@@ -31,7 +31,6 @@ namespace tst {
         , max_y(0.0f)
         , min_z(0.0f)
         , max_z(0.0f)
-        , m_vaoId(0)
         , m_vboId(0)
         , m_iboId(0)
     { }
@@ -43,7 +42,6 @@ namespace tst {
         , max_y(minmax[3])
         , min_z(minmax[4])
         , max_z(minmax[5])
-        , m_vaoId(0)
         , m_vboId(0)
         , m_iboId(0)
     { }
@@ -53,8 +51,8 @@ namespace tst {
 
     void BBox::init()
     {
-        glGenVertexArrays(1, &m_vaoId);
-        glBindVertexArray(m_vaoId);
+        //glGenVertexArrays(1, &m_vaoId);
+//        glBindVertexArray(m_vaoId);
 
         glGenBuffers(1, &m_vboId);
         glBindBuffer(GL_ARRAY_BUFFER, m_vboId);
@@ -69,7 +67,7 @@ namespace tst {
             0,                  // no extra data between each position
             0                   // offset of first element
             );
-        
+
         //glBindBuffer(GL_ARRAY_BUFFER, 0);
 
         glGenBuffers(1, &m_iboId);
@@ -77,7 +75,7 @@ namespace tst {
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(elements), elements, GL_STATIC_DRAW);
         //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-        glBindVertexArray(0);
+        //glBindVertexArray(0);
 
         glm::vec3 size = glm::vec3(max_x - min_x, max_y - min_y, max_z - min_z);
         glm::vec3 center = glm::vec3((min_x + max_x) / 2, (min_y + max_y) / 2, (min_z + max_z) / 2);

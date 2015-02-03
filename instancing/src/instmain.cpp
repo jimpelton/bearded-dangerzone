@@ -12,6 +12,7 @@
 
 #include <string>
 #include <vector>
+#include <array>
 
 #include <sstream>
 #include <fstream>
@@ -25,7 +26,7 @@ const char* vertex_shader =
 "in vec3 vp;"
 "uniform mat4 mvp;"
 "void main () {"
-"  gl_Position = mvp * vec4(vp, 1.0);"
+"  gl_Position = mvp * vec4(vp, 1.0) + gl_InstanceID;"
 "}";
 
 const char* fragment_shader =
@@ -37,10 +38,15 @@ const char* fragment_shader =
 
 const char *g_logfile = "gl.log";
 FILE *g_file = nullptr;
-tst::BBox *g_bbox;
 
-GLuint g_uniform_mvp;                           // id for uniforms
-GLuint g_shaderProgramId;                                  // id for what?
+const unsigned int NUMBOXES = 1;
+tst::BBox *g_bbox[NUMBOXES];
+
+
+GLuint  g_uniform_mvp;
+GLuint  g_shaderProgramId;
+GLuint  g_vaoIds[NUMBOXES];
+
 glm::quat g_cameraRotation;
 glm::mat4 g_modelMatrix;
 glm::mat4 g_viewMatrix;
@@ -57,8 +63,10 @@ float g_screenHeight = 720.0f;
 float g_fov = 50.0f;
 bool g_viewDirty = false;
 
+
 void log(const char* message, ...);
 void closeLog();
+void cleanup();
 
 GLuint loadShader(GLenum type, std::string filepath);
 GLuint compileShader(GLenum type, const char *shader);
@@ -66,6 +74,7 @@ GLuint compileShader(GLenum type, const char *shader);
 void glfw_cursorpos_callback(GLFWwindow *window, double x, double y);
 void glfw_keyboard_callback(GLFWwindow *window, int key, int scancode, int action, int mods);
 void glfw_error_callback(int error, const char* description);
+void glfw_window_size_callback(GLFWwindow *window, int width, int height);
 
 void updateMvpMatrix();
 void setRotation(const glm::vec2 &dr);
@@ -130,6 +139,13 @@ void glfw_keyboard_callback(GLFWwindow *window, int key, int scancode, int actio
 
 }
 
+void glfw_window_size_callback(GLFWwindow *window, int width, int height)
+{
+    g_screenWidth = width;
+    g_screenHeight = height;
+    glViewport(0, 0, width, height);
+}
+
 void glfw_cursorpos_callback(GLFWwindow *window, double x, double y)
 {
     glm::vec2 cpos(floor(x), floor(y));
@@ -143,7 +159,6 @@ void glfw_cursorpos_callback(GLFWwindow *window, double x, double y)
 /************************************************************************/
 /* S H A D E R   C O M P I L I N G                                      */
 /************************************************************************/
-
 GLuint loadShader(GLenum type, std::string filepath)
 {
     GLuint shaderId = 0;
@@ -171,7 +186,7 @@ GLuint compileShader(GLenum type, const char *shader)
     GLuint shaderId = glCreateShader(type);
     log("Created shader, type: 0x%x04, id: %d", type, shaderId);
     glShaderSource(shaderId, 1, &shader, NULL);
-    
+
     glCompileShader(shaderId);
 
     // Check for errors.
@@ -241,25 +256,22 @@ void setRotation(const glm::vec2 &dr)
 
 void updateMvpMatrix()
 {
-    //g_modelMatrix = g_bbox->modelTransform() * glm::toMat4(g_cameraRotation);
     g_viewMatrix = glm::lookAt(g_camPosition, g_camFocus, g_camUp);
     g_projectionMatrix = glm::perspective(g_fov, g_screenWidth/g_screenHeight, 0.1f, 100.0f);
-    g_vpMatrix = g_projectionMatrix * g_viewMatrix; // *g_modelMatrix;
+    g_vpMatrix = g_projectionMatrix * g_viewMatrix;
     g_viewDirty = false;
 }
 
-void drawBoundingBox()
+void drawBoundingBox(tst::BBox *b, unsigned int vaoIdx)
 {
-    glm::mat4 mvp = g_vpMatrix * g_bbox->modelTransform() * glm::toMat4(g_cameraRotation);
+    glm::mat4 mvp = g_vpMatrix * b->modelTransform() * glm::toMat4(g_cameraRotation);
 
     glUseProgram(g_shaderProgramId);
     glUniformMatrix4fv(g_uniform_mvp, 1, GL_FALSE, glm::value_ptr(mvp));
-    glBindVertexArray(g_bbox->vaoId());
-
-    glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, 0);
-    glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, (GLvoid*)(4 * sizeof(GLushort)));
-    glDrawElements(GL_LINES, 8, GL_UNSIGNED_SHORT, (GLvoid*)(8 * sizeof(GLushort)));
-
+    glBindVertexArray(g_vaoIds[vaoIdx]);
+    glDrawElementsInstanced(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, 0, 2);
+    glDrawElementsInstanced(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, (GLvoid*)(4 * sizeof(GLushort)), 2);
+    glDrawElementsInstanced(GL_LINES, 8, GL_UNSIGNED_SHORT, (GLvoid*)(8 * sizeof(GLushort)), 2);
     glBindVertexArray(0);
 }
 
@@ -269,16 +281,17 @@ void loop(GLFWwindow *window)
 
     do {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        
+
         if (g_viewDirty) {
             updateMvpMatrix();
         }
 
-        drawBoundingBox();
+        drawBoundingBox(g_bbox[0], 0);
+        //drawBoundingBox(g_bbox[1], 1);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
-        
+
     } while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
         glfwWindowShouldClose(window) == 0);
 }
@@ -290,7 +303,7 @@ GLFWwindow* init()
         log("could not start GLFW3");
         return nullptr;
     }
-    
+
     glfwSetErrorCallback(glfw_error_callback);
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
     // number of samples to use for multi sampling
@@ -305,11 +318,12 @@ GLFWwindow* init()
         glfwTerminate();
         return nullptr;
     }
-    
+
     glfwSetCursorPosCallback(window, glfw_cursorpos_callback);
+    glfwSetWindowSizeCallback(window, glfw_window_size_callback);
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
     glfwMakeContextCurrent(window);
-    
+
     glewExperimental = GL_TRUE;
     GLenum error = glewInit();
     if (error) {
@@ -327,6 +341,13 @@ GLFWwindow* init()
     return window;
 }
 
+void cleanup()
+{
+    std::array<GLuint, 2> bufIds {{g_bbox[0]->vboId(), g_bbox[1]->iboId()}};
+    glDeleteBuffers(2, &bufIds[0]);
+    glDeleteProgram(g_shaderProgramId);
+}
+
 int main(int argc, char* argv[])
 {
     GLFWwindow * window;
@@ -335,26 +356,37 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    std::vector<tinyobj::shape_t> shapes;
-    std::vector<tinyobj::material_t> materials;
-    tinyobj::LoadObj(shapes, materials, "torus/torus.obj", "torus/torus.mtl");
-
-    
+//    std::vector<tinyobj::shape_t> shapes;
+//    std::vector<tinyobj::material_t> materials;
+//    tinyobj::LoadObj(shapes, materials, "torus/torus.obj", "torus/torus.mtl");
 
     GLuint vsId = compileShader(GL_VERTEX_SHADER, vertex_shader);
     GLuint fsId = compileShader(GL_FRAGMENT_SHADER, fragment_shader);
     g_shaderProgramId = linkProgram({ vsId, fsId });
     glGetUniformLocation(g_shaderProgramId, "mvp");
-    
-    GLfloat minmax[] = { -0.5f, 0.5f, -0.5f, 0.5f, -0.5f, 0.5f };
-    tst::BBox box(minmax);
-    box.init();
-    g_bbox = &box;
+
+    const GLfloat minmax[NUMBOXES][6] =
+    {
+        { -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f }
+        //{ -0.5f, 0.5f, -0.5f, 0.5f, -0.5f, 0.5f }
+    };
+
+    glGenVertexArrays(NUMBOXES, g_vaoIds);
+    for(int i=0; i<NUMBOXES; ++i)
+    {
+        glBindVertexArray(g_vaoIds[i]);
+        tst::BBox box(minmax[i]);
+        box.init();
+        g_bbox[i] = &box;
+    }
+
+    glBindVertexArray(0);
 
     loop(window);
+    cleanup();
     closeLog();
     glfwTerminate();
-    
+
     return 0;
 }
 

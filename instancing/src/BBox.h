@@ -36,7 +36,6 @@ namespace tst {
 
 
     public:
-        unsigned vaoId() const { return m_vaoId; }
         unsigned vboId() const { return m_vboId; }
         unsigned iboId() const { return m_iboId; }
 
@@ -48,7 +47,7 @@ namespace tst {
         static const float vertices[];
         static const unsigned short elements[];
 
-        unsigned m_vaoId, m_vboId, m_iboId;
+        unsigned m_vboId, m_iboId;
 
         float min_x, max_x,
             min_y, max_y,

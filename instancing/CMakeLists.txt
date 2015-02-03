@@ -29,7 +29,7 @@ find_package(GLM REQUIRED)
 #find_package(Freetype REQUIRED)
 
 include_directories(${OPENGL_INCLUDE_DIR})
-include_directories(${GLFW_INCLUDE_DIRS})
+include_directories(${GLFW_INCLUDE_DIR})
 include_directories(${GLEW_INCLUDE_DIR})
 include_directories(${GLM_INCLUDE_DIR})
 #include_directories(${Boost_INCLUDE_DIRS})
