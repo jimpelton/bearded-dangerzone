@@ -343,8 +343,12 @@ GLFWwindow* init()
 
 void cleanup()
 {
-    std::array<GLuint, 2> bufIds {{g_bbox[0]->vboId(), g_bbox[1]->iboId()}};
-    glDeleteBuffers(2, &bufIds[0]);
+    std::vector<GLuint> bufIds;
+    for (int i=0; i<NUMBOXES; ++i) {
+        bufIds.push_back(g_bbox[i]->iboId());
+        bufIds.push_back(g_bbox[i]->vboId());
+    }
+    glDeleteBuffers(NUMBOXES, &bufIds[0]);
     glDeleteProgram(g_shaderProgramId);
 }
 
