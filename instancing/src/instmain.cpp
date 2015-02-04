@@ -40,12 +40,12 @@ const char *g_logfile = "gl.log";
 FILE *g_file = nullptr;
 
 const unsigned int NUMBOXES = 1;
-tst::BBox *g_bbox[NUMBOXES];
+std::vector<tst::BBox> g_bbox;
 
 
 GLuint  g_uniform_mvp;
 GLuint  g_shaderProgramId;
-GLuint  g_vaoIds[NUMBOXES];
+std::vector<GLuint> g_vaoIds;
 
 glm::quat g_cameraRotation;
 glm::mat4 g_modelMatrix;
@@ -286,7 +286,7 @@ void loop(GLFWwindow *window)
             updateMvpMatrix();
         }
 
-        drawBoundingBox(g_bbox[0], 0);
+        drawBoundingBox(&g_bbox[0], 0);
         //drawBoundingBox(g_bbox[1], 1);
 
         glfwSwapBuffers(window);
@@ -345,8 +345,8 @@ void cleanup()
 {
     std::vector<GLuint> bufIds;
     for (int i=0; i<NUMBOXES; ++i) {
-        bufIds.push_back(g_bbox[i]->iboId());
-        bufIds.push_back(g_bbox[i]->vboId());
+        bufIds.push_back(g_bbox[i].iboId());
+        bufIds.push_back(g_bbox[i].vboId());
     }
     glDeleteBuffers(NUMBOXES, &bufIds[0]);
     glDeleteProgram(g_shaderProgramId);
@@ -369,19 +369,17 @@ int main(int argc, char* argv[])
     g_shaderProgramId = linkProgram({ vsId, fsId });
     glGetUniformLocation(g_shaderProgramId, "mvp");
 
-    const GLfloat minmax[NUMBOXES][6] =
-    {
-        { -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f }
-        //{ -0.5f, 0.5f, -0.5f, 0.5f, -0.5f, 0.5f }
-    };
+    const GLfloat minmax[6] =
+        { -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f };
 
-    glGenVertexArrays(NUMBOXES, g_vaoIds);
+    g_vaoIds.reserve(NUMBOXES);
+    glGenVertexArrays(NUMBOXES, &g_vaoIds[0]);
     for(int i=0; i<NUMBOXES; ++i)
     {
         glBindVertexArray(g_vaoIds[i]);
-        tst::BBox box(minmax[i]);
+        tst::BBox box(minmax);
         box.init();
-        g_bbox[i] = &box;
+        g_bbox.push_back(box);
     }
 
     glBindVertexArray(0);
