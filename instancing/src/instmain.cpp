@@ -1,6 +1,6 @@
 
-#include "BBox.h"
-#include "tiny_obj_loader/tiny_obj_loader.h"
+#include "geometry/BBox.h"
+#include "file/tiny_obj_loader/tiny_obj_loader.h"
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
