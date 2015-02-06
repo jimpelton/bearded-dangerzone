@@ -40,4 +40,5 @@ include_directories(${GLM_INCLUDE_DIR})
 
 include_directories("${SHARED_DIR}")
 
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/template")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/instancing")
