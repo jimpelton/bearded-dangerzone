@@ -23,8 +23,8 @@ endif (WIN32)
 
 set(BIN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/bin")
 set(SHARED_DIR "${CMAKE_CURRENT_SOURCE_DIR}/shared")
-#message(STATUS "SHARED_INCLUDES_DIR: ${SHARED_DIR}")
-#message(STATUS "BIN_DIR: ${BIN_DIR}")
+message(STATUS "SHARED_INCLUDES_DIR: ${SHARED_DIR}")
+message(STATUS "BIN_DIR: ${BIN_DIR}")
 
 find_package(OpenGL REQUIRED)
 find_package(GLFW REQUIRED)
@@ -42,3 +42,4 @@ include_directories("${SHARED_DIR}")
 
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/template")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/instancing")
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/simplevr")

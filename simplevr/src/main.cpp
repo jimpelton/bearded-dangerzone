@@ -1,6 +1,17 @@
+//************************************************************//
+// Jim Pelton
+// Graduate Student
+// Dept. of Computer Science
+// Boise State University
+// Spring 2015
+//
+// Simplevr -- Simple slice-based 3D texture volume renderer
+//************************************************************//
+
 
 #include "geometry/BBox.h"
-#include "file/tiny_obj_loader/tiny_obj_loader.h"
+#include "file/datareader.h"
+#include "log/gl_log.h"
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -20,6 +31,29 @@
 #include <cstdio>
 #include <cstdarg>
 #include <ctime>
+
+
+
+class Quad {
+public:
+	static const std::vector<glm::vec4> verts;
+
+public:
+	Quad() {};
+	~Quad() {};
+
+	const glm::mat4& model() { return m_model; }
+
+private:
+	glm::mat4 m_model;
+};
+
+const std::vector<glm::vec4> Quad::verts {
+	glm::vec4(0.0, 0.0, 0.0, 1.0),
+	glm::vec4(1.0, 0.0, 0.0, 1.0),
+	glm::vec4(1.0, 1.0, 0.0, 1.0),
+	glm::vec4(0.0, -1.0, 0.0, 1.0)
+};
 
 const char* vertex_shader =
 "#version 400\n"
@@ -64,8 +98,9 @@ float g_fov = 50.0f;
 bool g_viewDirty = false;
 
 
-void log(const char* message, ...);
-void closeLog();
+// void log(const char* message, ...);
+// void closeLog();
+
 void cleanup();
 
 GLuint loadShader(GLenum type, std::string filepath);
@@ -81,32 +116,34 @@ void setRotation(const glm::vec2 &dr);
 void drawBoundingBox(tst::BBox *b, unsigned int vaoIdx);
 void loop(GLFWwindow *window);
 
-void log(const char* message, ...)
-{
-    va_list argptr;
-    if (!g_file) {
-        g_file = fopen(g_logfile, "w");
-        if (!g_file) {
-            fprintf(stderr, "ERROR: could not open %s file for appending\n", g_logfile);
-            return;
-        }
-        time_t now = time(NULL); char* date = ctime(&now);
-        fprintf(g_file, "------------------------\nOpening %s. local time %s\n", g_logfile, date);
-    }
-    va_start(argptr, message); vfprintf(g_file, message, argptr); va_end(argptr);
-    fprintf(g_file, "\n"); fflush(g_file);
-}
+void drawSlicesInstanced();
 
-void closeLog()
-{
-    if (!g_file) {
-        fprintf(stderr, "Error: not closing %s because it was not opened.", g_logfile);
-        return;
-    }
-    time_t now = time(NULL); char* date = ctime(&now);
-    fprintf(g_file, "------------------------\nClosing %s. local time %s\n", g_logfile, date);
-    fclose(g_file);
-}
+//void log(const char* message, ...)
+//{
+//    va_list argptr;
+//    if (!g_file) {
+//        g_file = fopen(g_logfile, "w");
+//        if (!g_file) {
+//            fprintf(stderr, "ERROR: could not open %s file for appending\n", g_logfile);
+//            return;
+//        }
+//        time_t now = time(NULL); char* date = ctime(&now);
+//        fprintf(g_file, "------------------------\nOpening %s. local time %s\n", g_logfile, date);
+//    }
+//    va_start(argptr, message); vfprintf(g_file, message, argptr); va_end(argptr);
+//    fprintf(g_file, "\n"); fflush(g_file);
+//}
+
+//void closeLog()
+//{
+//    if (!g_file) {
+//        fprintf(stderr, "Error: not closing %s because it was not opened.", g_logfile);
+//        return;
+//    }
+//    time_t now = time(NULL); char* date = ctime(&now);
+//    fprintf(g_file, "------------------------\nClosing %s. local time %s\n", g_logfile, date);
+//    fclose(g_file);
+//}
 
 /************************************************************************/
 /* OPENGL CALLBACKS                                                     */
@@ -121,7 +158,7 @@ void gl_debug_message_callback(GLenum source,
 {
    /* fprintf(stderr, "OGL_DEBUG: source: 0x%04X, type 0x%04X, id %u, severity 0x%0X, '%s'\n",
         source, type, id, severity, message);*/
-    log("OGL_DEBUG: source: 0x%04X, type 0x%04X, id %u, severity 0x%0X, '%s'\n",
+    gl_log("OGL_DEBUG: source: 0x%04X, type 0x%04X, id %u, severity 0x%0X, '%s'\n",
         source, type, id, severity, message);
 }
 
@@ -131,7 +168,7 @@ void gl_debug_message_callback(GLenum source,
 /************************************************************************/
 void glfw_error_callback(int error, const char* description)
 {
-    log("GLFW ERROR: code %i msg: %s", error, description);
+    gl_log("GLFW ERROR: code %i msg: %s", error, description);
 }
 
 void glfw_keyboard_callback(GLFWwindow *window, int key, int scancode, int action, int mods)
@@ -164,7 +201,7 @@ GLuint loadShader(GLenum type, std::string filepath)
     GLuint shaderId = 0;
     std::ifstream file(filepath.c_str());
     if (!file.is_open()) {
-        log("Couldn't open %s", filepath.c_str());
+        gl_log("Couldn't open %s", filepath.c_str());
         return 0;
     }
 
@@ -175,7 +212,7 @@ GLuint loadShader(GLenum type, std::string filepath)
     const char *ptrCode = code.c_str();
     file.close();
 
-    log("Compiling shader: %s", filepath.c_str());
+    gl_log("Compiling shader: %s", filepath.c_str());
     shaderId = compileShader(type, ptrCode);
     return shaderId;
 }
@@ -184,7 +221,7 @@ GLuint compileShader(GLenum type, const char *shader)
 {
     // Create shader and compile
     GLuint shaderId = glCreateShader(type);
-    log("Created shader, type: 0x%x04, id: %d", type, shaderId);
+    gl_log("Created shader, type: 0x%x04, id: %d", type, shaderId);
     glShaderSource(shaderId, 1, &shader, NULL);
 
     glCompileShader(shaderId);
@@ -199,7 +236,7 @@ GLuint compileShader(GLenum type, const char *shader)
     if (InfoLogLength > 1){
         std::vector<char> msg(InfoLogLength + 1);
         glGetShaderInfoLog(shaderId, InfoLogLength, NULL, &msg[0]);
-        log("%s", &msg[0]);
+        gl_log("%s", &msg[0]);
     }
 
     return shaderId;
@@ -208,13 +245,13 @@ GLuint compileShader(GLenum type, const char *shader)
 GLuint linkProgram(const std::vector<GLuint> &shaderIds)
 {
     GLuint programId = glCreateProgram();
-    log("Created program id: %d", programId);
+    gl_log("Created program id: %d", programId);
 
     for (auto &sh : shaderIds) {
         glAttachShader(programId, sh);
     }
 
-    log("Linking program");
+    gl_log("Linking program");
     glLinkProgram(programId);
 
     // Check the program
@@ -227,7 +264,7 @@ GLuint linkProgram(const std::vector<GLuint> &shaderIds)
     if (InfoLogLength > 1) {
         std::vector<char> programErrorMessage(InfoLogLength + 1);
         glGetProgramInfoLog(programId, InfoLogLength, NULL, &programErrorMessage[0]);
-        log("%s", &programErrorMessage[0]);
+        gl_log("%s", &programErrorMessage[0]);
     }
 
     return programId;
@@ -275,6 +312,8 @@ void drawBoundingBox(tst::BBox *b, unsigned int vaoIdx)
     glBindVertexArray(0);
 }
 
+
+
 void loop(GLFWwindow *window)
 {
     g_viewDirty = true;
@@ -287,6 +326,7 @@ void loop(GLFWwindow *window)
         }
 
         drawBoundingBox(&g_bbox[0], 0);
+        //drawSlicesInstanced();
         //drawBoundingBox(g_bbox[1], 1);
 
         glfwSwapBuffers(window);
@@ -300,7 +340,7 @@ GLFWwindow* init()
 {
     GLFWwindow *window = nullptr;
     if (!glfwInit()) {
-        log("could not start GLFW3");
+        gl_log("could not start GLFW3");
         return nullptr;
     }
 
@@ -314,7 +354,7 @@ GLFWwindow* init()
 
     window = glfwCreateWindow(1280, 720, "Minimal", NULL, NULL);
     if (!window) {
-        log("ERROR: could not open window with GLFW3");
+        gl_log("ERROR: could not open window with GLFW3");
         glfwTerminate();
         return nullptr;
     }
@@ -327,7 +367,7 @@ GLFWwindow* init()
     glewExperimental = GL_TRUE;
     GLenum error = glewInit();
     if (error) {
-        log("could not init glew %s", glewGetErrorString(error));
+        gl_log("could not init glew %s", glewGetErrorString(error));
         return nullptr;
     }
 
@@ -341,6 +381,10 @@ GLFWwindow* init()
     return window;
 }
 
+bool readVolumeData(const std::string &rawFile) {
+	std::ifstream raw(rawFile);
+}
+
 void cleanup()
 {
     std::vector<GLuint> bufIds;
@@ -348,21 +392,21 @@ void cleanup()
         bufIds.push_back(g_bbox[i].iboId());
         bufIds.push_back(g_bbox[i].vboId());
     }
+
     glDeleteBuffers(NUMBOXES, &bufIds[0]);
     glDeleteProgram(g_shaderProgramId);
 }
 
 int main(int argc, char* argv[])
 {
-    GLFWwindow * window;
+	GLFWwindow * window;
     if ((window = init()) == nullptr) {
-        log("Could not initialize GLFW, exiting.");
+        gl_log("Could not initialize GLFW, exiting.");
         return 1;
     }
+    std::string rawFile( argc>1 ? argv[1] : "" );
 
-//    std::vector<tinyobj::shape_t> shapes;
-//    std::vector<tinyobj::material_t> materials;
-//    tinyobj::LoadObj(shapes, materials, "torus/torus.obj", "torus/torus.mtl");
+    readVolumeData(rawFile);
 
     GLuint vsId = compileShader(GL_VERTEX_SHADER, vertex_shader);
     GLuint fsId = compileShader(GL_FRAGMENT_SHADER, fragment_shader);
@@ -386,7 +430,8 @@ int main(int argc, char* argv[])
 
     loop(window);
     cleanup();
-    closeLog();
+    gl_log_close();
+    //closeLog();
     glfwTerminate();
 
     return 0;

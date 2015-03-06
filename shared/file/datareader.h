@@ -1,7 +1,7 @@
 #ifndef datareader_h__
 #define datareader_h__
 
-#include "log.h"
+#include "log/gl_log.h"
 
 #include <limits>
 #include <fstream>

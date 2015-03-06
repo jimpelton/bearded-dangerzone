@@ -82,7 +82,6 @@ namespace tst {
         glm::mat4 transform = glm::translate(glm::mat4(1), center) * glm::scale(glm::mat4(1), size);
         m_transform = transform;
     }
-
 }
 
 //void makeBuffers(GLuint *vboId, GLuint *iboId)
