@@ -7,6 +7,11 @@
 #include <fstream>
 #include <cstdint>
 
+/**
+* \brief Read data and convert from ExternTy to InternTy
+* \tparam ExternTy Type read from file.
+* \tparam InternTy Type data is converted to.
+*/
 template< typename ExternTy, typename InternTy >
 class DataReader
 {
@@ -21,7 +26,7 @@ public:
     ~DataReader() 
     { 
         if (m_data != nullptr) 
-            delete[] m_data; 
+            delete [] m_data;
     }
 
 public:
@@ -29,7 +34,7 @@ public:
     * \brief Load the raw file at path \c imagepath. The external representation
     * in the file is expected to be ExternTy. The data is converted to InternTy.
     *
-    *  Note: a constraint class does not exist to prevent incompatible types so it
+    *  Note: constraint classes do not exist to prevent incompatible types so it
     *  is assumed that a natural conversion already exists between
     *  ExternalTy and InternalTy.
     *
@@ -55,7 +60,7 @@ public:
 
 private:
     /** \brief calculate and return file size in bytes */
-    size_t volsize ( std::filebuf *pbuf);
+    size_t volsize (std::filebuf *pbuf);
     
     /** \brief compute and return fabs(m_min) */
     InternTy shiftAmt();
