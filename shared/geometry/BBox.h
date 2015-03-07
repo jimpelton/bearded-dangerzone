@@ -5,8 +5,8 @@
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-
-namespace tst {
+namespace bearded {
+namespace dangerzone {
 
     class BBox {
     public:
@@ -56,6 +56,7 @@ namespace tst {
         glm::mat4 m_transform;
     };
 
-}
+} // namespace dangerzone
+} // namspace bearded
 
 #endif
