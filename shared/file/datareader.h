@@ -21,11 +21,12 @@ public:
         : m_data(nullptr) 
         , m_max(std::numeric_limits<InternTy>::lowest())   // Man, I hope InternTy has a numeric_limit!
         , m_min(std::numeric_limits<InternTy>::max())
+        , haveOwnership(true)
     { }
 
     ~DataReader() 
     { 
-        if (m_data != nullptr) 
+        if (m_data != nullptr || haveOwnership)
             delete [] m_data;
     }
 
@@ -49,8 +50,45 @@ public:
     size_t loadRaw3d(const std::string &imagepath,
         size_t width, size_t height, size_t depth, bool normalize=true);
 
-    /** \brief Returns a pointer to the array of converted data. */
-    InternTy *data_ptr() const { return m_data; }
+    /**
+    * \return true if this datareader has ownership of the data else false.
+    */
+    bool hasOwnership() const { return haveOwnership; }
+
+    /**
+    * \brief The caller takes ownership of the data.
+    *
+    * The caller takes ownership of the data in the sense that when this DataReader
+    * is deleted, the data will not be dealocated at that time, and the new owner takes
+    * responsibility for that (messed up, I know). This can only be called once, after the
+    * initial call it returns nullptr.
+    *
+    * If this datareader does not have ownership, or no data has been read, returns a nullptr,
+    *
+    * \return a pointer to the data, or nullptr
+    */
+    InternTy *takeOwnership() {
+        if (haveOwnership) {
+            haveOwnership = false;
+            return m_data;
+        } else {
+            return nullptr;
+        }
+    }
+
+    /**
+    * \brief Get pointer to the array of converted data or nullptr.
+    *
+    * Returns nullptr if no ownership, or if no data has been read yet.
+    *
+    * \return A pointer to the data, or nullptr.
+    */
+    InternTy *data_ptr() const {
+        if (haveOwnership)
+            return m_data;
+        else
+            return nullptr;
+    }
     /** \brief Returns the min value of the converted data. */
     InternTy  min()      const { return m_min; }
     /** \brief Returns the max value of the converted data. */
@@ -77,6 +115,8 @@ private:
     InternTy m_min;
 
     size_t m_numVoxels;
+
+    bool haveOwnership;
 
 };
 
