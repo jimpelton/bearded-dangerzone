@@ -25,6 +25,7 @@
 #include <vector>
 #include <array>
 
+#include <iostream>
 #include <sstream>
 #include <fstream>
 
@@ -39,10 +40,18 @@ public:
 	static const std::vector<glm::vec4> verts;
 
 public:
-	Quad() {};
+	Quad() 
+        : m_model(1.0) { };
+    
+    Quad(const glm::vec3 &min, const glm::vec2 &dims) 
+        : m_model(1.0) {
+    	glm::scale(m_model, glm::vec3());
+        
+    }
 	~Quad() {};
 
 	const glm::mat4& model() { return m_model; }
+    
 
 private:
 	glm::mat4 m_model;
@@ -74,7 +83,7 @@ const char *g_logfile = "gl.log";
 FILE *g_file = nullptr;
 
 const unsigned int NUMBOXES = 1;
-std::vector<tst::BBox> g_bbox;
+std::vector<bearded::dangerzone::BBox> g_bbox;
 
 
 GLuint  g_uniform_mvp;
@@ -82,7 +91,7 @@ GLuint  g_shaderProgramId;
 std::vector<GLuint> g_vaoIds;
 
 glm::quat g_cameraRotation;
-glm::mat4 g_modelMatrix;
+//glm::mat4 g_modelMatrix;
 glm::mat4 g_viewMatrix;
 glm::mat4 g_projectionMatrix;
 glm::mat4 g_vpMatrix;
@@ -113,7 +122,7 @@ void glfw_window_size_callback(GLFWwindow *window, int width, int height);
 
 void updateMvpMatrix();
 void setRotation(const glm::vec2 &dr);
-void drawBoundingBox(tst::BBox *b, unsigned int vaoIdx);
+void drawBoundingBox(bearded::dangerzone::BBox *b, unsigned int vaoIdx);
 void loop(GLFWwindow *window);
 
 void drawSlicesInstanced();
@@ -148,19 +157,19 @@ void drawSlicesInstanced();
 /************************************************************************/
 /* OPENGL CALLBACKS                                                     */
 /************************************************************************/
-void gl_debug_message_callback(GLenum source,
-    GLenum type,
-    GLuint id,
-    GLenum severity,
-    GLsizei length,
-    const GLchar *message,
-    void *userParam)
-{
-   /* fprintf(stderr, "OGL_DEBUG: source: 0x%04X, type 0x%04X, id %u, severity 0x%0X, '%s'\n",
-        source, type, id, severity, message);*/
-    gl_log("OGL_DEBUG: source: 0x%04X, type 0x%04X, id %u, severity 0x%0X, '%s'\n",
-        source, type, id, severity, message);
-}
+//void gl_debug_message_callback(GLenum source,
+//    GLenum type,
+//    GLuint id,
+//    GLenum severity,
+//    GLsizei length,
+//    const GLchar *message,
+//    void *userParam)
+//{
+//   /* fprintf(stderr, "OGL_DEBUG: source: 0x%04X, type 0x%04X, id %u, severity 0x%0X, '%s'\n",
+//        source, type, id, severity, message);*/
+//    gl_log("OGL_DEBUG: source: 0x%04X, type 0x%04X, id %u, severity 0x%0X, '%s'\n",
+//        source, type, id, severity, message);
+//}
 
 
 /************************************************************************/
@@ -299,7 +308,7 @@ void updateMvpMatrix()
     g_viewDirty = false;
 }
 
-void drawBoundingBox(tst::BBox *b, unsigned int vaoIdx)
+void drawBoundingBox(bearded::dangerzone::BBox *b, unsigned int vaoIdx)
 {
     glm::mat4 mvp = g_vpMatrix * b->modelTransform() * glm::toMat4(g_cameraRotation);
 
@@ -311,8 +320,6 @@ void drawBoundingBox(tst::BBox *b, unsigned int vaoIdx)
     glDrawElements(GL_LINES, 8, GL_UNSIGNED_SHORT, (GLvoid*)(8 * sizeof(GLushort)));
     glBindVertexArray(0);
 }
-
-
 
 void loop(GLFWwindow *window)
 {
@@ -383,6 +390,10 @@ GLFWwindow* init()
 
 bool readVolumeData(const std::string &rawFile) {
 	std::ifstream raw(rawFile);
+	if (! raw.is_open()) return false;
+
+    raw.close();
+    return true;
 }
 
 void cleanup()
@@ -397,6 +408,10 @@ void cleanup()
     glDeleteProgram(g_shaderProgramId);
 }
 
+void usage() {
+	std::cout << "simplevr <raw-file>\n";
+}
+
 int main(int argc, char* argv[])
 {
 	GLFWwindow * window;
@@ -406,7 +421,8 @@ int main(int argc, char* argv[])
     }
     std::string rawFile( argc>1 ? argv[1] : "" );
 
-    readVolumeData(rawFile);
+    if (! readVolumeData(rawFile)) { usage(); return 1; }
+
 
     GLuint vsId = compileShader(GL_VERTEX_SHADER, vertex_shader);
     GLuint fsId = compileShader(GL_FRAGMENT_SHADER, fragment_shader);
@@ -421,7 +437,7 @@ int main(int argc, char* argv[])
     for(int i=0; i<NUMBOXES; ++i)
     {
         glBindVertexArray(g_vaoIds[i]);
-        tst::BBox box(minmax);
+        bearded::dangerzone::BBox box(minmax);
         box.init();
         g_bbox.push_back(box);
     }
