@@ -42,7 +42,7 @@ bool gl_log_close()
     return true;
 }
 
-bool restart_gl_debug_log ()
+bool gl_debug_log_restart()
 {
     if (!glDebugFile) {
         glDebugFile = fopen(glDebugFileName, "a");
@@ -64,7 +64,7 @@ bool restart_gl_debug_log ()
     return true;
 }
 
-bool restart_gl_log ()
+bool gl_log_restart()
 {
     if (!file) {
         file = fopen(logFileName, "a");

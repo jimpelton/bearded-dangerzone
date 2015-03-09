@@ -40,7 +40,7 @@ const char *g_logfile = "gl.log";
 FILE *g_file = nullptr;
 
 const unsigned int NUMBOXES = 1;
-std::vector<tst::BBox> g_bbox;
+std::vector<bearded::dangerzone::BBox> g_bbox;
 
 
 GLuint  g_uniform_mvp;
@@ -78,7 +78,7 @@ void glfw_window_size_callback(GLFWwindow *window, int width, int height);
 
 void updateMvpMatrix();
 void setRotation(const glm::vec2 &dr);
-void drawBoundingBox(tst::BBox *b, unsigned int vaoIdx);
+void drawBoundingBox(bearded::dangerzone::BBox *b, unsigned int vaoIdx);
 void loop(GLFWwindow *window);
 
 void log(const char* message, ...)
@@ -262,7 +262,7 @@ void updateMvpMatrix()
     g_viewDirty = false;
 }
 
-void drawBoundingBox(tst::BBox *b, unsigned int vaoIdx)
+void drawBoundingBox(bearded::dangerzone::BBox *b, unsigned int vaoIdx)
 {
     glm::mat4 mvp = g_vpMatrix * b->modelTransform() * glm::toMat4(g_cameraRotation);
 
@@ -377,7 +377,7 @@ int main(int argc, char* argv[])
     for(int i=0; i<NUMBOXES; ++i)
     {
         glBindVertexArray(g_vaoIds[i]);
-        tst::BBox box(minmax);
+        bearded::dangerzone::BBox box(minmax);
         box.init();
         g_bbox.push_back(box);
     }

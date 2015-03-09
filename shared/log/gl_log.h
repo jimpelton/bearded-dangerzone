@@ -13,8 +13,8 @@
 #define gl_log_err(fmt_, ...) gl_log_err_fcn("%s[%d]:%s()::" # fmt_, __FILE__, __LINE__, __func__, ##__VA_ARGS__)
 
 void checkForAndLogGlError(const char* func, int line);
-bool restart_gl_log();
-bool restart_gl_debug_log();
+bool gl_log_restart();
+bool gl_debug_log_restart();
 bool gl_log_close();
 bool gl_log_fcn(const char* message, ...);
 

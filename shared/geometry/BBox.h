@@ -5,17 +5,19 @@
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-namespace bearded {
-namespace dangerzone {
+namespace bearded { namespace dangerzone { namespace geometry {
 
-    class BBox {
-    public:
-        BBox();
-        /** \brief create a bbox with the given mins/maxes.
+            class BBox {
+            public:
+                BBox();
+
+                /** \brief create a bbox with the given mins/maxes.
          *
          *  \param minmax minX, maxX, minY, maxY, minZ, maxZ
          */
-        BBox(const float *minmax);
+        BBox
+                (
+                        const float *minmax);
         ~BBox();
 
         /* BBox(const BBox &rhs)
@@ -47,15 +49,15 @@ namespace dangerzone {
         static const float vertices[];
         static const unsigned short elements[];
 
-        unsigned m_vboId, m_iboId;
-
         float min_x, max_x,
             min_y, max_y,
             min_z, max_z;
 
+        unsigned m_vboId, m_iboId;
+
         glm::mat4 m_transform;
     };
-
+} // namespace geometry
 } // namespace dangerzone
 } // namspace bearded
 

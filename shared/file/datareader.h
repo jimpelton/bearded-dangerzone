@@ -7,6 +7,10 @@
 #include <fstream>
 #include <cstdint>
 
+namespace bearded {
+namespace dangerzone {
+namespace file {
+
 /**
 * \brief Read data and convert from ExternTy to InternTy
 * \tparam ExternTy Type read from file.
@@ -248,4 +252,7 @@ DataReader< ExternTy, InternTy >::normalize_copy
 
 }
 
+}
+}
+}
 #endif // datareader_h__

@@ -21,74 +21,78 @@
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include <string>
+
 #include <vector>
 #include <array>
 
 #include <iostream>
 #include <sstream>
-#include <fstream>
-
-#include <cstdio>
-#include <cstdarg>
-#include <ctime>
-
-
 
 class Quad {
 public:
-	static const std::vector<glm::vec4> verts;
+	static const std::array<glm::vec4, 4> verts;
+    static const std::array<unsigned short, 4> elements;
 
 public:
-	Quad() 
-        : m_model(1.0) { };
-    
-    Quad(const glm::vec3 &min, const glm::vec2 &dims) 
+	Quad()
+        : m_model(1.0) { }
+
+    Quad(const glm::vec3 &center, const glm::vec3 &dims)
         : m_model(1.0) {
-    	glm::scale(m_model, glm::vec3());
-        
+       	m_model = glm::translate(glm::mat4(1.0f), center) * glm::scale(glm::mat4(1.0f), dims);
     }
-	~Quad() {};
+
+	~Quad() {}
 
 	const glm::mat4& model() { return m_model; }
-    
 
 private:
 	glm::mat4 m_model;
 };
 
-const std::vector<glm::vec4> Quad::verts {
-	glm::vec4(0.0, 0.0, 0.0, 1.0),
-	glm::vec4(1.0, 0.0, 0.0, 1.0),
-	glm::vec4(1.0, 1.0, 0.0, 1.0),
-	glm::vec4(0.0, -1.0, 0.0, 1.0)
+const std::array<glm::vec4, 4> Quad::verts {
+	glm::vec4(-0.5f, -0.5f, 0.0, 1.0),
+	glm::vec4(0.5f, -0.5f, 0.0, 1.0),
+	glm::vec4(0.5f, 0.5f, 0.0, 1.0),
+	glm::vec4(-0.5f, 0.5f, 0.0, 1.0)
 };
+
+const std::array<unsigned short, 4> Quad::elements {
+        0, 1, 2, 3
+};
+
+///////////////////////////////////////////////////////////////////////////////
 
 const char* vertex_shader =
 "#version 400\n"
-"in vec3 vp;"
+"in vec3 v;"
 "uniform mat4 mvp;"
 "void main () {"
-"  gl_Position = mvp * vec4(vp, 1.0);"
+"  gl_Position = mvp * vec4(v + vec3(0.0f, 0.0f, 1.0f/7.0f) * gl_InstanceID, 1.0f);"
 "}";
-
+//
 const char* fragment_shader =
 "#version 400\n"
-"out vec4 frag_colour;"
+"out vec4 col;"
 "void main () {"
-"  frag_colour = vec4 (1.0, 1.0, 1.0, 1.0);"
+"  col = vec4 (1.0, 1.0, 1.0, 1.0);"
 "}";
+
+///////////////////////////////////////////////////////////////////////////////
 
 const char *g_logfile = "gl.log";
 FILE *g_file = nullptr;
 
-const unsigned int NUMBOXES = 1;
-std::vector<bearded::dangerzone::BBox> g_bbox;
-
+//const unsigned int NUMBOXES = 1;
+//std::vector<bearded::dangerzone::geometry::BBox> g_bbox;
+//std::vector<GLuint> g_vaoIds;
 
 GLuint  g_uniform_mvp;
 GLuint  g_shaderProgramId;
-std::vector<GLuint> g_vaoIds;
+
+GLuint g_q_vaoId; // quad vertex array obj id
+GLuint g_q_vboId; // quad geo vertex buffer id
+GLuint g_q_iboId; // quad geo index buffer id
 
 glm::quat g_cameraRotation;
 //glm::mat4 g_modelMatrix;
@@ -104,13 +108,13 @@ float g_mouseSpeed = 1.0f;
 float g_screenWidth = 1280.0f;
 float g_screenHeight = 720.0f;
 float g_fov = 50.0f;
-bool g_viewDirty = false;
+bool  g_viewDirty = false;
 
-
-// void log(const char* message, ...);
-// void closeLog();
+/////////////////////////////////////////////////////////////////////////////////////
 
 void cleanup();
+void usage();
+void usage(const char *);
 
 GLuint loadShader(GLenum type, std::string filepath);
 GLuint compileShader(GLenum type, const char *shader);
@@ -122,55 +126,15 @@ void glfw_window_size_callback(GLFWwindow *window, int width, int height);
 
 void updateMvpMatrix();
 void setRotation(const glm::vec2 &dr);
-void drawBoundingBox(bearded::dangerzone::BBox *b, unsigned int vaoIdx);
+void drawBoundingBox(bearded::dangerzone::geometry::BBox *b, unsigned int vaoIdx);
 void loop(GLFWwindow *window);
 
-void drawSlicesInstanced();
+void initQuadVbos(unsigned int vaoId);
+void drawSlicesInstanced(unsigned int vaoId);
 
-//void log(const char* message, ...)
-//{
-//    va_list argptr;
-//    if (!g_file) {
-//        g_file = fopen(g_logfile, "w");
-//        if (!g_file) {
-//            fprintf(stderr, "ERROR: could not open %s file for appending\n", g_logfile);
-//            return;
-//        }
-//        time_t now = time(NULL); char* date = ctime(&now);
-//        fprintf(g_file, "------------------------\nOpening %s. local time %s\n", g_logfile, date);
-//    }
-//    va_start(argptr, message); vfprintf(g_file, message, argptr); va_end(argptr);
-//    fprintf(g_file, "\n"); fflush(g_file);
-//}
+Quad g_theQuad(glm::vec3(0.0f, 0.0f, -1.0f/7.0f), glm::vec3(1.0f, 1.0f, 0.0f));
 
-//void closeLog()
-//{
-//    if (!g_file) {
-//        fprintf(stderr, "Error: not closing %s because it was not opened.", g_logfile);
-//        return;
-//    }
-//    time_t now = time(NULL); char* date = ctime(&now);
-//    fprintf(g_file, "------------------------\nClosing %s. local time %s\n", g_logfile, date);
-//    fclose(g_file);
-//}
-
-/************************************************************************/
-/* OPENGL CALLBACKS                                                     */
-/************************************************************************/
-//void gl_debug_message_callback(GLenum source,
-//    GLenum type,
-//    GLuint id,
-//    GLenum severity,
-//    GLsizei length,
-//    const GLchar *message,
-//    void *userParam)
-//{
-//   /* fprintf(stderr, "OGL_DEBUG: source: 0x%04X, type 0x%04X, id %u, severity 0x%0X, '%s'\n",
-//        source, type, id, severity, message);*/
-//    gl_log("OGL_DEBUG: source: 0x%04X, type 0x%04X, id %u, severity 0x%0X, '%s'\n",
-//        source, type, id, severity, message);
-//}
-
+/////////////////////////////////////////////////////////////////////////////////////
 
 /************************************************************************/
 /* G L F W     C A L L B A C K S                                        */
@@ -308,16 +272,29 @@ void updateMvpMatrix()
     g_viewDirty = false;
 }
 
-void drawBoundingBox(bearded::dangerzone::BBox *b, unsigned int vaoIdx)
-{
-    glm::mat4 mvp = g_vpMatrix * b->modelTransform() * glm::toMat4(g_cameraRotation);
+//void drawBoundingBox(bearded::dangerzone::geometry::BBox *b, unsigned int vaoIdx)
+//{
+//    glm::mat4 mvp = g_vpMatrix * b->modelTransform() * glm::toMat4(g_cameraRotation);
+//
+//    glUseProgram(g_shaderProgramId);
+//    glUniformMatrix4fv(g_uniform_mvp, 1, GL_FALSE, glm::value_ptr(mvp));
+//    glBindVertexArray(g_vaoIds[vaoIdx]);
+//    glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, 0);
+//    glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, (GLvoid*)(4 * sizeof(GLushort)));
+//    glDrawElements(GL_LINES, 8, GL_UNSIGNED_SHORT, (GLvoid*)(8 * sizeof(GLushort)));
+//    glBindVertexArray(0);
+//}
+
+
+
+void drawSlicesInstanced(unsigned int vaoId) {
+
+    glm::mat4 mvp(g_vpMatrix * (g_theQuad.model() * glm::toMat4(g_cameraRotation)));
 
     glUseProgram(g_shaderProgramId);
     glUniformMatrix4fv(g_uniform_mvp, 1, GL_FALSE, glm::value_ptr(mvp));
-    glBindVertexArray(g_vaoIds[vaoIdx]);
-    glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, 0);
-    glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, (GLvoid*)(4 * sizeof(GLushort)));
-    glDrawElements(GL_LINES, 8, GL_UNSIGNED_SHORT, (GLvoid*)(8 * sizeof(GLushort)));
+    glBindVertexArray(vaoId);
+    glDrawElementsInstanced(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, 0, 7);
     glBindVertexArray(0);
 }
 
@@ -332,8 +309,8 @@ void loop(GLFWwindow *window)
             updateMvpMatrix();
         }
 
-        drawBoundingBox(&g_bbox[0], 0);
-        //drawSlicesInstanced();
+        //drawBoundingBox(&g_bbox[0], 0);
+        drawSlicesInstanced(g_q_vaoId);
         //drawBoundingBox(g_bbox[1], 1);
 
         glfwSwapBuffers(window);
@@ -342,6 +319,10 @@ void loop(GLFWwindow *window)
     } while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
         glfwWindowShouldClose(window) == 0);
 }
+
+/************************************************************************/
+/*     I N I T I A L I Z A T I O N                                      */
+/************************************************************************/
 
 GLFWwindow* init()
 {
@@ -388,61 +369,123 @@ GLFWwindow* init()
     return window;
 }
 
-bool readVolumeData(const std::string &rawFile) {
-	std::ifstream raw(rawFile);
-	if (! raw.is_open()) return false;
 
-    raw.close();
+
+void initQuadVbos(unsigned int vaoId) {
+    glBindVertexArray(vaoId);
+
+    glGenBuffers(1, &g_q_vboId);
+    glBindBuffer(GL_ARRAY_BUFFER, g_q_vboId);
+    glBufferData(
+            GL_ARRAY_BUFFER,
+            Quad::verts.size() * sizeof(decltype(Quad::verts[0])),
+            Quad::verts.data(),
+            GL_STATIC_DRAW);
+    const unsigned vertex_coord_attr = 0;
+    glEnableVertexAttribArray(vertex_coord_attr);
+    glVertexAttribPointer(
+            vertex_coord_attr,  // attribute
+            4,                  // number of elements per vertex, here (x,y,z,w)
+            GL_FLOAT,           // the type of each element
+            GL_FALSE,           // take our values as-is
+            0,                  // no extra data between each position
+            0                   // offset of first element
+    );
+
+    glGenBuffers(1, &g_q_iboId);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_q_iboId);
+    glBufferData(
+            GL_ELEMENT_ARRAY_BUFFER,
+            Quad::elements.size() * sizeof(decltype(Quad::elements[0])),
+            Quad::elements.data(),
+            GL_STATIC_DRAW);
+
+    glBindVertexArray(0);
+}
+
+bool readVolumeData(const std::string &rawFile, size_t w, size_t h, size_t d, float **rawdata) {
+    if (rawFile.length() == 0)
+        return false;
+    if (w == 0 || h == 0 || d == 0)
+        return false;
+
+    bearded::dangerzone::file::DataReader<float, float> reader;
+    reader.loadRaw3d(rawFile, w, h, d);
+    *rawdata = reader.takeOwnership();
+
     return true;
 }
 
 void cleanup()
 {
-    std::vector<GLuint> bufIds;
-    for (int i=0; i<NUMBOXES; ++i) {
-        bufIds.push_back(g_bbox[i].iboId());
-        bufIds.push_back(g_bbox[i].vboId());
+    if (g_q_vboId > 0) {
+        glDeleteBuffers(1, &g_q_vboId);
     }
-
-    glDeleteBuffers(NUMBOXES, &bufIds[0]);
-    glDeleteProgram(g_shaderProgramId);
+//    std::vector<GLuint> bufIds;
+//    for (unsigned i=0; i<NUMBOXES; ++i) {
+//        bufIds.push_back(g_bbox[i].iboId());
+//        bufIds.push_back(g_bbox[i].vboId());
+//    }
+//
+//    glDeleteBuffers(NUMBOXES, &bufIds[0]);
+//    glDeleteProgram(g_shaderProgramId);
 }
 
+
+
 void usage() {
-	std::cout << "simplevr <raw-file>\n";
+    usage(nullptr);
+}
+
+void usage(const char *msg) {
+    std::cout << "simplevr <raw-file>\n";
+    if (msg) {
+        std::cout << msg << "\n";
+    }
 }
 
 int main(int argc, char* argv[])
 {
+    gl_log_restart();
+    gl_debug_log_restart();
+
 	GLFWwindow * window;
     if ((window = init()) == nullptr) {
         gl_log("Could not initialize GLFW, exiting.");
         return 1;
     }
-    std::string rawFile( argc>1 ? argv[1] : "" );
+    std::string rawFile( argc>1 ? argv[1] : std::string() );
 
-    if (! readVolumeData(rawFile)) { usage(); return 1; }
+    size_t height= argc>2 ? atol(argv[2]) : 0ul;
+    size_t width = argc>3 ? atol(argv[3]) : 0ul;
+    size_t depth = argc>4 ? atol(argv[4]) : 0ul;
 
+    float *data = nullptr;
 
+    if (! readVolumeData(rawFile, width, height, depth, &data)) {
+        usage();
+        return 1;
+    }
+
+    glGenVertexArrays(1, &g_q_vaoId);
+    initQuadVbos(g_q_vaoId);
     GLuint vsId = compileShader(GL_VERTEX_SHADER, vertex_shader);
     GLuint fsId = compileShader(GL_FRAGMENT_SHADER, fragment_shader);
     g_shaderProgramId = linkProgram({ vsId, fsId });
-    glGetUniformLocation(g_shaderProgramId, "mvp");
+    g_uniform_mvp = glGetUniformLocation(g_shaderProgramId, "mvp");
 
-    const GLfloat minmax[6] =
-        { -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f };
+//    const GLfloat minmax[6] =
+//        { -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f };
 
-    g_vaoIds.reserve(NUMBOXES);
-    glGenVertexArrays(NUMBOXES, &g_vaoIds[0]);
-    for(int i=0; i<NUMBOXES; ++i)
-    {
-        glBindVertexArray(g_vaoIds[i]);
-        bearded::dangerzone::BBox box(minmax);
-        box.init();
-        g_bbox.push_back(box);
-    }
-
-    glBindVertexArray(0);
+//    g_vaoIds.reserve(NUMBOXES);
+//    glGenVertexArrays(NUMBOXES, &g_vaoIds[0]);
+//    glBindVertexArray(g_vaoIds[0]);
+//    for(unsigned i=0; i<NUMBOXES; ++i) {
+//        bearded::dangerzone::geometry::BBox box(minmax);
+//        box.init();
+//        g_bbox.push_back(box);
+//    }
+//    glBindVertexArray(0);
 
     loop(window);
     cleanup();
