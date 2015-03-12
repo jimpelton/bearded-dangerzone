@@ -5,58 +5,40 @@
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <array>
+
 namespace bearded { namespace dangerzone { namespace geometry {
 
-            class BBox {
-            public:
-                BBox();
+class BBox {
+public:
+    BBox();
 
-                /** \brief create a bbox with the given mins/maxes.
-         *
-         *  \param minmax minX, maxX, minY, maxY, minZ, maxZ
-         */
-        BBox
-                (
-                        const float *minmax);
-        ~BBox();
-
-        /* BBox(const BBox &rhs)
-             : m_vboId(rhs.m_vboId)
-             , m_iboId(rhs.m_iboId)
-             , min_x(rhs.min_x)
-             , max_x(rhs.max_x)
-             , min_y(rhs.min_y)
-             , max_y(rhs.max_y)
-             , min_z(rhs.min_z)
-             , max_z(rhs.max_z)
-             , m_transform(rhs.m_transform)
-             { }
-
-             BBox& operator=(const BBox &rhs) {
-
-             }*/
+    /** \brief create a bbox with the given mins/maxes.
+     *
+     *  \param minmax minX, maxX, minY, maxY, minZ, maxZ
+     */
+    BBox(const std::array<float, 6> &minmax);
+    ~BBox();
 
 
-    public:
-        unsigned vboId() const { return m_vboId; }
-        unsigned iboId() const { return m_iboId; }
+public:
 
-        glm::mat4 modelTransform() const { return m_transform; }
 
-        void init();
+    glm::mat4 transform() const { return m_transform; }
 
-    private:
-        static const float vertices[];
-        static const unsigned short elements[];
+    void init();
 
-        float min_x, max_x,
-            min_y, max_y,
-            min_z, max_z;
+    static const std::array<float, 32> vertices;
+    static const std::array<unsigned short, 16> elements;
 
-        unsigned m_vboId, m_iboId;
+private:
+    float min_x, max_x,
+        min_y, max_y,
+        min_z, max_z;
 
-        glm::mat4 m_transform;
-    };
+    glm::mat4 m_transform;
+
+};
 } // namespace geometry
 } // namespace dangerzone
 } // namspace bearded

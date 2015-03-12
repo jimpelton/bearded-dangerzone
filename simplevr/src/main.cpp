@@ -28,6 +28,8 @@
 #include <iostream>
 #include <sstream>
 
+namespace bd = bearded::dangerzone;
+
 class Quad {
 public:
 	static const std::array<glm::vec4, 4> verts;
@@ -66,9 +68,10 @@ const std::array<unsigned short, 4> Quad::elements {
 const char* vertex_shader =
 "#version 400\n"
 "in vec3 v;"
-"uniform mat4 mvp;"
+"uniform mat4 vp;"
+"uniform mat4 m;"
 "void main () {"
-"  gl_Position = mvp * vec4(v + vec3(0.0f, 0.0f, 1.0f/7.0f) * gl_InstanceID, 1.0f);"
+"  gl_Position = vp * m * vec4(v + vec3(0.0f, 0.0f, 1.0f/7.0f) * gl_InstanceID, 1.0f);"
 "}";
 //
 const char* fragment_shader =
@@ -83,16 +86,19 @@ const char* fragment_shader =
 const char *g_logfile = "gl.log";
 FILE *g_file = nullptr;
 
-//const unsigned int NUMBOXES = 1;
-//std::vector<bearded::dangerzone::geometry::BBox> g_bbox;
-//std::vector<GLuint> g_vaoIds;
+std::vector<bd::geometry::BBox> g_bbox;
+GLuint g_bbox_vaoId;
 
-GLuint  g_uniform_mvp;
+GLuint  g_uniform_vp;
+GLuint  g_uniform_m;
 GLuint  g_shaderProgramId;
 
 GLuint g_q_vaoId; // quad vertex array obj id
 GLuint g_q_vboId; // quad geo vertex buffer id
 GLuint g_q_iboId; // quad geo index buffer id
+GLuint g_box_vboId;
+GLuint g_box_iboId;
+
 
 glm::quat g_cameraRotation;
 //glm::mat4 g_modelMatrix;
@@ -129,10 +135,12 @@ void setRotation(const glm::vec2 &dr);
 void drawBoundingBox(bearded::dangerzone::geometry::BBox *b, unsigned int vaoIdx);
 void loop(GLFWwindow *window);
 
+void initBoxVbos(unsigned int vaoId);
 void initQuadVbos(unsigned int vaoId);
 void drawSlicesInstanced(unsigned int vaoId);
 
-Quad g_theQuad(glm::vec3(0.0f, 0.0f, -1.0f/7.0f), glm::vec3(1.0f, 1.0f, 0.0f));
+
+Quad g_theQuad(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 0.0f));
 
 /////////////////////////////////////////////////////////////////////////////////////
 
@@ -289,10 +297,11 @@ void updateMvpMatrix()
 
 void drawSlicesInstanced(unsigned int vaoId) {
 
-    glm::mat4 mvp(g_vpMatrix * (g_theQuad.model() * glm::toMat4(g_cameraRotation)));
+    glm::mat4 m(g_theQuad.model() * glm::toMat4(g_cameraRotation));
 
     glUseProgram(g_shaderProgramId);
-    glUniformMatrix4fv(g_uniform_mvp, 1, GL_FALSE, glm::value_ptr(mvp));
+    glUniformMatrix4fv(g_uniform_vp, 1, GL_FALSE, glm::value_ptr(g_vpMatrix));
+    glUniformMatrix4fv(g_uniform_m, 1, GL_FALSE, glm::value_ptr(m));
     glBindVertexArray(vaoId);
     glDrawElementsInstanced(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, 0, 7);
     glBindVertexArray(0);
@@ -369,7 +378,37 @@ GLFWwindow* init()
     return window;
 }
 
+void initBoxVbos(unsigned int vaoId) {
 
+
+    glBindVertexArray(vaoId);
+
+    glGenBuffers(1, &g_box_vboId);
+    glBindBuffer(GL_ARRAY_BUFFER, g_box_vboId);
+    glBufferData(
+            GL_ARRAY_BUFFER,
+            bd::geometry::BBox::vertices.size() * sizeof(decltype(bd::geometry::BBox::vertices[0])),
+            bd::geometry::BBox::vertices.data(),
+            GL_STATIC_DRAW);
+    const unsigned vertex_coord_attr = 0;
+    glEnableVertexAttribArray(vertex_coord_attr);
+    glVertexAttribPointer(
+            vertex_coord_attr,  // attribute
+            4,                  // number of elements per vertex, here (x,y,z,w)
+            GL_FLOAT,           // the type of each element
+            GL_FALSE,           // take our values as-is
+            0,                  // no extra data between each position
+            0                   // offset of first element
+    );
+
+    glGenBuffers(1, &g_box_iboId);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_box_iboId);
+    glBufferData(
+            GL_ELEMENT_ARRAY_BUFFER,
+            bd::geometry::BBox::elements.size() * sizeof(decltype(bd::geometry::BBox::elements[0])),
+            bd::geometry::BBox::elements.data(),
+            GL_STATIC_DRAW);
+}
 
 void initQuadVbos(unsigned int vaoId) {
     glBindVertexArray(vaoId);
@@ -472,7 +511,8 @@ int main(int argc, char* argv[])
     GLuint vsId = compileShader(GL_VERTEX_SHADER, vertex_shader);
     GLuint fsId = compileShader(GL_FRAGMENT_SHADER, fragment_shader);
     g_shaderProgramId = linkProgram({ vsId, fsId });
-    g_uniform_mvp = glGetUniformLocation(g_shaderProgramId, "mvp");
+    g_uniform_vp = glGetUniformLocation(g_shaderProgramId, "vp");
+    g_uniform_m  = glGetUniformLocation(g_shaderProgramId, "m");
 
 //    const GLfloat minmax[6] =
 //        { -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f };
