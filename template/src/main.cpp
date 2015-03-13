@@ -40,7 +40,7 @@ const char *g_logfile = "gl.log";
 FILE *g_file = nullptr;
 
 const unsigned int NUMBOXES = 1;
-std::vector<bearded::dangerzone::BBox> g_bbox;
+std::vector<bearded::dangerzone::geometry::BBox> g_bbox;
 
 
 GLuint  g_uniform_mvp;
@@ -78,7 +78,7 @@ void glfw_window_size_callback(GLFWwindow *window, int width, int height);
 
 void updateMvpMatrix();
 void setRotation(const glm::vec2 &dr);
-void drawBoundingBox(bearded::dangerzone::BBox *b, unsigned int vaoIdx);
+void drawBoundingBox(bearded::dangerzone::geometry::BBox *b, unsigned int vaoIdx);
 void loop(GLFWwindow *window);
 
 void log(const char* message, ...)
@@ -262,9 +262,9 @@ void updateMvpMatrix()
     g_viewDirty = false;
 }
 
-void drawBoundingBox(bearded::dangerzone::BBox *b, unsigned int vaoIdx)
+void drawBoundingBox(bearded::dangerzone::geometry::BBox *b, unsigned int vaoIdx)
 {
-    glm::mat4 mvp = g_vpMatrix * b->modelTransform() * glm::toMat4(g_cameraRotation);
+    glm::mat4 mvp = g_vpMatrix * b->transform() * glm::toMat4(g_cameraRotation);
 
     glUseProgram(g_shaderProgramId);
     glUniformMatrix4fv(g_uniform_mvp, 1, GL_FALSE, glm::value_ptr(mvp));
@@ -343,13 +343,13 @@ GLFWwindow* init()
 
 void cleanup()
 {
-    std::vector<GLuint> bufIds;
-    for (int i=0; i<NUMBOXES; ++i) {
-        bufIds.push_back(g_bbox[i].iboId());
-        bufIds.push_back(g_bbox[i].vboId());
-    }
-    glDeleteBuffers(NUMBOXES, &bufIds[0]);
-    glDeleteProgram(g_shaderProgramId);
+//    std::vector<GLuint> bufIds;
+//    for (int i=0; i<NUMBOXES; ++i) {
+//        bufIds.push_back(g_bbox[i].iboId());
+//        bufIds.push_back(g_bbox[i].vboId());
+//    }
+//    glDeleteBuffers(NUMBOXES, &bufIds[0]);
+//    glDeleteProgram(g_shaderProgramId);
 }
 
 int main(int argc, char* argv[])
@@ -369,16 +369,12 @@ int main(int argc, char* argv[])
     g_shaderProgramId = linkProgram({ vsId, fsId });
     glGetUniformLocation(g_shaderProgramId, "mvp");
 
-    const GLfloat minmax[6] =
-        { -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f };
-
     g_vaoIds.reserve(NUMBOXES);
     glGenVertexArrays(NUMBOXES, &g_vaoIds[0]);
     for(int i=0; i<NUMBOXES; ++i)
     {
         glBindVertexArray(g_vaoIds[i]);
-        bearded::dangerzone::BBox box(minmax);
-        box.init();
+        bearded::dangerzone::geometry::BBox box({-1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f});
         g_bbox.push_back(box);
     }
 

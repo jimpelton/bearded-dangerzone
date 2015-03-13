@@ -22,11 +22,7 @@ public:
 
 
 public:
-
-
     glm::mat4 transform() const { return m_transform; }
-
-    void init();
 
     static const std::array<float, 32> vertices;
     static const std::array<unsigned short, 16> elements;

@@ -264,7 +264,7 @@ void updateMvpMatrix()
 
 void drawBoundingBox(bearded::dangerzone::geometry::BBox *b, unsigned int vaoIdx)
 {
-    glm::mat4 mvp = g_vpMatrix * b->modelTransform() * glm::toMat4(g_cameraRotation);
+    glm::mat4 mvp = g_vpMatrix * b->transform() * glm::toMat4(g_cameraRotation);
 
     glUseProgram(g_shaderProgramId);
     glUniformMatrix4fv(g_uniform_mvp, 1, GL_FALSE, glm::value_ptr(mvp));
@@ -344,11 +344,11 @@ GLFWwindow* init()
 void cleanup()
 {
     std::vector<GLuint> bufIds;
-    for (unsigned i=0; i<NUMBOXES; ++i) {
-        bufIds.push_back(g_bbox[i].iboId());
-        bufIds.push_back(g_bbox[i].vboId());
-    }
-    glDeleteBuffers(NUMBOXES, &bufIds[0]);
+//    for (unsigned i=0; i<NUMBOXES; ++i) {
+//        bufIds.push_back(g_bbox[i].iboId());
+//        bufIds.push_back(g_bbox[i].vboId());
+//    }
+//    glDeleteBuffers(NUMBOXES, &bufIds[0]);
     glDeleteProgram(g_shaderProgramId);
 }
 
@@ -372,15 +372,15 @@ int main(int argc, char* argv[])
     const GLfloat minmax[6] =
         { -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f };
 
-    g_vaoIds.reserve(NUMBOXES);
-    glGenVertexArrays(NUMBOXES, &g_vaoIds[0]);
-    for(unsigned i=0; i<NUMBOXES; ++i)
-    {
-        glBindVertexArray(g_vaoIds[i]);
-        bearded::dangerzone::geometry::BBox box(minmax);
-        box.init();
-        g_bbox.push_back(box);
-    }
+//    g_vaoIds.reserve(NUMBOXES);
+//    glGenVertexArrays(NUMBOXES, &g_vaoIds[0]);
+//    for(unsigned i=0; i<NUMBOXES; ++i)
+//    {
+//        glBindVertexArray(g_vaoIds[i]);
+//        bearded::dangerzone::geometry::BBox box();
+//        box.init();
+//        g_bbox.push_back(box);
+//    }
 
     glBindVertexArray(0);
 

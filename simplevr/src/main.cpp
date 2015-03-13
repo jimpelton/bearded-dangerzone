@@ -20,6 +20,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/string_cast.hpp>
 
 
 #include <vector>
@@ -39,14 +40,17 @@ public:
 	Quad()
         : m_model(1.0) { }
 
-    Quad(const glm::vec3 &center, const glm::vec3 &dims)
+    Quad(const glm::vec3 &center, const glm::vec2 &dims)
         : m_model(1.0) {
-       	m_model = glm::translate(glm::mat4(1.0f), center) * glm::scale(glm::mat4(1.0f), dims);
+       	m_model = glm::translate(glm::mat4(1.0f), center); // * glm::scale(glm::mat4(1.0f), glm::vec3(dims, 0.0f));
+        std::cout << glm::to_string(m_model) << '\n';
     }
 
 	~Quad() {}
 
-	const glm::mat4& model() { return m_model; }
+	const glm::mat4& model() {
+        return m_model;
+    }
 
 private:
 	glm::mat4 m_model;
@@ -60,7 +64,7 @@ const std::array<glm::vec4, 4> Quad::verts {
 };
 
 const std::array<unsigned short, 4> Quad::elements {
-        0, 1, 2, 3
+    0, 1, 2, 3
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -70,10 +74,11 @@ const char* vertex_shader =
 "in vec3 v;"
 "uniform mat4 vp;"
 "uniform mat4 m;"
+"uniform vec3 vdir;"
 "void main () {"
-"  gl_Position = vp * m * vec4(v + vec3(0.0f, 0.0f, 1.0f/7.0f) * gl_InstanceID, 1.0f);"
+"  gl_Position = vp * (m * vec4(v + (vdir * gl_InstanceID), 1.0f));"
 "}";
-//
+
 const char* fragment_shader =
 "#version 400\n"
 "out vec4 col;"
@@ -91,6 +96,7 @@ GLuint g_bbox_vaoId;
 
 GLuint  g_uniform_vp;
 GLuint  g_uniform_m;
+GLuint  g_uniform_vdir;
 GLuint  g_shaderProgramId;
 
 GLuint g_q_vaoId; // quad vertex array obj id
@@ -109,6 +115,11 @@ glm::vec3 g_camPosition(0.0f, 0.0f, -10.0f);
 glm::vec3 g_camFocus(0.0f, 0.0f, 0.0f);
 glm::vec3 g_camUp(0.0f, 1.0f, 0.0f);
 glm::vec2 g_cursorPos;
+
+const unsigned int NUMSLICES = 7;
+glm::vec3 g_x_vdir(1.0f, 0.0f, 0.0f);
+glm::vec3 g_y_vdir(0.0f, 1.0f, 0.0f);
+glm::vec3 g_z_vdir(0.0f, 0.0f, 1.0f);
 
 float g_mouseSpeed = 1.0f;
 float g_screenWidth = 1280.0f;
@@ -140,7 +151,7 @@ void initQuadVbos(unsigned int vaoId);
 void drawSlicesInstanced(unsigned int vaoId);
 
 
-Quad g_theQuad(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 0.0f));
+Quad g_theQuad(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec2(1.0f, 1.0f));
 
 /////////////////////////////////////////////////////////////////////////////////////
 
@@ -294,7 +305,6 @@ void updateMvpMatrix()
 //}
 
 
-
 void drawSlicesInstanced(unsigned int vaoId) {
 
     glm::mat4 m(g_theQuad.model() * glm::toMat4(g_cameraRotation));
@@ -310,6 +320,10 @@ void drawSlicesInstanced(unsigned int vaoId) {
 void loop(GLFWwindow *window)
 {
     g_viewDirty = true;
+
+    float start = -1 * (1.0f/NUMSLICES) * (NUMSLICES/2);
+
+    glUniform3fv(g_uniform_vdir, 1, glm::value_ptr(g_z_vdir));
 
     do {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -513,6 +527,7 @@ int main(int argc, char* argv[])
     g_shaderProgramId = linkProgram({ vsId, fsId });
     g_uniform_vp = glGetUniformLocation(g_shaderProgramId, "vp");
     g_uniform_m  = glGetUniformLocation(g_shaderProgramId, "m");
+    g_uniform_vdir = glGetUniformLocation(g_shaderProgramId, "vidr");
 
 //    const GLfloat minmax[6] =
 //        { -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f };
