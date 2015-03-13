@@ -42,7 +42,7 @@ public:
 
     Quad(const glm::vec3 &center, const glm::vec2 &dims)
         : m_model(1.0) {
-       	m_model = glm::translate(glm::mat4(1.0f), center); // * glm::scale(glm::mat4(1.0f), glm::vec3(dims, 0.0f));
+       	//m_model = glm::translate(glm::mat4(1.0f), center); // * glm::scale(glm::mat4(1.0f), glm::vec3(dims, 0.0f));
         std::cout << glm::to_string(m_model) << '\n';
     }
 
@@ -72,11 +72,15 @@ const std::array<unsigned short, 4> Quad::elements {
 const char* vertex_shader =
 "#version 400\n"
 "in vec3 v;"
-"uniform mat4 vp;"
-"uniform mat4 m;"
-"uniform vec3 vdir;"
+"uniform mat4 vp;"    // proj * view matrix
+"uniform mat4 m;"     // model matrix
+"uniform mat4 rot;"   // rotation matrix
+"uniform vec3 vdir;"  // view dir
+"uniform float st;"   // start
+"uniform float ds;"
 "void main () {"
-"  gl_Position = vp * (m * vec4(v + (vdir * gl_InstanceID), 1.0f));"
+"  vec3 offset = vdir * ( st + ds * gl_InstanceID );"
+"  gl_Position = vp * (vec4(v + vec3(0,0,gl_InstanceID), 1.0f) * m * rot);"
 "}";
 
 const char* fragment_shader =
@@ -88,38 +92,36 @@ const char* fragment_shader =
 
 ///////////////////////////////////////////////////////////////////////////////
 
-const char *g_logfile = "gl.log";
-FILE *g_file = nullptr;
+GLuint  g_uniform_vp;     // proj * view matrix
+GLuint  g_uniform_m;      // model matrix
+GLuint  g_uniform_vdir;   // view dir vec
+GLuint  g_uniform_rot;    // rotation mat
+GLuint  g_uniform_st;     //start
+GLuint  g_uniform_ds;
 
-std::vector<bd::geometry::BBox> g_bbox;
-GLuint g_bbox_vaoId;
-
-GLuint  g_uniform_vp;
-GLuint  g_uniform_m;
-GLuint  g_uniform_vdir;
 GLuint  g_shaderProgramId;
 
-GLuint g_q_vaoId; // quad vertex array obj id
-GLuint g_q_vboId; // quad geo vertex buffer id
-GLuint g_q_iboId; // quad geo index buffer id
-GLuint g_box_vboId;
-GLuint g_box_iboId;
+GLuint g_q_vaoId;     // quad vertex array obj id
+GLuint g_q_vboId;     // quad geo vertex buffer id
+GLuint g_q_iboId;     // quad geo index buffer id
+GLuint g_bbox_vaoId;  //
+GLuint g_box_vboId;   //
+GLuint g_box_iboId;   //
 
 
 glm::quat g_cameraRotation;
-//glm::mat4 g_modelMatrix;
 glm::mat4 g_viewMatrix;
 glm::mat4 g_projectionMatrix;
 glm::mat4 g_vpMatrix;
-glm::vec3 g_camPosition(0.0f, 0.0f, -10.0f);
+glm::vec3 g_camPosition(0.0f, 0.0f, -30.0f);
 glm::vec3 g_camFocus(0.0f, 0.0f, 0.0f);
 glm::vec3 g_camUp(0.0f, 1.0f, 0.0f);
 glm::vec2 g_cursorPos;
 
 const unsigned int NUMSLICES = 7;
-glm::vec3 g_x_vdir(1.0f, 0.0f, 0.0f);
-glm::vec3 g_y_vdir(0.0f, 1.0f, 0.0f);
-glm::vec3 g_z_vdir(0.0f, 0.0f, 1.0f);
+const glm::vec3 g_x_vdir(1.0f, 0.0f, 0.0f);
+const glm::vec3 g_y_vdir(0.0f, 1.0f, 0.0f);
+const glm::vec3 g_z_vdir(0.0f, 0.0f, 1.0f);
 
 float g_mouseSpeed = 1.0f;
 float g_screenWidth = 1280.0f;
@@ -150,8 +152,8 @@ void initBoxVbos(unsigned int vaoId);
 void initQuadVbos(unsigned int vaoId);
 void drawSlicesInstanced(unsigned int vaoId);
 
-
-Quad g_theQuad(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec2(1.0f, 1.0f));
+bd::geometry::BBox g_bbox;
+Quad g_theQuad; //(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec2(1.0f, 1.0f));
 
 /////////////////////////////////////////////////////////////////////////////////////
 
@@ -307,13 +309,13 @@ void updateMvpMatrix()
 
 void drawSlicesInstanced(unsigned int vaoId) {
 
-    glm::mat4 m(g_theQuad.model() * glm::toMat4(g_cameraRotation));
+    //glm::mat4 m(g_theQuad.model() * glm::toMat4(g_cameraRotation));
 
-    glUseProgram(g_shaderProgramId);
     glUniformMatrix4fv(g_uniform_vp, 1, GL_FALSE, glm::value_ptr(g_vpMatrix));
-    glUniformMatrix4fv(g_uniform_m, 1, GL_FALSE, glm::value_ptr(m));
+    glUniformMatrix4fv(g_uniform_m, 1, GL_FALSE, glm::value_ptr(g_theQuad.model()));
+    glUniformMatrix4fv(g_uniform_rot, 1, GL_FALSE, glm::value_ptr(glm::toMat4(g_cameraRotation)));
     glBindVertexArray(vaoId);
-    glDrawElementsInstanced(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, 0, 7);
+    glDrawElementsInstanced(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, 0, NUMSLICES);
     glBindVertexArray(0);
 }
 
@@ -321,9 +323,15 @@ void loop(GLFWwindow *window)
 {
     g_viewDirty = true;
 
-    float start = -1 * (1.0f/NUMSLICES) * (NUMSLICES/2);
+    float ds = 1.0f/NUMSLICES;
+    float start =  -1.0f * (ds * (NUMSLICES/2));
+
+    glUseProgram(g_shaderProgramId);
 
     glUniform3fv(g_uniform_vdir, 1, glm::value_ptr(g_z_vdir));
+    glUniform1f(g_uniform_st, start);
+    glUniform1f(g_uniform_ds, ds);
+
 
     do {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -393,8 +401,6 @@ GLFWwindow* init()
 }
 
 void initBoxVbos(unsigned int vaoId) {
-
-
     glBindVertexArray(vaoId);
 
     glGenBuffers(1, &g_box_vboId);
@@ -528,6 +534,10 @@ int main(int argc, char* argv[])
     g_uniform_vp = glGetUniformLocation(g_shaderProgramId, "vp");
     g_uniform_m  = glGetUniformLocation(g_shaderProgramId, "m");
     g_uniform_vdir = glGetUniformLocation(g_shaderProgramId, "vidr");
+    g_uniform_rot = glGetUniformLocation(g_shaderProgramId, "rot");
+    g_uniform_st  = glGetUniformLocation(g_shaderProgramId, "st");
+    g_uniform_ds  = glGetUniformLocation(g_shaderProgramId, "ds");
+
 
 //    const GLfloat minmax[6] =
 //        { -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f };
@@ -544,6 +554,11 @@ int main(int argc, char* argv[])
 
     loop(window);
     cleanup();
+
+    if (data != nullptr) {
+        delete [] data;
+    }
+
     gl_log_close();
     //closeLog();
     glfwTerminate();
