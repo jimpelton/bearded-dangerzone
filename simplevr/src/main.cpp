@@ -58,9 +58,9 @@ private:
 
 const std::array<glm::vec4, 4> Quad::verts {
 	glm::vec4(-0.5f, -0.5f, 0.0, 1.0),
-	glm::vec4(0.5f, -0.5f, 0.0, 1.0),
-	glm::vec4(0.5f, 0.5f, 0.0, 1.0),
-	glm::vec4(-0.5f, 0.5f, 0.0, 1.0)
+	glm::vec4( 0.5f, -0.5f, 0.0, 1.0),
+	glm::vec4( 0.5f,  0.5f, 0.0, 1.0),
+	glm::vec4(-0.5f,  0.5f, 0.0, 1.0)
 };
 
 const std::array<unsigned short, 4> Quad::elements {
@@ -80,7 +80,7 @@ const char* vertex_shader =
 "uniform float ds;"
 "void main () {"
 "  vec3 offset = vdir * ( st + ds * gl_InstanceID );"
-"  gl_Position = vp * (vec4(v + vec3(0,0,gl_InstanceID), 1.0f) * m * rot);"
+"  gl_Position = vp * (m * rot * vec4(v + offset, 1.0f));"
 "}";
 
 const char* fragment_shader =
@@ -96,15 +96,15 @@ GLuint  g_uniform_vp;     // proj * view matrix
 GLuint  g_uniform_m;      // model matrix
 GLuint  g_uniform_vdir;   // view dir vec
 GLuint  g_uniform_rot;    // rotation mat
-GLuint  g_uniform_st;     //start
-GLuint  g_uniform_ds;
+GLuint  g_uniform_st;     // start
+GLuint  g_uniform_ds;     // slice distance
 
 GLuint  g_shaderProgramId;
 
 GLuint g_q_vaoId;     // quad vertex array obj id
 GLuint g_q_vboId;     // quad geo vertex buffer id
 GLuint g_q_iboId;     // quad geo index buffer id
-GLuint g_bbox_vaoId;  //
+GLuint g_box_vaoId;   //
 GLuint g_box_vboId;   //
 GLuint g_box_iboId;   //
 
@@ -521,22 +521,22 @@ int main(int argc, char* argv[])
 
     float *data = nullptr;
 
-    if (! readVolumeData(rawFile, width, height, depth, &data)) {
+  /*  if (! readVolumeData(rawFile, width, height, depth, &data)) {
         usage();
         return 1;
-    }
+    }*/
 
     glGenVertexArrays(1, &g_q_vaoId);
     initQuadVbos(g_q_vaoId);
     GLuint vsId = compileShader(GL_VERTEX_SHADER, vertex_shader);
     GLuint fsId = compileShader(GL_FRAGMENT_SHADER, fragment_shader);
     g_shaderProgramId = linkProgram({ vsId, fsId });
-    g_uniform_vp = glGetUniformLocation(g_shaderProgramId, "vp");
-    g_uniform_m  = glGetUniformLocation(g_shaderProgramId, "m");
-    g_uniform_vdir = glGetUniformLocation(g_shaderProgramId, "vidr");
-    g_uniform_rot = glGetUniformLocation(g_shaderProgramId, "rot");
-    g_uniform_st  = glGetUniformLocation(g_shaderProgramId, "st");
-    g_uniform_ds  = glGetUniformLocation(g_shaderProgramId, "ds");
+    g_uniform_vp   = glGetUniformLocation(g_shaderProgramId, "vp");
+    g_uniform_m    = glGetUniformLocation(g_shaderProgramId, "m");
+    g_uniform_vdir = glGetUniformLocation(g_shaderProgramId, "vdir");
+    g_uniform_rot  = glGetUniformLocation(g_shaderProgramId, "rot");
+    g_uniform_st   = glGetUniformLocation(g_shaderProgramId, "st");
+    g_uniform_ds   = glGetUniformLocation(g_shaderProgramId, "ds");
 
 
 //    const GLfloat minmax[6] =
