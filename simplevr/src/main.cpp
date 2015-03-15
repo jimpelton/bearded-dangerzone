@@ -42,8 +42,8 @@ public:
 
     Quad(const glm::vec3 &center, const glm::vec2 &dims)
         : m_model(1.0) {
-       	//m_model = glm::translate(glm::mat4(1.0f), center); // * glm::scale(glm::mat4(1.0f), glm::vec3(dims, 0.0f));
-        std::cout << glm::to_string(m_model) << '\n';
+       	m_model = glm::translate(glm::mat4(1.0f), center); // * glm::scale(glm::mat4(1.0f), glm::vec3(dims, 0.0f));
+        //std::cout << glm::to_string(m_model) << '\n';
     }
 
 	~Quad() {}
@@ -71,33 +71,44 @@ const std::array<unsigned short, 4> Quad::elements {
 
 const char* vertex_shader =
 "#version 400\n"
-"in vec3 v;"
-"uniform mat4 vp;"    // proj * view matrix
+"in vec3 vert;"
+"uniform sampler1D colors;"
+"uniform mat4 v;"
+"uniform mat4 p;"
 "uniform mat4 m;"     // model matrix
 "uniform mat4 rot;"   // rotation matrix
 "uniform vec3 vdir;"  // view dir
 "uniform float st;"   // start
 "uniform float ds;"
+"uniform int numblocks;"
+"out vec4 v_col;"
+""
 "void main () {"
 "  vec3 offset = vdir * ( st + ds * gl_InstanceID );"
-"  gl_Position = vp * (m * rot * vec4(v + offset, 1.0f));"
+"  gl_Position = p * v * rot * (m * vec4(vert + offset, 1.0f));"
+"  v_col = vec4(1.0f, 1.0f, 1.0f, 1.0f);"
 "}";
 
 const char* fragment_shader =
 "#version 400\n"
+"in vec4 v_col;"
 "out vec4 col;"
 "void main () {"
-"  col = vec4 (1.0, 1.0, 1.0, 1.0);"
+"  col = v_col;"
 "}";
 
 ///////////////////////////////////////////////////////////////////////////////
 
-GLuint  g_uniform_vp;     // proj * view matrix
-GLuint  g_uniform_m;      // model matrix
-GLuint  g_uniform_vdir;   // view dir vec
-GLuint  g_uniform_rot;    // rotation mat
-GLuint  g_uniform_st;     // start
-GLuint  g_uniform_ds;     // slice distance
+//GLuint  g_uniform_vp;     // proj * view matrix
+GLuint  g_uniform_colors;
+GLuint  g_uniform_v;
+GLuint  g_uniform_p;
+GLuint  g_uniform_m;            // model matrix
+GLuint  g_uniform_rot;          // rotation mat
+GLuint  g_uniform_vdir;         // view dir vec
+GLuint  g_uniform_st;           // start
+GLuint  g_uniform_ds;           // slice distance
+GLuint  g_uniform_numblocks;
 
 GLuint  g_shaderProgramId;
 
@@ -112,12 +123,13 @@ GLuint g_box_iboId;   //
 glm::quat g_cameraRotation;
 glm::mat4 g_viewMatrix;
 glm::mat4 g_projectionMatrix;
-glm::mat4 g_vpMatrix;
+// glm::mat4 g_vpMatrix;
 glm::vec3 g_camPosition(0.0f, 0.0f, -30.0f);
 glm::vec3 g_camFocus(0.0f, 0.0f, 0.0f);
 glm::vec3 g_camUp(0.0f, 1.0f, 0.0f);
 glm::vec2 g_cursorPos;
 
+const unsigned int NUMBLOCKS = 2;    // blocks per volume dimension
 const unsigned int NUMSLICES = 7;
 const glm::vec3 g_x_vdir(1.0f, 0.0f, 0.0f);
 const glm::vec3 g_y_vdir(0.0f, 1.0f, 0.0f);
@@ -128,6 +140,9 @@ float g_screenWidth = 1280.0f;
 float g_screenHeight = 720.0f;
 float g_fov = 50.0f;
 bool  g_viewDirty = false;
+
+bd::geometry::BBox g_bbox;
+std::vector<Quad> theQuads;
 
 /////////////////////////////////////////////////////////////////////////////////////
 
@@ -145,15 +160,14 @@ void glfw_window_size_callback(GLFWwindow *window, int width, int height);
 
 void updateMvpMatrix();
 void setRotation(const glm::vec2 &dr);
-void drawBoundingBox(bearded::dangerzone::geometry::BBox *b, unsigned int vaoIdx);
+void drawBoundingBox(bd::geometry::BBox *b, unsigned int vaoIdx);
 void loop(GLFWwindow *window);
 
 void initBoxVbos(unsigned int vaoId);
 void initQuadVbos(unsigned int vaoId);
 void drawSlicesInstanced(unsigned int vaoId);
 
-bd::geometry::BBox g_bbox;
-Quad g_theQuad; //(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec2(1.0f, 1.0f));
+
 
 /////////////////////////////////////////////////////////////////////////////////////
 
@@ -289,7 +303,7 @@ void updateMvpMatrix()
 {
     g_viewMatrix = glm::lookAt(g_camPosition, g_camFocus, g_camUp);
     g_projectionMatrix = glm::perspective(g_fov, g_screenWidth/g_screenHeight, 0.1f, 100.0f);
-    g_vpMatrix = g_projectionMatrix * g_viewMatrix;
+    // g_vpMatrix = g_projectionMatrix * g_viewMatrix;
     g_viewDirty = false;
 }
 
@@ -309,13 +323,13 @@ void updateMvpMatrix()
 
 void drawSlicesInstanced(unsigned int vaoId) {
 
-    //glm::mat4 m(g_theQuad.model() * glm::toMat4(g_cameraRotation));
-
-    glUniformMatrix4fv(g_uniform_vp, 1, GL_FALSE, glm::value_ptr(g_vpMatrix));
-    glUniformMatrix4fv(g_uniform_m, 1, GL_FALSE, glm::value_ptr(g_theQuad.model()));
-    glUniformMatrix4fv(g_uniform_rot, 1, GL_FALSE, glm::value_ptr(glm::toMat4(g_cameraRotation)));
     glBindVertexArray(vaoId);
-    glDrawElementsInstanced(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, 0, NUMSLICES);
+    
+    for (auto &q : theQuads) {
+        glUniformMatrix4fv(g_uniform_m, 1, GL_FALSE, glm::value_ptr(q.model()));
+        glDrawElementsInstanced(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, 0, NUMSLICES);
+    }
+
     glBindVertexArray(0);
 }
 
@@ -327,21 +341,25 @@ void loop(GLFWwindow *window)
     float start =  -1.0f * (ds * (NUMSLICES/2));
 
     glUseProgram(g_shaderProgramId);
-
-    glUniform3fv(g_uniform_vdir, 1, glm::value_ptr(g_z_vdir));
-    glUniform1f(g_uniform_st, start);
-    glUniform1f(g_uniform_ds, ds);
-
+    glUniform3fv(g_uniform_vdir, 1, glm::value_ptr(g_z_vdir));         // vdir
+    glUniform1f(g_uniform_st, start);                                  // st
+    glUniform1f(g_uniform_ds, ds);                                     // ds
+    glUniform1i(g_uniform_numblocks, NUMBLOCKS*NUMBLOCKS*NUMBLOCKS);   // numblocks
 
     do {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         if (g_viewDirty) {
             updateMvpMatrix();
+            glUniformMatrix4fv(g_uniform_p, 1, GL_FALSE, glm::value_ptr(g_projectionMatrix));   // p
+            glUniformMatrix4fv(g_uniform_v, 1, GL_FALSE, glm::value_ptr(g_viewMatrix));         // v
         }
+        
+        glUniformMatrix4fv(g_uniform_rot, 1, GL_FALSE, glm::value_ptr(glm::toMat4(g_cameraRotation)));   // rot
+        
+        drawSlicesInstanced(g_q_vaoId);
 
         //drawBoundingBox(&g_bbox[0], 0);
-        drawSlicesInstanced(g_q_vaoId);
         //drawBoundingBox(g_bbox[1], 1);
 
         glfwSwapBuffers(window);
@@ -475,6 +493,71 @@ bool readVolumeData(const std::string &rawFile, size_t w, size_t h, size_t d, fl
     return true;
 }
 
+void hsvToRgb(float h, float s, float v, glm::vec3 &rgb) {
+    while (h < 0.0f) { h += 360.0f; }
+    while (h > 360.0f) { h -= 350.0f; }
+
+    if (v <= 0.0f) {
+        rgb.r = rgb.g = rgb.b = 0.0f;
+    } else if (s <= 0.0f) {
+        rgb.r = rgb.g = rgb.b = v;
+    } else {
+        float chroma = v * s;
+        float H = h / 60.0f;
+        int thang = int(H);
+        float wat = H - thang;
+        float pv = v * (1.0f - s);
+        float qv = v * (1.0f - s * wat);
+        float tv = v * (1.0f - s * (1.0f - wat));
+        switch (thang) {
+        case 0:
+            rgb.r = v; 
+            rgb.g = tv; 
+            rgb.b = pv;
+            break;
+        case 1:
+            rgb.r = qv;
+            rgb.g = v;
+            rgb.b = tv;
+            break;
+        case 2:
+            rgb.r = pv;
+            rgb.g = v;
+            rgb.b = tv;
+            break;
+        case 3:
+            rgb.r = pv;
+            rgb.g = qv;
+            rgb.b = v;
+            break;
+        case 4:
+            rgb.r = tv;
+            rgb.g = pv;
+            rgb.b = v;
+            break;
+        case 5:
+            rgb.r = v;
+            rgb.g = pv;
+            rgb.b = qv;
+            break;
+        case 6:
+            rgb.r = v;
+            rgb.g = tv;
+            rgb.b = pv;
+            break;
+        case -1:
+            rgb.r = v; 
+            rgb.g = pv;
+            rgb.b = qv;
+            break;
+        default:
+            rgb.r = rgb.g = rgb.b = v;
+            break;
+        }
+    }
+}
+
+
 void cleanup()
 {
     if (g_q_vboId > 0) {
@@ -528,16 +611,56 @@ int main(int argc, char* argv[])
 
     glGenVertexArrays(1, &g_q_vaoId);
     initQuadVbos(g_q_vaoId);
+    
     GLuint vsId = compileShader(GL_VERTEX_SHADER, vertex_shader);
+    if (vsId == 0) { 
+        gl_log_err("Vertex shader failed to compile. Exiting..."); 
+        cleanup();
+        exit(1); 
+    }
+    
     GLuint fsId = compileShader(GL_FRAGMENT_SHADER, fragment_shader);
+    if (fsId == 0) { 
+        gl_log_err("Fragment shader failed to compile. Exiting..."); 
+        cleanup();
+        exit(1); 
+    }
+
     g_shaderProgramId = linkProgram({ vsId, fsId });
-    g_uniform_vp   = glGetUniformLocation(g_shaderProgramId, "vp");
+    if (g_shaderProgramId == 0) {
+        gl_log_err("Shader program failed to link. Exiting...");
+        cleanup();
+        exit(1);
+    }
+    
+    //g_uniform_vp   = glGetUniformLocation(g_shaderProgramId, "vp");
+
+    g_uniform_colors = glGetUniformLocation(g_shaderProgramId, "colors");
+    g_uniform_p    = glGetUniformLocation(g_shaderProgramId, "p");
+    g_uniform_v    = glGetUniformLocation(g_shaderProgramId, "v");
     g_uniform_m    = glGetUniformLocation(g_shaderProgramId, "m");
     g_uniform_vdir = glGetUniformLocation(g_shaderProgramId, "vdir");
     g_uniform_rot  = glGetUniformLocation(g_shaderProgramId, "rot");
     g_uniform_st   = glGetUniformLocation(g_shaderProgramId, "st");
     g_uniform_ds   = glGetUniformLocation(g_shaderProgramId, "ds");
+    g_uniform_numblocks = glGetUniformLocation(g_shaderProgramId, "numblocks");
 
+
+    //const int NUMBLOCKS = 2;
+    const float db = 1.0f / NUMBLOCKS;
+    const glm::vec2 dims(db-0.1f, db-0.1f);
+
+    for (int z = 0; z < NUMBLOCKS; ++z)
+    for (int y = 0; y < NUMBLOCKS; ++y)
+    for (int x = 0; x < NUMBLOCKS; ++x)
+    {
+        glm::vec3 c(db*x, db*y, db*z);
+        c += -0.5f;
+        theQuads.push_back({c, dims});
+    }
+
+        
+    
 
 //    const GLfloat minmax[6] =
 //        { -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f };
