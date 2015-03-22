@@ -28,6 +28,9 @@
     <Filter Include="Source Files\log">
       <UniqueIdentifier>{01bb3b0e-0575-477f-9f52-a26799d38633}</UniqueIdentifier>
     </Filter>
+    <Filter Include="shader_programs">
+      <UniqueIdentifier>{21fc295b-2ef2-48c2-a6ef-569309021736}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\shared\geometry\BBox.h">
@@ -53,5 +56,10 @@
     <ClCompile Include="..\..\shared\log\gl_log.cpp">
       <Filter>Source Files\log</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shader_programs\simple.vs">
+      <Filter>shader_programs</Filter>
+    </None>
   </ItemGroup>
 </Project>

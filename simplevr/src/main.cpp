@@ -33,27 +33,27 @@ namespace bd = bearded::dangerzone;
 
 class Quad {
 public:
-	static const std::array<glm::vec4, 4> verts;
+    static const std::array<glm::vec4, 4> verts;
     static const std::array<unsigned short, 4> elements;
-
+    
 public:
-	Quad()
+    Quad()
         : Quad(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec2(1.0f, 1.0f))
     { }
 
-    Quad(const glm::vec3 &center, const glm::vec2 &dims)
-        : Quad(center, dims, glm::vec3(1.0f, 1.0f, 1.0f))
+    Quad(const glm::vec3 &lowerLeft, const glm::vec2 &dims)
+        : Quad(lowerLeft, dims, glm::vec3(1.0f, 1.0f, 1.0f))
     { }
 
-    Quad(const glm::vec3 &center, const glm::vec2 &dims, const glm::vec3 &color) 
-        : m_model(glm::translate(glm::mat4(1.0f), center) * glm::scale(glm::mat4(1.0f), glm::vec3(dims, 1.0f)))
-        //: m_model(glm::translate(glm::mat4(1.0f), center))
+    Quad(const glm::vec3 &lowerLeft, const glm::vec2 &dims, const glm::vec3 &color) 
+        : m_model(glm::translate(glm::mat4(1.0f), lowerLeft + glm::vec3(dims / 2.0f, 0.0f)) 
+            * glm::scale(glm::mat4(1.0f), glm::vec3(dims, 1.0f)))
         , m_color(color)
     { }
 
-	~Quad() {}
+    ~Quad() {}
 
-	const glm::mat4& model() {
+    const glm::mat4& model() {
         return m_model;
     }
 
@@ -61,54 +61,50 @@ public:
         return m_color;
     }
 
-    //const glm::mat4& scale() {
-    //    return m_scale;
-    //}
-
 private:
-	glm::mat4 m_model;
-    //glm::mat4 m_scale;
+    glm::mat4 m_model;
     glm::vec3 m_color;
 };
 
 const std::array<glm::vec4, 4> Quad::verts {
-	glm::vec4(-0.5f, -0.5f, 0.0, 1.0),
-	glm::vec4( 0.5f, -0.5f, 0.0, 1.0),
-	glm::vec4( 0.5f,  0.5f, 0.0, 1.0),
-	glm::vec4(-0.5f,  0.5f, 0.0, 1.0)
+    glm::vec4(-0.5f, -0.5f, 0.0f, 1.0f),
+    glm::vec4(0.5f, -0.5f, 0.0f, 1.0f),
+    glm::vec4(0.5f, 0.5f, 0.0f, 1.0f),
+    glm::vec4(-0.5f, 0.5f, 0.0f, 1.0f)
 };
+
+//const std::array<glm::vec4, 4> Quad::verts{
+//    glm::vec4(0.0f, 0.0f, 0.0, 1.0),
+//    glm::vec4(1.0f, 0.0f, 0.0, 1.0),
+//    glm::vec4(1.0f, 1.0f, 0.0, 1.0),
+//    glm::vec4(0.0f, 1.0f, 0.0, 1.0)
+//};
 
 const std::array<unsigned short, 4> Quad::elements {
     0, 1, 2, 3
 };
 
+const std::array<glm::vec4, 4> g_axisVerts {
+    glm::vec4(0.0f, 0.0f, 0.0f, 1.0f),
+    glm::vec4(1.0f, 0.0f, 0.0f, 1.0f),
+    glm::vec4(0.0f, 1.0f, 0.0f, 1.0f),
+    glm::vec4(0.0f, 0.0f, 1.0f, 1.0f)
+};
+
+const std::array<unsigned short, 6> g_axisElements {
+    0, 1,
+    0, 2,
+    0, 3
+};
+
+
 ///////////////////////////////////////////////////////////////////////////////
 
-const char* vertex_shader =
-"#version 400\n"
-"in vec3 vert;"
-"uniform mat4 v;"      // view matrix
-"uniform mat4 p;"      // proj matrix
-"uniform mat4 m;"      // model matrix
-"uniform mat4 rot;"    // rotation matrix
-"uniform vec3 vdir;"   // view dir
-"uniform float st;"    // start
-"uniform float ds;"    // slice distance
-"uniform int numblocks;" // number of blocks that will be drawn.
-""
-"void main () {"
-"  vec4 offset = vec4(vdir * ( st + ds * gl_InstanceID ), 1.0f);"
-"  gl_Position = (p * v * rot * (m * vec4(vert, 1.0f))) + offset ;"
+const char* vertex_shader = "simplevr/shaders/sub-quads-vs.glsl";
 
-"}";
 
-const char* fragment_shader =
-"#version 400\n"
-"uniform vec3 in_col;"
-"out vec4 col;"
-"void main () {"
-"  col = vec4(in_col, 1.0f);"
-"}";
+const char* fragment_shader = "simplevr/shaders/simple-color-frag.glsl";
+
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -135,7 +131,7 @@ glm::quat g_cameraRotation;
 glm::mat4 g_viewMatrix;
 glm::mat4 g_projectionMatrix;
 // glm::mat4 g_vpMatrix;
-glm::vec3 g_camPosition(0.0f, 0.0f, -30.0f);
+glm::vec3 g_camPosition(0.0f, 0.0f, -3.0f);
 glm::vec3 g_camFocus(0.0f, 0.0f, 0.0f);
 glm::vec3 g_camUp(0.0f, 1.0f, 0.0f);
 glm::vec2 g_cursorPos;
@@ -314,7 +310,6 @@ void updateMvpMatrix()
 {
     g_viewMatrix = glm::lookAt(g_camPosition, g_camFocus, g_camUp);
     g_projectionMatrix = glm::perspective(g_fov, g_screenWidth/g_screenHeight, 0.1f, 100.0f);
-    // g_vpMatrix = g_projectionMatrix * g_viewMatrix;
     g_viewDirty = false;
 }
 
@@ -331,13 +326,18 @@ void updateMvpMatrix()
 //    glBindVertexArray(0);
 //}
 
+void drawAxisElements(unsigned int vaoId) {
+    
+}
+
 void drawSlicesInstanced(unsigned int vaoId) 
 {
     glBindVertexArray(vaoId);
 
+    glUseProgram(g_shaderProgramId);
+    
     for (auto &q : theQuads) {
         glUniformMatrix4fv(g_uniform_m, 1, GL_FALSE, glm::value_ptr(q.model()));
-        //glUniformMatrix4fv(g_uniform_scale, 1, GL_FALSE, glm::value_ptr(q.scale()));
         glUniform3fv(g_uniform_color, 1, glm::value_ptr(q.color()));
         glDrawElementsInstanced(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, 0, NUMSLICES);
     }
@@ -368,7 +368,6 @@ void loop(GLFWwindow *window)
             glUniformMatrix4fv(g_uniform_v, 1, GL_FALSE, glm::value_ptr(g_viewMatrix));         // v
         }
         
-    
         glUniformMatrix4fv(g_uniform_rot, 1, GL_FALSE, glm::value_ptr(glm::toMat4(g_cameraRotation)));   // rot
         
         drawSlicesInstanced(g_q_vaoId);
@@ -572,25 +571,25 @@ void hsvToRgb(float h, float s, float v, glm::vec3 &rgb) {
 }
 
 void makeQuadsAndColors() {
-    const float db = 1.0f / NUMBLOCKS;
-    const glm::vec2 dims(db-0.01f, db-0.01f);
-    glm::vec3 color;
-    int hue = 0;
+    const float bounds_min = -0.5f;
+    const float bounds_max =  0.5f;
+    const float side = 1.0f / NUMBLOCKS;
+    const glm::vec2 dims(side, side);
     const int huemax = 360;
     const int dh = huemax / (NUMBLOCKS*NUMBLOCKS*NUMBLOCKS);
+    
+    glm::vec3 color;
+    int hue = 0;
 
-    for (int z = 0; z < NUMBLOCKS; ++z) {
-        for (int y = 0; y < NUMBLOCKS; ++y) {
-            for (int x = 0; x < NUMBLOCKS; ++x)
-            {
-                glm::vec3 c(db*x, db*y, db*z);
-                c += -0.5f;
-                hsvToRgb(hue, 1.0f, 1.0f, color);
-                hue += dh;
-                theQuads.push_back({ c, dims, color });
-            }
-        }
-    }
+    for (int z = 0; z < NUMBLOCKS; ++z) 
+    for (int y = 0; y < NUMBLOCKS; ++y) 
+    for (int x = 0; x < NUMBLOCKS; ++x) {
+        glm::vec3 c(side*x, side*y, side*z);
+        c += -0.5f;
+        hsvToRgb(hue, 1.0f, 1.0f, color);
+        hue += dh;
+        theQuads.push_back({ c, dims, color });
+     }
 }
 
 
@@ -643,14 +642,14 @@ int main(int argc, char* argv[])
     initQuadVbos(g_q_vaoId);
     makeQuadsAndColors();
 
-    GLuint vsId = compileShader(GL_VERTEX_SHADER, vertex_shader);
+    GLuint vsId = loadShader(GL_VERTEX_SHADER, vertex_shader);
     if (vsId == 0) {
         gl_log_err("Vertex shader failed to compile. Exiting...");
         cleanup();
         exit(1);
     }
 
-    GLuint fsId = compileShader(GL_FRAGMENT_SHADER, fragment_shader);
+    GLuint fsId = loadShader(GL_FRAGMENT_SHADER, fragment_shader);
     if (fsId == 0) {
         gl_log_err("Fragment shader failed to compile. Exiting...");
         cleanup();

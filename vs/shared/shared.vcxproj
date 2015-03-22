@@ -130,6 +130,9 @@
     <ClCompile Include="..\..\shared\geometry\mesh.cpp" />
     <ClCompile Include="..\..\shared\log\gl_log.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="shader_programs\simple.vs" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

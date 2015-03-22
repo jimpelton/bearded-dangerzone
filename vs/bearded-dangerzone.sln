@@ -10,6 +10,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "simplevr", "simplevr\simple
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shared", "shared\shared.vcxproj", "{869A3C77-30F0-43B1-9EE5-76760960543D}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "simpleblocking", "simpleblocking\simpleblocking.vcxproj", "{59C95AC6-6A90-41D3-928E-FAEDFDDF718A}"
+	ProjectSection(ProjectDependencies) = postProject
+		{869A3C77-30F0-43B1-9EE5-76760960543D} = {869A3C77-30F0-43B1-9EE5-76760960543D}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Mixed Platforms = Debug|Mixed Platforms
@@ -43,6 +48,17 @@ Global
 		{869A3C77-30F0-43B1-9EE5-76760960543D}.Release|Win32.ActiveCfg = Release|Win32
 		{869A3C77-30F0-43B1-9EE5-76760960543D}.Release|Win32.Build.0 = Release|Win32
 		{869A3C77-30F0-43B1-9EE5-76760960543D}.Release|x64.ActiveCfg = Release|Win32
+		{59C95AC6-6A90-41D3-928E-FAEDFDDF718A}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
+		{59C95AC6-6A90-41D3-928E-FAEDFDDF718A}.Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{59C95AC6-6A90-41D3-928E-FAEDFDDF718A}.Debug|Win32.ActiveCfg = Debug|Win32
+		{59C95AC6-6A90-41D3-928E-FAEDFDDF718A}.Debug|Win32.Build.0 = Debug|Win32
+		{59C95AC6-6A90-41D3-928E-FAEDFDDF718A}.Debug|x64.ActiveCfg = Debug|x64
+		{59C95AC6-6A90-41D3-928E-FAEDFDDF718A}.Debug|x64.Build.0 = Debug|x64
+		{59C95AC6-6A90-41D3-928E-FAEDFDDF718A}.Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{59C95AC6-6A90-41D3-928E-FAEDFDDF718A}.Release|Mixed Platforms.Build.0 = Release|Win32
+		{59C95AC6-6A90-41D3-928E-FAEDFDDF718A}.Release|Win32.ActiveCfg = Release|Win32
+		{59C95AC6-6A90-41D3-928E-FAEDFDDF718A}.Release|Win32.Build.0 = Release|Win32
+		{59C95AC6-6A90-41D3-928E-FAEDFDDF718A}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
