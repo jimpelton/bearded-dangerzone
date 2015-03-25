@@ -10,6 +10,7 @@
 
 
 #include "geometry/BBox.h"
+#include "geometry/quad.h"
 #include "file/datareader.h"
 #include "log/gl_log.h"
 
@@ -30,59 +31,6 @@
 #include <sstream>
 
 namespace bd = bearded::dangerzone;
-
-class Quad {
-public:
-    static const std::array<glm::vec4, 4> verts;
-    static const std::array<unsigned short, 4> elements;
-    
-public:
-    Quad()
-        : Quad(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec2(1.0f, 1.0f))
-    { }
-
-    Quad(const glm::vec3 &lowerLeft, const glm::vec2 &dims)
-        : Quad(lowerLeft, dims, glm::vec3(1.0f, 1.0f, 1.0f))
-    { }
-
-    Quad(const glm::vec3 &lowerLeft, const glm::vec2 &dims, const glm::vec3 &color) 
-        : m_model(glm::translate(glm::mat4(1.0f), lowerLeft + glm::vec3(dims / 2.0f, 0.0f)) 
-            * glm::scale(glm::mat4(1.0f), glm::vec3(dims, 1.0f)))
-        , m_color(color)
-    { }
-
-    ~Quad() {}
-
-    const glm::mat4& model() {
-        return m_model;
-    }
-
-    const glm::vec3& color() {
-        return m_color;
-    }
-
-private:
-    glm::mat4 m_model;
-    glm::vec3 m_color;
-};
-
-const std::array<glm::vec4, 4> Quad::verts {
-    glm::vec4(-0.5f, -0.5f, 0.0f, 1.0f),
-    glm::vec4(0.5f, -0.5f, 0.0f, 1.0f),
-    glm::vec4(0.5f, 0.5f, 0.0f, 1.0f),
-    glm::vec4(-0.5f, 0.5f, 0.0f, 1.0f)
-};
-
-//const std::array<glm::vec4, 4> Quad::verts{
-//    glm::vec4(0.0f, 0.0f, 0.0, 1.0),
-//    glm::vec4(1.0f, 0.0f, 0.0, 1.0),
-//    glm::vec4(1.0f, 1.0f, 0.0, 1.0),
-//    glm::vec4(0.0f, 1.0f, 0.0, 1.0)
-//};
-
-const std::array<unsigned short, 4> Quad::elements {
-    0, 1, 2, 3
-};
 
 const std::array<glm::vec4, 4> g_axisVerts {
     glm::vec4(0.0f, 0.0f, 0.0f, 1.0f),
@@ -149,7 +97,7 @@ float g_fov = 50.0f;
 bool  g_viewDirty = false;
 
 bd::geometry::BBox g_bbox;
-std::vector<Quad> theQuads;
+std::vector<bd::geometry::Quad> theQuads;
 
 /////////////////////////////////////////////////////////////////////////////////////
 
@@ -431,7 +379,8 @@ GLFWwindow* init()
     return window;
 }
 
-void initBoxVbos(unsigned int vaoId) {
+void initBoxVbos(unsigned int vaoId) 
+{
     glBindVertexArray(vaoId);
 
     glGenBuffers(1, &g_box_vboId);
@@ -461,7 +410,9 @@ void initBoxVbos(unsigned int vaoId) {
             GL_STATIC_DRAW);
 }
 
-void initQuadVbos(unsigned int vaoId) {
+void initQuadVbos(unsigned int vaoId) 
+{
+    using bd::geometry::Quad;
     glBindVertexArray(vaoId);
 
     glGenBuffers(1, &g_q_vboId);

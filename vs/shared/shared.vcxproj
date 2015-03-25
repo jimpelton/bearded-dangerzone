@@ -123,11 +123,13 @@
     <ClInclude Include="..\..\shared\file\datareader.h" />
     <ClInclude Include="..\..\shared\geometry\BBox.h" />
     <ClInclude Include="..\..\shared\geometry\mesh.h" />
+    <ClInclude Include="..\..\shared\geometry\quad.h" />
     <ClInclude Include="..\..\shared\log\gl_log.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\shared\geometry\BBox.cpp" />
     <ClCompile Include="..\..\shared\geometry\mesh.cpp" />
+    <ClCompile Include="..\..\shared\geometry\quad.cpp" />
     <ClCompile Include="..\..\shared\log\gl_log.cpp" />
   </ItemGroup>
   <ItemGroup>

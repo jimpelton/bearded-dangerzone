@@ -45,6 +45,9 @@
     <ClInclude Include="..\..\shared\log\gl_log.h">
       <Filter>Header Files\log</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\shared\geometry\quad.h">
+      <Filter>Header Files\geometry</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\shared\geometry\BBox.cpp">
@@ -55,6 +58,9 @@
     </ClCompile>
     <ClCompile Include="..\..\shared\log\gl_log.cpp">
       <Filter>Source Files\log</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\shared\geometry\quad.cpp">
+      <Filter>Source Files\geometry</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

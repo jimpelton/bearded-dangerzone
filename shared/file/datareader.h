@@ -30,7 +30,7 @@ public:
 
     ~DataReader() 
     { 
-        if (m_data != nullptr || haveOwnership)
+        if (m_data != nullptr && haveOwnership)
             delete [] m_data;
     }
 
@@ -127,13 +127,13 @@ private:
 template< typename ExternTy, typename InternTy >
 size_t 
 DataReader< ExternTy, InternTy >::loadRaw3d
-    (
-     const std::string &imagepath,
-     size_t width, 
-     size_t height, 
-     size_t depth, 
-     bool normalize
-    )
+(
+    const std::string &imagepath,
+    size_t width, 
+    size_t height, 
+    size_t depth, 
+    bool normalize
+)
 {
     using std::ifstream;
     using std::filebuf;
@@ -194,9 +194,9 @@ DataReader< ExternTy, InternTy >::loadRaw3d
 template< typename ExternTy, typename InternTy >
 size_t
 DataReader< ExternTy, InternTy >::volsize
-    (
-     std::filebuf *pbuf
-    )
+(
+    std::filebuf *pbuf
+)
 {
     pbuf->pubseekpos(0);
     size_t szbytes = pbuf->pubseekoff(0, std::ifstream::end, std::ifstream::in);
@@ -207,8 +207,8 @@ DataReader< ExternTy, InternTy >::volsize
 template< typename ExternTy, typename InternTy >
 InternTy
 DataReader< ExternTy, InternTy >::shiftAmt
-    (
-    )
+( 
+)
 {
     InternTy amt = InternTy();
     if (m_min < 0.0f) {
@@ -222,9 +222,9 @@ DataReader< ExternTy, InternTy >::shiftAmt
 template< typename ExternTy, typename InternTy >
 void
 DataReader< ExternTy, InternTy >::minMax
-    (
-     const ExternTy *image
-    )
+(
+    const ExternTy *image
+)
 {
     gl_log("Calculating min and max.");
 
@@ -240,19 +240,17 @@ DataReader< ExternTy, InternTy >::minMax
 template< typename ExternTy, typename InternTy >
 void
 DataReader< ExternTy, InternTy >::normalize_copy
-    (
-     const ExternTy *image, 
-     InternTy *internal
-    )
+(
+    const ExternTy *image,
+    InternTy *internal
+)
 {
     InternTy amt = shiftAmt();
     for (size_t idx=0; idx<m_numVoxels; ++idx) {
         internal[idx] = (static_cast<InternTy>(image[idx])+amt) / m_max;
     }
-
 }
 
-}
-}
-}
+}}}
+
 #endif // datareader_h__
