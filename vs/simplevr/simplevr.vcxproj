@@ -144,6 +144,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\simplevr\src\cmdline.cpp" />
     <ClCompile Include="..\..\simplevr\src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -154,6 +155,12 @@
   <ItemGroup>
     <None Include="..\..\simplevr\shaders\simple-color-frag.glsl" />
     <None Include="..\..\simplevr\shaders\sub-quads-vs.glsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\simplevr\src\block.h" />
+    <ClInclude Include="..\..\simplevr\src\cmdline.h" />
+    <ClInclude Include="..\..\simplevr\src\vertexarrayobject.h" />
+    <ClInclude Include="..\..\simplevr\src\vertexbufferobject.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

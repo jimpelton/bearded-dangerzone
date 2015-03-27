@@ -11,6 +11,8 @@ namespace bearded {
 namespace dangerzone {
 namespace file {
 
+
+
 /**
 * \brief Read data and convert from ExternTy to InternTy
 * \tparam ExternTy Type read from file.

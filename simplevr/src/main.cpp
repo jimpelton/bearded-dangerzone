@@ -9,10 +9,17 @@
 //************************************************************//
 
 
-#include "geometry/BBox.h"
-#include "geometry/quad.h"
-#include "file/datareader.h"
-#include "log/gl_log.h"
+#include "cmdline.h"
+#include "block.h"
+
+#include <geometry/BBox.h>
+#include <geometry/quad.h>
+#include <geometry/axis.h>
+#include <file/datatypes.h>
+#include <file/datareader.h>
+#include <log/gl_log.h>
+#include <util/util.h>
+#include <util/shader.h>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -23,7 +30,6 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/string_cast.hpp>
 
-
 #include <vector>
 #include <array>
 
@@ -32,27 +38,13 @@
 
 namespace bd = bearded::dangerzone;
 
-const std::array<glm::vec4, 4> g_axisVerts {
-    glm::vec4(0.0f, 0.0f, 0.0f, 1.0f),
-    glm::vec4(1.0f, 0.0f, 0.0f, 1.0f),
-    glm::vec4(0.0f, 1.0f, 0.0f, 1.0f),
-    glm::vec4(0.0f, 0.0f, 1.0f, 1.0f)
-};
-
-const std::array<unsigned short, 6> g_axisElements {
-    0, 1,
-    0, 2,
-    0, 3
-};
-
 
 ///////////////////////////////////////////////////////////////////////////////
 
 const char* vertex_shader = "simplevr/shaders/sub-quads-vs.glsl";
-
-
 const char* fragment_shader = "simplevr/shaders/simple-color-frag.glsl";
 
+CommandLineOptions g_opts;
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -73,9 +65,11 @@ GLuint g_q_iboId;     // quad geo index buffer id
 GLuint g_box_vaoId;   //
 GLuint g_box_vboId;   //
 GLuint g_box_iboId;   //
+GLuint g_axis_vboId;
+GLuint g_axis_iboId;
 
 
-glm::quat g_cameraRotation;
+glm::quat g_rotation;
 glm::mat4 g_viewMatrix;
 glm::mat4 g_projectionMatrix;
 // glm::mat4 g_vpMatrix;
@@ -156,82 +150,6 @@ void glfw_cursorpos_callback(GLFWwindow *window, double x, double y)
     g_cursorPos = cpos;
 }
 
-/************************************************************************/
-/* S H A D E R   C O M P I L I N G                                      */
-/************************************************************************/
-GLuint loadShader(GLenum type, std::string filepath)
-{
-    GLuint shaderId = 0;
-    std::ifstream file(filepath.c_str());
-    if (!file.is_open()) {
-        gl_log("Couldn't open %s", filepath.c_str());
-        return 0;
-    }
-
-    std::stringstream shaderCode;
-    shaderCode << file.rdbuf();
-
-    std::string code = shaderCode.str();
-    const char *ptrCode = code.c_str();
-    file.close();
-
-    gl_log("Compiling shader: %s", filepath.c_str());
-    shaderId = compileShader(type, ptrCode);
-    return shaderId;
-}
-
-GLuint compileShader(GLenum type, const char *shader)
-{
-    // Create shader and compile
-    GLuint shaderId = glCreateShader(type);
-    gl_log("Created shader, type: 0x%x04, id: %d", type, shaderId);
-    glShaderSource(shaderId, 1, &shader, NULL);
-
-    glCompileShader(shaderId);
-
-    // Check for errors.
-    GLint Result = GL_FALSE;
-    int InfoLogLength;
-
-    glGetShaderiv(shaderId, GL_COMPILE_STATUS, &Result);
-    glGetShaderiv(shaderId, GL_INFO_LOG_LENGTH, &InfoLogLength);
-
-    if (InfoLogLength > 1){
-        std::vector<char> msg(InfoLogLength + 1);
-        glGetShaderInfoLog(shaderId, InfoLogLength, NULL, &msg[0]);
-        gl_log("%s", &msg[0]);
-    }
-
-    return shaderId;
-}
-
-GLuint linkProgram(const std::vector<GLuint> &shaderIds)
-{
-    GLuint programId = glCreateProgram();
-    gl_log("Created program id: %d", programId);
-
-    for (auto &sh : shaderIds) {
-        glAttachShader(programId, sh);
-    }
-
-    gl_log("Linking program");
-    glLinkProgram(programId);
-
-    // Check the program
-    int InfoLogLength = 0;
-    GLint result = GL_FALSE;
-
-    glGetProgramiv(programId, GL_LINK_STATUS, &result);
-    glGetProgramiv(programId, GL_INFO_LOG_LENGTH, &InfoLogLength);
-
-    if (InfoLogLength > 1) {
-        std::vector<char> programErrorMessage(InfoLogLength + 1);
-        glGetProgramInfoLog(programId, InfoLogLength, NULL, &programErrorMessage[0]);
-        gl_log("%s", &programErrorMessage[0]);
-    }
-
-    return programId;
-}
 
 /************************************************************************/
 /*     D R A W I N'                                                     */
@@ -249,7 +167,7 @@ void setRotation(const glm::vec2 &dr)
         glm::vec3(0, 1, 0)
         );
 
-    g_cameraRotation = (rotX * rotY) * g_cameraRotation;
+    g_rotation = (rotX * rotY) * g_rotation;
 
     g_viewDirty = true;
 }
@@ -261,22 +179,28 @@ void updateMvpMatrix()
     g_viewDirty = false;
 }
 
-//void drawBoundingBox(bearded::dangerzone::geometry::BBox *b, unsigned int vaoIdx)
+// void drawBoundingBox(bd::geometry::BBox *b, unsigned int vaoIdx)
+// {
+//     glm::mat4 mvp = g_vpMatrix * b->modelTransform() * glm::toMat4(g_rotation);
+// 
+//     glUseProgram(g_shaderProgramId);
+//     glUniformMatrix4fv(g_uniform_mvp, 1, GL_FALSE, glm::value_ptr(mvp));
+//     glBindVertexArray(g_vaoIds[vaoIdx]);
+//     glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, 0);
+//     glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, (GLvoid*)(4 * sizeof(GLushort)));
+//     glDrawElements(GL_LINES, 8, GL_UNSIGNED_SHORT, (GLvoid*)(8 * sizeof(GLushort)));
+//     glBindVertexArray(0);
+// }
+
+//bd::geometry::Axis g_axis;
+//void drawAxisElements(unsigned int vaoId)
 //{
-//    glm::mat4 mvp = g_vpMatrix * b->modelTransform() * glm::toMat4(g_cameraRotation);
+//    glBindVertexArray(vaoId);
 //
 //    glUseProgram(g_shaderProgramId);
-//    glUniformMatrix4fv(g_uniform_mvp, 1, GL_FALSE, glm::value_ptr(mvp));
-//    glBindVertexArray(g_vaoIds[vaoIdx]);
-//    glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, 0);
-//    glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, (GLvoid*)(4 * sizeof(GLushort)));
-//    glDrawElements(GL_LINES, 8, GL_UNSIGNED_SHORT, (GLvoid*)(8 * sizeof(GLushort)));
+//
 //    glBindVertexArray(0);
 //}
-
-void drawAxisElements(unsigned int vaoId) {
-    
-}
 
 void drawSlicesInstanced(unsigned int vaoId) 
 {
@@ -287,7 +211,8 @@ void drawSlicesInstanced(unsigned int vaoId)
     for (auto &q : theQuads) {
         glUniformMatrix4fv(g_uniform_m, 1, GL_FALSE, glm::value_ptr(q.model()));
         glUniform3fv(g_uniform_color, 1, glm::value_ptr(q.color()));
-        glDrawElementsInstanced(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, 0, NUMSLICES);
+        //glDrawElementsInstanced(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, 0, NUMSLICES);
+        glDrawElementsInstanced(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, 0, NUMSLICES);
     }
 
     glBindVertexArray(0);
@@ -304,8 +229,6 @@ void loop(GLFWwindow *window)
     glUniform3fv(g_uniform_vdir, 1, glm::value_ptr(g_z_vdir));         // vdir
     glUniform1f(g_uniform_st, start);                                  // st
     glUniform1f(g_uniform_ds, ds);                                     // ds
-    
-    
 
     do {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -316,12 +239,9 @@ void loop(GLFWwindow *window)
             glUniformMatrix4fv(g_uniform_v, 1, GL_FALSE, glm::value_ptr(g_viewMatrix));         // v
         }
         
-        glUniformMatrix4fv(g_uniform_rot, 1, GL_FALSE, glm::value_ptr(glm::toMat4(g_cameraRotation)));   // rot
+        glUniformMatrix4fv(g_uniform_rot, 1, GL_FALSE, glm::value_ptr(glm::toMat4(g_rotation)));   // rot
         
         drawSlicesInstanced(g_q_vaoId);
-
-        //drawBoundingBox(&g_bbox[0], 0);
-        //drawBoundingBox(g_bbox[1], 1);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -338,7 +258,7 @@ GLFWwindow* init()
 {
     GLFWwindow *window = nullptr;
     if (!glfwInit()) {
-        gl_log("could not start GLFW3");
+        gl_log_err("could not start GLFW3");
         return nullptr;
     }
 
@@ -352,7 +272,7 @@ GLFWwindow* init()
 
     window = glfwCreateWindow(1280, 720, "Minimal", NULL, NULL);
     if (!window) {
-        gl_log("ERROR: could not open window with GLFW3");
+        gl_log_err("ERROR: could not open window with GLFW3");
         glfwTerminate();
         return nullptr;
     }
@@ -365,7 +285,7 @@ GLFWwindow* init()
     glewExperimental = GL_TRUE;
     GLenum error = glewInit();
     if (error) {
-        gl_log("could not init glew %s", glewGetErrorString(error));
+        gl_log_err("could not init glew %s", glewGetErrorString(error));
         return nullptr;
     }
 
@@ -394,7 +314,7 @@ void initBoxVbos(unsigned int vaoId)
     glEnableVertexAttribArray(vertex_coord_attr);
     glVertexAttribPointer(
             vertex_coord_attr,  // attribute
-            4,                  // number of elements per vertex, here (x,y,z,w)
+            bd::geometry::BBox::vert_element_size,                  // number of elements per vertex, here (x,y,z,w)
             GL_FLOAT,           // the type of each element
             GL_FALSE,           // take our values as-is
             0,                  // no extra data between each position
@@ -426,7 +346,7 @@ void initQuadVbos(unsigned int vaoId)
     glEnableVertexAttribArray(vertex_coord_attr);
     glVertexAttribPointer(
             vertex_coord_attr,  // attribute
-            4,                  // number of elements per vertex, here (x,y,z,w)
+            bd::geometry::Quad::vert_element_size,                  // number of elements per vertex, here (x,y,z,w)
             GL_FLOAT,           // the type of each element
             GL_FALSE,           // take our values as-is
             0,                  // no extra data between each position
@@ -444,86 +364,64 @@ void initQuadVbos(unsigned int vaoId)
     glBindVertexArray(0);
 }
 
-bool readVolumeData(const std::string &rawFile, size_t w, size_t h, size_t d, float **rawdata) {
-    if (rawFile.length() == 0)
-        return false;
-    if (w == 0 || h == 0 || d == 0)
-        return false;
+void initAxisVbos(unsigned int vaoId)
+{
+    using bd::geometry::Axis;
+    glBindVertexArray(vaoId);
 
-    bearded::dangerzone::file::DataReader<float, float> reader;
-    reader.loadRaw3d(rawFile, w, h, d);
-    *rawdata = reader.takeOwnership();
+    glGenBuffers(1, &g_axis_vboId);
+    glBindBuffer(GL_ARRAY_BUFFER, g_axis_vboId);
+    glBufferData(
+        GL_ARRAY_BUFFER,
+        Axis::verts.size() * sizeof(decltype(Axis::verts[0])),
+        Axis::verts.data(),
+        GL_STATIC_DRAW);
+    const unsigned vertex_coord_attr = 0;
+    glEnableVertexAttribArray(vertex_coord_attr);
+    glVertexAttribPointer(
+        vertex_coord_attr,  // attribute
+        bd::geometry::Axis::vert_element_size,  // number of elements per vertex, here (x,y,z,w)
+        GL_FLOAT,           // the type of each element
+        GL_FALSE,           // take our values as-is
+        0,                  // no extra data between each position
+        0                   // offset of first element
+        );
 
-    return true;
+    glGenBuffers(1, &g_axis_iboId);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_axis_iboId);
+    glBufferData(
+        GL_ELEMENT_ARRAY_BUFFER,
+        Axis::elements.size() * sizeof(decltype(Axis::elements[0])),
+        Axis::elements.data(),
+        GL_STATIC_DRAW);
+
+    glBindVertexArray(0);
 }
 
-void hsvToRgb(float h, float s, float v, glm::vec3 &rgb) {
-    while (h < 0.0f) { h += 360.0f; }
-    while (h > 360.0f) { h -= 350.0f; }
-
-    if (v <= 0.0f) {
-        rgb.r = rgb.g = rgb.b = 0.0f;
-    } else if (s <= 0.0f) {
-        rgb.r = rgb.g = rgb.b = v;
-    } else {
-        float chroma = v * s;
-        float H = h / 60.0f;
-        int thang = int(H);
-        float wat = H - thang;
-        float pv = v * (1.0f - s);
-        float qv = v * (1.0f - s * wat);
-        float tv = v * (1.0f - s * (1.0f - wat));
-        switch (thang) {
-        case 0:
-            rgb.r = v; 
-            rgb.g = tv; 
-            rgb.b = pv;
-            break;
-        case 1:
-            rgb.r = qv;
-            rgb.g = v;
-            rgb.b = tv;
-            break;
-        case 2:
-            rgb.r = pv;
-            rgb.g = v;
-            rgb.b = tv;
-            break;
-        case 3:
-            rgb.r = pv;
-            rgb.g = qv;
-            rgb.b = v;
-            break;
-        case 4:
-            rgb.r = tv;
-            rgb.g = pv;
-            rgb.b = v;
-            break;
-        case 5:
-            rgb.r = v;
-            rgb.g = pv;
-            rgb.b = qv;
-            break;
-        case 6:
-            rgb.r = v;
-            rgb.g = tv;
-            rgb.b = pv;
-            break;
-        case -1:
-            rgb.r = v; 
-            rgb.g = pv;
-            rgb.b = qv;
-            break;
-        default:
-            rgb.r = rgb.g = rgb.b = v;
-            break;
-        }
+float* readData(const std::string &dtype, const std::string &fname, 
+    size_t x, size_t y, size_t z)
+{
+    using namespace bd::file;
+    DataType t = bd::file::DataTypesMap.at(dtype);
+    float *rval = nullptr;
+    switch (t) {
+    case DataType::Float:
+    {
+        DataReader<float, float> reader;
+        reader.loadRaw3d(g_opts.filePath, g_opts.w, g_opts.h, g_opts.d);
+        rval = reader.takeOwnership();
+        break;
     }
+    default:
+        break;
+    }
+
+    return rval;
 }
 
 void makeQuadsAndColors() {
-    const float bounds_min = -0.5f;
-    const float bounds_max =  0.5f;
+    //const float bounds_min = -0.5f;
+    //const float bounds_max =  0.5f;
     const float side = 1.0f / NUMBLOCKS;
     const glm::vec2 dims(side, side);
     const int huemax = 360;
@@ -537,18 +435,19 @@ void makeQuadsAndColors() {
     for (int x = 0; x < NUMBLOCKS; ++x) {
         glm::vec3 c(side*x, side*y, side*z);
         c += -0.5f;
-        hsvToRgb(hue, 1.0f, 1.0f, color);
+        bd::util::hsvToRgb(hue, 1.0f, 1.0f, color);
         hue += dh;
         theQuads.push_back({ c, dims, color });
      }
 }
-
 
 void cleanup()
 {
     if (g_q_vboId > 0) {
         glDeleteBuffers(1, &g_q_vboId);
     }
+
+    gl_log_close();
 //    std::vector<GLuint> bufIds;
 //    for (unsigned i=0; i<NUMBOXES; ++i) {
 //        bufIds.push_back(g_bbox[i].iboId());
@@ -559,55 +458,55 @@ void cleanup()
 //    glDeleteProgram(g_shaderProgramId);
 }
 
-void usage(const char *msg = nullptr) {
-    std::cout << "simplevr <raw-file>\n";
-    if (msg) {
-        std::cout << msg << "\n";
-    }
-}
-
 int main(int argc, char* argv[])
 {
     gl_log_restart();
     gl_debug_log_restart();
 
+    if (parseThem(argc, argv, g_opts) == 0) {
+        gl_log_err("Check command line arguments... Exiting.");
+        cleanup();
+        exit(1);
+    }
+
     GLFWwindow * window;
     if ((window = init()) == nullptr) {
         gl_log("Could not initialize GLFW, exiting.");
-        return 1;
+        exit(1);
     }
-    std::string rawFile(argc > 1 ? argv[1] : std::string());
 
-    size_t height = argc > 2 ? atol(argv[2]) : 0ul;
-    size_t width  = argc > 3 ? atol(argv[3]) : 0ul;
-    size_t depth  = argc > 4 ? atol(argv[4]) : 0ul;
+    float *data = readData(g_opts.type, g_opts.filePath, g_opts.w, g_opts.h, g_opts.d);
+    if( data == nullptr ) {
+        gl_log_err("Nope! Did not read that data right! Exiting...");
+        exit(1);
+      }
+    int voxels = g_opts.w * g_opts.h * g_opts.d;
+    int voxelsPerBlock = g_opts.block_side * g_opts.block_side * g_opts.block_side;
+    int numblocks = voxels / voxelsPerBlock;
+    std::vector<Block> blocks(numblocks);
 
-    float *data = nullptr;
-
-    /*if(! readVolumeData(rawFile, width, height, depth, &data)) {
-        usage();
-        return 1;
-      }*/
+    Block::sumblocks(blocks, data, g_opts.w, g_opts.h, g_opts.d, g_opts.block_side);
+    Block::avgblocks(blocks, voxelsPerBlock);
 
     glGenVertexArrays(1, &g_q_vaoId);
     initQuadVbos(g_q_vaoId);
     makeQuadsAndColors();
 
-    GLuint vsId = loadShader(GL_VERTEX_SHADER, vertex_shader);
+    GLuint vsId = bd::util::loadShader(GL_VERTEX_SHADER, vertex_shader);
     if (vsId == 0) {
         gl_log_err("Vertex shader failed to compile. Exiting...");
         cleanup();
         exit(1);
     }
 
-    GLuint fsId = loadShader(GL_FRAGMENT_SHADER, fragment_shader);
+    GLuint fsId = bd::util::loadShader(GL_FRAGMENT_SHADER, fragment_shader);
     if (fsId == 0) {
         gl_log_err("Fragment shader failed to compile. Exiting...");
         cleanup();
         exit(1);
     }
 
-    g_shaderProgramId = linkProgram({ vsId, fsId });
+    g_shaderProgramId = bd::util::linkProgram({ vsId, fsId });
     if (g_shaderProgramId == 0) {
         gl_log_err("Shader program failed to link. Exiting...");
         cleanup();

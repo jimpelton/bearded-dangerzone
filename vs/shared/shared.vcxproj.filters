@@ -31,6 +31,15 @@
     <Filter Include="shader_programs">
       <UniqueIdentifier>{21fc295b-2ef2-48c2-a6ef-569309021736}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\util">
+      <UniqueIdentifier>{b1e50286-f079-43dd-bd29-0c44b648c7bd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\util">
+      <UniqueIdentifier>{5ed56d6f-ce8b-4f78-94c7-54987a88747c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\file">
+      <UniqueIdentifier>{fa2f596e-9bad-4e3c-b129-691b9dbd61c7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\shared\geometry\BBox.h">
@@ -48,6 +57,18 @@
     <ClInclude Include="..\..\shared\geometry\quad.h">
       <Filter>Header Files\geometry</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\shared\util\util.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\shared\geometry\axis.h">
+      <Filter>Header Files\geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\shared\file\datatypes.h">
+      <Filter>Header Files\file</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\shared\util\shader.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\shared\geometry\BBox.cpp">
@@ -61,6 +82,18 @@
     </ClCompile>
     <ClCompile Include="..\..\shared\geometry\quad.cpp">
       <Filter>Source Files\geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\shared\util\util.cpp">
+      <Filter>Source Files\util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\shared\geometry\axis.cpp">
+      <Filter>Source Files\geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\shared\file\datatypes.cpp">
+      <Filter>Source Files\file</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\shared\util\shader.cpp">
+      <Filter>Source Files\util</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

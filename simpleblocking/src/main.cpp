@@ -16,26 +16,32 @@
 
 struct Block 
 {
-    // block coordinates
-    glm::vec3 loc;
-    // block voxel coordinate (voxel in volume)
+    int bidx;
+    // block voxel coordinates
+    glm::ivec3 loc;
+    // block world coordinates
     glm::vec3 min;
     // size of this block
-    glm::vec3 dims;
+    glm::ivec3 dims;
     // avg value of this block
     float avg;
     // empty flag (true --> not sent to gpu)
     bool empty;
 
     Block()
-        : min(glm::vec3(0.0f))
-        , dims(glm::vec3(0.0f))
+        : bidx(0)
+        , loc(glm::ivec3(0))
+        , min(glm::vec3(0.0f))
+        , dims(glm::ivec3(0))
         , avg(0.0f)
+        , empty(false)
     { }
 
     std::string to_string() 
     {
-        return "Min: " + glm::to_string(min) + "\n"
+        return "Idx: " + std::to_string(bidx) + "\n"
+            "Loc: " + glm::to_string(loc) + "\n"
+            "Min: " + glm::to_string(min) + "\n"
             "Dims: " + glm::to_string(dims) + "\n"
             "Avg: " + std::to_string(avg) + "\n"
             "Empty: " + std::to_string(empty);
@@ -201,8 +207,8 @@ float* readData(const std::string &dtype, const std::string &fname, size_t x, si
 
 void sumblocks(std::vector<Block> &blocks, const float *data) 
 {
-    //Block *b = (Block*)blocks.data();
-    
+    // NOTE: This is probably the worst piece of code ever!
+
     int bs = opts.w / opts.side;  // blocks per side of volume
     
     for (int z = 0; z < opts.d; ++z)
@@ -211,13 +217,31 @@ void sumblocks(std::vector<Block> &blocks, const float *data)
         int bx = x / opts.side;
         int by = y / opts.side;
         int bz = z / opts.side;
+        
         size_t idx = x + opts.w * (y + z * opts.d);
-        Block *blk = &(blocks[bx + bs * (by + bz*bs)]);
-        blk->loc = { bx, by, bz };
-        blk->min = { x, y, z };
+        int bidx = bx + bs * (by + bz*bs);
+
+        Block *blk = &(blocks[bidx]);
+        blk->bidx = bidx;
+        blk->dims = { opts.side, opts.side, opts.side };
+        blk->loc = glm::ivec3{ x, y, z } - 7;
+        //blk->min = { x, y, z };
         blk->avg += data[idx];
     }
+
+
 }
+
+void avgblocks(std::vector<Block> &blocks, size_t voxPerBlock)
+{
+    for (auto &b : blocks) {
+        b.avg /= voxPerBlock;
+        if (b.avg < 0.5f) {
+            b.empty = true;
+        }
+    }
+}
+
 
 void printblocks(std::vector<Block> &blocks) 
 {
@@ -225,7 +249,7 @@ void printblocks(std::vector<Block> &blocks)
     for (auto &b : blocks) {
         std::string blockstr(b.to_string());
         std::cout << blockstr << '\n';
-        f << blockstr << "\n------------";
+        f << blockstr << "\n------------\n";
     }
 
     f.flush();
@@ -253,13 +277,9 @@ try
     std::vector<Block> blocks = std::vector<Block>(numBlocks);
     
     sumblocks(blocks, data);
+    avgblocks(blocks, voxPerBlock);
     
-    for (auto &b : blocks) {
-        b.avg /= voxPerBlock;
-        if (b.avg < 0.5f) {
-            b.empty = true;
-        }
-    }
+
 
     printblocks(blocks);
 

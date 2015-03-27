@@ -11,6 +11,11 @@ namespace bearded { namespace dangerzone { namespace geometry {
 
 class BBox {
 public:
+    static const std::array<float, 32> vertices;
+    static const std::array<unsigned short, 16> elements;
+    static const unsigned int vert_element_size = 4;
+
+public:
     BBox();
 
     /** \brief create a bbox with the given mins/maxes.
@@ -24,8 +29,7 @@ public:
 public:
     glm::mat4 transform() const { return m_transform; }
 
-    static const std::array<float, 32> vertices;
-    static const std::array<unsigned short, 16> elements;
+
 
 private:
     float min_x, max_x,

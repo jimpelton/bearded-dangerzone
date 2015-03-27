@@ -86,6 +86,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_CRT_SECURE_NO_DEPRECATE;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\shared\;$(BoostIncludeDir);$(GlmIncludeDir);$(GlfwIncludeDir);$(GlewIncludeDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -121,16 +122,24 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\shared\file\datareader.h" />
+    <ClInclude Include="..\..\shared\file\datatypes.h" />
+    <ClInclude Include="..\..\shared\geometry\axis.h" />
     <ClInclude Include="..\..\shared\geometry\BBox.h" />
     <ClInclude Include="..\..\shared\geometry\mesh.h" />
     <ClInclude Include="..\..\shared\geometry\quad.h" />
     <ClInclude Include="..\..\shared\log\gl_log.h" />
+    <ClInclude Include="..\..\shared\util\shader.h" />
+    <ClInclude Include="..\..\shared\util\util.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\shared\file\datatypes.cpp" />
+    <ClCompile Include="..\..\shared\geometry\axis.cpp" />
     <ClCompile Include="..\..\shared\geometry\BBox.cpp" />
     <ClCompile Include="..\..\shared\geometry\mesh.cpp" />
     <ClCompile Include="..\..\shared\geometry\quad.cpp" />
     <ClCompile Include="..\..\shared\log\gl_log.cpp" />
+    <ClCompile Include="..\..\shared\util\shader.cpp" />
+    <ClCompile Include="..\..\shared\util\util.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shader_programs\simple.vs" />
