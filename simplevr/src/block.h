@@ -30,17 +30,20 @@ public:
      * Assums square blocks with just one parameter for block dimensions.
      * 
      *  \param blocks The collectin of blocks
-     *  \param data raw volume data
+
      *  \param vol_w Volume width (in voxels)
      *  \param vol_h Volume height (in voxels)
      *  \param vol_d Volume depth (in voxels)
      *  \param blk_s Block side (in voxels)
      * 
      */
-    static void sumblocks(std::vector<Block> &blocks, const float *data, 
-        int vol_x, int vol_y, int vol_z, int blk_x, int blk_y, int blk_z)
+    static void initBlocks
+        (
+        std::vector<Block> &blocks, 
+        int vol_x, int vol_y, int vol_z, 
+        int blk_x, int blk_y, int blk_z
+        )
     {
-
         // compute number of blocks in the volume for each dimension.
         // (used to get linear block index later)
         int bs_x = vol_x / blk_x;  
@@ -50,11 +53,12 @@ public:
         float dh = 360.0f / numblocks;
         float hue = 0.0f;
         
-        // block size in world units is vol_world_size/num_voxels.
+        // size of block in world coordinates
+        // the blocks all cram into a 1x1x1 volume.
         glm::vec3 block_world_size = 
             glm::vec3(1.0f, 1.0f, 1.0f) / glm::vec3(bs_x, bs_y, bs_z);
         
-
+        // Loop through block coordinates and populate block fields.
         for (int bz = 0; bz < bs_z; ++bz)
         for (int by = 0; by < bs_y; ++by)
         for (int bx = 0; bx < bs_x; ++bx) 
@@ -63,33 +67,60 @@ public:
 
             Block *blk = &( blocks[bidx] );
             blk->bidx = bidx;
+
+            // block dimensions in voxels.
             blk->dims = { blk_x, blk_y, blk_z };
+            // block location in voxel coordinates
             blk->loc = { bx*blk_x, by*blk_y, bz*blk_z };
+            
+            // convert block coordinates to world coordinates
             blk->min = { 
-                blk->loc.x * block_world_size.x, 
-                //bx * block_world_size.x,
-                blk->loc.y * block_world_size.y,
-                //by * block_world_size.y,
-                blk->loc.z * block_world_size.z
-                //bz * block_world_size.z
+                bx * block_world_size.x,
+                by * block_world_size.y,
+                bz * block_world_size.z
             };
+
+            // offset this block
             blk->min -= 0.5f;
 
             blk->m_quad.model(
-                glm::translate(glm::mat4(1.0f), (blk->min + block_world_size) / 2.0f) *
+                glm::translate(glm::mat4(1.0f), (blk->min + (blk->min + block_world_size)) / 2.0f) *
                     glm::scale(glm::mat4(1.0f), block_world_size)
                 );
 
-            //blk->m_quad.lowerLeft(blk->min);
-            
             bd::util::hsvToRgb(hue, 1.0f, 1.0f, blk->m_quad.color());
             hue += dh;
         }
 
+        
+    }
+
+    /** \brief Loop over blocks to determine emptyness
+     * 
+     *  \param blocks The blocks
+     *  \param blk_vox The number of voxels in a block.
+     */
+    static void avgblocks
+    (
+        std::vector<Block> &blocks,
+        const float* data,
+        int vol_x, int vol_y, int vol_z,
+        int blk_x, int blk_y, int blk_z,
+        size_t blk_vox
+    )
+    {
+
+        // compute number of blocks in the volume for each dimension.
+        // (used to get linear block index later)
+        int bs_x = vol_x / blk_x;
+        int bs_y = vol_y / blk_y;
+        int bs_z = vol_z / blk_z;
+
+        // Sum voxels within blocks
         // x,y,z are voxel coordinates.
         for (int z = 0; z < vol_z; ++z)
         for (int y = 0; y < vol_y; ++y)
-        for (int x = 0; x < vol_x; ++x) 
+        for (int x = 0; x < vol_x; ++x)
         {
             // voxel --> block coordinates
             int bx = x / blk_x;
@@ -103,15 +134,8 @@ public:
             Block *blk = &(blocks[bidx]);
             blk->avg += data[idx];
         }
-    }
 
-    /** \brief Loop over blocks to determine emptyness
-     * 
-     *  \param blocks The blocks
-     *  \param blk_vox The number of voxels in a block.
-     */
-    static void avgblocks(std::vector<Block> &blocks, size_t blk_vox)
-    {
+        // compute average
         for (auto &b : blocks) {
             b.avg /= blk_vox;
             if (b.avg < 0.5f) {
@@ -120,7 +144,7 @@ public:
         }
     }
 
-    /** \brief Print the output of Block::to_string() for each block to stdout and to a file.
+    /** \brief Print the output of Block::to_string() for each block to a file.
      *
      *  The file name used is BLOCK_DATA_FILENAME, no checks for write permissions made :( .
      *
@@ -143,7 +167,7 @@ public:
             f.close();
         }
 
-        std::cout << peep << std::endl;
+        //std::cout << peep << std::endl;
     }
 
 public:
@@ -172,6 +196,8 @@ public:
             "Empty: " << empty << " (" << avg << ")";
         return ss.str();
     }
+
+    bool isEmpty() const { return empty; }
 
 private:
     // block linear index

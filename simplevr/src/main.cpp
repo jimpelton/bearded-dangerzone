@@ -215,6 +215,7 @@ void drawSlicesInstanced(unsigned int vaoId)
     glUseProgram(g_shaderProgramId);
   
     for (auto &b : *g_blocks) {
+        if (b.isEmpty()) continue;
         glUniformMatrix4fv(g_uniform_m, 1, GL_FALSE, glm::value_ptr(b.quad().model()));
         glUniform3fv(g_uniform_color, 1, glm::value_ptr(b.quad().color()));
         //glDrawElementsInstanced(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, 0, NUMSLICES);
@@ -500,7 +501,7 @@ int main(int argc, char* argv[])
     int numblocks = voxels / voxelsPerBlock;
     std::vector<Block> blocks(numblocks);
 
-    Block::sumblocks(blocks, data, 
+    Block::initBlocks(blocks, 
         g_opts.w, g_opts.h, g_opts.d,
         g_opts.block_side, g_opts.block_side, g_opts.block_side);
     Block::avgblocks(blocks, voxelsPerBlock);
