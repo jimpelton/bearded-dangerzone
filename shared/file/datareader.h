@@ -52,6 +52,8 @@ public:
     * \param normalize If true, normalize floating point type between [0..1]. Default is true.
     *
     * \return The name of the 3D texture as created by glTexImage3D().
+    * 
+    * \throws some exception on failure!
     */
     size_t loadRaw3d(const std::string &imagepath,
         size_t width, size_t height, size_t depth, bool normalize=true);
@@ -144,11 +146,14 @@ DataReader< ExternTy, InternTy >::loadRaw3d
 
     ifstream rawfile;
     rawfile.exceptions(ifstream::failbit | ifstream::badbit);
-    rawfile.open(imagepath, ifstream::in | ifstream::binary);
-    if (!rawfile.is_open()) {
-        gl_log_err("Could not open file %s", imagepath.c_str());
+    try{
+        rawfile.open(imagepath, ifstream::in | ifstream::binary);
+    } catch (std::exception &err) {
+        gl_log_err("Could not open file %s. Message was: %s", 
+            imagepath.c_str(), err.what());
         return 0;
     }
+
 
     filebuf *pbuf = rawfile.rdbuf();
     size_t szbytes = volsize(pbuf);
