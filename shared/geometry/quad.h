@@ -26,20 +26,32 @@ public:
     { }
 
     Quad(const glm::vec3 &lowerLeft, const glm::vec2 &dims, const glm::vec3 &color)
-        : m_model(glm::translate(glm::mat4(1.0f), 
-            lowerLeft + glm::vec3(dims / 2.0f, 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(dims, 1.0f)))
+        : m_model( glm::translate(glm::mat4(1.0f), 
+            lowerLeft + glm::vec3(dims / 2.0f, 0.0f)) * 
+            glm::scale(glm::mat4(1.0f), glm::vec3(dims, 1.0f)))
         , m_color(color)
+        , m_dims(dims)
     { }
 
     ~Quad() { }
+public:
 
-    const glm::mat4& model() { return m_model; }
+    glm::mat4& model() { return m_model; }
+    void model(glm::mat4& m) { m_model = m; }
 
-    const glm::vec3& color() { return m_color; }
+    glm::vec3& color() { return m_color; }
+    void color(glm::vec3& c) { m_color = c; }
+
+    void lowerLeft(glm::vec3 &pos) {
+        m_model = glm::translate(glm::mat4(1.0f),
+            pos + glm::vec3(m_dims / 2.0f, 0.0f)) *
+            glm::scale(glm::mat4(1.0f), glm::vec3(m_dims, 1.0f));
+    }
 
 private:
     glm::mat4 m_model;
     glm::vec3 m_color;
+    glm::vec2 m_dims;
 };
 
 } } } /* namespace */

@@ -20,6 +20,7 @@ const std::array<glm::vec4, 4> Quad::verts
 const std::array<unsigned short, 4> Quad::elements
 {
     0, 1, 3, 2
+    //0, 1, 2, 3
 };
 
 }}}

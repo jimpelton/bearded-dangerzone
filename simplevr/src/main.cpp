@@ -91,7 +91,8 @@ float g_fov = 50.0f;
 bool  g_viewDirty = false;
 
 bd::geometry::BBox g_bbox;
-std::vector<bd::geometry::Quad> theQuads;
+//std::vector<bd::geometry::Quad> theQuads;
+std::vector<Block> *g_blocks = nullptr;
 
 /////////////////////////////////////////////////////////////////////////////////////
 
@@ -150,6 +151,11 @@ void glfw_cursorpos_callback(GLFWwindow *window, double x, double y)
     g_cursorPos = cpos;
 }
 
+void glfw_scrollwhell_callback(GLFWwindow *window, double xoff, double yoff)
+{
+    g_camPosition += yoff;
+    g_viewDirty = true;
+}
 
 /************************************************************************/
 /*     D R A W I N'                                                     */
@@ -207,13 +213,20 @@ void drawSlicesInstanced(unsigned int vaoId)
     glBindVertexArray(vaoId);
 
     glUseProgram(g_shaderProgramId);
-    
-    for (auto &q : theQuads) {
-        glUniformMatrix4fv(g_uniform_m, 1, GL_FALSE, glm::value_ptr(q.model()));
-        glUniform3fv(g_uniform_color, 1, glm::value_ptr(q.color()));
+  
+    for (auto &b : *g_blocks) {
+        glUniformMatrix4fv(g_uniform_m, 1, GL_FALSE, glm::value_ptr(b.quad().model()));
+        glUniform3fv(g_uniform_color, 1, glm::value_ptr(b.quad().color()));
         //glDrawElementsInstanced(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, 0, NUMSLICES);
         glDrawElementsInstanced(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, 0, NUMSLICES);
     }
+
+//     for (auto &q : theQuads) {
+//         glUniformMatrix4fv(g_uniform_m, 1, GL_FALSE, glm::value_ptr(q.model()));
+//         glUniform3fv(g_uniform_color, 1, glm::value_ptr(q.color()));
+//         glDrawElementsInstanced(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, 0, NUMSLICES);
+//         //glDrawElementsInstanced(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, 0, NUMSLICES);
+//     }
 
     glBindVertexArray(0);
 }
@@ -279,6 +292,7 @@ GLFWwindow* init()
 
     glfwSetCursorPosCallback(window, glfw_cursorpos_callback);
     glfwSetWindowSizeCallback(window, glfw_window_size_callback);
+    glfwSetScrollCallback(window, glfw_scrollwhell_callback);
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
     glfwMakeContextCurrent(window);
 
@@ -419,27 +433,27 @@ float* readData(const std::string &dtype, const std::string &fname,
     return rval;
 }
 
-void makeQuadsAndColors() {
-    //const float bounds_min = -0.5f;
-    //const float bounds_max =  0.5f;
-    const float side = 1.0f / NUMBLOCKS;
-    const glm::vec2 dims(side, side);
-    const int huemax = 360;
-    const int dh = huemax / (NUMBLOCKS*NUMBLOCKS*NUMBLOCKS);
-    
-    glm::vec3 color;
-    int hue = 0;
-
-    for (int z = 0; z < NUMBLOCKS; ++z) 
-    for (int y = 0; y < NUMBLOCKS; ++y) 
-    for (int x = 0; x < NUMBLOCKS; ++x) {
-        glm::vec3 c(side*x, side*y, side*z);
-        c += -0.5f;
-        bd::util::hsvToRgb(hue, 1.0f, 1.0f, color);
-        hue += dh;
-        theQuads.push_back({ c, dims, color });
-     }
-}
+//  void makeQuadsAndColors() {
+//      //const float bounds_min = -0.5f;
+//      //const float bounds_max =  0.5f;
+//      const float side = 1.0f / NUMBLOCKS;
+//      const glm::vec2 dims(side, side);
+//      const int huemax = 360;
+//      const int dh = huemax / (NUMBLOCKS*NUMBLOCKS*NUMBLOCKS);
+//      
+//      glm::vec3 color;
+//      int hue = 0;
+//      
+//      for (int z = 0; z < NUMBLOCKS; ++z) 
+//      for (int y = 0; y < NUMBLOCKS; ++y) 
+//      for (int x = 0; x < NUMBLOCKS; ++x) {
+//          glm::vec3 c(side*x, side*y, side*z);
+//          c += -0.5f;
+//          bd::util::hsvToRgb(hue, 1.0f, 1.0f, color);
+//          hue += dh;
+//          theQuads.push_back({ c, dims, color });
+//       }
+//  }
 
 void cleanup()
 {
@@ -479,19 +493,25 @@ int main(int argc, char* argv[])
     if( data == nullptr ) {
         gl_log_err("Nope! Did not read that data right! Exiting...");
         exit(1);
-      }
+    }
+
     int voxels = g_opts.w * g_opts.h * g_opts.d;
     int voxelsPerBlock = g_opts.block_side * g_opts.block_side * g_opts.block_side;
     int numblocks = voxels / voxelsPerBlock;
     std::vector<Block> blocks(numblocks);
 
-    Block::sumblocks(blocks, data, g_opts.w, g_opts.h, g_opts.d, g_opts.block_side);
+    Block::sumblocks(blocks, data, 
+        g_opts.w, g_opts.h, g_opts.d,
+        g_opts.block_side, g_opts.block_side, g_opts.block_side);
     Block::avgblocks(blocks, voxelsPerBlock);
+    Block::printblocks(blocks);
+    g_blocks = &blocks;
 
     glGenVertexArrays(1, &g_q_vaoId);
     initQuadVbos(g_q_vaoId);
-    makeQuadsAndColors();
 
+    //makeQuadsAndColors();
+    
     GLuint vsId = bd::util::loadShader(GL_VERTEX_SHADER, vertex_shader);
     if (vsId == 0) {
         gl_log_err("Vertex shader failed to compile. Exiting...");

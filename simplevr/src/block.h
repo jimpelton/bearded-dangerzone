@@ -1,6 +1,8 @@
 #ifndef block_h__
 #define block_h__
 
+#include <log/gl_log.h>
+#include <util/util.h>
 #include <geometry/quad.h>
 
 #include <glm/glm.hpp>
@@ -12,7 +14,13 @@
 #include <fstream>
 #include <sstream>
 
-namespace bd=bearded::dangerzone;
+
+
+#ifndef BLOCK_DATA_FILENAME
+#define BLOCK_DATA_FILENAME "block_data.txt"
+#endif
+
+namespace bd = bearded::dangerzone;
 
 class Block
 {
@@ -30,29 +38,69 @@ public:
      * 
      */
     static void sumblocks(std::vector<Block> &blocks, const float *data, 
-        int vol_w, int vol_h, int vol_d, int blk_s)
+        int vol_x, int vol_y, int vol_z, int blk_x, int blk_y, int blk_z)
     {
 
-        int bs_x = vol_w / blk_s;
-        int bs_y = vol_h / blk_s;
-        int bs_z = vol_d / blk_s;
+        // compute number of blocks in the volume for each dimension.
+        // (used to get linear block index later)
+        int bs_x = vol_x / blk_x;  
+        int bs_y = vol_y / blk_y;  
+        int bs_z = vol_z / blk_z;  
+        int numblocks = blocks.size();
+        float dh = 360.0f / numblocks;
+        float hue = 0.0f;
+        
+        // block size in world units is vol_world_size/num_voxels.
+        glm::vec3 block_world_size = 
+            glm::vec3(1.0f, 1.0f, 1.0f) / glm::vec3(bs_x, bs_y, bs_z);
+        
 
-        for (int z = 0; z < vol_d; ++z)
-        for (int y = 0; y < vol_h; ++y)
-        for (int x = 0; x < vol_w; ++x) 
+        for (int bz = 0; bz < bs_z; ++bz)
+        for (int by = 0; by < bs_y; ++by)
+        for (int bx = 0; bx < bs_x; ++bx) 
         {
-            int bx = x / blk_s;
-            int by = y / blk_s;
-            int bz = z / blk_s;
+            int bidx = bx + bs_x * (by + bz*bs_z);
 
-            size_t idx = x + vol_w * (y + z * vol_d);
-            int bidx = bx + bs_y * (by + bz*bs_y);
-
-            Block *blk = &(blocks[bidx]);
+            Block *blk = &( blocks[bidx] );
             blk->bidx = bidx;
-            blk->dims = { blk_s, blk_s, blk_s };
-            blk->loc = glm::ivec3{ x, y, z } - 7;
-            //blk->min = { x, y, z };
+            blk->dims = { blk_x, blk_y, blk_z };
+            blk->loc = { bx*blk_x, by*blk_y, bz*blk_z };
+            blk->min = { 
+                blk->loc.x * block_world_size.x, 
+                //bx * block_world_size.x,
+                blk->loc.y * block_world_size.y,
+                //by * block_world_size.y,
+                blk->loc.z * block_world_size.z
+                //bz * block_world_size.z
+            };
+            blk->min -= 0.5f;
+
+            blk->m_quad.model(
+                glm::translate(glm::mat4(1.0f), (blk->min + block_world_size) / 2.0f) *
+                    glm::scale(glm::mat4(1.0f), block_world_size)
+                );
+
+            //blk->m_quad.lowerLeft(blk->min);
+            
+            bd::util::hsvToRgb(hue, 1.0f, 1.0f, blk->m_quad.color());
+            hue += dh;
+        }
+
+        // x,y,z are voxel coordinates.
+        for (int z = 0; z < vol_z; ++z)
+        for (int y = 0; y < vol_y; ++y)
+        for (int x = 0; x < vol_x; ++x) 
+        {
+            // voxel --> block coordinates
+            int bx = x / blk_x;
+            int by = y / blk_y;
+            int bz = z / blk_z;
+            // linear block index
+            int bidx = bx + bs_x * (by + bz * bs_z);
+            // linear voxel index
+            size_t idx = x + vol_x * (y + z * vol_z);
+            // accumulate voxel value
+            Block *blk = &(blocks[bidx]);
             blk->avg += data[idx];
         }
     }
@@ -72,20 +120,30 @@ public:
         }
     }
 
-    /** \brief 
+    /** \brief Print the output of Block::to_string() for each block to stdout and to a file.
      *
+     *  The file name used is BLOCK_DATA_FILENAME, no checks for write permissions made :( .
+     *
+     *  \param blocks vector of blocks to print.
      */
     static void printblocks(std::vector<Block> &blocks)
     {
-        std::ofstream f("outfile.txt");
+        std::stringstream ss;
+
         for (auto &b : blocks) {
-            std::string blockstr(b.to_string());
-            std::cout << blockstr << '\n';
-            f << blockstr << "\n------------\n";
+            ss << b.to_string() << '\n';
         }
 
-        f.flush();
-        f.close();
+        std::string peep(ss.str());
+        std::ofstream f(BLOCK_DATA_FILENAME);
+        
+        if (f.is_open()) {
+            f << peep;
+            f.flush();
+            f.close();
+        }
+
+        std::cout << peep << std::endl;
     }
 
 public:
@@ -98,35 +156,38 @@ public:
         , avg(0.0f)
         , empty(false)
     { }
-
-
-
-    std::string to_string()
-    {
-        return "Idx: " + std::to_string(bidx) + "\n"
-            "Loc: " + glm::to_string(loc) + "\n"
-            "Min: " + glm::to_string(min) + "\n"
-            "Dims: " + glm::to_string(dims) + "\n"
-            "Avg: " + std::to_string(avg) + "\n"
-            "Empty: " + std::to_string(empty);
+ 
+    bd::geometry::Quad& quad() {
+        return m_quad;
     }
 
+    std::string to_string() const
+    {
+        std::stringstream ss;
+        ss << "Idx: " << bidx << "\n"
+            "Loc: " << glm::to_string(loc) << "\n"
+            "Min: " << glm::to_string(min) << "\n"
+            "Dims: " << glm::to_string(dims) << "\n"
+            "Avg: " << avg << "\n"
+            "Empty: " << empty << " (" << avg << ")";
+        return ss.str();
+    }
 
 private:
     // block linear index
     int bidx;
     // block voxel coordinates
-    glm::ivec3 loc;
+    glm::vec3 loc;
     // block world coordinates
     glm::vec3 min;
     // size of this block
-    glm::ivec3 dims;
+    glm::vec3 dims;
     // avg value of this block
     float avg;
     // empty flag (true --> not sent to gpu)
     bool empty;
     // the instance quad for this block
-    bd::geometry::Quad quad;
+    bd::geometry::Quad m_quad;
 };
 
 
