@@ -128,6 +128,7 @@
     <ClInclude Include="..\..\shared\geometry\mesh.h" />
     <ClInclude Include="..\..\shared\geometry\quad.h" />
     <ClInclude Include="..\..\shared\log\gl_log.h" />
+    <ClInclude Include="..\..\shared\util\glfwcontext.h" />
     <ClInclude Include="..\..\shared\util\shader.h" />
     <ClInclude Include="..\..\shared\util\util.h" />
   </ItemGroup>
@@ -138,6 +139,7 @@
     <ClCompile Include="..\..\shared\geometry\mesh.cpp" />
     <ClCompile Include="..\..\shared\geometry\quad.cpp" />
     <ClCompile Include="..\..\shared\log\gl_log.cpp" />
+    <ClCompile Include="..\..\shared\util\glfwcontext.cpp" />
     <ClCompile Include="..\..\shared\util\shader.cpp" />
     <ClCompile Include="..\..\shared\util\util.cpp" />
   </ItemGroup>

@@ -9,10 +9,6 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
     <Filter Include="Source Files\geometry">
       <UniqueIdentifier>{1992e813-035b-45a2-b563-e822d85f2326}</UniqueIdentifier>
     </Filter>
@@ -69,6 +65,9 @@
     <ClInclude Include="..\..\shared\util\shader.h">
       <Filter>Header Files\util</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\shared\util\glfwcontext.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\shared\geometry\BBox.cpp">
@@ -93,6 +92,9 @@
       <Filter>Source Files\file</Filter>
     </ClCompile>
     <ClCompile Include="..\..\shared\util\shader.cpp">
+      <Filter>Source Files\util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\shared\util\glfwcontext.cpp">
       <Filter>Source Files\util</Filter>
     </ClCompile>
   </ItemGroup>
