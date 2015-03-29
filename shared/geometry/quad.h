@@ -22,14 +22,16 @@ public:
      ~Quad() { }
 
 public:
-    glm::mat4& translate() { return m_transform; }
+    const glm::mat4& translate() const { return m_transform; }
     void translate(glm::mat4& m) { m_transform = m; }
 
-    glm::mat4& scale() { return m_scale; }
+    const glm::mat4& scale() const { return m_scale; }
     void scale(glm::mat4& m) { m_scale = m; }
 
-    glm::vec3& color() { return m_color; }
+    const glm::vec3& cColor() const { return m_color; }
     void color(glm::vec3& c) { m_color = c; }
+    
+    glm::vec3& color() { return m_color; }
 
 private:
     glm::mat4 m_transform;

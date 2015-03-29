@@ -144,6 +144,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\simplevr\src\block.cpp" />
+    <ClCompile Include="..\..\simplevr\src\blockscollection.cpp" />
     <ClCompile Include="..\..\simplevr\src\cmdline.cpp" />
     <ClCompile Include="..\..\simplevr\src\main.cpp" />
   </ItemGroup>
@@ -158,9 +160,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\simplevr\src\block.h" />
+    <ClInclude Include="..\..\simplevr\src\blockscollection.h" />
     <ClInclude Include="..\..\simplevr\src\cmdline.h" />
     <ClInclude Include="..\..\simplevr\src\vertexarrayobject.h" />
     <ClInclude Include="..\..\simplevr\src\vertexbufferobject.h" />
+    <ClInclude Include="..\..\simplevr\src\volume.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -11,6 +11,7 @@
 
 #include "cmdline.h"
 #include "block.h"
+#include "blockscollection.h"
 
 #include <geometry/BBox.h>
 #include <geometry/quad.h>
@@ -31,7 +32,6 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/string_cast.hpp>
 
-#include <vector>
 #include <array>
 
 #include <iostream>
@@ -93,7 +93,8 @@ bool  g_viewDirty = false;
 
 bd::geometry::BBox g_bbox;
 //std::vector<bd::geometry::Quad> theQuads;
-std::vector<Block> *g_blocks = nullptr;
+//std::vector<Block> *g_blocks = nullptr;
+BlocksCollection *g_bcol = nullptr;
 
 /////////////////////////////////////////////////////////////////////////////////////
 
@@ -213,12 +214,12 @@ void drawSlicesInstanced(unsigned int vaoId)
 
     glUseProgram(g_shaderProgramId);
   
-    for (Block &b : *g_blocks) {
+    for (const Block &b : g_bcol->blocks()) {
         if (b.isEmpty()) continue;
 
         glUniformMatrix4fv(g_uniform_m, 1, GL_FALSE, 
             glm::value_ptr(b.quad().translate() * b.quad().scale()));
-        glUniform3fv(g_uniform_color, 1, glm::value_ptr(b.quad().color()));
+        glUniform3fv(g_uniform_color, 1, glm::value_ptr(b.quad().cColor()));
         //glDrawElementsInstanced(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, 0, NUMSLICES);
         glDrawElementsInstanced(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, 0, NUMSLICES);
     }
@@ -230,8 +231,8 @@ void loop(bd::util::GlfwContext *context)
 {
     GLFWwindow *window = context->window();
     g_viewDirty = true;
-    float db = 1.0f / g_blocks->size();
-    //float ds = db / NUMSLICES;
+    float db = 1.0f / 4.0f;
+    float ds = db / NUMSLICES;
     //float start = -0.5f + ds; //-1.0f * (ds * (NUMSLICES/2));
 
     glUseProgram(g_shaderProgramId);
@@ -452,23 +453,20 @@ int main(int argc, char* argv[])
         exit(1);
     }
 
-    int voxels = g_opts.w * g_opts.h * g_opts.d;
-    int voxelsPerBlock = g_opts.block_side * g_opts.block_side * g_opts.block_side;
-    int numblocks = voxels / voxelsPerBlock;
-    std::vector<Block> blocks(numblocks);
+    size_t voxels { g_opts.w * g_opts.h * g_opts.d };
+    int voxelsPerBlock { g_opts.block_side * g_opts.block_side * g_opts.block_side };
+    size_t numblocks { voxels / voxelsPerBlock };
+    
+    Volume v { { 1.0,1.0,1.0 }, 
+        { g_opts.w, g_opts.h, g_opts.d }, 
+        { g_opts.block_side, g_opts.block_side, g_opts.block_side } };
 
-    Block::initBlocks(blocks, 
-        g_opts.w, g_opts.h, g_opts.d,
-        g_opts.block_side, g_opts.block_side, g_opts.block_side);
-    
-    Block::avgblocks(blocks, data, 
-        g_opts.w, g_opts.h, g_opts.d, 
-        g_opts.block_side, g_opts.block_side, g_opts.block_side,
-        voxelsPerBlock);
-    
+    BlocksCollection bcol{ &v };
+    bcol.initBlocks();
+    bcol.avgblocks(data);
+    g_bcol = &bcol;
+
     // Block::printblocks(blocks);
-    
-    g_blocks = &blocks;
 
     glGenVertexArrays(1, &g_q_vaoId);
     initQuadVbos(g_q_vaoId);
