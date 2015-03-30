@@ -1,30 +1,27 @@
-
 #ifndef datatypes_h__
 #define datatypes_h__
-
 
 #include <map>
 #include <string>
 
-namespace bearded { namespace dangerzone { namespace  file {
+namespace bd {
+    namespace file {
+        enum class DataType
+        {
+            Integer,
+            UnsignedInteger,
 
-enum class DataType
-{
-    Integer,
-    UnsignedInteger,
+            Character,
+            UnsignedCharacter,
 
-    Character,
-    UnsignedCharacter,
+            Short,
+            UnsignedShort,
 
-    Short,
-    UnsignedShort,
+            Float
+        };
 
-    Float
-};
-
-extern const std::map<std::string, DataType> DataTypesMap;
-
-} } } /* namespace */
-
+        extern const std::map<std::string, DataType> DataTypesMap;
+    }
+} /* namespace */
 
 #endif  /* ifndef datatypes_h__ */

@@ -18,23 +18,21 @@
 #define BLOCK_DATA_FILENAME "block_data.txt"
 #endif
 
-
-
 class Block
 {
-friend class BlocksCollection;
+    friend class BlocksCollection;
 
 public:
 
     Block()
-        : bidx{-1}
-        , loc{0, 0, 0}
-        , min{0.0f, 0.0f, 0.0f}
-        , avg{0.0f}
-        , empty{false}
+        : bidx{ -1 }
+        , loc{ 0, 0, 0 }
+        , min{ 0.0f, 0.0f, 0.0f }
+        , avg{ 0.0f }
+        , empty{ false }
     { }
- 
-    const bearded::dangerzone::geometry::Quad& quad() const { return m_quad; }
+
+    const bd::geometry::Quad& quad() const { return m_quad; }
 
     std::string to_string() const;
 
@@ -44,26 +42,24 @@ public:
 private:
     // block linear index
     int bidx;
-    
+
     // block voxel coordinates
     glm::u64vec3 loc;
-    
+
     // block world coordinates
     glm::vec3 min;
-    
+
     // avg value of this block
     float avg;
-    
+
     // empty flag (true --> not sent to gpu)
     bool empty;
-    
+
     // resource id of the texture for this block.
     unsigned int m_texid;
 
     // the instance quad geometry for this block
-    bearded::dangerzone::geometry::Quad m_quad;
+    bd::geometry::Quad m_quad;
 };
-
-
 
 #endif // block_h__

@@ -1,5 +1,3 @@
-
-
 #include "log/gl_log.h"
 #include "file/datareader.h"
 
@@ -13,8 +11,7 @@
 #include <string>
 #include <map>
 
-
-struct Block 
+struct Block
 {
     int bidx;
     // block voxel coordinates
@@ -37,7 +34,7 @@ struct Block
         , empty(false)
     { }
 
-    std::string to_string() 
+    std::string to_string()
     {
         return "Idx: " + std::to_string(bidx) + "\n"
             "Loc: " + glm::to_string(loc) + "\n"
@@ -48,7 +45,7 @@ struct Block
     }
 };
 
-struct CommandLineOptions 
+struct CommandLineOptions
 {
     // raw file path
     std::string filePath;
@@ -59,23 +56,23 @@ struct CommandLineOptions
     // vol width
     size_t w;
     // vol height
-    size_t h; 
+    size_t h;
     // vol depth
     size_t d;
 } opts;
 
-enum class DataType 
-{ 
-    Integer, 
-    UnsignedInteger, 
+enum class DataType
+{
+    Integer,
+    UnsignedInteger,
 
     Character,
-    UnsignedCharacter, 
+    UnsignedCharacter,
 
-    Short, 
-    UnsignedShort, 
+    Short,
+    UnsignedShort,
 
-    Float 
+    Float
 };
 
 std::map<std::string, DataType> g_dataTypesMap
@@ -86,7 +83,6 @@ std::map<std::string, DataType> g_dataTypesMap
     { "char", DataType::Character },
     { "uchar", DataType::UnsignedCharacter },
     { "unsigned char", DataType::UnsignedCharacter },
-
 
     { "short", DataType::Short },
     { "ushort", DataType::UnsignedShort },
@@ -99,12 +95,12 @@ struct DatFileDescription
 {
     // raw file name
     std::string objectFileName;
-    
+
     // resolution x, y, z
     unsigned long long resx;
     unsigned long long resy;
     unsigned long long resz;
-    
+
     // thickness x, y, z
     float thx;
     float thy;
@@ -114,28 +110,27 @@ struct DatFileDescription
 };
 
 // #include <boost/algorithm/string.hpp>
-// 
-// void readDatFile(const std::string &fpath) 
+//
+// void readDatFile(const std::string &fpath)
 // {
 //     std::ifstream dat(fpath, std::ifstream::in);
-//     
+//
 //     for (std::string line; std::getline(dat, line);) {
 //         std::string::size_type colpos = line.find(':');
 //         if (colpos == std::string::npos) continue;
-// 
+//
 //         std::vector<std::string> values;
 //         namespace ba = boost::algorithm;
 //         ba::split(values, line.substr(colpos), [](char c){ return c == ','; });
 //         if (values.size() != 0) {
-// 
+//
 //         }
-// 
+//
 //     }
-// 
+//
 // }
 
-
-int parseThem(int argc, char *argv[])
+int parseThem(int argc, char *argv [])
 try {
     using std::string;
     namespace po = boost::program_options;
@@ -150,7 +145,7 @@ try {
         ("xdim,x", po::value<int>()->required(), "X dimension of volume")
         ("ydim,y", po::value<int>()->required(), "Y dimension of volume")
         ("zdim,z", po::value<int>()->required(), "Z dimension of volume")
-    ;
+        ;
 
     po::positional_options_description p;
     p.add("raw-file", -1);
@@ -167,33 +162,31 @@ try {
 
     po::notify(m_vm);
 
-//     if (m_vm.count("d")) {
-//         readDatFile(m_vm["d"].as<string>());
-//     } else {
-        opts.filePath = m_vm["raw-file"].as<string>();
-        opts.type = m_vm["type"].as<string>();
-        opts.side = m_vm["side"].as<int>();
-        opts.w = m_vm["xdim"].as<int>();
-        opts.h = m_vm["ydim"].as<int>();
-        opts.d = m_vm["zdim"].as<int>();
-//  }
+    //     if (m_vm.count("d")) {
+    //         readDatFile(m_vm["d"].as<string>());
+    //     } else {
+    opts.filePath = m_vm["raw-file"].as<string>();
+    opts.type = m_vm["type"].as<string>();
+    opts.side = m_vm["side"].as<int>();
+    opts.w = m_vm["xdim"].as<int>();
+    opts.h = m_vm["ydim"].as<int>();
+    opts.d = m_vm["zdim"].as<int>();
+    //  }
 
     return static_cast<int>(m_vm.size());
-
 } catch (boost::program_options::error &e) {
     std::cerr << e.what() << std::endl;
     return 0;
 }
 
-
-float* readData(const std::string &dtype, const std::string &fname, size_t x, size_t y, size_t z) 
+float* readData(const std::string &dtype, const std::string &fname, size_t x, size_t y, size_t z)
 {
     DataType t = g_dataTypesMap[dtype];
     float *rval = nullptr;
     switch (t) {
     case DataType::Float:
     {
-        bearded::dangerzone::file::DataReader<float, float> reader;
+        bd::file::DataReader<float, float> reader;
         reader.loadRaw3d(opts.filePath, opts.w, opts.h, opts.d);
         rval = reader.takeOwnership();
         break;
@@ -201,35 +194,33 @@ float* readData(const std::string &dtype, const std::string &fname, size_t x, si
     default:
         break;
     }
-    
+
     return rval;
 }
 
-void sumblocks(std::vector<Block> &blocks, const float *data) 
+void sumblocks(std::vector<Block> &blocks, const float *data)
 {
     // NOTE: This is probably the worst piece of code ever!
 
     int bs = opts.w / opts.side;  // blocks per side of volume
-    
+
     for (int z = 0; z < opts.d; ++z)
-    for (int y = 0; y < opts.h; ++y)
-    for (int x = 0; x < opts.w; ++x) {
-        int bx = x / opts.side;
-        int by = y / opts.side;
-        int bz = z / opts.side;
-        
-        size_t idx = x + opts.w * (y + z * opts.d);
-        int bidx = bx + bs * (by + bz*bs);
+        for (int y = 0; y < opts.h; ++y)
+            for (int x = 0; x < opts.w; ++x) {
+                int bx = x / opts.side;
+                int by = y / opts.side;
+                int bz = z / opts.side;
 
-        Block *blk = &(blocks[bidx]);
-        blk->bidx = bidx;
-        blk->dims = { opts.side, opts.side, opts.side };
-        blk->loc = glm::ivec3{ x, y, z } - 7;
-        //blk->min = { x, y, z };
-        blk->avg += data[idx];
-    }
+                size_t idx = x + opts.w * (y + z * opts.d);
+                int bidx = bx + bs * (by + bz*bs);
 
-
+                Block *blk = &(blocks[bidx]);
+                blk->bidx = bidx;
+                blk->dims = { opts.side, opts.side, opts.side };
+                blk->loc = glm::ivec3{ x, y, z } -7;
+                //blk->min = { x, y, z };
+                blk->avg += data[idx];
+            }
 }
 
 void avgblocks(std::vector<Block> &blocks, size_t voxPerBlock)
@@ -242,8 +233,7 @@ void avgblocks(std::vector<Block> &blocks, size_t voxPerBlock)
     }
 }
 
-
-void printblocks(std::vector<Block> &blocks) 
+void printblocks(std::vector<Block> &blocks)
 {
     std::ofstream f("outfile.txt");
     for (auto &b : blocks) {
@@ -256,35 +246,33 @@ void printblocks(std::vector<Block> &blocks)
     f.close();
 }
 
-int main(int argc, char *argv[]) 
+int main(int argc, char *argv [])
 try
 {
-    gl_log_restart();
-    gl_debug_log_restart();
+    bd::log::gl_log_restart();
+    bd::log::gl_debug_log_restart();
 
     if (parseThem(argc, argv) == 0) {
         std::cerr << "Error parsing arguments, exiting...\n";
         exit(1);
     }
-    
-    float* data = readData(opts.type, opts.filePath, 
+
+    float* data = readData(opts.type, opts.filePath,
         opts.w, opts.h, opts.d);
 
     size_t voxels = opts.w * opts.h * opts.d;
     size_t voxPerBlock = opts.side*opts.side*opts.side;
     size_t numBlocks = voxels / voxPerBlock;
-    
+
     std::vector<Block> blocks = std::vector<Block>(numBlocks);
-    
+
     sumblocks(blocks, data);
     avgblocks(blocks, voxPerBlock);
-    
-
 
     printblocks(blocks);
 
-    delete[] data;
-    
+    delete [] data;
+
     return 0;
 } catch (std::exception &e) {
     std::cerr << e.what() << std::endl;

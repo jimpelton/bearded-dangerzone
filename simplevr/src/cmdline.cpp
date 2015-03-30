@@ -10,6 +10,7 @@ int parseThem(int argc, char *argv [], CommandLineOptions &opts)
 try {
     using std::string;
     namespace po = boost::program_options;
+
     boost::program_options::variables_map m_vm;
     po::options_description desc("Allowed options");
     desc.add_options()

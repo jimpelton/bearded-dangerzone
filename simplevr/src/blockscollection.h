@@ -36,6 +36,8 @@ public:
 
     const std::vector<Block>& blocks() const { return m_blocks; }
 
+    const Volume& volume() const { return *m_vol; }
+
 private:
     std::vector<Block> m_blocks;
     

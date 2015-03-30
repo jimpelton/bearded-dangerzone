@@ -1,5 +1,3 @@
-
-
 #ifndef quad_h__
 #define quad_h__
 
@@ -8,39 +6,38 @@
 
 #include <array>
 
-namespace bearded { namespace dangerzone { namespace geometry { 
+namespace bd {
+    namespace geometry {
+        class Quad {
+        public:
+            static const std::array<glm::vec4, 4> verts;
+            static const std::array<unsigned short, 4> elements;
+            static const unsigned int vert_element_size = 4;
 
-class Quad {
-public:
-    static const std::array<glm::vec4, 4> verts;
-    static const std::array<unsigned short, 4> elements;
-    static const unsigned int vert_element_size = 4;
+        public:
+            Quad() { }
+            ~Quad() { }
 
-public:
-    Quad() { }
+        public:
+            const glm::mat4& translate() const { return m_transform; }
+            void translate(glm::mat4& m) { m_transform = m; }
 
-     ~Quad() { }
+            const glm::mat4& scale() const { return m_scale; }
+            void scale(glm::mat4& m) { m_scale = m; }
 
-public:
-    const glm::mat4& translate() const { return m_transform; }
-    void translate(glm::mat4& m) { m_transform = m; }
+            const glm::vec3& cColor() const { return m_color; }
+            void color(glm::vec3& c) { m_color = c; }
 
-    const glm::mat4& scale() const { return m_scale; }
-    void scale(glm::mat4& m) { m_scale = m; }
+            glm::vec3& color() { return m_color; }
 
-    const glm::vec3& cColor() const { return m_color; }
-    void color(glm::vec3& c) { m_color = c; }
-    
-    glm::vec3& color() { return m_color; }
+        private:
+            glm::mat4 m_transform;
+            glm::mat4 m_scale;
 
-private:
-    glm::mat4 m_transform;
-    glm::mat4 m_scale;
-    
-    glm::vec3 m_color;
-    glm::vec2 m_dims;
-};
-
-} } } /* namespace */
+            glm::vec3 m_color;
+            glm::vec2 m_dims;
+        };
+    }
+} /* namespace */
 
 #endif

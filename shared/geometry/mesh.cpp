@@ -1,16 +1,14 @@
-
 #include "mesh.h"
 
-namespace tst {
+namespace bd {
+    namespace geometry {
+        Mesh::Mesh(MeshData const & data) : m_data(data)
+        { }
 
-Mesh::Mesh(MeshData const & data) : m_data(data)
-{ }
+        Mesh::~Mesh() { }
 
-Mesh::~Mesh() { }
-
-void Mesh::init()
-{
-
-}
-
+        void Mesh::init()
+        {
+        }
+    }
 } /* namepsace */

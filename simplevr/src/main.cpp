@@ -8,7 +8,6 @@
 // Simplevr -- Simple slice-based 3D texture volume renderer
 //************************************************************//
 
-
 #include "cmdline.h"
 #include "block.h"
 #include "blockscollection.h"
@@ -36,9 +35,6 @@
 
 #include <iostream>
 #include <sstream>
-
-namespace bd = bearded::dangerzone;
-
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -69,7 +65,6 @@ GLuint g_box_iboId;   //
 GLuint g_axis_vboId;
 GLuint g_axis_iboId;
 
-
 glm::quat g_rotation;
 glm::mat4 g_viewMatrix;
 glm::mat4 g_projectionMatrix;
@@ -92,8 +87,6 @@ float g_fov = 50.0f;
 bool  g_viewDirty = false;
 
 bd::geometry::BBox g_bbox;
-//std::vector<bd::geometry::Quad> theQuads;
-//std::vector<Block> *g_blocks = nullptr;
 BlocksCollection *g_bcol = nullptr;
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -119,18 +112,14 @@ void initBoxVbos(unsigned int vaoId);
 void initQuadVbos(unsigned int vaoId);
 void drawSlicesInstanced(unsigned int vaoId);
 
-
-
 /////////////////////////////////////////////////////////////////////////////////////
 
 /************************************************************************/
 /* G L F W     C A L L B A C K S                                        */
 /************************************************************************/
 
-
 void keyboard_callback(int key, int scancode, int action, int mods)
 {
-
 }
 
 void window_size_callback(int width, int height)
@@ -180,7 +169,7 @@ void setRotation(const glm::vec2 &dr)
 void updateMvpMatrix()
 {
     g_viewMatrix = glm::lookAt(g_camPosition, g_camFocus, g_camUp);
-    g_projectionMatrix = glm::perspective(g_fov, g_screenWidth/g_screenHeight, 0.1f, 100.0f);
+    g_projectionMatrix = glm::perspective(g_fov, g_screenWidth / g_screenHeight, 0.1f, 100.0f);
     g_vpMatrix = g_projectionMatrix * g_viewMatrix;
     g_viewDirty = false;
 }
@@ -188,7 +177,7 @@ void updateMvpMatrix()
 // void drawBoundingBox(bd::geometry::BBox *b, unsigned int vaoIdx)
 // {
 //     glm::mat4 mvp = g_vpMatrix * b->modelTransform() * glm::toMat4(g_rotation);
-// 
+//
 //     glUseProgram(g_shaderProgramId);
 //     glUniformMatrix4fv(g_uniform_mvp, 1, GL_FALSE, glm::value_ptr(mvp));
 //     glBindVertexArray(g_vaoIds[vaoIdx]);
@@ -208,22 +197,22 @@ void updateMvpMatrix()
 //    glBindVertexArray(0);
 //}
 
-void drawSlicesInstanced(unsigned int vaoId) 
+void drawSlicesInstanced(unsigned int vaoId)
 {
     glBindVertexArray(vaoId);
 
     glUseProgram(g_shaderProgramId);
-  
+
     for (const Block &b : g_bcol->blocks()) {
         if (b.isEmpty()) continue;
 
-        glUniformMatrix4fv(g_uniform_m, 1, GL_FALSE, 
+        glUniformMatrix4fv(g_uniform_m, 1, GL_FALSE,
             glm::value_ptr(b.quad().translate() * b.quad().scale()));
         glUniform3fv(g_uniform_color, 1, glm::value_ptr(b.quad().cColor()));
         //glDrawElementsInstanced(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, 0, NUMSLICES);
         glDrawElementsInstanced(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, 0, NUMSLICES);
     }
-    
+
     glBindVertexArray(0);
 }
 
@@ -231,8 +220,8 @@ void loop(bd::util::GlfwContext *context)
 {
     GLFWwindow *window = context->window();
     g_viewDirty = true;
-    float db = 1.0f / 4.0f;
-    float ds = db / NUMSLICES;
+
+    float ds = (1.0f / g_bcol->volume().numBlocks().x) / NUMSLICES;
     //float start = -0.5f + ds; //-1.0f * (ds * (NUMSLICES/2));
 
     glUseProgram(g_shaderProgramId);
@@ -248,14 +237,13 @@ void loop(bd::util::GlfwContext *context)
             //glUniformMatrix4fv(g_uniform_p, 1, GL_FALSE, glm::value_ptr(g_projectionMatrix));   // p
             //glUniformMatrix4fv(g_uniform_v, 1, GL_FALSE, glm::value_ptr(g_viewMatrix));         // v
         }
-        
+
         glUniformMatrix4fv(g_uniform_r, 1, GL_FALSE, glm::value_ptr(glm::toMat4(g_rotation)));   // r
-        
+
         drawSlicesInstanced(g_q_vaoId);
-        
+
         glfwSwapBuffers(window);
         glfwPollEvents();
-
     } while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
         glfwWindowShouldClose(window) == 0);
 }
@@ -264,38 +252,38 @@ void loop(bd::util::GlfwContext *context)
 /*     I N I T I A L I Z A T I O N                                      */
 /************************************************************************/
 
-void initBoxVbos(unsigned int vaoId) 
+void initBoxVbos(unsigned int vaoId)
 {
     glBindVertexArray(vaoId);
 
     glGenBuffers(1, &g_box_vboId);
     glBindBuffer(GL_ARRAY_BUFFER, g_box_vboId);
     glBufferData(
-            GL_ARRAY_BUFFER,
-            bd::geometry::BBox::vertices.size() * sizeof(decltype(bd::geometry::BBox::vertices[0])),
-            bd::geometry::BBox::vertices.data(),
-            GL_STATIC_DRAW);
+        GL_ARRAY_BUFFER,
+        bd::geometry::BBox::vertices.size() * sizeof(decltype(bd::geometry::BBox::vertices[0])),
+        bd::geometry::BBox::vertices.data(),
+        GL_STATIC_DRAW);
     const unsigned vertex_coord_attr = 0;
     glEnableVertexAttribArray(vertex_coord_attr);
     glVertexAttribPointer(
-            vertex_coord_attr,  // attribute
-            bd::geometry::BBox::vert_element_size,                  // number of elements per vertex, here (x,y,z,w)
-            GL_FLOAT,           // the type of each element
-            GL_FALSE,           // take our values as-is
-            0,                  // no extra data between each position
-            0                   // offset of first element
-    );
+        vertex_coord_attr,  // attribute
+        bd::geometry::BBox::vert_element_size,                  // number of elements per vertex, here (x,y,z,w)
+        GL_FLOAT,           // the type of each element
+        GL_FALSE,           // take our values as-is
+        0,                  // no extra data between each position
+        0                   // offset of first element
+        );
 
     glGenBuffers(1, &g_box_iboId);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_box_iboId);
     glBufferData(
-            GL_ELEMENT_ARRAY_BUFFER,
-            bd::geometry::BBox::elements.size() * sizeof(decltype(bd::geometry::BBox::elements[0])),
-            bd::geometry::BBox::elements.data(),
-            GL_STATIC_DRAW);
+        GL_ELEMENT_ARRAY_BUFFER,
+        bd::geometry::BBox::elements.size() * sizeof(decltype(bd::geometry::BBox::elements[0])),
+        bd::geometry::BBox::elements.data(),
+        GL_STATIC_DRAW);
 }
 
-void initQuadVbos(unsigned int vaoId) 
+void initQuadVbos(unsigned int vaoId)
 {
     using bd::geometry::Quad;
     glBindVertexArray(vaoId);
@@ -303,28 +291,28 @@ void initQuadVbos(unsigned int vaoId)
     glGenBuffers(1, &g_q_vboId);
     glBindBuffer(GL_ARRAY_BUFFER, g_q_vboId);
     glBufferData(
-            GL_ARRAY_BUFFER,
-            Quad::verts.size() * sizeof(decltype(Quad::verts[0])),
-            Quad::verts.data(),
-            GL_STATIC_DRAW);
+        GL_ARRAY_BUFFER,
+        Quad::verts.size() * sizeof(decltype(Quad::verts[0])),
+        Quad::verts.data(),
+        GL_STATIC_DRAW);
     const unsigned vertex_coord_attr = 0;
     glEnableVertexAttribArray(vertex_coord_attr);
     glVertexAttribPointer(
-            vertex_coord_attr,  // attribute
-            bd::geometry::Quad::vert_element_size,                  // number of elements per vertex, here (x,y,z,w)
-            GL_FLOAT,           // the type of each element
-            GL_FALSE,           // take our values as-is
-            0,                  // no extra data between each position
-            0                   // offset of first element
-    );
+        vertex_coord_attr,  // attribute
+        bd::geometry::Quad::vert_element_size,                  // number of elements per vertex, here (x,y,z,w)
+        GL_FLOAT,           // the type of each element
+        GL_FALSE,           // take our values as-is
+        0,                  // no extra data between each position
+        0                   // offset of first element
+        );
 
     glGenBuffers(1, &g_q_iboId);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_q_iboId);
     glBufferData(
-            GL_ELEMENT_ARRAY_BUFFER,
-            Quad::elements.size() * sizeof(decltype(Quad::elements[0])),
-            Quad::elements.data(),
-            GL_STATIC_DRAW);
+        GL_ELEMENT_ARRAY_BUFFER,
+        Quad::elements.size() * sizeof(decltype(Quad::elements[0])),
+        Quad::elements.data(),
+        GL_STATIC_DRAW);
 
     glBindVertexArray(0);
 }
@@ -363,16 +351,16 @@ void initAxisVbos(unsigned int vaoId)
     glBindVertexArray(0);
 }
 
-float* readData(const std::string &dtype, const std::string &fname, 
+float* readData(const std::string &dtype, const std::string &fname,
     size_t x, size_t y, size_t z)
 {
-    using namespace bd::file;
+    using bd::file::DataType;
     DataType t = bd::file::DataTypesMap.at(dtype);
     float *rval = nullptr;
     switch (t) {
     case DataType::Float:
     {
-        DataReader<float, float> reader;
+        bd::file::DataReader<float, float> reader;
         reader.loadRaw3d(g_opts.filePath, g_opts.w, g_opts.h, g_opts.d);
         rval = reader.takeOwnership();
         break;
@@ -391,12 +379,12 @@ float* readData(const std::string &dtype, const std::string &fname,
 //      const glm::vec2 dims(side, side);
 //      const int huemax = 360;
 //      const int dh = huemax / (NUMBLOCKS*NUMBLOCKS*NUMBLOCKS);
-//      
+//
 //      glm::vec3 color;
 //      int hue = 0;
-//      
-//      for (int z = 0; z < NUMBLOCKS; ++z) 
-//      for (int y = 0; y < NUMBLOCKS; ++y) 
+//
+//      for (int z = 0; z < NUMBLOCKS; ++z)
+//      for (int y = 0; y < NUMBLOCKS; ++y)
 //      for (int x = 0; x < NUMBLOCKS; ++x) {
 //          glm::vec3 c(side*x, side*y, side*z);
 //          c += -0.5f;
@@ -412,21 +400,21 @@ void cleanup()
         glDeleteBuffers(1, &g_q_vboId);
     }
 
-    gl_log_close();
-//    std::vector<GLuint> bufIds;
-//    for (unsigned i=0; i<NUMBOXES; ++i) {
-//        bufIds.push_back(g_bbox[i].iboId());
-//        bufIds.push_back(g_bbox[i].vboId());
-//    }
-//
-//    glDeleteBuffers(NUMBOXES, &bufIds[0]);
-//    glDeleteProgram(g_shaderProgramId);
+    bd::log::gl_log_close();
+    //    std::vector<GLuint> bufIds;
+    //    for (unsigned i=0; i<NUMBOXES; ++i) {
+    //        bufIds.push_back(g_bbox[i].iboId());
+    //        bufIds.push_back(g_bbox[i].vboId());
+    //    }
+    //
+    //    glDeleteBuffers(NUMBOXES, &bufIds[0]);
+    //    glDeleteProgram(g_shaderProgramId);
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char* argv [])
 {
-    gl_log_restart();
-    gl_debug_log_restart();
+    bd::log::gl_log_restart();
+    bd::log::gl_debug_log_restart();
 
     if (parseThem(argc, argv, g_opts) == 0) {
         gl_log_err("Check command line arguments... Exiting.");
@@ -448,18 +436,21 @@ int main(int argc, char* argv[])
     context.setWindowSizeCallback(window_size_callback);
 
     float *data = readData(g_opts.type, g_opts.filePath, g_opts.w, g_opts.h, g_opts.d);
-    if( data == nullptr ) {
+    if (data == nullptr) {
         gl_log_err("Nope! Did not read that data right! Exiting...");
         exit(1);
     }
 
-    size_t voxels { g_opts.w * g_opts.h * g_opts.d };
-    int voxelsPerBlock { g_opts.block_side * g_opts.block_side * g_opts.block_side };
-    size_t numblocks { voxels / voxelsPerBlock };
-    
-    Volume v { { 1.0,1.0,1.0 }, 
-        { g_opts.w, g_opts.h, g_opts.d }, 
-        { g_opts.block_side, g_opts.block_side, g_opts.block_side } };
+    size_t voxels{ g_opts.w * g_opts.h * g_opts.d };
+    int voxelsPerBlock{ g_opts.block_side * g_opts.block_side * g_opts.block_side };
+    size_t numblocks{ voxels / voxelsPerBlock };
+
+    Volume v
+    {
+        { 1.0, 1.0, 1.0 },
+        { g_opts.w, g_opts.h, g_opts.d },
+        { g_opts.w / g_opts.block_side, g_opts.h / g_opts.block_side, g_opts.d / g_opts.block_side }
+    };
 
     BlocksCollection bcol{ &v };
     bcol.initBlocks();
@@ -470,7 +461,7 @@ int main(int argc, char* argv[])
 
     glGenVertexArrays(1, &g_q_vaoId);
     initQuadVbos(g_q_vaoId);
-    
+
     GLuint vsId = bd::util::loadShader(GL_VERTEX_SHADER, vertex_shader);
     if (vsId == 0) {
         gl_log_err("Vertex shader failed to compile. Exiting...");
@@ -492,9 +483,9 @@ int main(int argc, char* argv[])
         exit(1);
     }
 
-    g_uniform_vp   = glGetUniformLocation(g_shaderProgramId, "vp");
+    g_uniform_vp = glGetUniformLocation(g_shaderProgramId, "vp");
     g_uniform_color = glGetUniformLocation(g_shaderProgramId, "in_col");
-//     g_uniform_p = glGetUniformLocation(g_shaderProgramId, "p");
+    //     g_uniform_p = glGetUniformLocation(g_shaderProgramId, "p");
     //g_uniform_v = glGetUniformLocation(g_shaderProgramId, "v");
     g_uniform_m = glGetUniformLocation(g_shaderProgramId, "m");
     //g_uniform_scale = glGetUniformLocation(g_shaderProgramId, "s");
@@ -502,7 +493,7 @@ int main(int argc, char* argv[])
     g_uniform_r = glGetUniformLocation(g_shaderProgramId, "r");
     //g_uniform_st = glGetUniformLocation(g_shaderProgramId, "st");
     g_uniform_ds = glGetUniformLocation(g_shaderProgramId, "ds");
-    
+
     loop(&context);
     cleanup();
 
@@ -510,10 +501,9 @@ int main(int argc, char* argv[])
         delete [] data;
     }
 
-    gl_log_close();
+    bd::log::gl_log_close();
     //closeLog();
     glfwTerminate();
 
     return 0;
 }
-

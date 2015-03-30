@@ -14,13 +14,13 @@ public:
     ~Volume() { }
 
     /* \brief dimsneions in world coords. */
-    glm::vec3 worldDims() const { return m_dims_world; }
+    glm::vec3 dims() const { return m_dims_world; }
     
     /* \brief dimensions in voxels */
-    glm::u64vec3 voxDims() const { return m_dims_vox; }
+    glm::u64vec3 numVox() const { return m_dims_vox; }
     
     /* \brief dimensions in blocks */
-    glm::u64vec3 blockDims() const { return m_dims_blocks; }
+    glm::u64vec3 numBlocks() const { return m_dims_blocks; }
 
 private:
     /* \brief dimensions in world coords (floating point). */
