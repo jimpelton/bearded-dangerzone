@@ -130,6 +130,7 @@
     <ClInclude Include="..\..\shared\log\gl_log.h" />
     <ClInclude Include="..\..\shared\util\glfwcontext.h" />
     <ClInclude Include="..\..\shared\util\shader.h" />
+    <ClInclude Include="..\..\shared\util\texture.h" />
     <ClInclude Include="..\..\shared\util\util.h" />
   </ItemGroup>
   <ItemGroup>
@@ -141,6 +142,7 @@
     <ClCompile Include="..\..\shared\log\gl_log.cpp" />
     <ClCompile Include="..\..\shared\util\glfwcontext.cpp" />
     <ClCompile Include="..\..\shared\util\shader.cpp" />
+    <ClCompile Include="..\..\shared\util\texture.cpp" />
     <ClCompile Include="..\..\shared\util\util.cpp" />
   </ItemGroup>
   <ItemGroup>

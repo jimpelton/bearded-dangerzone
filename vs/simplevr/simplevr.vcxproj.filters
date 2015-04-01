@@ -30,6 +30,9 @@
     <ClCompile Include="..\..\simplevr\src\block.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\simplevr\src\transferfunction.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\simplevr\shaders\sub-quads-vs.glsl">
@@ -56,6 +59,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\simplevr\src\volume.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\simplevr\src\transferfunction.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

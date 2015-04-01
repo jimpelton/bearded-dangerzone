@@ -5,22 +5,33 @@
 
 class Volume {
 public:
-    Volume(const glm::vec3 &dims_world, const glm::u64vec3 &dims_vox, const glm::uvec3 &dims_blocks) 
+    Volume(const glm::vec3 &dims_world, const glm::u64vec3 &dims_vox,
+           const glm::uvec3 &dims_blocks)
         : m_dims_world { dims_world }
         , m_dims_vox { dims_vox }
-        , m_dims_blocks{ dims_blocks } 
-    { }
+        , m_dims_blocks{ dims_blocks } {
+    }
 
     ~Volume() { }
 
     /* \brief dimsneions in world coords. */
-    glm::vec3 dims() const { return m_dims_world; }
-    
+    glm::vec3 dims() const {
+        return m_dims_world;
+    }
+
     /* \brief dimensions in voxels */
-    glm::u64vec3 numVox() const { return m_dims_vox; }
-    
+    glm::u64vec3 numVox() const {
+        return m_dims_vox;
+    }
+
     /* \brief dimensions in blocks */
-    glm::u64vec3 numBlocks() const { return m_dims_blocks; }
+    glm::u64vec3 numBlocks() const {
+        return m_dims_blocks;
+    }
+
+    size_t totalBlocks() {
+        return m_dims_blocks.x * m_dims_blocks.y * m_dims_blocks.z;
+    }
 
 private:
     /* \brief dimensions in world coords (floating point). */

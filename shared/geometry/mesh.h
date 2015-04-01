@@ -4,27 +4,26 @@
 #include <vector>
 
 namespace bd {
-    namespace geometry {
-        struct MeshData {
-            std::vector<float>          m_positions;
-            std::vector<float>          m_normals;
-            std::vector<float>          m_texcoords;
-            std::vector<unsigned int>   m_indices;
-            std::vector<int>            m_material_ids; // per-mesh material ID
-        };
+namespace geometry {
+struct MeshData {
+    std::vector<float> m_positions;
+    std::vector<float> m_normals;
+    std::vector<float> m_texcoords;
+    std::vector<unsigned int> m_indices;
+    std::vector<int> m_material_ids; // per-mesh material ID
+};
 
-        class Mesh
-        {
-        public:
-            Mesh(MeshData const & data);
-            ~Mesh();
+class Mesh {
+public:
+    Mesh(MeshData const &data);
+    ~Mesh();
 
-            void init();
+    void init();
 
-        private:
-            MeshData m_data;
-        };
-    }
+private:
+    MeshData m_data;
+};
+}
 } /* namespace */
 
 #endif /* mesh_h__ */

@@ -5,23 +5,22 @@
 #include <string>
 
 namespace bd {
-    namespace file {
-        enum class DataType
-        {
-            Integer,
-            UnsignedInteger,
+namespace file {
+enum class DataType {
+    Integer,
+    UnsignedInteger,
 
-            Character,
-            UnsignedCharacter,
+    Character,
+    UnsignedCharacter,
 
-            Short,
-            UnsignedShort,
+    Short,
+    UnsignedShort,
 
-            Float
-        };
+    Float
+};
 
-        extern const std::map<std::string, DataType> DataTypesMap;
-    }
+extern const std::map<std::string, DataType> DataTypesMap;
+}
 } /* namespace */
 
-#endif  /* ifndef datatypes_h__ */
+#endif /* ifndef datatypes_h__ */
