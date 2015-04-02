@@ -88,7 +88,7 @@ glm::vec3 g_camFocus { 0.0f, 0.0f, 0.0f };
 glm::vec3 g_camUp { 0.0f, 1.0f, 0.0f };
 glm::vec2 g_cursorPos;
 
-const unsigned int NUMSLICES = 1u;
+//unsigned int NUMSLICES = 1u;
 const glm::vec3 g_x_vdir { 1.0f, 0.0f, 0.0f };
 const glm::vec3 g_y_vdir { 0.0f, 1.0f, 0.0f };
 const glm::vec3 g_z_vdir { 0.0f, 0.0f, 1.0f };
@@ -233,7 +233,7 @@ void drawSlicesInstanced(unsigned int vaoId) {
         glBindTexture(GL_TEXTURE_3D, b.texid());
         glUniform1i(g_uniform_volume, 0);
 
-        glDrawElementsInstanced(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, 0, NUMSLICES);
+        glDrawElementsInstanced(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, 0, g_opts.num_slices);
     }
 
     glBindVertexArray(0);
@@ -243,7 +243,7 @@ void loop(bd::util::GlfwContext *context) {
     GLFWwindow *window = context->window();
     g_viewDirty = true;
 
-    float ds { 1.0f / g_bcol->volume().numBlocks().x / NUMSLICES };
+    float ds { 1.0f / g_bcol->volume().numBlocks().x / g_opts.num_slices };
 
     glUseProgram(g_volume_shader_Id);
     glUniform3fv(g_uniform_vdir, 1, glm::value_ptr(g_z_vdir)); // vdir
@@ -312,6 +312,8 @@ void initQuadVbos(unsigned int vaoId) {
                           0, // no extra data between each position
                           0 // offset of first element
                          );
+
+
 
     glGenBuffers(1, &g_q_iboId);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_q_iboId);

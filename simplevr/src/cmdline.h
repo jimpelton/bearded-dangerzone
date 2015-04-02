@@ -11,6 +11,8 @@ struct CommandLineOptions
     std::string type;
     // voxels per side of block
     int block_side;
+    // slices per block
+    unsigned int num_slices;
     // vol width
     size_t w;
     // vol height

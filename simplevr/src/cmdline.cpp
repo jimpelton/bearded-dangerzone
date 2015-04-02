@@ -19,6 +19,7 @@ try {
         ("dat,d", po::value<string>(), "(optional) Path to dat raw file description")
         ("type,t", po::value<string>()->required(), "Data type. C numeric primitives are accepted: char, float, \"unsigned int\", etc.")
         ("side,s", po::value<int>()->required(), "Length in voxels of a block side")
+        ("slices,l", po::value<int>()->default_value(1), "Slices per block (default=1)")
         ("xdim,x", po::value<int>()->required(), "X dimension of volume")
         ("ydim,y", po::value<int>()->required(), "Y dimension of volume")
         ("zdim,z", po::value<int>()->required(), "Z dimension of volume")
@@ -45,6 +46,7 @@ try {
     opts.filePath = m_vm["raw-file"].as<string>();
     opts.type = m_vm["type"].as<string>();
     opts.block_side = m_vm["side"].as<int>();
+    opts.num_slices = m_vm["slices"].as<int>();
     opts.w = m_vm["xdim"].as<int>();
     opts.h = m_vm["ydim"].as<int>();
     opts.d = m_vm["zdim"].as<int>();
