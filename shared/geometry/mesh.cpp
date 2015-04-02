@@ -1,7 +1,7 @@
 #include "mesh.h"
 
 namespace bd {
-namespace geometry {
+namespace geo {
 Mesh::Mesh(MeshData const &data) : m_data(data) { }
 
 Mesh::~Mesh() { }

@@ -13,11 +13,11 @@ const char *glDebugFileName = "gl_debug.log";
 FILE *file = NULL;
 FILE *glDebugFile = NULL;
 
-void checkForAndLogGlError(const char *func, int line)
+void checkForAndLogGlError(const char *file, const char *func, int line)
 {
     GLint error;
     while ((error = glGetError()) != GL_NO_ERROR) {
-        gl_log_err("(OGL): Func: %s: Line: %d: Error: 0x%04X", func, line, error);
+        gl_log_err_fcn("(OGL): %s[%d]:%s():: 0x%04X", file, line, func, error);
     }
 }
 

@@ -11,12 +11,23 @@
 
 #define gl_log_err(fmt_, ...) bd::log::gl_log_err_fcn("%s[%d]:%s()::" # fmt_, __FILE__, __LINE__, __func__, ##__VA_ARGS__)
 
+#ifdef BD_DEBUG
+#define gl_check(fn) (fn); bd::log::checkforAndLogGlError(__FILE__, __func__, __LINE__);
+#else
+#define gl_check(fn) (fn);
+#endif
+
+
 namespace bd {
 namespace log {
-void checkForAndLogGlError(const char *func, int line);
+void checkForAndLogGlError(const char *file, const char *func, int line);
+
 bool gl_log_restart();
+
 bool gl_debug_log_restart();
+
 bool gl_log_close();
+
 bool gl_log_fcn(const char *message, ...);
 
 void gl_debug_message_callback(GLenum source,
@@ -24,8 +35,10 @@ void gl_debug_message_callback(GLenum source,
                                GLsizei length, const GLchar *message, void *userParam);
 
 bool gl_log_err_fcn(const char *message, ...);
+
 void log_gl_params();
-}
-} // namespace
+
+} // namespace log
+} // namespace bd
 #endif // gl_log_h__
 

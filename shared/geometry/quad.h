@@ -7,7 +7,7 @@
 #include <array>
 
 namespace bd {
-namespace geometry {
+namespace geo {
 class Quad {
 public:
     static const std::array<glm::vec4, 4> verts;

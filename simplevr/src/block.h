@@ -115,12 +115,12 @@ public:
         return m_numvox;
     }
 
-    const bd::geometry::Quad& cQuad() const
+    const bd::geo::Quad& cQuad() const
     {
         return m_quad;
     }
 
-    bd::geometry::Quad& quad()
+    bd::geo::Quad& quad()
     {
         return m_quad;
     }
@@ -152,7 +152,7 @@ private:
     unsigned int m_texid;
 
     // the instance quad geometry for this block
-    bd::geometry::Quad m_quad;
+    bd::geo::Quad m_quad;
 };
 
 #endif // block_h__

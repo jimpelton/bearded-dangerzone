@@ -7,12 +7,13 @@
 #include <array>
 
 namespace bd {
-namespace geometry {
+namespace geo {
 ; // <-- stop VS from indenting (so rediculous!)
 
 class Axis {
 public:
-    static const std::array<glm::vec4, 4> verts;
+    static const std::array<glm::vec4, 6> verts;
+    static const std::array<glm::vec3, 6> colors;
     static const std::array<unsigned short, 6> elements;
     static const unsigned int vert_element_size = 4;
 

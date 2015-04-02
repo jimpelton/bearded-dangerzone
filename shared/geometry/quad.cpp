@@ -5,7 +5,7 @@
 #include <array>
 
 namespace bd {
-namespace geometry {
+namespace geo {
 const std::array<glm::vec4, 4> Quad::verts
 {
     glm::vec4(-0.5f, -0.5f, 0.0f, 1.0f), // 0 ll

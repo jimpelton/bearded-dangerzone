@@ -7,7 +7,7 @@
 #include <array>
 
 namespace bd {
-namespace geometry {
+namespace geo {
 
 class BBox {
 public:

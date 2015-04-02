@@ -38,13 +38,15 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 
-const char *vertex_shader = "simplevr/shaders/sub-quads-vs.glsl";
-const char *fragment_shader = "simplevr/shaders/simple-color-frag.glsl";
+const char *sub_quads_vertex_shader = "simplevr/shaders/sub-quads-vs.glsl";
+const char *volume_fragment_shader = "simplevr/shaders/volume-frag.glsl";
+const char *simple_vertex_shader = "simplevr/shaders/simple-vs.glsl";
+const char *simple_color_fragment_shader = "simplevr/shaders/simple-color-frag.glsl";
 
 CommandLineOptions g_opts;
 bd::util::GlfwContext *g_context{ nullptr };
 BlocksCollection *g_bcol{ nullptr };
-bd::geometry::Axis g_axis;
+bd::geo::Axis g_axis;
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -57,12 +59,15 @@ GLuint g_uniform_m; // model matrix
 GLuint g_uniform_r; // rotation mat
 GLuint g_uniform_vdir; // view dir vec
 GLuint g_uniform_ds; // slice distance
-GLuint g_shaderProgramId;
+GLuint g_volume_shader_Id;
 
 /// fragment shader ///
 GLuint g_uniform_color;
 GLuint g_uniform_volume;
 GLuint g_uniform_tf;
+
+GLuint g_simple_shader_Id;
+GLuint g_uniform_simple_mvp;
 
 GLuint g_q_vaoId; // quad vertex array obj id
 GLuint g_q_vboId; // quad geo vertex buffer id
@@ -71,7 +76,7 @@ GLuint g_q_iboId; // quad geo index buffer id
 //GLuint g_box_vboId; //
 //GLuint g_box_iboId; //
 GLuint g_axis_vaoId;
-GLuint g_axis_vboId;
+GLuint g_axis_vboId[2];
 GLuint g_axis_iboId;
 
 glm::quat g_rotation;
@@ -113,7 +118,7 @@ void window_size_callback(int width, int height);
 
 void updateMvpMatrix();
 void setRotation(const glm::vec2 &dr);
-void drawBoundingBox(bd::geometry::BBox *b, unsigned int vaoIdx);
+void drawBoundingBox(bd::geo::BBox *b, unsigned int vaoIdx);
 void loop(bd::util::GlfwContext *);
 
 void initBoxVbos(unsigned int vaoId);
@@ -192,29 +197,36 @@ void updateMvpMatrix() {
 //     glBindVertexArray(0);
 // }
 
-//bd::geometry::Axis g_axis;
-//void drawAxisElements(unsigned int vaoId)
-//{
-//    glBindVertexArray(vaoId);
-//
-//    glUseProgram(g_shaderProgramId);
-//
-//    glBindVertexArray(0);
-//}
+void drawAxisElements(unsigned int vaoId)
+{
+    glBindVertexArray(vaoId);
+    glUseProgram(g_simple_shader_Id);
+    
+    glUniformMatrix4fv(g_uniform_simple_mvp, 1, GL_FALSE, 
+        glm::value_ptr(g_vpMatrix * glm::toMat4(g_rotation)));
+
+    glDrawArrays(GL_LINES, 0, bd::geo::Axis::verts.size());
+
+    glBindVertexArray(0);
+}
 
 void drawSlicesInstanced(unsigned int vaoId) {
     glBindVertexArray(vaoId);
 
-    //glUseProgram(g_shaderProgramId);
+    glUseProgram(g_volume_shader_Id);
+    if (g_viewDirty) {
+        updateMvpMatrix();
+        glUniformMatrix4fv(g_uniform_vp, 1, GL_FALSE, glm::value_ptr(g_vpMatrix)); // vp
+    }
 
+    glUniformMatrix4fv(g_uniform_r, 1, GL_FALSE, glm::value_ptr(glm::toMat4(g_rotation))); // r
 
     for (const Block &b : g_bcol->blocks()) {
         if (b.empty()) continue;
 
-        glUniformMatrix4fv(g_uniform_m,
-                           1,
-                           GL_FALSE,
-                           value_ptr(b.cQuad().translate() * b.cQuad().scale()));
+        glUniformMatrix4fv(g_uniform_m, 1, GL_FALSE,
+                           glm::value_ptr(b.cQuad().translate() * b.cQuad().scale()));
+
         glUniform3fv(g_uniform_color, 1, glm::value_ptr(b.cQuad().cColor()));
 
         glActiveTexture(GL_TEXTURE0);
@@ -233,21 +245,15 @@ void loop(bd::util::GlfwContext *context) {
 
     float ds { 1.0f / g_bcol->volume().numBlocks().x / NUMSLICES };
 
-    glUseProgram(g_shaderProgramId);
+    glUseProgram(g_volume_shader_Id);
     glUniform3fv(g_uniform_vdir, 1, glm::value_ptr(g_z_vdir)); // vdir
     glUniform1f(g_uniform_ds, ds); // ds
 
     do {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        if (g_viewDirty) {
-            updateMvpMatrix();
-            glUniformMatrix4fv(g_uniform_vp, 1, GL_FALSE, glm::value_ptr(g_vpMatrix)); // vp
-        }
-
-        glUniformMatrix4fv(g_uniform_r, 1, GL_FALSE, glm::value_ptr(glm::toMat4(g_rotation))); // r
-
         drawSlicesInstanced(g_q_vaoId);
+        drawAxisElements(g_axis_vaoId);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -288,7 +294,7 @@ void loop(bd::util::GlfwContext *context) {
 //}
 
 void initQuadVbos(unsigned int vaoId) {
-    using bd::geometry::Quad;
+    using bd::geo::Quad;
     glBindVertexArray(vaoId);
 
     glGenBuffers(1, &g_q_vboId);
@@ -318,11 +324,11 @@ void initQuadVbos(unsigned int vaoId) {
 }
 
 void initAxisVbos(unsigned int vaoId) {
-    using bd::geometry::Axis;
+    using bd::geo::Axis;
     glBindVertexArray(vaoId);
 
-    glGenBuffers(1, &g_axis_vboId);
-    glBindBuffer(GL_ARRAY_BUFFER, g_axis_vboId);
+    glGenBuffers(2, g_axis_vboId);
+    glBindBuffer(GL_ARRAY_BUFFER, g_axis_vboId[0]);
     glBufferData(GL_ARRAY_BUFFER,
                  Axis::verts.size() * sizeof(decltype(Axis::verts[0])),
                  Axis::verts.data(),
@@ -335,13 +341,23 @@ void initAxisVbos(unsigned int vaoId) {
                           GL_FALSE, // take our values as-is
                           0, // no extra data between each position
                           0); // offset of first element
+    
 
-    glGenBuffers(1, &g_axis_iboId);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_axis_iboId);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-                 Axis::elements.size() * sizeof(decltype(Axis::elements[0])),
-                 Axis::elements.data(),
-                 GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, g_axis_vboId[1]);
+    glBufferData(GL_ARRAY_BUFFER, 
+        Axis::colors.size() * sizeof(decltype(Axis::colors[0])),
+        Axis::colors.data(), 
+        GL_STATIC_DRAW);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+
+    //glGenBuffers(1, &g_axis_iboId);
+    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_axis_iboId);
+    //glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+    //             Axis::elements.size() * sizeof(decltype(Axis::elements[0])),
+    //             Axis::elements.data(),
+    //             GL_STATIC_DRAW);
 
     glBindVertexArray(0);
 }
@@ -429,41 +445,68 @@ int main(int argc, char *argv[]) {
     glGenVertexArrays(1, &g_q_vaoId);
     initQuadVbos(g_q_vaoId);
 
-    GLuint vsId = bd::util::loadShader(GL_VERTEX_SHADER, vertex_shader);
-    if (vsId == 0) {
-        gl_log_err("Vertex shader failed to compile. Exiting...");
+    GLuint sq_vsId = bd::util::loadShader(GL_VERTEX_SHADER, sub_quads_vertex_shader);
+    if (sq_vsId == 0) {
+        gl_log_err("Sub-quads vertex shader failed to compile. Exiting...");
         cleanup();
         exit(1);
     }
 
-    GLuint fsId = bd::util::loadShader(GL_FRAGMENT_SHADER, fragment_shader);
-    if (fsId == 0) {
-        gl_log_err("Fragment shader failed to compile. Exiting...");
+    GLuint vol_fsId = bd::util::loadShader(GL_FRAGMENT_SHADER, volume_fragment_shader);
+    if (vol_fsId == 0) {
+        gl_log_err("Volume fragment shader failed to compile. Exiting...");
         cleanup();
         exit(1);
     }
 
-    g_shaderProgramId = bd::util::linkProgram({ vsId, fsId });
-    if (g_shaderProgramId == 0) {
-        gl_log_err("Shader program failed to link. Exiting...");
+    g_volume_shader_Id = bd::util::linkProgram({ sq_vsId, vol_fsId });
+    if (g_volume_shader_Id == 0) {
+        gl_log_err("Sub-quads+volume shader program failed to link. Exiting...");
+        cleanup();
+        exit(1);
+    }
+
+    GLuint simple_vsId = bd::util::loadShader(GL_VERTEX_SHADER, simple_vertex_shader);
+    if (simple_vsId == 0) {
+        gl_log_err("Simple vertex shader failed to compile. Exiting...");
+        cleanup();
+        exit(1);
+    }
+
+    GLuint color_fsId = bd::util::loadShader(GL_FRAGMENT_SHADER, simple_color_fragment_shader);
+    if (color_fsId == 0) {
+        gl_log_err("Simple-color fragment shader failed to compile. Exiting...");
+        cleanup();
+        exit(1);
+    }
+
+    g_simple_shader_Id = bd::util::linkProgram({ simple_vsId, color_fsId });
+    if (g_simple_shader_Id == 0) {
+        gl_log_err("Simple-vertex+simple-color shader program failed to link. Exiting...");
         cleanup();
         exit(1);
     }
 
     /// vertex shader ///
-    g_uniform_vp = glGetUniformLocation(g_shaderProgramId, "vp");
-    g_uniform_m = glGetUniformLocation(g_shaderProgramId, "m");
-    g_uniform_vdir = glGetUniformLocation(g_shaderProgramId, "vdir");
-    g_uniform_r = glGetUniformLocation(g_shaderProgramId, "r");
-    g_uniform_ds = glGetUniformLocation(g_shaderProgramId, "ds");
+    g_uniform_simple_mvp = glGetUniformLocation(g_simple_shader_Id, "mvp");
+
+    g_uniform_vp = glGetUniformLocation(g_volume_shader_Id, "vp");
+    g_uniform_m = glGetUniformLocation(g_volume_shader_Id, "m");
+    g_uniform_vdir = glGetUniformLocation(g_volume_shader_Id, "vdir");
+    g_uniform_r = glGetUniformLocation(g_volume_shader_Id, "r");
+    g_uniform_ds = glGetUniformLocation(g_volume_shader_Id, "ds");
+    
+    
+
     //g_uniform_scale = glGetUniformLocation(g_shaderProgramId, "s");
     //g_uniform_p = glGetUniformLocation(g_shaderProgramId, "p");
     //g_uniform_v = glGetUniformLocation(g_shaderProgramId, "v");
 
     /// fragment shader ///
-    g_uniform_color = glGetUniformLocation(g_shaderProgramId, "color");
-    g_uniform_volume = glGetUniformLocation(g_shaderProgramId, "volume");
-    g_uniform_tf = glGetUniformLocation(g_shaderProgramId, "tf");
+    g_uniform_color = glGetUniformLocation(g_volume_shader_Id, "color");
+    g_uniform_volume = glGetUniformLocation(g_volume_shader_Id, "volume");
+    g_uniform_tf = glGetUniformLocation(g_volume_shader_Id, "tf");
+
 
     loop(&context);
     cleanup();

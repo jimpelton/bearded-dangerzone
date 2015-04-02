@@ -4,7 +4,7 @@
 #include <vector>
 
 namespace bd {
-namespace geometry {
+namespace geo {
 struct MeshData {
     std::vector<float> m_positions;
     std::vector<float> m_normals;

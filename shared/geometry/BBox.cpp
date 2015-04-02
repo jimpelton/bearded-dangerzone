@@ -3,7 +3,7 @@
 #include <array>
 
 namespace bd {
-namespace geometry {
+namespace geo {
 
 const std::array<float, 32> BBox::vertices {
     -0.5, -0.5, -0.5, 1.0,

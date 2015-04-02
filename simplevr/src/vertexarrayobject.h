@@ -6,9 +6,11 @@
 
 #include "vertexbufferobject.h"
 
+#include <log/gl_log.h>
 #include <GL/glew.h>
 
 #include <string>
+#include <vector>
 
 class VertexArrayObject {
 public:
@@ -17,10 +19,18 @@ public:
         glGenVertexArrays(1, &m_id);
     }
 
-    VertexArrayObject& attachVbo(VertexBufferObject &vbo) {
+
+
+    void createVbo(std::vector<float> data) 
+    {
         bind();
-        
-        unbind();
+        GLuint vbo = 0;
+        gl_check(glGenBuffers(1, &vbo));
+        gl_check(glBindBuffer(GL_ARRAY_BUFFER, vbo));
+        gl_check(glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(decltype(data[0])),
+            data.data(), GL_STATIC_DRAW));
+
+
     }
     
     void bind() {
@@ -31,6 +41,7 @@ public:
     }
 
 private:
+    std::vector<VertexBufferObject> m_vbos;
     unsigned int m_id;
     const char *m_name;
 };
