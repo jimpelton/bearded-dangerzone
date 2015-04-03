@@ -26,8 +26,11 @@ class GlfwContext {
 public:
     GlfwContext();
     ~GlfwContext();
+    
+    GLFWwindow* init(int w, int h);
 
 public:
+
     void setCursorPosCallback(CursorPosCallback cbfunc)
     {
         m_cursor_pos_cbfunc = cbfunc;
@@ -47,8 +50,6 @@ public:
     {
         m_keyboard_cbfunc = cbfunc;
     }
-
-    GLFWwindow* init(int w, int h);
 
     GLFWwindow* window() const
     {
