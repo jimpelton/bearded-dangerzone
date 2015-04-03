@@ -7,7 +7,7 @@
 #include <array>
 
 namespace bd {
-namespace geo {
+
 class Quad {
 public:
     static const std::array<glm::vec4, 4> verts;
@@ -62,7 +62,7 @@ private:
     glm::vec3 m_color;
     glm::vec2 m_dims;
 };
-}
-} /* namespace */
+
+} /* namespace bd */
 
 #endif

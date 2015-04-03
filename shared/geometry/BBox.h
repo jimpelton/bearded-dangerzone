@@ -7,23 +7,23 @@
 #include <array>
 
 namespace bd {
-namespace geo {
 
-class BBox {
+
+class Box {
 public:
     static const std::array<float, 32> vertices;
     static const std::array<unsigned short, 16> elements;
     static const unsigned int vert_element_size = 4;
 
 public:
-    BBox();
+    Box();
 
     /** \brief create a bbox with the given mins/maxes.
              *
              *  \param minmax minX, maxX, minY, maxY, minZ, maxZ
              */
-    BBox(const std::array<float, 6> &minmax);
-    ~BBox();
+    Box(const std::array<float, 6> &minmax);
+    ~Box();
 
 public:
     glm::mat4 transform() const
@@ -38,7 +38,7 @@ private:
 
     glm::mat4 m_transform;
 };
-}
-} // namspace
+
+} // namspace bd
 
 #endif

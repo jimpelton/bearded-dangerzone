@@ -6,7 +6,6 @@
 #include <fstream>
 
 namespace bd {
-namespace util {
 GLuint loadShader(GLenum type, std::string filepath)
 {
     GLuint shaderId = 0;
@@ -80,6 +79,5 @@ GLuint linkProgram(const std::vector<GLuint> &shaderIds)
 
     return programId;
 }
-}
-} // namespace
+} // namespace bd
 

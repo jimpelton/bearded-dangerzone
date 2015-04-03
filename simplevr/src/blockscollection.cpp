@@ -41,7 +41,7 @@ void BlocksCollection::initBlocks() {
     for (auto bz = 0; bz < bs.z; ++bz)
     for (auto by = 0; by < bs.y; ++by)
     for (auto bx = 0; bx < bs.x; ++bx) {
-        size_t bidx{ bd::util::to1D(bx, by, bz, bs.x, bs.y) };
+        size_t bidx{ bd::to1D(bx, by, bz, bs.x, bs.y) };
         glm::u64vec3 blkLoc{ bx, by, bz };
         glm::u64vec3 voxLoc{ m_block_dims_voxels * blkLoc };
         glm::vec3 worldLoc{ block_world_size *glm::vec3{ blkLoc } };
@@ -58,7 +58,7 @@ void BlocksCollection::initBlocks() {
         };
 
         glm::vec3 col;
-        bd::util::hsvToRgb(hue, 1.0f, 1.0f, col);
+        bd::hsvToRgb(hue, 1.0f, 1.0f, col);
         hue += dh;
 
         Block blk(bidx, voxLoc, m_block_dims_voxels, worldLoc, tr, sc, col);
@@ -82,11 +82,11 @@ void BlocksCollection::avgblocks() {
         unsigned long long bz{ z / m_block_dims_voxels.z };
 
         // linear block index
-        unsigned long long bidx{ bd::util::to1D(bx, by, bz, bs.x, bs.y) };
+        unsigned long long bidx{ bd::to1D(bx, by, bz, bs.x, bs.y) };
 
         // linear voxel index
 
-        unsigned long long idx{ bd::util::to1D(x, y, z, vol.x, vol.y) };
+        unsigned long long idx{ bd::to1D(x, y, z, vol.x, vol.y) };
 
         // accumulate voxel value
         Block *blk{ &(m_blocks[bidx]) };
@@ -112,7 +112,7 @@ void BlocksCollection::avgblocks() {
         }
     }
 
-    gl_log("Averaged %d blocks, decided %ul are empty.", m_blocks.size(), emptyCount);
+    gl_log("Averaged %d blocks, decided %d are empty.", m_blocks.size(), emptyCount);
 }
 
 void BlocksCollection::createNonEmptyTextures() {
@@ -132,11 +132,11 @@ void BlocksCollection::createNonEmptyTextures() {
         for (auto z = b.loc().z; z < b.loc().z + m_block_dims_voxels.z; ++z)
         for (auto y = b.loc().y; y < b.loc().y + m_block_dims_voxels.y; ++y)
         for (auto x = b.loc().x; x < b.loc().x + m_block_dims_voxels.x; ++x) {
-            size_t didx{ bd::util::to1D(x, y, z, v.x, v.y) };
+            size_t didx{ bd::to1D(x, y, z, v.x, v.y) };
             image[imgIdx++] = m_data[didx];
         } // for for for
 
-        unsigned int t = bd::util::genGLTex3d(image, GL_RED, GL_RED,
+        unsigned int t = bd::genGLTex3d(image, GL_RED, GL_RED,
                                               m_block_dims_voxels.x, m_block_dims_voxels.y, m_block_dims_voxels.z);
 
         if (t == 0) {

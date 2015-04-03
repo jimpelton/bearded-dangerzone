@@ -5,7 +5,6 @@
 #include <GLFW/glfw3.h>
 
 namespace bd {
-namespace util {
 typedef void (*CursorPosCallback)(double x, double y);
 typedef void (*WindowSizeCallback)(int x, int y);
 typedef void (*ScrollWheelCallback)(double xoff, double yoff);
@@ -64,8 +63,7 @@ private:
     static ScrollWheelCallback m_scroll_wheel_cbfunc;
     static KeyboardCallback m_keyboard_cbfunc;
 };
-}
-} // namespace
+} // namespace bd
 
 #endif // glfwcontext_h__
 

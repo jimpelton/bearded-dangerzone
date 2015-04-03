@@ -44,9 +44,9 @@ const char *simple_vertex_shader = "simplevr/shaders/simple-vs.glsl";
 const char *simple_color_fragment_shader = "simplevr/shaders/simple-color-frag.glsl";
 
 CommandLineOptions g_opts;
-bd::util::GlfwContext *g_context{ nullptr };
+bd::GlfwContext *g_context{ nullptr };
 BlocksCollection *g_bcol{ nullptr };
-bd::geo::Axis g_axis;
+bd::Axis g_axis;
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -99,7 +99,7 @@ unsigned int g_screenHeight { 720 };
 float g_fov { 50.0f };
 bool g_viewDirty { false };
 
-//bd::geometry::BBox g_bbox;
+//bd::BBox g_bbox;
 
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -118,8 +118,8 @@ void window_size_callback(int width, int height);
 
 void updateMvpMatrix();
 void setRotation(const glm::vec2 &dr);
-void drawBoundingBox(bd::geo::BBox *b, unsigned int vaoIdx);
-void loop(bd::util::GlfwContext *);
+void drawBoundingBox(bd::Box *b, unsigned int vaoIdx);
+void loop(bd::GlfwContext *);
 
 void initBoxVbos(unsigned int vaoId);
 void initQuadVbos(unsigned int vaoId);
@@ -205,7 +205,7 @@ void drawAxisElements(unsigned int vaoId)
     glUniformMatrix4fv(g_uniform_simple_mvp, 1, GL_FALSE, 
         glm::value_ptr(g_vpMatrix * glm::toMat4(g_rotation)));
 
-    glDrawArrays(GL_LINES, 0, bd::geo::Axis::verts.size());
+    glDrawArrays(GL_LINES, 0, bd::Axis::verts.size());
 
     glBindVertexArray(0);
 }
@@ -239,7 +239,7 @@ void drawSlicesInstanced(unsigned int vaoId) {
     glBindVertexArray(0);
 }
 
-void loop(bd::util::GlfwContext *context) {
+void loop(bd::GlfwContext *context) {
     GLFWwindow *window = context->window();
     g_viewDirty = true;
 
@@ -294,7 +294,7 @@ void loop(bd::util::GlfwContext *context) {
 //}
 
 void initQuadVbos(unsigned int vaoId) {
-    using bd::geo::Quad;
+    using bd::Quad;
     glBindVertexArray(vaoId);
 
     glGenBuffers(1, &g_q_vboId);
@@ -326,7 +326,7 @@ void initQuadVbos(unsigned int vaoId) {
 }
 
 void initAxisVbos(unsigned int vaoId) {
-    using bd::geo::Axis;
+    using bd::Axis;
     glBindVertexArray(vaoId);
 
     glGenBuffers(2, g_axis_vboId);
@@ -366,12 +366,20 @@ void initAxisVbos(unsigned int vaoId) {
 
 float *readData(const std::string &dtype, const std::string &fname,
                 size_t x, size_t y, size_t z) {
-    using bd::file::DataType;
-    DataType t = bd::file::DataTypesMap.at(dtype);
+    using bd::DataType;
+    DataType t = bd::DataTypesMap.at(dtype);
     float *rval = nullptr;
     switch (t) {
-    case DataType::Float: {
-        bd::file::DataReader<float, float> reader;
+    case DataType::Float: 
+    {
+        bd::DataReader<float, float> reader;
+        reader.loadRaw3d(g_opts.filePath, g_opts.w, g_opts.h, g_opts.d);
+        rval = reader.takeOwnership();
+        break;
+    }
+    case DataType::UnsignedShort:
+    {
+        bd::DataReader<unsigned short, float> reader;
         reader.loadRaw3d(g_opts.filePath, g_opts.w, g_opts.h, g_opts.d);
         rval = reader.takeOwnership();
         break;
@@ -384,16 +392,17 @@ float *readData(const std::string &dtype, const std::string &fname,
 }
 
 void cleanup() {
-    if (g_q_vboId > 0) {
-        glDeleteBuffers(1, &g_q_vboId);
-    }
+    //if (g_q_vboId > 0) {
+    //    glDeleteBuffers(1, &g_q_vboId);
+    //}
 
-    bd::log::gl_log_close();
+    //TODO: cleanup buffers
+    bd::gl_log_close();
 }
 
 int main(int argc, char *argv[]) {
-    bd::log::gl_log_restart();
-    bd::log::gl_debug_log_restart();
+    bd::gl_log_restart();
+    bd::gl_debug_log_restart();
 
     if (parseThem(argc, argv, g_opts) == 0) {
         gl_log_err("Check command line arguments... Exiting.");
@@ -401,7 +410,7 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-    bd::util::GlfwContext context;
+    bd::GlfwContext context;
     g_context = &context;
 
     if (context.init(1280, 720) == nullptr) {
@@ -447,42 +456,42 @@ int main(int argc, char *argv[]) {
     glGenVertexArrays(1, &g_q_vaoId);
     initQuadVbos(g_q_vaoId);
 
-    GLuint sq_vsId = bd::util::loadShader(GL_VERTEX_SHADER, sub_quads_vertex_shader);
+    GLuint sq_vsId = bd::loadShader(GL_VERTEX_SHADER, sub_quads_vertex_shader);
     if (sq_vsId == 0) {
         gl_log_err("Sub-quads vertex shader failed to compile. Exiting...");
         cleanup();
         exit(1);
     }
 
-    GLuint vol_fsId = bd::util::loadShader(GL_FRAGMENT_SHADER, volume_fragment_shader);
+    GLuint vol_fsId = bd::loadShader(GL_FRAGMENT_SHADER, volume_fragment_shader);
     if (vol_fsId == 0) {
         gl_log_err("Volume fragment shader failed to compile. Exiting...");
         cleanup();
         exit(1);
     }
 
-    g_volume_shader_Id = bd::util::linkProgram({ sq_vsId, vol_fsId });
+    g_volume_shader_Id = bd::linkProgram({ sq_vsId, vol_fsId });
     if (g_volume_shader_Id == 0) {
         gl_log_err("Sub-quads+volume shader program failed to link. Exiting...");
         cleanup();
         exit(1);
     }
 
-    GLuint simple_vsId = bd::util::loadShader(GL_VERTEX_SHADER, simple_vertex_shader);
+    GLuint simple_vsId = bd::loadShader(GL_VERTEX_SHADER, simple_vertex_shader);
     if (simple_vsId == 0) {
         gl_log_err("Simple vertex shader failed to compile. Exiting...");
         cleanup();
         exit(1);
     }
 
-    GLuint color_fsId = bd::util::loadShader(GL_FRAGMENT_SHADER, simple_color_fragment_shader);
+    GLuint color_fsId = bd::loadShader(GL_FRAGMENT_SHADER, simple_color_fragment_shader);
     if (color_fsId == 0) {
         gl_log_err("Simple-color fragment shader failed to compile. Exiting...");
         cleanup();
         exit(1);
     }
 
-    g_simple_shader_Id = bd::util::linkProgram({ simple_vsId, color_fsId });
+    g_simple_shader_Id = bd::linkProgram({ simple_vsId, color_fsId });
     if (g_simple_shader_Id == 0) {
         gl_log_err("Simple-vertex+simple-color shader program failed to link. Exiting...");
         cleanup();
@@ -497,12 +506,6 @@ int main(int argc, char *argv[]) {
     g_uniform_vdir = glGetUniformLocation(g_volume_shader_Id, "vdir");
     g_uniform_r = glGetUniformLocation(g_volume_shader_Id, "r");
     g_uniform_ds = glGetUniformLocation(g_volume_shader_Id, "ds");
-    
-    
-
-    //g_uniform_scale = glGetUniformLocation(g_shaderProgramId, "s");
-    //g_uniform_p = glGetUniformLocation(g_shaderProgramId, "p");
-    //g_uniform_v = glGetUniformLocation(g_shaderProgramId, "v");
 
     /// fragment shader ///
     g_uniform_color = glGetUniformLocation(g_volume_shader_Id, "color");
@@ -513,8 +516,6 @@ int main(int argc, char *argv[]) {
     loop(&context);
     cleanup();
 
-    bd::log::gl_log_close();
-    //closeLog();
     glfwTerminate();
 
     return 0;

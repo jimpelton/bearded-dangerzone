@@ -186,7 +186,7 @@ float* readData(const std::string &dtype, const std::string &fname, size_t x, si
     switch (t) {
     case DataType::Float:
     {
-        bd::file::DataReader<float, float> reader;
+        bd::DataReader<float, float> reader;
         reader.loadRaw3d(opts.filePath, opts.w, opts.h, opts.d);
         rval = reader.takeOwnership();
         break;
@@ -249,8 +249,8 @@ void printblocks(std::vector<Block> &blocks)
 int main(int argc, char *argv [])
 try
 {
-    bd::log::gl_log_restart();
-    bd::log::gl_debug_log_restart();
+    bd::gl_log_restart();
+    bd::gl_debug_log_restart();
 
     if (parseThem(argc, argv) == 0) {
         std::cerr << "Error parsing arguments, exiting...\n";

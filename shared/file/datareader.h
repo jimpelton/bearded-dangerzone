@@ -8,7 +8,7 @@
 #include <cstdint>
 
 namespace bd {
-namespace file {
+
 /**
 * \brief Read data and convert from ExternTy to InternTy
 * \tparam ExternTy Type read from file.
@@ -253,7 +253,6 @@ DataReader<ExternTy, InternTy>::normalize_copy
     }
 }
 
-} // namespace file
 } // namespace bd
 
 #endif // datareader_h__

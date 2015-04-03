@@ -1,7 +1,7 @@
 #include "datatypes.h"
 
 namespace bd {
-namespace file {
+
 const std::map<std::string, DataType> DataTypesMap
 {
     { "int", DataType::Integer },
@@ -17,6 +17,6 @@ const std::map<std::string, DataType> DataTypesMap
 
     { "float", DataType::Float }
 };
-}
-} /* namespace */
+
+} /* namespace bd */
 

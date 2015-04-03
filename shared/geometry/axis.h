@@ -7,7 +7,7 @@
 #include <array>
 
 namespace bd {
-namespace geo {
+
 ; // <-- stop VS from indenting (so rediculous!)
 
 class Axis {
@@ -55,7 +55,7 @@ private:
     glm::vec3 m_colorY;
     glm::vec3 m_colorZ;
 };
-}
+
 } /* namespace */
 
 #endif /* ifndef axis_h__ */

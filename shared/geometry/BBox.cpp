@@ -3,9 +3,8 @@
 #include <array>
 
 namespace bd {
-namespace geo {
 
-const std::array<float, 32> BBox::vertices {
+const std::array<float, 32> Box::vertices {
     -0.5, -0.5, -0.5, 1.0,
     0.5, -0.5, -0.5, 1.0,
     0.5, 0.5, -0.5, 1.0,
@@ -16,13 +15,13 @@ const std::array<float, 32> BBox::vertices {
     -0.5, 0.5, 0.5, 1.0,
 };
 
-const std::array<unsigned short, 16> BBox::elements {
+const std::array<unsigned short, 16> Box::elements {
     0, 1, 2, 3,
     4, 5, 6, 7,
     0, 4, 1, 5, 2, 6, 3, 7
 };
 
-BBox::BBox()
+Box::Box()
     : min_x(0.0f),
       max_x(0.0f),
       min_y(0.0f),
@@ -35,7 +34,7 @@ BBox::BBox()
     m_transform = glm::translate(glm::mat4(1.0f), center) * glm::scale(glm::mat4(1.0f), size);
 }
 
-BBox::BBox(const std::array<float, 6> &minmax)
+Box::Box(const std::array<float, 6> &minmax)
     : min_x(minmax[0]),
       max_x(minmax[1]),
       min_y(minmax[2]),
@@ -48,7 +47,7 @@ BBox::BBox(const std::array<float, 6> &minmax)
     m_transform = glm::translate(glm::mat4(1.0f), center) * glm::scale(glm::mat4(1.0f), size);
 }
 
-BBox::~BBox() { }
-}
-} // namespace
+Box::~Box() { }
+
+} // namespace bd
 

@@ -7,19 +7,20 @@
 #define __func__ __FUNCTION__
 #endif
 
-#define gl_log(fmt_, ...) bd::log::gl_log_fcn("%s[%d]:%s()::" # fmt_, __FILE__, __LINE__, __func__, ##__VA_ARGS__)
+#define gl_log(fmt_, ...) bd::gl_log_fcn("%s[%d]:%s()::" # fmt_, __FILE__, __LINE__, __func__, ##__VA_ARGS__)
 
-#define gl_log_err(fmt_, ...) bd::log::gl_log_err_fcn("%s[%d]:%s()::" # fmt_, __FILE__, __LINE__, __func__, ##__VA_ARGS__)
+#define gl_log_err(fmt_, ...) bd::gl_log_err_fcn("%s[%d]:%s()::" # fmt_, __FILE__, __LINE__, __func__, ##__VA_ARGS__)
 
 #ifdef BD_DEBUG
-#define gl_check(fn) (fn); bd::log::checkforAndLogGlError(__FILE__, __func__, __LINE__);
+#define gl_check(fn) (fn); bd::checkForAndLogGlError(__FILE__, __func__, __LINE__);
 #else
 #define gl_check(fn) (fn);
 #endif
 
 
 namespace bd {
-namespace log {
+
+
 void checkForAndLogGlError(const char *file, const char *func, int line);
 
 bool gl_log_restart();
@@ -38,7 +39,8 @@ bool gl_log_err_fcn(const char *message, ...);
 
 void log_gl_params();
 
-} // namespace log
-} // namespace bd
+
+} /* namespace bd */
+
 #endif // gl_log_h__
 

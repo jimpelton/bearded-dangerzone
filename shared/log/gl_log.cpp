@@ -7,7 +7,7 @@
 #include <ctime>
 
 namespace bd {
-namespace log {
+
 const char *logFileName = "gl.log";
 const char *glDebugFileName = "gl_debug.log";
 FILE *file = NULL;
@@ -197,7 +197,6 @@ void gl_debug_message_callback(GLenum source,
     if (glDebugFile)
         fprintf(glDebugFile, msg,
                 source, type, id, severity, message);
-}
 }
 } // namespace
 

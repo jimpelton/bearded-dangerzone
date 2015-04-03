@@ -5,7 +5,7 @@
 #include <array>
 
 namespace bd {
-namespace geo {
+
 const std::array<glm::vec4, 4> Quad::verts
 {
     glm::vec4(-0.5f, -0.5f, 0.0f, 1.0f), // 0 ll
@@ -19,6 +19,6 @@ const std::array<unsigned short, 4> Quad::elements
     0, 1, 3, 2
     //0, 1, 2, 3
 };
-}
-} // namespace
+
+} // namespace bd
 

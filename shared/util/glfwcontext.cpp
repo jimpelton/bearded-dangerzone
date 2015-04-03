@@ -3,7 +3,6 @@
 #include "log/gl_log.h"
 
 namespace bd {
-namespace util {
 CursorPosCallback GlfwContext::m_cursor_pos_cbfunc = nullptr;
 WindowSizeCallback GlfwContext::m_window_size_cbfunc = nullptr;
 ScrollWheelCallback GlfwContext::m_scroll_wheel_cbfunc = nullptr;
@@ -50,7 +49,7 @@ GLFWwindow* GlfwContext::init(int width, int height)
         return nullptr;
     }
 
-    glDebugMessageCallback((GLDEBUGPROC)bd::log::gl_debug_message_callback, NULL);
+    glDebugMessageCallback((GLDEBUGPROC)bd::gl_debug_message_callback, NULL);
     glEnable(GL_DEBUG_OUTPUT);
 
     glEnable(GL_DEPTH_TEST);
@@ -87,7 +86,7 @@ void GlfwContext::glfw_scrollwheel_callback(GLFWwindow *window, double xoff, dou
 {
     if (m_scroll_wheel_cbfunc != nullptr)
         (*m_scroll_wheel_cbfunc)(xoff, yoff);
+
 }
-}
-} // namespace
+} // namespace bd
 

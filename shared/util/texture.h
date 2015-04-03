@@ -5,11 +5,11 @@
 
 #include <GL/glew.h>
 
-namespace bd { namespace util {
+namespace bd {
 
     unsigned int genGLTex3d(float *img, GLenum internal_type, GLenum external_type, 
         size_t w, size_t h, size_t d);
 
-}}  // namespace
+}  // namespace bd
 
 #endif

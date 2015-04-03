@@ -1,7 +1,7 @@
 #include "axis.h"
 
 namespace bd {
-namespace geo {
+
 const std::array<glm::vec4, 6> Axis::verts
 {
     glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), 
@@ -30,6 +30,5 @@ const std::array<unsigned short, 6> Axis::elements
     0, 2,
     0, 3
 };
-}
-} /* namespace */
 
+} /* namespace  bd */

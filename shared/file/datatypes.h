@@ -5,7 +5,7 @@
 #include <string>
 
 namespace bd {
-namespace file {
+
 enum class DataType {
     Integer,
     UnsignedInteger,
@@ -20,7 +20,7 @@ enum class DataType {
 };
 
 extern const std::map<std::string, DataType> DataTypesMap;
-}
-} /* namespace */
+
+} /* namespace bd */
 
 #endif /* ifndef datatypes_h__ */
