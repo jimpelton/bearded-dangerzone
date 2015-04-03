@@ -20,6 +20,7 @@
     </Link>
     <ClCompile>
       <AdditionalIncludeDirectories>$(BoostIncludeDir);$(GlmIncludeDir);$(GlfwIncludeDir);$(GlewIncludeDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>GLEW_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
