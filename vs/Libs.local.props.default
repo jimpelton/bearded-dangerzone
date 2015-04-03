@@ -2,15 +2,29 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros">
+
     <GlfwIncludeDir></GlfwIncludeDir>
+
     <GlfwLibsDir></GlfwLibsDir>
+
     <GlewIncludeDir></GlewIncludeDir>
+
     <GlewLibDir></GlewLibDir>
+
     <BoostIncludeDir></BoostIncludeDir>
+
     <BoostLibDir></BoostLibDir>
+    
     <GlmIncludeDir></GlmIncludeDir>
+
     <FreeTypeLibDir></FreeTypeLibDir>
+
     <FreeTypeIncludeDir></FreeTypeIncludeDir>
+
+    <GTestLibDir></GTestLibDir>
+
+    <GTestIncludeDir></GTestIncludeDir>
+
   </PropertyGroup>
   <PropertyGroup />
   <ItemDefinitionGroup>
@@ -24,40 +38,60 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+
     <BuildMacro Include="GlfwIncludeDir">
       <Value>$(GlfwIncludeDir)</Value>
       <EnvironmentVariable>true</EnvironmentVariable>
     </BuildMacro>
+
     <BuildMacro Include="GlfwLibsDir">
       <Value>$(GlfwLibsDir)</Value>
     </BuildMacro>
+
     <BuildMacro Include="GlewIncludeDir">
       <Value>$(GlewIncludeDir)</Value>
       <EnvironmentVariable>true</EnvironmentVariable>
     </BuildMacro>
+
     <BuildMacro Include="GlewLibDir">
       <Value>$(GlewLibDir)</Value>
       <EnvironmentVariable>true</EnvironmentVariable>
     </BuildMacro>
+
     <BuildMacro Include="BoostIncludeDir">
       <Value>$(BoostIncludeDir)</Value>
       <EnvironmentVariable>true</EnvironmentVariable>
     </BuildMacro>
+
     <BuildMacro Include="BoostLibDir">
       <Value>$(BoostLibDir)</Value>
       <EnvironmentVariable>true</EnvironmentVariable>
     </BuildMacro>
+
     <BuildMacro Include="GlmIncludeDir">
       <Value>$(GlmIncludeDir)</Value>
       <EnvironmentVariable>true</EnvironmentVariable>
     </BuildMacro>
+
     <BuildMacro Include="FreeTypeLibDir">
       <Value>$(FreeTypeLibDir)</Value>
       <EnvironmentVariable>true</EnvironmentVariable>
     </BuildMacro>
+
     <BuildMacro Include="FreeTypeIncludeDir">
       <Value>$(FreeTypeIncludeDir)</Value>
       <EnvironmentVariable>true</EnvironmentVariable>
     </BuildMacro>
+
+    <BuildMacro Include="GTestLibDir">
+      <Value>$(GTestLibDir)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+
+    <BuildMacro Include="GTestIncludeDir">
+      <Value>$(GTestIncludeDir)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+
   </ItemGroup>
 </Project>
