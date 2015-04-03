@@ -1,0 +1,11 @@
+*.log
+*.dll
+vs/Libs.local.props
+*.opensdf
+*.sdf
+*.user
+*.nvuser
+*.suo
+**/x64
+**/Debug
+**/Release
