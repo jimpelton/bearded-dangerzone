@@ -6,7 +6,6 @@
 
 #include <sstream>
 
-
 std::string Block::to_string() const
 {
     std::stringstream ss;

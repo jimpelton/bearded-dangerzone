@@ -1,14 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
-    </Filter>
     <Filter Include="Resource Files">
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
@@ -16,22 +8,31 @@
     <Filter Include="shaders">
       <UniqueIdentifier>{136b0075-201b-4d04-b65e-ec5f72e94c6c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{a1f58f61-ca96-494f-841b-e791c60cc564}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\simplevr\src\main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\simplevr\src\cmdline.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="..\..\simplevr\src\block.cpp">
+      <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\..\simplevr\src\blockscollection.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\simplevr\src\block.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="..\..\simplevr\src\cmdline.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\simplevr\src\geometry.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\simplevr\src\main.cpp">
+      <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\..\simplevr\src\transferfunction.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\simplevr\src\volrend.cpp">
+      <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -43,26 +44,32 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\simplevr\src\cmdline.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\simplevr\src\vertexarrayobject.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\simplevr\src\vertexbufferobject.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\simplevr\src\block.h">
-      <Filter>Header Files</Filter>
+      <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\simplevr\src\blockscollection.h">
-      <Filter>Header Files</Filter>
+      <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\simplevr\src\volume.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="..\..\simplevr\src\cmdline.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\simplevr\src\geometry.h">
+      <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\simplevr\src\transferfunction.h">
-      <Filter>Header Files</Filter>
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\simplevr\src\vertexarrayobject.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\simplevr\src\vertexbufferobject.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\simplevr\src\volrend.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\simplevr\src\volume.h">
+      <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

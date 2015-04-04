@@ -5,12 +5,28 @@
 #include <GLFW/glfw3.h>
 
 namespace bd {
+
+class ContextController
+{
+public:
+    ContextController() { }
+    virtual ~ContextController() { }
+
+    virtual void keyboard_callback(int key, int scancode, int action, int mods) = 0;
+    virtual void window_size_callback(int width, int height) = 0;
+    virtual void cursorpos_callback(double x, double y) = 0;
+    virtual void scrollwheel_callback(double xoff, double yoff) = 0;
+};
+
 typedef void (*CursorPosCallback)(double x, double y);
 typedef void (*WindowSizeCallback)(int x, int y);
 typedef void (*ScrollWheelCallback)(double xoff, double yoff);
 typedef void (*KeyboardCallback)(int key, int scancode, int action, int mods);
 
 class GlfwContext {
+private:
+    static ContextController *m_concon;
+    
     static void glfw_error_callback(int error, const char *description);
 
     static void glfw_cursorpos_callback(GLFWwindow *win, double x, double y);
@@ -23,45 +39,21 @@ class GlfwContext {
     static void glfw_scrollwheel_callback(GLFWwindow *window, double xoff, double yoff);
 
 public:
-    GlfwContext();
+    explicit GlfwContext();
     ~GlfwContext();
     
-    GLFWwindow* init(int w, int h);
+    GLFWwindow* init(ContextController *, int scr_w, int scr_h);
 
 public:
+    GLFWwindow* window() const;
 
-    void setCursorPosCallback(CursorPosCallback cbfunc)
-    {
-        m_cursor_pos_cbfunc = cbfunc;
-    }
+    void swapBuffers();
 
-    void setWindowSizeCallback(WindowSizeCallback cbfunc)
-    {
-        m_window_size_cbfunc = cbfunc;
-    }
-
-    void setScrollWheelCallback(ScrollWheelCallback cbfunc)
-    {
-        m_scroll_wheel_cbfunc = cbfunc;
-    }
-
-    void setKeyboardCallback(KeyboardCallback cbfunc)
-    {
-        m_keyboard_cbfunc = cbfunc;
-    }
-
-    GLFWwindow* window() const
-    {
-        return m_window;
-    }
+    void pollEvents();
 
 private:
     GLFWwindow *m_window;
-
-    static CursorPosCallback m_cursor_pos_cbfunc;
-    static WindowSizeCallback m_window_size_cbfunc;
-    static ScrollWheelCallback m_scroll_wheel_cbfunc;
-    static KeyboardCallback m_keyboard_cbfunc;
+    
 };
 } // namespace bd
 

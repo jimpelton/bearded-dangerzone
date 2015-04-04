@@ -1,6 +1,7 @@
 #include "blockscollection.h"
 
 #include <util/texture.h>
+#include <log/gl_log.h>
 
 #include <GL/glew.h>
 
@@ -8,21 +9,27 @@
 
 #include <fstream>
 #include <sstream>
+#include <util/util.h>
 
 const glm::mat4 identity {
     1.0f
 };
 
+BlocksCollection::BlocksCollection()
+{
+}
+
 BlocksCollection::BlocksCollection(std::unique_ptr<float[]> &data, Volume *vol)
     : m_blocks{ }
     , m_block_dims_voxels{ vol->numVox() / vol->numBlocks() }
     , m_vol{ vol }
-    , m_data{ std::move(data) } {
+    , m_data{ std::move(data) }
+{
 }
 
-BlocksCollection::~BlocksCollection() { }
-
-
+BlocksCollection::~BlocksCollection()
+{
+}
 
 void BlocksCollection::initBlocks() {
     // number of blocks in the volume for each dimension.
@@ -47,13 +54,15 @@ void BlocksCollection::initBlocks() {
         glm::vec3 worldLoc{ block_world_size *glm::vec3{ blkLoc } };
 
         // translation for quad
-        glm::mat4 tr {
+        glm::mat4 tr 
+        {
             glm::translate(identity, (worldLoc + (worldLoc + block_world_size)) / 2.0f)
         };
 
         // scale quad to block size
         // TODO: this may not be right because... quad is 2d?
-        glm::mat4 sc {
+        glm::mat4 sc 
+        {
             glm::scale(identity, glm::vec3(block_world_size.x, block_world_size.y, 0.0))
         };
 
@@ -64,6 +73,7 @@ void BlocksCollection::initBlocks() {
         Block blk(bidx, voxLoc, m_block_dims_voxels, worldLoc, tr, sc, col);
         m_blocks.push_back(blk);
     }
+
 }
 
 void BlocksCollection::avgblocks() {

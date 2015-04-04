@@ -1,9 +1,11 @@
 #ifndef aabb_h__
 #define aabb_h__
 
+#include "translation.h"
+
 #include <glm/glm.hpp>
 
-namespace bd{
+namespace bd {
 
 class BoundingBox 
 {
@@ -11,15 +13,12 @@ public:
     BoundingBox();
     ~BoundingBox();
 
-
-    void translate(glm::vec3 center);
-    void scale(glm::vec3 by);
-        
+    
 private:
     glm::vec3 m_min;
     glm::vec3 m_max;
 
-    glm::mat4 m_transform;
+    Translation m_tr;
 
 };
 

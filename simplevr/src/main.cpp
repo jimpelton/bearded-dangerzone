@@ -11,6 +11,7 @@
 #include "cmdline.h"
 #include "block.h"
 #include "blockscollection.h"
+#include "geometry.h"
 
 #include <geometry/BBox.h>
 #include <geometry/quad.h>
@@ -18,7 +19,6 @@
 #include <file/datatypes.h>
 #include <file/datareader.h>
 #include <log/gl_log.h>
-#include <util/util.h>
 #include <util/shader.h>
 #include <util/glfwcontext.h>
 
@@ -29,12 +29,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <glm/gtx/string_cast.hpp>
 
 #include <array>
 #include <memory>
-#include <iostream>
-#include <sstream>
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -46,6 +43,7 @@ const char *simple_color_fragment_shader = "simplevr/shaders/simple-color-frag.g
 CommandLineOptions g_opts;
 bd::GlfwContext *g_context{ nullptr };
 BlocksCollection *g_bcol{ nullptr };
+Volume *g_vol{ nullptr };
 bd::Axis g_axis;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -88,7 +86,6 @@ glm::vec3 g_camFocus { 0.0f, 0.0f, 0.0f };
 glm::vec3 g_camUp { 0.0f, 1.0f, 0.0f };
 glm::vec2 g_cursorPos;
 
-//unsigned int NUMSLICES = 1u;
 const glm::vec3 g_x_vdir { 1.0f, 0.0f, 0.0f };
 const glm::vec3 g_y_vdir { 0.0f, 1.0f, 0.0f };
 const glm::vec3 g_z_vdir { 0.0f, 0.0f, 1.0f };
@@ -111,18 +108,17 @@ void usage(const char *);
 GLuint loadShader(GLenum type, std::string filepath);
 GLuint compileShader(GLenum type, const char *shader);
 
-void cursorpos_callback(double x, double y);
-void keyboard_callback(int key, int scancode, int action, int mods);
-void error_callback(int error, const char *description);
-void window_size_callback(int width, int height);
+//void cursorpos_callback(double x, double y);
+//void keyboard_callback(int key, int scancode, int action, int mods);
+//void error_callback(int error, const char *description);
+//void window_size_callback(int width, int height);
 
 void updateMvpMatrix();
 void setRotation(const glm::vec2 &dr);
 void drawBoundingBox(bd::Box *b, unsigned int vaoIdx);
 void loop(bd::GlfwContext *);
 
-void initBoxVbos(unsigned int vaoId);
-void initQuadVbos(unsigned int vaoId);
+
 void drawSlicesInstanced(unsigned int vaoId);
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -131,58 +127,35 @@ void drawSlicesInstanced(unsigned int vaoId);
 /*             C A L L B A C K S                                        */
 /************************************************************************/
 
-void keyboard_callback(int key, int scancode, int action, int mods) {}
-
-void window_size_callback(int width, int height) {
-    g_screenWidth = width;
-    g_screenHeight = height;
-    glViewport(0, 0, width, height);
-}
-
-void cursorpos_callback(double x, double y) {
-    glm::vec2 cpos { floor(x), floor(y) };
-    if (glfwGetMouseButton(g_context->window(), GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
-        glm::vec2 delta { cpos - g_cursorPos };
-        setRotation(delta);
-    }
-    g_cursorPos = cpos;
-}
-
-void scrollwheel_callback(double xoff, double yoff) {
-    g_camPosition += yoff;
-    g_viewDirty = true;
-}
+//void keyboard_callback(int key, int scancode, int action, int mods) {}
+//
+//void window_size_callback(int width, int height) {
+//    g_screenWidth = width;
+//    g_screenHeight = height;
+//    glViewport(0, 0, width, height);
+//}
+//
+//void cursorpos_callback(double x, double y) {
+//    glm::vec2 cpos { floor(x), floor(y) };
+//    if (glfwGetMouseButton(g_context->window(), GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+//        glm::vec2 delta { cpos - g_cursorPos };
+//        setRotation(delta);
+//    }
+//    g_cursorPos = cpos;
+//}
+//
+//void scrollwheel_callback(double xoff, double yoff) {
+//    g_camPosition += yoff;
+//    g_viewDirty = true;
+//}
 
 /************************************************************************/
 /*     D R A W I N'                                                     */
 /************************************************************************/
 
-void setRotation(const glm::vec2 &dr) {
-    glm::quat rotX { glm::angleAxis<float>(
-                         glm::radians(dr.y) * g_mouseSpeed,
-                         glm::vec3(1, 0, 0)
-                     ) };
 
-    glm::quat rotY { glm::angleAxis<float>(
-                         glm::radians(-dr.x) * g_mouseSpeed,
-                         glm::vec3(0, 1, 0)
-                     ) };
 
-    g_rotation = (rotX * rotY) * g_rotation;
 
-    g_viewDirty = true;
-}
-
-void updateMvpMatrix() {
-    g_viewMatrix = glm::lookAt(g_camPosition, g_camFocus, g_camUp);
-
-    g_projectionMatrix = glm::perspective(g_fov,
-                                          static_cast<float>(g_screenWidth) / g_screenHeight,
-                                          0.1f, 100.0f);
-
-    g_vpMatrix = g_projectionMatrix * g_viewMatrix;
-    g_viewDirty = false;
-}
 
 // void drawBoundingBox(bd::geometry::BBox *b, unsigned int vaoIdx)
 // {
@@ -293,77 +266,6 @@ void loop(bd::GlfwContext *context) {
 //                 GL_STATIC_DRAW);
 //}
 
-void initQuadVbos(unsigned int vaoId) {
-    using bd::Quad;
-    glBindVertexArray(vaoId);
-
-    glGenBuffers(1, &g_q_vboId);
-    glBindBuffer(GL_ARRAY_BUFFER, g_q_vboId);
-    glBufferData(GL_ARRAY_BUFFER,
-                 Quad::verts.size() * sizeof(decltype(Quad::verts[0])),
-                 Quad::verts.data(),
-                 GL_STATIC_DRAW);
-    const unsigned vertex_coord_attr = 0;
-    glEnableVertexAttribArray(vertex_coord_attr);
-    glVertexAttribPointer(vertex_coord_attr, // attribute
-                          Quad::vert_element_size, // number of elements per vertex, here (x,y,z,w)
-                          GL_FLOAT, // the type of each element
-                          GL_FALSE, // take our values as-is
-                          0, // no extra data between each position
-                          0 // offset of first element
-                         );
-
-
-
-    glGenBuffers(1, &g_q_iboId);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_q_iboId);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-                 Quad::elements.size() * sizeof(decltype(Quad::elements[0])),
-                 Quad::elements.data(),
-                 GL_STATIC_DRAW);
-
-    glBindVertexArray(0);
-}
-
-void initAxisVbos(unsigned int vaoId) {
-    using bd::Axis;
-    glBindVertexArray(vaoId);
-
-    glGenBuffers(2, g_axis_vboId);
-    glBindBuffer(GL_ARRAY_BUFFER, g_axis_vboId[0]);
-    glBufferData(GL_ARRAY_BUFFER,
-                 Axis::verts.size() * sizeof(decltype(Axis::verts[0])),
-                 Axis::verts.data(),
-                 GL_STATIC_DRAW);
-    const unsigned vertex_coord_attr = 0;
-    glEnableVertexAttribArray(vertex_coord_attr);
-    glVertexAttribPointer(vertex_coord_attr, // attribute
-                          Axis::vert_element_size, // number of elements per vertex, here (x,y,z,w)
-                          GL_FLOAT, // the type of each element
-                          GL_FALSE, // take our values as-is
-                          0, // no extra data between each position
-                          0); // offset of first element
-    
-
-    glBindBuffer(GL_ARRAY_BUFFER, g_axis_vboId[1]);
-    glBufferData(GL_ARRAY_BUFFER, 
-        Axis::colors.size() * sizeof(decltype(Axis::colors[0])),
-        Axis::colors.data(), 
-        GL_STATIC_DRAW);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
-
-
-    //glGenBuffers(1, &g_axis_iboId);
-    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_axis_iboId);
-    //glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-    //             Axis::elements.size() * sizeof(decltype(Axis::elements[0])),
-    //             Axis::elements.data(),
-    //             GL_STATIC_DRAW);
-
-    glBindVertexArray(0);
-}
-
 float *readData(const std::string &dtype, const std::string &fname,
                 size_t x, size_t y, size_t z) {
     using bd::DataType;
@@ -410,18 +312,12 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-    bd::GlfwContext context;
-    g_context = &context;
+    
 
-    if (context.init(1280, 720) == nullptr) {
-        gl_log("Could not initialize GLFW, exiting.");
-        exit(1);
-    }
+    //bd::GlfwContext context;
+    //g_context = &context;
 
-    context.setCursorPosCallback(cursorpos_callback);
-    context.setKeyboardCallback(keyboard_callback);
-    context.setScrollWheelCallback(scrollwheel_callback);
-    context.setWindowSizeCallback(window_size_callback);
+
 
     std::unique_ptr<float []> data {
         readData(g_opts.type, g_opts.filePath, g_opts.w, g_opts.h, g_opts.d)
@@ -441,7 +337,7 @@ int main(int argc, char *argv[]) {
         { g_opts.w, g_opts.h, g_opts.d },
         { g_opts.w / g_opts.block_side, g_opts.h / g_opts.block_side, g_opts.d / g_opts.block_side }
     };
-
+    g_vol = &v;
     BlocksCollection bcol { data, &v };
     bcol.initBlocks();
     bcol.avgblocks();
@@ -451,10 +347,10 @@ int main(int argc, char *argv[]) {
     g_bcol = &bcol;
 
     glGenVertexArrays(1, &g_axis_vaoId);
-    initAxisVbos(g_axis_vaoId);
+    initAxisVbos(g_axis_vaoId, g_axis_vboId);
     
     glGenVertexArrays(1, &g_q_vaoId);
-    initQuadVbos(g_q_vaoId);
+    initQuadVbos(g_q_vaoId, &g_q_vboId, &g_q_iboId);
 
     GLuint sq_vsId = bd::loadShader(GL_VERTEX_SHADER, sub_quads_vertex_shader);
     if (sq_vsId == 0) {
@@ -513,7 +409,7 @@ int main(int argc, char *argv[]) {
     g_uniform_tf = glGetUniformLocation(g_volume_shader_Id, "tf");
 
 
-    loop(&context);
+    //loop(&context);
     cleanup();
 
     glfwTerminate();

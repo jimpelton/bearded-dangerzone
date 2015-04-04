@@ -1,13 +1,9 @@
 #ifndef block_h__
 #define block_h__
 
-#include <log/gl_log.h>
-#include <util/util.h>
-#include <geometry/quad.h>
+#include <graphics/quad.h>
 
 #include <glm/glm.hpp>
-
-
 
 
 #ifndef BLOCK_DATA_FILENAME
@@ -16,7 +12,8 @@
 
 class Block
 {
-    
+public:
+    static void makeBlockSlices(unsigned int numslices);
 
 public:
 

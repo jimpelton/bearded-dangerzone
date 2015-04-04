@@ -1,116 +1,96 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
-    </Filter>
-    <Filter Include="Source Files\geometry">
-      <UniqueIdentifier>{1992e813-035b-45a2-b563-e822d85f2326}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\geometry">
-      <UniqueIdentifier>{0d756e47-bd08-4657-a015-90938a07dfd1}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\file">
-      <UniqueIdentifier>{0526f03d-b25d-41a3-a7ec-3967e2153fbe}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\log">
-      <UniqueIdentifier>{852ffeec-419d-4bf3-bf49-ae46bb135e91}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\log">
-      <UniqueIdentifier>{01bb3b0e-0575-477f-9f52-a26799d38633}</UniqueIdentifier>
-    </Filter>
     <Filter Include="shader_programs">
       <UniqueIdentifier>{21fc295b-2ef2-48c2-a6ef-569309021736}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\util">
+    <Filter Include="file">
+      <UniqueIdentifier>{0526f03d-b25d-41a3-a7ec-3967e2153fbe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="graphics">
+      <UniqueIdentifier>{f06609c8-658b-4d45-843c-3f853453f6a6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="log">
+      <UniqueIdentifier>{852ffeec-419d-4bf3-bf49-ae46bb135e91}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="util">
       <UniqueIdentifier>{b1e50286-f079-43dd-bd29-0c44b648c7bd}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\util">
-      <UniqueIdentifier>{5ed56d6f-ce8b-4f78-94c7-54987a88747c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\file">
-      <UniqueIdentifier>{fa2f596e-9bad-4e3c-b129-691b9dbd61c7}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\shared\geometry\BBox.h">
-      <Filter>Header Files\geometry</Filter>
+    <ClInclude Include="..\..\shared\graphics\axis.h">
+      <Filter>graphics</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\shared\geometry\mesh.h">
-      <Filter>Header Files\geometry</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\shared\file\datareader.h">
-      <Filter>Header Files\file</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\shared\log\gl_log.h">
-      <Filter>Header Files\log</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\shared\geometry\quad.h">
-      <Filter>Header Files\geometry</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\shared\util\util.h">
-      <Filter>Header Files\util</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\shared\geometry\axis.h">
-      <Filter>Header Files\geometry</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\shared\file\datatypes.h">
-      <Filter>Header Files\file</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\shared\util\shader.h">
-      <Filter>Header Files\util</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\shared\util\glfwcontext.h">
-      <Filter>Header Files\util</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\shared\util\texture.h">
-      <Filter>Header Files\util</Filter>
+    <ClInclude Include="..\..\shared\graphics\BBox.h">
+      <Filter>graphics</Filter>
     </ClInclude>
     <ClInclude Include="..\..\shared\util\boundingbox.h">
-      <Filter>Header Files\util</Filter>
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\shared\file\datareader.h">
+      <Filter>file</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\shared\file\datatypes.h">
+      <Filter>file</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\shared\log\gl_log.h">
+      <Filter>log</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\shared\util\glfwcontext.h">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\shared\graphics\mesh.h">
+      <Filter>graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\shared\graphics\quad.h">
+      <Filter>graphics</Filter>
     </ClInclude>
     <ClInclude Include="..\..\shared\util\translation.h">
-      <Filter>Header Files\util</Filter>
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\shared\util\util.h">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\shared\util\texture.h">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\shared\util\shader.h">
+      <Filter>util</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\shared\geometry\BBox.cpp">
-      <Filter>Source Files\geometry</Filter>
+    <ClCompile Include="..\..\shared\graphics\axis.cpp">
+      <Filter>graphics</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\shared\geometry\mesh.cpp">
-      <Filter>Source Files\geometry</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\shared\log\gl_log.cpp">
-      <Filter>Source Files\log</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\shared\geometry\quad.cpp">
-      <Filter>Source Files\geometry</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\shared\util\util.cpp">
-      <Filter>Source Files\util</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\shared\geometry\axis.cpp">
-      <Filter>Source Files\geometry</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\shared\file\datatypes.cpp">
-      <Filter>Source Files\file</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\shared\util\shader.cpp">
-      <Filter>Source Files\util</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\shared\util\glfwcontext.cpp">
-      <Filter>Source Files\util</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\shared\util\texture.cpp">
-      <Filter>Source Files\util</Filter>
+    <ClCompile Include="..\..\shared\graphics\BBox.cpp">
+      <Filter>graphics</Filter>
     </ClCompile>
     <ClCompile Include="..\..\shared\util\boundingbox.cpp">
-      <Filter>Source Files\util</Filter>
+      <Filter>util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\shared\file\datatypes.cpp">
+      <Filter>file</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\shared\log\gl_log.cpp">
+      <Filter>log</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\shared\util\glfwcontext.cpp">
+      <Filter>util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\shared\graphics\mesh.cpp">
+      <Filter>graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\shared\graphics\quad.cpp">
+      <Filter>graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\shared\util\util.cpp">
+      <Filter>util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\shared\util\texture.cpp">
+      <Filter>util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\shared\util\shader.cpp">
+      <Filter>util</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

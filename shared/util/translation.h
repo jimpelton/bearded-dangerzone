@@ -1,6 +1,8 @@
 #ifndef translation_h__
 #define translation_h__
 
+#include <glm/glm.hpp>
+
 namespace bd {
 
 class Translation {

@@ -33,6 +33,8 @@ public:
     /** \brief Default constructor 
       * Create a blockscollection associted with given volume.
       */
+    BlocksCollection();
+
     BlocksCollection(std::unique_ptr<float[]> &data, Volume *vol);
     ~BlocksCollection();
 

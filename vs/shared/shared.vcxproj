@@ -123,10 +123,10 @@
   <ItemGroup>
     <ClInclude Include="..\..\shared\file\datareader.h" />
     <ClInclude Include="..\..\shared\file\datatypes.h" />
-    <ClInclude Include="..\..\shared\geometry\axis.h" />
-    <ClInclude Include="..\..\shared\geometry\BBox.h" />
-    <ClInclude Include="..\..\shared\geometry\mesh.h" />
-    <ClInclude Include="..\..\shared\geometry\quad.h" />
+    <ClInclude Include="..\..\shared\graphics\axis.h" />
+    <ClInclude Include="..\..\shared\graphics\BBox.h" />
+    <ClInclude Include="..\..\shared\graphics\mesh.h" />
+    <ClInclude Include="..\..\shared\graphics\quad.h" />
     <ClInclude Include="..\..\shared\log\gl_log.h" />
     <ClInclude Include="..\..\shared\util\boundingbox.h" />
     <ClInclude Include="..\..\shared\util\glfwcontext.h" />
@@ -137,10 +137,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\shared\file\datatypes.cpp" />
-    <ClCompile Include="..\..\shared\geometry\axis.cpp" />
-    <ClCompile Include="..\..\shared\geometry\BBox.cpp" />
-    <ClCompile Include="..\..\shared\geometry\mesh.cpp" />
-    <ClCompile Include="..\..\shared\geometry\quad.cpp" />
+    <ClCompile Include="..\..\shared\graphics\axis.cpp" />
+    <ClCompile Include="..\..\shared\graphics\BBox.cpp" />
+    <ClCompile Include="..\..\shared\graphics\mesh.cpp" />
+    <ClCompile Include="..\..\shared\graphics\quad.cpp" />
     <ClCompile Include="..\..\shared\log\gl_log.cpp" />
     <ClCompile Include="..\..\shared\util\boundingbox.cpp" />
     <ClCompile Include="..\..\shared\util\glfwcontext.cpp" />

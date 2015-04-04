@@ -9,3 +9,4 @@ vs/Libs.local.props
 **/x64
 **/Debug
 **/Release
+**/ipch
