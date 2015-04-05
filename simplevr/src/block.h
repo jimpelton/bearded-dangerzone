@@ -13,7 +13,7 @@
 class Block
 {
 public:
-    static void makeBlockSlices(unsigned int numslices);
+    // static void makeBlockSlices(unsigned int numslices);
 
 public:
 

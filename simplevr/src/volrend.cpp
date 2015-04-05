@@ -7,16 +7,20 @@
 
 #include <vector>
 
+///////////////////////////////////////////////////////////////////////////////////
+// View Class   
+///////////////////////////////////////////////////////////////////////////////////
+
 void View::setMouseRotation(const glm::vec2& cpos)
 {
     glm::vec2 dr{ m_cursorPos - cpos };
 
-    glm::quat rotX{ glm::angleAxis<float>(
+    glm::quat rotX { glm::angleAxis<float>(
         glm::radians(dr.y) * m_mouseSpeed,
         glm::vec3(1, 0, 0)
         ) };
 
-    glm::quat rotY{ glm::angleAxis<float>(
+    glm::quat rotY { glm::angleAxis<float>(
         glm::radians(-dr.x) * m_mouseSpeed,
         glm::vec3(0, 1, 0)
         ) };
@@ -29,7 +33,6 @@ void View::setMouseRotation(const glm::vec2& cpos)
 void View::setCursorPos(const glm::vec2& cpos)
 {
     m_cursorPos = cpos;
-
 }
 
 void View::setViewPort(int w, int h)
@@ -46,7 +49,7 @@ void View::setPosOffset(double xoff, double yoff)
     m_viewDirty = true;
 }
 
-void View::updateMvpMatrix()
+void View::updateTransform()
 {
     m_view = glm::lookAt(m_position, m_focus, m_up);
 
@@ -54,7 +57,8 @@ void View::updateMvpMatrix()
         static_cast<float>(m_screenWidth) / m_screenHeight,
         0.1f, 100.0f);
 
-    //g_vpMatrix = g_projectionMatrix * g_viewMatrix;
+    m_transform = m_proj * m_view;
+
     m_viewDirty = false;
 }
 
@@ -75,6 +79,8 @@ bool VolRend::init(int scr_w, int src_h)
         gl_log("Could not initialize GLFW, exiting.");
         return false;
     }
+
+    
 
     return true;
 }

@@ -5,6 +5,7 @@
 #include <cstdarg>
 #include <fstream>
 #include <ctime>
+#include <iostream>
 
 namespace bd {
 
@@ -17,7 +18,7 @@ void checkForAndLogGlError(const char *file, const char *func, int line)
 {
     GLint error;
     while ((error = glGetError()) != GL_NO_ERROR) {
-        gl_log_err_fcn("(OGL): %s[%d]:%s():: 0x%04X", file, line, func, error);
+        fprintf(stderr, "(OGL): %s[%d]:%s():: 0x%04X", file, line, func, error);
     }
 }
 

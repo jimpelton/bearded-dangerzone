@@ -4,93 +4,99 @@
     <Filter Include="shader_programs">
       <UniqueIdentifier>{21fc295b-2ef2-48c2-a6ef-569309021736}</UniqueIdentifier>
     </Filter>
-    <Filter Include="file">
-      <UniqueIdentifier>{0526f03d-b25d-41a3-a7ec-3967e2153fbe}</UniqueIdentifier>
+    <Filter Include="src">
+      <UniqueIdentifier>{3851ee81-b529-4aa0-8bc4-9f3524354365}</UniqueIdentifier>
     </Filter>
-    <Filter Include="graphics">
-      <UniqueIdentifier>{f06609c8-658b-4d45-843c-3f853453f6a6}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="log">
+    <Filter Include="src\log">
       <UniqueIdentifier>{852ffeec-419d-4bf3-bf49-ae46bb135e91}</UniqueIdentifier>
     </Filter>
-    <Filter Include="util">
+    <Filter Include="src\graphics">
+      <UniqueIdentifier>{f06609c8-658b-4d45-843c-3f853453f6a6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\file">
+      <UniqueIdentifier>{0526f03d-b25d-41a3-a7ec-3967e2153fbe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\util">
       <UniqueIdentifier>{b1e50286-f079-43dd-bd29-0c44b648c7bd}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\shared\graphics\axis.h">
-      <Filter>graphics</Filter>
+      <Filter>src\graphics</Filter>
     </ClInclude>
     <ClInclude Include="..\..\shared\graphics\BBox.h">
-      <Filter>graphics</Filter>
+      <Filter>src\graphics</Filter>
     </ClInclude>
     <ClInclude Include="..\..\shared\util\boundingbox.h">
-      <Filter>util</Filter>
+      <Filter>src\util</Filter>
     </ClInclude>
     <ClInclude Include="..\..\shared\file\datareader.h">
-      <Filter>file</Filter>
+      <Filter>src\file</Filter>
     </ClInclude>
     <ClInclude Include="..\..\shared\file\datatypes.h">
-      <Filter>file</Filter>
+      <Filter>src\file</Filter>
     </ClInclude>
     <ClInclude Include="..\..\shared\log\gl_log.h">
-      <Filter>log</Filter>
+      <Filter>src\log</Filter>
     </ClInclude>
     <ClInclude Include="..\..\shared\util\glfwcontext.h">
-      <Filter>util</Filter>
+      <Filter>src\util</Filter>
     </ClInclude>
     <ClInclude Include="..\..\shared\graphics\mesh.h">
-      <Filter>graphics</Filter>
+      <Filter>src\graphics</Filter>
     </ClInclude>
     <ClInclude Include="..\..\shared\graphics\quad.h">
-      <Filter>graphics</Filter>
+      <Filter>src\graphics</Filter>
     </ClInclude>
     <ClInclude Include="..\..\shared\util\translation.h">
-      <Filter>util</Filter>
+      <Filter>src\util</Filter>
     </ClInclude>
     <ClInclude Include="..\..\shared\util\util.h">
-      <Filter>util</Filter>
+      <Filter>src\util</Filter>
     </ClInclude>
     <ClInclude Include="..\..\shared\util\texture.h">
-      <Filter>util</Filter>
+      <Filter>src\util</Filter>
     </ClInclude>
     <ClInclude Include="..\..\shared\util\shader.h">
-      <Filter>util</Filter>
+      <Filter>src\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\shared\graphics\renderstate.h">
+      <Filter>src\graphics</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\shared\graphics\axis.cpp">
-      <Filter>graphics</Filter>
+      <Filter>src\graphics</Filter>
     </ClCompile>
     <ClCompile Include="..\..\shared\graphics\BBox.cpp">
-      <Filter>graphics</Filter>
+      <Filter>src\graphics</Filter>
     </ClCompile>
     <ClCompile Include="..\..\shared\util\boundingbox.cpp">
-      <Filter>util</Filter>
+      <Filter>src\util</Filter>
     </ClCompile>
     <ClCompile Include="..\..\shared\file\datatypes.cpp">
-      <Filter>file</Filter>
+      <Filter>src\file</Filter>
     </ClCompile>
     <ClCompile Include="..\..\shared\log\gl_log.cpp">
-      <Filter>log</Filter>
+      <Filter>src\log</Filter>
     </ClCompile>
     <ClCompile Include="..\..\shared\util\glfwcontext.cpp">
-      <Filter>util</Filter>
+      <Filter>src\util</Filter>
     </ClCompile>
     <ClCompile Include="..\..\shared\graphics\mesh.cpp">
-      <Filter>graphics</Filter>
+      <Filter>src\graphics</Filter>
     </ClCompile>
     <ClCompile Include="..\..\shared\graphics\quad.cpp">
-      <Filter>graphics</Filter>
+      <Filter>src\graphics</Filter>
     </ClCompile>
     <ClCompile Include="..\..\shared\util\util.cpp">
-      <Filter>util</Filter>
+      <Filter>src\util</Filter>
     </ClCompile>
     <ClCompile Include="..\..\shared\util\texture.cpp">
-      <Filter>util</Filter>
+      <Filter>src\util</Filter>
     </ClCompile>
     <ClCompile Include="..\..\shared\util\shader.cpp">
-      <Filter>util</Filter>
+      <Filter>src\util</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

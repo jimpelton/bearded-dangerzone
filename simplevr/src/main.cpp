@@ -13,9 +13,9 @@
 #include "blockscollection.h"
 #include "geometry.h"
 
-#include <geometry/BBox.h>
-#include <geometry/quad.h>
-#include <geometry/axis.h>
+#include <graphics/axis.h>
+#include <graphics/quad.h>
+#include <graphics/BBox.h>
 #include <file/datatypes.h>
 #include <file/datareader.h>
 #include <log/gl_log.h>
@@ -32,6 +32,7 @@
 
 #include <array>
 #include <memory>
+#include "volrend.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -118,7 +119,7 @@ void setRotation(const glm::vec2 &dr);
 void drawBoundingBox(bd::Box *b, unsigned int vaoIdx);
 void loop(bd::GlfwContext *);
 
-
+void drawAxisElements(unsigned int vaoId);
 void drawSlicesInstanced(unsigned int vaoId);
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -188,7 +189,7 @@ void drawSlicesInstanced(unsigned int vaoId) {
 
     glUseProgram(g_volume_shader_Id);
     if (g_viewDirty) {
-        updateMvpMatrix();
+        //updateMvpMatrix();
         glUniformMatrix4fv(g_uniform_vp, 1, GL_FALSE, glm::value_ptr(g_vpMatrix)); // vp
     }
 
@@ -206,7 +207,7 @@ void drawSlicesInstanced(unsigned int vaoId) {
         glBindTexture(GL_TEXTURE_3D, b.texid());
         glUniform1i(g_uniform_volume, 0);
 
-        glDrawElementsInstanced(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, 0, g_opts.num_slices);
+        glDrawElementsInstanced(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, nullptr, g_opts.num_slices);
     }
 
     glBindVertexArray(0);
@@ -312,13 +313,6 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-    
-
-    //bd::GlfwContext context;
-    //g_context = &context;
-
-
-
     std::unique_ptr<float []> data {
         readData(g_opts.type, g_opts.filePath, g_opts.w, g_opts.h, g_opts.d)
     };
@@ -328,6 +322,11 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
+    VolRend vr{ g_opts };
+    if (!vr.init(1280, 720)) {
+        gl_log_err("Context not initialized...exiting.");
+        exit(1);
+    }
     size_t voxels { g_opts.w *g_opts.h * g_opts.d };
     int voxelsPerBlock { g_opts.block_side *g_opts.block_side * g_opts.block_side };
     size_t numblocks { voxels / voxelsPerBlock };
@@ -352,43 +351,45 @@ int main(int argc, char *argv[]) {
     glGenVertexArrays(1, &g_q_vaoId);
     initQuadVbos(g_q_vaoId, &g_q_vboId, &g_q_iboId);
 
-    GLuint sq_vsId = bd::loadShader(GL_VERTEX_SHADER, sub_quads_vertex_shader);
-    if (sq_vsId == 0) {
+    bd::Shader subQuadsVertexShader(bd::ShaderType::Vertex);
+    if (! subQuadsVertexShader.loadFromFile(sub_quads_vertex_shader)) {
         gl_log_err("Sub-quads vertex shader failed to compile. Exiting...");
         cleanup();
         exit(1);
     }
 
-    GLuint vol_fsId = bd::loadShader(GL_FRAGMENT_SHADER, volume_fragment_shader);
-    if (vol_fsId == 0) {
+    bd::Shader volumeFragmentShader(bd::ShaderType::Fragment);
+    if (! volumeFragmentShader.loadFromFile(volume_fragment_shader)) {
         gl_log_err("Volume fragment shader failed to compile. Exiting...");
         cleanup();
         exit(1);
     }
 
-    g_volume_shader_Id = bd::linkProgram({ sq_vsId, vol_fsId });
-    if (g_volume_shader_Id == 0) {
+    bd::ShaderProgram volumeShaderProgram;
+    g_volume_shader_Id = volumeShaderProgram.linkProgram(&subQuadsVertexShader, &volumeFragmentShader);
+    if (! g_volume_shader_Id) {
         gl_log_err("Sub-quads+volume shader program failed to link. Exiting...");
         cleanup();
         exit(1);
     }
 
-    GLuint simple_vsId = bd::loadShader(GL_VERTEX_SHADER, simple_vertex_shader);
-    if (simple_vsId == 0) {
+    bd::Shader simpleVertexShader(bd::ShaderType::Vertex);
+    if (! simpleVertexShader.loadFromFile(simple_vertex_shader)) {
         gl_log_err("Simple vertex shader failed to compile. Exiting...");
         cleanup();
         exit(1);
     }
 
-    GLuint color_fsId = bd::loadShader(GL_FRAGMENT_SHADER, simple_color_fragment_shader);
-    if (color_fsId == 0) {
+    bd::Shader simpleColorFragmentShader(bd::ShaderType::Fragment);
+    if (! simpleColorFragmentShader.loadFromFile(simple_color_fragment_shader)) {
         gl_log_err("Simple-color fragment shader failed to compile. Exiting...");
         cleanup();
         exit(1);
     }
 
-    g_simple_shader_Id = bd::linkProgram({ simple_vsId, color_fsId });
-    if (g_simple_shader_Id == 0) {
+    bd::ShaderProgram simpleShaderProgram;
+    g_simple_shader_Id = simpleShaderProgram.linkProgram(&simpleVertexShader, &simpleColorFragmentShader);
+    if (! g_simple_shader_Id) {
         gl_log_err("Simple-vertex+simple-color shader program failed to link. Exiting...");
         cleanup();
         exit(1);

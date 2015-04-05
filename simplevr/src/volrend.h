@@ -10,9 +10,7 @@
 
 class View
 {
-
 public:
-
     void setMouseRotation(const glm::vec2 &cpos);
     
     void setCursorPos(const glm::vec2 &cpos);
@@ -21,9 +19,9 @@ public:
 
     void setPosOffset(double xoff, double yoff);
 
-    void updateMvpMatrix();
+    void updateTransform();
 
-public:
+private:
     int m_screenWidth;
     int m_screenHeight;
     
@@ -42,6 +40,7 @@ public:
 
     glm::mat4 m_proj;
     glm::mat4 m_view;
+    glm::mat4 m_transform;
 
     bool m_viewDirty;
 };
