@@ -146,14 +146,15 @@ void BlocksCollection::createNonEmptyTextures() {
             image[imgIdx++] = m_data[didx];
         } // for for for
 
-        unsigned int t = bd::genGLTex3d(image, GL_RED, GL_RED,
-                                              m_block_dims_voxels.x, m_block_dims_voxels.y, m_block_dims_voxels.z);
+      /*  unsigned int t = bd::genGLTex3d(image,
+            bd::TextureFormat::OneChannel, bd::TextureFormat::OneChannel,
+            m_block_dims_voxels.x, m_block_dims_voxels.y, m_block_dims_voxels.z);*/
 
-        if (t == 0) {
+   /*     if (t == 0) {
             gl_log_err("genGLTex3d returned 0 for the texture id.");
         } else {
             b.texid(t);
-        }
+        }*/
 
     } // for auto
 

@@ -80,8 +80,6 @@ bool VolRend::init(int scr_w, int src_h)
         return false;
     }
 
-    
-
     return true;
 }
 

@@ -2,17 +2,22 @@
 
 #include "log/gl_log.h"
 
+#include <GL/glew.h>
+
 #include <sstream>
 #include <fstream>
 #include <array>
+#include <vector>
+#include <glm/gtc/type_ptr.hpp>
 
 namespace bd {
 Shader::Shader(ShaderType t)
     : m_type(t)
+    , m_id(0)
 {
 }
 
-unsigned Shader::loadFromFile(const std::string& filepath)
+unsigned int Shader::loadFromFile(const std::string& filepath)
 {
     //GLuint shaderId = 0;
     std::ifstream file(filepath.c_str());
@@ -41,10 +46,11 @@ unsigned int Shader::compileShader(const char* shader)
     {
         GL_VERTEX_SHADER, GL_FRAGMENT_SHADER 
     };
-    int ordinal = static_cast<int>(m_type);
-    GLuint shaderId = glCreateShader(shTypes[ordinal]);
 
-    gl_log("Created shader, type: 0x%x04, id: %d", ordinal, shaderId);
+    GLenum gl_type = shTypes.at(static_cast<int>(m_type));
+    GLuint shaderId = glCreateShader(gl_type);
+
+    gl_log("Created shader, type: 0x%x04, id: %d", gl_type, shaderId);
     glShaderSource(shaderId, 1, &shader, nullptr);
 
     glCompileShader(shaderId);
@@ -61,6 +67,7 @@ unsigned int Shader::compileShader(const char* shader)
         glGetShaderInfoLog(shaderId, infoLogLength, nullptr, &msg[0]);
         gl_log("%s", &msg[0]);
     }
+    
 
     return m_id = shaderId;
 }
@@ -76,8 +83,15 @@ ShaderProgram::ShaderProgram(const Shader* vert, const Shader* frag)
 {
 }
 
-unsigned ShaderProgram::linkProgram()
+ShaderProgram::~ShaderProgram()
 {
+}
+
+unsigned int ShaderProgram::linkProgram()
+{
+    if (!checkBuilt()) 
+        return 0;
+    
     GLuint programId = glCreateProgram();
     gl_log("Created program id: %d", programId);
 
@@ -96,20 +110,91 @@ unsigned ShaderProgram::linkProgram()
 
     if (InfoLogLength > 1) {
         std::vector<char> programErrorMessage(InfoLogLength + 1);
-        glGetProgramInfoLog(programId, InfoLogLength, NULL, &programErrorMessage[0]);
+        glGetProgramInfoLog(programId, InfoLogLength, nullptr, &programErrorMessage[0]);
         gl_log("%s", &programErrorMessage[0]);
     }
 
     return programId;
 }
 
-unsigned ShaderProgram::linkProgram(const Shader *vert, const Shader *frag)
+unsigned int ShaderProgram::linkProgram(const Shader *vert, const Shader *frag)
 {
     m_vert = vert;
     m_frag = frag;
     return linkProgram();
 }
 
+unsigned int ShaderProgram::addParam(const std::string& param)
+{
+    unsigned int id = gl_check(glGetUniformLocation(m_location, param.c_str()));
+    return id;
+}
+
+void ShaderProgram::setParam(const std::string &param, glm::mat4 &val)
+{
+    unsigned int id = getParamLocation(param);
+    gl_check(glUniformMatrix4fv(id, 1, GL_FALSE, glm::value_ptr(val)));
+}
+
+void ShaderProgram::setParam(const std::string &param, glm::vec4 &val)
+{
+    unsigned int id = getParamLocation(param);
+    gl_check(glUniform4fv(id, 1, glm::value_ptr(val)));
+}
+
+void ShaderProgram::setParam(const std::string &param, glm::vec3 &val)
+{
+    unsigned int id = getParamLocation(param);
+    gl_check(glUniform3fv(id, 1, glm::value_ptr(val)));
+}
+
+unsigned int ShaderProgram::getParamLocation(const std::string& param)
+{
+    int rval = 0;
+    ParamTable::iterator found = m_params.find(param);
+    if (found != m_params.end()) 
+        rval = (*found).second;
+    
+    return rval;
+}
+
+void ShaderProgram::bind()
+{
+    static const std::array<GLenum, 2> textypes = { GL_TEXTURE_1D, GL_TEXTURE_3D };
+    gl_check(glUseProgram(m_location));
+    int i = 0;
+    for (auto &tex : m_textures) {
+        gl_check(glActiveTexture(GL_TEXTURE0 + i));
+
+        int ty = static_cast<int>(tex.type());
+        gl_check(glBindTexture(textypes.at(ty), (*tex).first));
+        gl_check(glUniform1f());
+    }
+
+    gl_check(glActiveTexture(GL_TEXTURE0));
+}
+
+void ShaderProgram::unbind()
+{
+    gl_check(glUseProgram(0));
+}
+
+bool ShaderProgram::checkBuilt()
+{
+    bool rval = true;
+    
+    if (!m_vert->isBuilt()) {
+        gl_log_err("Vertex shader has not been built, cannot link program.");
+        rval = false;
+    }
+
+    if (!m_frag->isBuilt()) {
+        gl_log_err("Fragment shader has not been built, cannot link program.");
+        rval = false;
+    }
+
+    return rval;
+}
 
 //GLuint loadShader(GLenum type, std::string filepath)
 //{
