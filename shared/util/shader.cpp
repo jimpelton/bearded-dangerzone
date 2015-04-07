@@ -11,12 +11,17 @@
 #include <glm/gtc/type_ptr.hpp>
 
 namespace bd {
+
+
+///////////////////////////////////////////////////////////////////////////////
 Shader::Shader(ShaderType t)
     : m_type(t)
     , m_id(0)
 {
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
 unsigned int Shader::loadFromFile(const std::string& filepath)
 {
     //GLuint shaderId = 0;
@@ -35,11 +40,15 @@ unsigned int Shader::loadFromFile(const std::string& filepath)
     return compileShader(ptrCode);
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
 unsigned int Shader::loadFromString(const std::string& shaderString)
 {
     return compileShader(shaderString.c_str());
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
 unsigned int Shader::compileShader(const char* shader)
 {
     static const std::array<GLenum, 2> shTypes 
@@ -72,21 +81,29 @@ unsigned int Shader::compileShader(const char* shader)
     return m_id = shaderId;
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
 ShaderProgram::ShaderProgram() 
     : ShaderProgram(nullptr, nullptr)
 {
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
 ShaderProgram::ShaderProgram(const Shader* vert, const Shader* frag) 
     : m_vert{ vert }
     , m_frag{ frag }
 {
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
 ShaderProgram::~ShaderProgram()
 {
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
 unsigned int ShaderProgram::linkProgram()
 {
     if (!checkBuilt()) 
@@ -114,9 +131,11 @@ unsigned int ShaderProgram::linkProgram()
         gl_log("%s", &programErrorMessage[0]);
     }
 
-    return programId;
+    return m_programId = programId;
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
 unsigned int ShaderProgram::linkProgram(const Shader *vert, const Shader *frag)
 {
     m_vert = vert;
@@ -124,61 +143,85 @@ unsigned int ShaderProgram::linkProgram(const Shader *vert, const Shader *frag)
     return linkProgram();
 }
 
-unsigned int ShaderProgram::addParam(const std::string& param)
+
+///////////////////////////////////////////////////////////////////////////////
+void ShaderProgram::setUniform(const std::string &param, glm::mat4 &val)
 {
-    unsigned int id = gl_check(glGetUniformLocation(m_location, param.c_str()));
-    return id;
+    unsigned int loc = getParamLocation(param);
+    gl_check(glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(val)));
 }
 
-void ShaderProgram::setParam(const std::string &param, glm::mat4 &val)
+
+///////////////////////////////////////////////////////////////////////////////
+void ShaderProgram::setUniform(const std::string &param, glm::vec4 &val)
 {
-    unsigned int id = getParamLocation(param);
-    gl_check(glUniformMatrix4fv(id, 1, GL_FALSE, glm::value_ptr(val)));
+    unsigned int loc = getParamLocation(param);
+    gl_check(glUniform4fv(loc, 1, glm::value_ptr(val)));
 }
 
-void ShaderProgram::setParam(const std::string &param, glm::vec4 &val)
+
+///////////////////////////////////////////////////////////////////////////////
+void ShaderProgram::setUniform(const std::string &param, glm::vec3 &val)
 {
-    unsigned int id = getParamLocation(param);
-    gl_check(glUniform4fv(id, 1, glm::value_ptr(val)));
+    unsigned int loc = getParamLocation(param);
+    gl_check(glUniform3fv(loc, 1, glm::value_ptr(val)));
 }
 
-void ShaderProgram::setParam(const std::string &param, glm::vec3 &val)
+
+///////////////////////////////////////////////////////////////////////////////
+void ShaderProgram::setUniform(const std::string& param, const Texture& tex)
 {
-    unsigned int id = getParamLocation(param);
-    gl_check(glUniform3fv(id, 1, glm::value_ptr(val)));
+    unsigned int loc = getParamLocation(param);
+    m_textures[loc] = &tex;
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
 unsigned int ShaderProgram::getParamLocation(const std::string& param)
 {
-    int rval = 0;
+    unsigned int rval = 0;
     ParamTable::iterator found = m_params.find(param);
-    if (found != m_params.end()) 
+    if (found != m_params.end()) {
         rval = (*found).second;
-    
+    } else {
+        rval = gl_check(glGetUniformLocation(m_programId, param.c_str()));
+        m_params[param] = rval;
+    }
+
     return rval;
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
 void ShaderProgram::bind()
 {
-    static const std::array<GLenum, 2> textypes = { GL_TEXTURE_1D, GL_TEXTURE_3D };
-    gl_check(glUseProgram(m_location));
+    static const std::array<GLenum, 2> targets { GL_TEXTURE_1D, GL_TEXTURE_3D };
+    
+    gl_check(glUseProgram(m_programId));
+    
     int i = 0;
-    for (auto &tex : m_textures) {
+    for (auto &pair : m_textures) {
         gl_check(glActiveTexture(GL_TEXTURE0 + i));
+        const Texture &tex = *(pair.second);
+        GLenum type = targets.at(static_cast<int>(tex.type()));
+        gl_check(glBindTexture(type, tex.id()));
+        gl_check(glUniform1f(pair.first, tex.id()));
 
-        int ty = static_cast<int>(tex.type());
-        gl_check(glBindTexture(textypes.at(ty), (*tex).first));
-        gl_check(glUniform1f());
+        i += 1;
     }
 
     gl_check(glActiveTexture(GL_TEXTURE0));
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
 void ShaderProgram::unbind()
 {
     gl_check(glUseProgram(0));
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
 bool ShaderProgram::checkBuilt()
 {
     bool rval = true;

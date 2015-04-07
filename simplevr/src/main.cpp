@@ -327,29 +327,29 @@ int main(int argc, char *argv[]) {
         gl_log_err("Context not initialized...exiting.");
         exit(1);
     }
-    size_t voxels { g_opts.w *g_opts.h * g_opts.d };
-    int voxelsPerBlock { g_opts.block_side *g_opts.block_side * g_opts.block_side };
-    size_t numblocks { voxels / voxelsPerBlock };
+    //size_t voxels { g_opts.w *g_opts.h * g_opts.d };
+    //int voxelsPerBlock { g_opts.block_side *g_opts.block_side * g_opts.block_side };
+    //size_t numblocks { voxels / voxelsPerBlock };
 
-    Volume v {
-        { 1.0, 1.0, 1.0 },
-        { g_opts.w, g_opts.h, g_opts.d },
-        { g_opts.w / g_opts.block_side, g_opts.h / g_opts.block_side, g_opts.d / g_opts.block_side }
-    };
-    g_vol = &v;
-    BlocksCollection bcol { data, &v };
-    bcol.initBlocks();
-    bcol.avgblocks();
-    bcol.createNonEmptyTextures();
-    bcol.printblocks();
+    //Volume v {
+    //    { 1.0, 1.0, 1.0 },
+    //    { g_opts.w, g_opts.h, g_opts.d },
+    //    { g_opts.w / g_opts.block_side, g_opts.h / g_opts.block_side, g_opts.d / g_opts.block_side }
+    //};
+    //g_vol = &v;
+    //BlocksCollection bcol { data, &v };
+    //bcol.initBlocks();
+    //bcol.avgblocks();
+    //bcol.createNonEmptyTextures();
+    //bcol.printblocks();
 
-    g_bcol = &bcol;
+    //g_bcol = &bcol;
 
-    glGenVertexArrays(1, &g_axis_vaoId);
-    initAxisVbos(g_axis_vaoId, g_axis_vboId);
+    //glGenVertexArrays(1, &g_axis_vaoId);
+    //initAxisVbos(g_axis_vaoId, g_axis_vboId);
     
-    glGenVertexArrays(1, &g_q_vaoId);
-    initQuadVbos(g_q_vaoId, &g_q_vboId, &g_q_iboId);
+    //glGenVertexArrays(1, &g_q_vaoId);
+//    initQuadVbos(g_q_vaoId, &g_q_vboId, &g_q_iboId);
 
     bd::Shader subQuadsVertexShader(bd::ShaderType::Vertex);
     if (! subQuadsVertexShader.loadFromFile(sub_quads_vertex_shader)) {
@@ -395,7 +395,11 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
+
     /// vertex shader ///
+    
+
+    
     g_uniform_simple_mvp = glGetUniformLocation(g_simple_shader_Id, "mvp");
 
     g_uniform_vp = glGetUniformLocation(g_volume_shader_Id, "vp");
@@ -403,6 +407,7 @@ int main(int argc, char *argv[]) {
     g_uniform_vdir = glGetUniformLocation(g_volume_shader_Id, "vdir");
     g_uniform_r = glGetUniformLocation(g_volume_shader_Id, "r");
     g_uniform_ds = glGetUniformLocation(g_volume_shader_Id, "ds");
+
 
     /// fragment shader ///
     g_uniform_color = glGetUniformLocation(g_volume_shader_Id, "color");

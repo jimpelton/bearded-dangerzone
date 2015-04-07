@@ -13,7 +13,7 @@ std::string Block::to_string() const
     ss << "Idx: " << m_bidx << "\n"
         "Loc: " << glm::to_string(m_loc) << "\n"
         "Min: " << glm::to_string(m_min) << "\n"
-        //"Dims: " << glm::to_string(dims) << "\n"
+        //"Dims: " << glm::to_string(worldDims) << "\n"
         "Empty: " << m_empty << " (" << m_avg << ")";
 
     return ss.str();

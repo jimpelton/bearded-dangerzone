@@ -24,7 +24,6 @@ class Shader
 public:
     Shader(ShaderType t);
 
-public:
     /** \brief Compile the shader in given file.
      *  \param A string containing the path to the file containing the shader.
      *  \return The non-zero gl identifier of the compiled shader, 0 on error.
@@ -44,11 +43,14 @@ public:
 private:
     unsigned int compileShader(const char *shader);
 
-private:
     ShaderType m_type;
     unsigned int m_id;
 };
 
+
+///////////////////////////////////////////////////////////////////////////////
+// Class ShaderProgram
+///////////////////////////////////////////////////////////////////////////////
 class ShaderProgram
 {
 public:
@@ -60,7 +62,6 @@ public:
     ShaderProgram(const Shader *vert, const Shader *frag);
     virtual ~ShaderProgram();
 
-public:
     /** 
       * \brief Link frag and vert shaders if already provided (via constructor).
       * \return The non-zero gl identifier for the program, 0 on error.
@@ -73,16 +74,16 @@ public:
       */
     unsigned int linkProgram(const Shader *vert, const Shader *frag);
 
-    unsigned int addParam(const std::string &param);
 
     /** 
       * \brief Sets the shader uniform specified by \c param to \c val.
       * 
-      * If \c param has not been added prior to calling setParam, chaos ensues.
+      * If \c param has not been added prior to calling setUniform, chaos ensues.
       */
-    void setParam(const std::string &param, glm::mat4 &val);
-    void setParam(const std::string &param, glm::vec4 &val);
-    void setParam(const std::string &param, glm::vec3 &val);
+    void setUniform(const std::string &param, glm::mat4 &val);
+    void setUniform(const std::string &param, glm::vec4 &val);
+    void setUniform(const std::string &param, glm::vec3 &val);
+    void setUniform(const std::string &param, const Texture &tex);
 
     /**  
       * \brief Get the id of the spec'd param.
@@ -93,21 +94,30 @@ public:
     void bind();
     void unbind();
 
-private:
-    
+    /** \brief True if both shaders have been built, false otherwise. */
     bool checkBuilt();
 
+private:
+    ///////////////////////////////////////////////////////////////////////////////
+    // Private Members
+    ///////////////////////////////////////////////////////////////////////////////
+    
+
+
+    /** \brief Map uniform name to location. */
     using ParamTable = std::map< std::string, unsigned int >;
-    using TextureTable = std::map<unsigned int, Texture >;
+    
+    /** \brief Maps sampler location, Texture */
+    using TextureTable = std::map<unsigned int, const Texture* >;
     
     ////////////////////////////////////////////////////////////////////////////////
     // Member Data
     ////////////////////////////////////////////////////////////////////////////////
     const Shader *m_vert;
     const Shader *m_frag;
-    unsigned int m_location;
-    ParamTable m_params;
-    TextureTable m_textures;
+    unsigned int m_programId; ///< The opengl shader program id
+    ParamTable m_params;  ///< Uniform locations
+    TextureTable m_textures;  ///< Texture sampler locatons
 
 };
 

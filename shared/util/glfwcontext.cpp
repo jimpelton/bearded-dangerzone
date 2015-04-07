@@ -78,6 +78,9 @@ GLFWwindow* GlfwContext::init(ContextController *con, int width, int height)
         glfwTerminate();
         return nullptr;
     }
+    
+    glDebugMessageCallback((GLDEBUGPROC)bd::gl_debug_message_callback, NULL);
+    gl_check(glEnable(GL_DEBUG_OUTPUT));
 
     glfwSetCursorPosCallback(m_window, glfw_cursorpos_callback);
     glfwSetWindowSizeCallback(m_window, glfw_window_size_callback);
@@ -92,12 +95,9 @@ GLFWwindow* GlfwContext::init(ContextController *con, int width, int height)
         return nullptr;
     }
 
-    glDebugMessageCallback((GLDEBUGPROC)bd::gl_debug_message_callback, NULL);
-    glEnable(GL_DEBUG_OUTPUT);
-
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
-    glClearColor(0.1f, 0.1f, 0.1f, 0.0f);
+    gl_check(glEnable(GL_DEPTH_TEST));
+    gl_check(glDepthFunc(GL_LESS));
+    gl_check(glClearColor(0.1f, 0.1f, 0.1f, 0.0f));
 
     return m_window;
 }

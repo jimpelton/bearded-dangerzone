@@ -1,10 +1,7 @@
-
-
 #ifndef blockscollection_h__
 #define blockscollection_h__
 
 #include "block.h"
-#include "volume.h"
 
 #include <vector>
 #include <memory>
@@ -30,12 +27,11 @@
 
 class BlocksCollection {
 public:
-    /** \brief Default constructor 
-      * Create a blockscollection associted with given volume.
-      */
+
     BlocksCollection();
 
-    BlocksCollection(std::unique_ptr<float[]> &data, Volume *vol);
+    BlocksCollection(std::unique_ptr<float[]> &data);
+
     ~BlocksCollection();
 
     ///////////////////////////////////////////////////////////////////////////
@@ -49,8 +45,8 @@ public:
     void initBlocks();
 
 
-    template< typename EmptyHeuristic >
-    unsigned long long findEmpties(EmptyHeuristic isempty);
+    //template< typename EmptyHeuristic >
+    //unsigned long long findEmpties(EmptyHeuristic isempty);
 
 
     /** \brief Loop over blocks to determine emptyness.
@@ -73,22 +69,19 @@ public:
      */
     void printblocks();
 
-    ///////////////////////////////////////////////////////////////////////////
-    // Accessors
-    ///////////////////////////////////////////////////////////////////////////
-
     const std::vector<Block>& blocks() const { return m_blocks; }
 
     /** \brief Return the volume associated with this blockcollection. */
-    const Volume& volume() const { return *m_vol; }
 
 private:
+    ///////////////////////////////////////////////////////////////////////////////
+    // Data members
+    ///////////////////////////////////////////////////////////////////////////////
+
     std::vector<Block> m_blocks;
     
     // size of a single block in voxels
     glm::u64vec3 m_block_dims_voxels;
-
-    Volume *m_vol;
 
     std::unique_ptr<float[]> m_data;
 

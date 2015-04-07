@@ -1,27 +1,19 @@
 #ifndef glfwcontext_h__
 #define glfwcontext_h__
 
+#include "util/contextcontroller.h"
+
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
 namespace bd {
 
-class ContextController
-{
-public:
-    ContextController() { }
-    virtual ~ContextController() { }
 
-    virtual void keyboard_callback(int key, int scancode, int action, int mods) = 0;
-    virtual void window_size_callback(int width, int height) = 0;
-    virtual void cursorpos_callback(double x, double y) = 0;
-    virtual void scrollwheel_callback(double xoff, double yoff) = 0;
-};
 
-typedef void (*CursorPosCallback)(double x, double y);
-typedef void (*WindowSizeCallback)(int x, int y);
-typedef void (*ScrollWheelCallback)(double xoff, double yoff);
-typedef void (*KeyboardCallback)(int key, int scancode, int action, int mods);
+//typedef void (*CursorPosCallback)(double x, double y);
+//typedef void (*WindowSizeCallback)(int x, int y);
+//typedef void (*ScrollWheelCallback)(double xoff, double yoff);
+//typedef void (*KeyboardCallback)(int key, int scancode, int action, int mods);
 
 class GlfwContext {
 private:

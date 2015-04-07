@@ -63,6 +63,9 @@
     <ClInclude Include="..\..\shared\graphics\renderstate.h">
       <Filter>src\graphics</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\shared\util\contextcontroller.h">
+      <Filter>src\util</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\shared\graphics\axis.cpp">

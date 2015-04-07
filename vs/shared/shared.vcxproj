@@ -87,6 +87,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>BD_DEBUG;_CRT_SECURE_NO_DEPRECATE;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..\shared\;$(BoostIncludeDir);$(GlmIncludeDir);$(GlfwIncludeDir);$(GlewIncludeDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -130,6 +131,7 @@
     <ClInclude Include="..\..\shared\graphics\renderstate.h" />
     <ClInclude Include="..\..\shared\log\gl_log.h" />
     <ClInclude Include="..\..\shared\util\boundingbox.h" />
+    <ClInclude Include="..\..\shared\util\contextcontroller.h" />
     <ClInclude Include="..\..\shared\util\glfwcontext.h" />
     <ClInclude Include="..\..\shared\util\shader.h" />
     <ClInclude Include="..\..\shared\util\texture.h" />

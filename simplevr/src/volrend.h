@@ -4,6 +4,7 @@
 #include "cmdline.h"
 #include "blockscollection.h"
 
+#include <util/contextcontroller.h>
 #include <util/glfwcontext.h>
 
 #include <glm/gtc/quaternion.hpp>
@@ -51,8 +52,7 @@ public:
     explicit VolRend(CommandLineOptions &cl);
     virtual ~VolRend();
 
-public:
-    bool init(int scr_w, int src_h);
+    bool init(int scr_w, int scr_h) override;
     void loop();
 
     virtual void cursorpos_callback(double x, double y) override;
