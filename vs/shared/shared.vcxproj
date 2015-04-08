@@ -124,13 +124,16 @@
   <ItemGroup>
     <ClInclude Include="..\..\shared\file\datareader.h" />
     <ClInclude Include="..\..\shared\file\datatypes.h" />
+    <ClInclude Include="..\..\shared\file\tiny_obj_loader\tiny_obj_loader.h" />
     <ClInclude Include="..\..\shared\graphics\axis.h" />
     <ClInclude Include="..\..\shared\graphics\BBox.h" />
     <ClInclude Include="..\..\shared\graphics\mesh.h" />
     <ClInclude Include="..\..\shared\graphics\quad.h" />
     <ClInclude Include="..\..\shared\graphics\renderstate.h" />
+    <ClInclude Include="..\..\shared\graphics\vertexarrayobject.h" />
     <ClInclude Include="..\..\shared\log\gl_log.h" />
     <ClInclude Include="..\..\shared\util\boundingbox.h" />
+    <ClInclude Include="..\..\shared\util\context.h" />
     <ClInclude Include="..\..\shared\util\contextcontroller.h" />
     <ClInclude Include="..\..\shared\util\glfwcontext.h" />
     <ClInclude Include="..\..\shared\util\shader.h" />
@@ -140,10 +143,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\shared\file\datatypes.cpp" />
+    <ClCompile Include="..\..\shared\file\tiny_obj_loader\tiny_obj_loader.cc" />
     <ClCompile Include="..\..\shared\graphics\axis.cpp" />
     <ClCompile Include="..\..\shared\graphics\BBox.cpp" />
     <ClCompile Include="..\..\shared\graphics\mesh.cpp" />
     <ClCompile Include="..\..\shared\graphics\quad.cpp" />
+    <ClCompile Include="..\..\shared\graphics\vertexarrayobject.cpp" />
     <ClCompile Include="..\..\shared\log\gl_log.cpp" />
     <ClCompile Include="..\..\shared\util\boundingbox.cpp" />
     <ClCompile Include="..\..\shared\util\glfwcontext.cpp" />
@@ -152,6 +157,7 @@
     <ClCompile Include="..\..\shared\util\util.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="ClassDiagram.cd" />
     <None Include="shader_programs\simple.vs" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

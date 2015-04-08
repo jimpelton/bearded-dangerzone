@@ -11,15 +11,17 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="catch.hpp" />
-  </ItemGroup>
-  <ItemGroup>
+    <ClCompile Include="simplecontextcontroller.cpp" />
     <ClCompile Include="test_main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\shared\shared.vcxproj">
       <Project>{869a3c77-30f0-43b1-9ee5-76760960543d}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\shared\graphics\axis.h" />
+    <ClInclude Include="simplecontextcontroller.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{B1F33BA0-7A70-4856-B486-83B0D50B23C3}</ProjectGuid>

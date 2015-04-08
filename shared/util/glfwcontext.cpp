@@ -4,58 +4,26 @@
 
 namespace bd {
 
-ContextController *GlfwContext::m_concon = nullptr;
 
-////////////////////////////////////////////////////////////////////////////////////
-// static glfw callbacks
-////////////////////////////////////////////////////////////////////////////////////
+    ContextController* Context::m_concon = nullptr;
 
-void GlfwContext::glfw_error_callback(int error, const char *description)
-{
-    gl_log("GLFW ERROR: code %i msg: %s", error, description);
-}
-
-void GlfwContext::glfw_cursorpos_callback(GLFWwindow *win, double x, double y)
-{
-    /*if (m_cursor_pos_cbfunc != nullptr)
-    (*m_cursor_pos_cbfunc)(x, y);*/
-    m_concon->cursorpos_callback(x, y);
-}
-
-void GlfwContext::glfw_window_size_callback(GLFWwindow *win, int w, int h)
-{
-    /*if (m_window_size_cbfunc != nullptr)
-    (*m_window_size_cbfunc)(w, h);*/
-    m_concon->window_size_callback(w, h);
-}
-
-void GlfwContext::glfw_keyboard_callback(GLFWwindow *window, int key, int scancode, int action, int mods)
-{
-    /*if (m_keyboard_cbfunc != nullptr)
-    (*m_keyboard_cbfunc)(key, scancode, action, mods);*/
-    m_concon->keyboard_callback(key, scancode, action, mods);
-}
-
-void GlfwContext::glfw_scrollwheel_callback(GLFWwindow *window, double xoff, double yoff)
-{
-    /*if (m_scroll_wheel_cbfunc != nullptr)
-    (*m_scroll_wheel_cbfunc)(xoff, yoff);*/
-    m_concon->scrollwheel_callback(xoff, yoff);
-}
-
-
-GlfwContext::GlfwContext()
+///////////////////////////////////////////////////////////////////////////////
+GlfwContext::GlfwContext(ContextController *concon) 
+    : Context(concon)
 {
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
 GlfwContext::~GlfwContext()
 {
     glfwTerminate();
 }
 
-GLFWwindow* GlfwContext::init(ContextController *con, int width, int height)
+
+///////////////////////////////////////////////////////////////////////////////
+GLFWwindow* GlfwContext::init(int width, int height)
 {
-    m_concon = con;
 
     m_window = nullptr;
     if (!glfwInit()) {
@@ -78,9 +46,6 @@ GLFWwindow* GlfwContext::init(ContextController *con, int width, int height)
         glfwTerminate();
         return nullptr;
     }
-    
-    glDebugMessageCallback((GLDEBUGPROC)bd::gl_debug_message_callback, NULL);
-    gl_check(glEnable(GL_DEBUG_OUTPUT));
 
     glfwSetCursorPosCallback(m_window, glfw_cursorpos_callback);
     glfwSetWindowSizeCallback(m_window, glfw_window_size_callback);
@@ -94,6 +59,9 @@ GLFWwindow* GlfwContext::init(ContextController *con, int width, int height)
         gl_log_err("could not init glew %s", glewGetErrorString(error));
         return nullptr;
     }
+    
+    glDebugMessageCallback((GLDEBUGPROC)bd::gl_debug_message_callback, NULL);
+    glEnable(GL_DEBUG_OUTPUT);
 
     gl_check(glEnable(GL_DEPTH_TEST));
     gl_check(glDepthFunc(GL_LESS));
@@ -102,19 +70,74 @@ GLFWwindow* GlfwContext::init(ContextController *con, int width, int height)
     return m_window;
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+void GlfwContext::swapBuffers()
+{
+    glfwSwapBuffers(m_window);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+void GlfwContext::pollEvents()
+{
+    glfwPollEvents();
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
 GLFWwindow* GlfwContext::window() const 
 {
     return m_window;
 }
 
-void GlfwContext::swapBuffers() 
+
+////////////////////////////////////////////////////////////////////////////////////
+// static glfw callbacks
+////////////////////////////////////////////////////////////////////////////////////
+
+
+///////////////////////////////////////////////////////////////////////////////
+void GlfwContext::glfw_error_callback(int error, const char *description)
 {
-    glfwSwapBuffers(m_window);
+    gl_log("GLFW ERROR: code %i msg: %s", error, description);
 }
 
-void GlfwContext::pollEvents() 
+
+///////////////////////////////////////////////////////////////////////////////
+void GlfwContext::glfw_cursorpos_callback(GLFWwindow *win, double x, double y)
 {
-    glfwPollEvents();
+    /*if (m_cursor_pos_cbfunc != nullptr)
+    (*m_cursor_pos_cbfunc)(x, y);*/
+    concon()->cursorpos_callback(x, y);
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
+void GlfwContext::glfw_window_size_callback(GLFWwindow *win, int w, int h)
+{
+    /*if (m_window_size_cbfunc != nullptr)
+    (*m_window_size_cbfunc)(w, h);*/
+    concon()->window_size_callback(w, h);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+void GlfwContext::glfw_keyboard_callback(GLFWwindow *window, int key, int scancode, int action, int mods)
+{
+    /*if (m_keyboard_cbfunc != nullptr)
+    (*m_keyboard_cbfunc)(key, scancode, action, mods);*/
+    concon()->keyboard_callback(key, scancode, action, mods);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+void GlfwContext::glfw_scrollwheel_callback(GLFWwindow *window, double xoff, double yoff)
+{
+    /*if (m_scroll_wheel_cbfunc != nullptr)
+    (*m_scroll_wheel_cbfunc)(xoff, yoff);*/
+    concon()->scrollwheel_callback(xoff, yoff);
+}
+
 } // namespace bd
 

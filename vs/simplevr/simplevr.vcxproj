@@ -167,8 +167,6 @@
     <ClInclude Include="..\..\simplevr\src\cmdline.h" />
     <ClInclude Include="..\..\simplevr\src\geometry.h" />
     <ClInclude Include="..\..\simplevr\src\transferfunction.h" />
-    <ClInclude Include="..\..\simplevr\src\vertexarrayobject.h" />
-    <ClInclude Include="..\..\simplevr\src\vertexbufferobject.h" />
     <ClInclude Include="..\..\simplevr\src\volrend.h" />
     <ClInclude Include="..\..\simplevr\src\volume.h" />
   </ItemGroup>

@@ -12,12 +12,12 @@ class Texture
 {
 public:
 
-    enum class Type
+    enum class Type : int
     {
-        Tex1D, Tex3D
+        Tex1D, Tex2D, Tex3D
     };
 
-    enum class Format
+    enum class Format : int
     {
         OneChannel
     };
@@ -35,6 +35,8 @@ public:
     ///////////////////////////////////////////////////////////////////////////////
     unsigned int genGLTex1d();
     
+    unsigned int genGLTex2d();
+
     unsigned int genGLTex3d(float *img, Format internal, Format external, 
         size_t w, size_t h, size_t d);
 

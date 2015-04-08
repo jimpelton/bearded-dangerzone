@@ -16,9 +16,11 @@ FILE *glDebugFile = NULL;
 
 void checkForAndLogGlError(const char *file, const char *func, int line)
 {
+    const char* fmt = "(OGL): %s[%d]:%s():: 0x%04X";
     GLint error;
     while ((error = glGetError()) != GL_NO_ERROR) {
-        fprintf(stderr, "(OGL): %s[%d]:%s():: 0x%04X", file, line, func, error);
+        //fprintf(stderr, fmt, file, line, func, error);
+        gl_log_err_fcn(fmt, file, line, func, error);
     }
 }
 
@@ -135,8 +137,7 @@ bool gl_log_err_fcn(const char *message, ...)
     return true;
 }
 
-void
-log_gl_params()
+void log_gl_params()
 {
     GLenum params [] = {
         GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS,
@@ -195,9 +196,9 @@ void gl_debug_message_callback(GLenum source,
                                void *userParam)
 {
     const char *msg = "OGL_DEBUG: source: 0x%04X, type 0x%04X, id %u, severity 0x%0X, '%s'\n";
-    if (glDebugFile)
-        fprintf(glDebugFile, msg,
-                source, type, id, severity, message);
+    if (glDebugFile) {
+        fprintf(glDebugFile, msg, source, type, id, severity, message);
+    } 
 }
 } // namespace
 

@@ -24,6 +24,12 @@ unsigned int Texture::genGLTex1d()
     return 0;
 }
 
+unsigned int Texture::genGLTex2d()
+{
+    m_type = Type::Tex2D;
+    return 0;
+}
+
 unsigned int Texture::genGLTex3d(float* img, Format ity,
     Format ety, size_t w, size_t h, size_t d)
 {

@@ -59,12 +59,6 @@
     <ClInclude Include="..\..\simplevr\src\transferfunction.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\simplevr\src\vertexarrayobject.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\simplevr\src\vertexbufferobject.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\simplevr\src\volrend.h">
       <Filter>src</Filter>
     </ClInclude>

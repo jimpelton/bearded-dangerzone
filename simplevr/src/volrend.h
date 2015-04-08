@@ -8,6 +8,7 @@
 #include <util/glfwcontext.h>
 
 #include <glm/gtc/quaternion.hpp>
+#include "volume.h"
 
 class View
 {

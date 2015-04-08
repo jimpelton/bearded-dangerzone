@@ -13,6 +13,8 @@ public:
 
     virtual bool init(int win_width, int win_height) = 0;
 
+    virtual void renderLoop() = 0;
+
     virtual void keyboard_callback(int key, int scancode, int action, int mods) = 0;
     virtual void window_size_callback(int width, int height) = 0;
     virtual void cursorpos_callback(double x, double y) = 0;

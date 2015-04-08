@@ -195,7 +195,10 @@ unsigned int ShaderProgram::getParamLocation(const std::string& param)
 ///////////////////////////////////////////////////////////////////////////////
 void ShaderProgram::bind()
 {
-    static const std::array<GLenum, 2> targets { GL_TEXTURE_1D, GL_TEXTURE_3D };
+    static const std::array<GLenum, 3> targets 
+    { 
+        GL_TEXTURE_1D, GL_TEXTURE_2D, GL_TEXTURE_3D 
+    };
     
     gl_check(glUseProgram(m_programId));
     

@@ -19,6 +19,9 @@
     <Filter Include="src\util">
       <UniqueIdentifier>{b1e50286-f079-43dd-bd29-0c44b648c7bd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\file\tiny_obj">
+      <UniqueIdentifier>{62d8a96f-7243-4a08-9c13-9010a09784e4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\shared\graphics\axis.h">
@@ -66,6 +69,15 @@
     <ClInclude Include="..\..\shared\util\contextcontroller.h">
       <Filter>src\util</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\shared\file\tiny_obj_loader\tiny_obj_loader.h">
+      <Filter>src\file\tiny_obj</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\shared\graphics\vertexarrayobject.h">
+      <Filter>src\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\shared\util\context.h">
+      <Filter>src\util</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\shared\graphics\axis.cpp">
@@ -101,10 +113,17 @@
     <ClCompile Include="..\..\shared\util\shader.cpp">
       <Filter>src\util</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\shared\file\tiny_obj_loader\tiny_obj_loader.cc">
+      <Filter>src\file\tiny_obj</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\shared\graphics\vertexarrayobject.cpp">
+      <Filter>src\graphics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="shader_programs\simple.vs">
       <Filter>shader_programs</Filter>
     </None>
+    <None Include="ClassDiagram.cd" />
   </ItemGroup>
 </Project>
