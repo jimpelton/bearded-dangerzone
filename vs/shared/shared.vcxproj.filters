@@ -51,9 +51,6 @@
     <ClInclude Include="..\..\shared\graphics\quad.h">
       <Filter>src\graphics</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\shared\util\translation.h">
-      <Filter>src\util</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\shared\util\util.h">
       <Filter>src\util</Filter>
     </ClInclude>
@@ -80,6 +77,9 @@
     </ClInclude>
     <ClInclude Include="..\..\shared\graphics\view.h">
       <Filter>src\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\shared\util\transform.h">
+      <Filter>src\util</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -126,6 +126,9 @@
       <Filter>src\graphics</Filter>
     </ClCompile>
     <ClCompile Include="..\..\shared\util\context.cpp">
+      <Filter>src\util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\shared\util\transform.cpp">
       <Filter>src\util</Filter>
     </ClCompile>
   </ItemGroup>

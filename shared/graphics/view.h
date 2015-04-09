@@ -11,9 +11,10 @@ class View
 {
 
 public:
+    
     View();
-    ~View();
 
+    ~View();
 
     void setViewport(int x, int y, int w, int h);
     
@@ -36,11 +37,6 @@ public:
 
 private:
 
-    //float m_mouseSpeed;
-    //float m_fov;
-
-    //glm::vec2 m_cursorPos;
-
     glm::vec3 m_position;
 
     glm::uvec4 m_viewport;
@@ -48,6 +44,7 @@ private:
     glm::quat m_rotation;
 
     glm::mat4 m_proj;
+
     glm::mat4 m_view;
 
     bool m_viewDirty;

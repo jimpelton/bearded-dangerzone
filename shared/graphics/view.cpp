@@ -21,6 +21,8 @@ View::View()
 {
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
 View::~View()
 {
 }
@@ -49,6 +51,8 @@ View::~View()
 //    m_cursorPos = cpos;
 //}
 
+
+///////////////////////////////////////////////////////////////////////////////
 void View::setViewport(int x, int y, int w, int h)
 {
     m_viewport = glm::uvec4(x, y, w, h);
@@ -57,56 +61,74 @@ void View::setViewport(int x, int y, int w, int h)
     m_viewDirty = true;
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
 void View::setPosition(const glm::vec3& pos)
 {
     m_position = pos;
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
 glm::vec3 View::getPosition() const
 {
     return m_position;
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
 void View::translate(const glm::vec3 & delta)
 {
     m_position += delta;
     m_viewDirty = true;
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
 void View::setRotation(const glm::quat &rot)
 {
     m_rotation = rot;
     m_viewDirty = true;
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
 glm::quat View::getRotation() const
 {
     return m_rotation;
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
 void View::rotate(const glm::quat &rot)
 {
     m_rotation *= rot;
     m_viewDirty = true;
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
 void View::setProjectionMatrix(float fov, float aspect_rat, float z_near, float z_far)
 {
     m_proj = glm::perspective(fov, aspect_rat, z_near, z_far);
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
 glm::mat4 View::getProjectionMatrix() const
 {
     return m_proj;
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
 glm::mat4 View::getViewMatrix() const
 {
     return m_view;
 }
 
 
-
+///////////////////////////////////////////////////////////////////////////////
 void View::updateViewMatrix()
 {
     glm::mat4 tr = glm::translate(glm::mat4(1.0), -(m_position));
@@ -115,9 +137,6 @@ void View::updateViewMatrix()
     m_view = rot * tr;
 
     m_viewDirty = false;
-
 }
-
-
 
 } // namespace bd

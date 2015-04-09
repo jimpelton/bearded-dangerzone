@@ -81,15 +81,12 @@ void SimpleContextController::renderLoop(bd::Context &context)
     m_view.setPosition(glm::vec3(0, 0, 10));
 
 
-
     do 
     {
         gl_check(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
         m_view.updateViewMatrix();
-        glm::mat4 mvp{
-            m_view.getProjectionMatrix() * m_view.getViewMatrix()
-        };
+        glm::mat4 mvp{ m_view.getProjectionMatrix() * m_view.getViewMatrix() };
         prog.setUniform("mvp", mvp);
 
         gl_check(glDrawElements(GL_TRIANGLE_STRIP, Quad::verts.size(), GL_UNSIGNED_SHORT, 0));
@@ -107,7 +104,9 @@ void SimpleContextController::cursorpos_callback(double x, double y)
 {
     glm::vec2 cpos{ floor(x), floor(y) };
     if (glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+
         glm::vec2 delta { cpos - m_cursorPos };
+        
         glm::quat rotX = glm::angleAxis<float>(
             glm::radians(delta.y) * 1.0,
             glm::vec3(1, 0, 0)
@@ -117,8 +116,13 @@ void SimpleContextController::cursorpos_callback(double x, double y)
             glm::radians(delta.x) * 1.0,
             glm::vec3(0, 1, 0)
             );
-        m_view.setRotation(rotX * rotY);
+
+        m_view.rotate(rotX * rotY);
+    } else if (glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS) {
+
+
     }
+
     m_cursorPos = cpos;
 }
 

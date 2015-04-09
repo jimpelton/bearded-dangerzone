@@ -1,7 +1,7 @@
 #ifndef aabb_h__
 #define aabb_h__
 
-#include "translation.h"
+#include "transform.h"
 
 #include <glm/glm.hpp>
 
@@ -18,7 +18,7 @@ private:
     glm::vec3 m_min;
     glm::vec3 m_max;
 
-    Translation m_tr;
+    Transform m_tr;
 
 };
 
