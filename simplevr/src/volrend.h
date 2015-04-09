@@ -3,49 +3,13 @@
 
 #include "cmdline.h"
 #include "blockscollection.h"
+#include "volume.h"
 
 #include <util/contextcontroller.h>
 #include <util/glfwcontext.h>
 
 #include <glm/gtc/quaternion.hpp>
-#include "volume.h"
 
-class View
-{
-public:
-    void setMouseRotation(const glm::vec2 &cpos);
-    
-    void setCursorPos(const glm::vec2 &cpos);
-
-    void setViewPort(int w, int h);
-
-    void setPosOffset(double xoff, double yoff);
-
-    void updateTransform();
-
-private:
-    int m_screenWidth;
-    int m_screenHeight;
-    
-    float m_mouseSpeed;
-    float m_fov;
-
-    glm::vec2 m_cursorPos;
-
-    glm::vec3 m_position;
-    glm::vec3 m_focus;
-    glm::vec3 m_up;
-    
-    glm::vec4 m_viewDir;
-    
-    glm::quat m_rotation;
-
-    glm::mat4 m_proj;
-    glm::mat4 m_view;
-    glm::mat4 m_transform;
-
-    bool m_viewDirty;
-};
 
 class VolRend : public bd::ContextController
 {
@@ -70,14 +34,12 @@ private:
     void makeBlockSlices(std::vector<QuadProto> &);
 
 
-private:
     CommandLineOptions &m_cl;
     bd::GlfwContext m_context;
-    View m_view;
+    //View m_view;
     Volume m_vol;
     BlocksCollection m_col;
 
-private:
     struct QuadProto
     {
         struct Quad{

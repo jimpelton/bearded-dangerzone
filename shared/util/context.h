@@ -1,36 +1,40 @@
 #ifndef context_h__
 #define context_h__
 
-#include <util/contextcontroller.h>
-
 namespace bd {
 ;
 
+class ContextController;
 
+//TODO: add virtual window() method to Context.
 class Context
 {
+
 public:
-    Context(ContextController *cc)
-    {
-        m_concon = cc;
-    }
 
-    virtual ~Context() 
-    { 
-    }
+    static Context* InitializeContext(ContextController *cc);
 
-    //void startLoop() 
-    //{
-    //    
-    //}
+    Context(ContextController *cc);
+    virtual ~Context();
+
+    void startLoop();
+    
 
     virtual void swapBuffers() = 0;
     virtual void pollEvents() = 0;
+    virtual void init(int win_width, int win_height) = 0;
 
-    static ContextController* concon() { return m_concon; }
+    static ContextController& Context::concon();
+
+    bool isInit() const;
+
+protected:
+    void isInit(bool);
+    
 
 private:
     static ContextController *m_concon;
+    bool m_isInit;
 
 };
 

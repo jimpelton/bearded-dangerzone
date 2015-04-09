@@ -131,6 +131,7 @@
     <ClInclude Include="..\..\shared\graphics\quad.h" />
     <ClInclude Include="..\..\shared\graphics\renderstate.h" />
     <ClInclude Include="..\..\shared\graphics\vertexarrayobject.h" />
+    <ClInclude Include="..\..\shared\graphics\view.h" />
     <ClInclude Include="..\..\shared\log\gl_log.h" />
     <ClInclude Include="..\..\shared\util\boundingbox.h" />
     <ClInclude Include="..\..\shared\util\context.h" />
@@ -149,8 +150,10 @@
     <ClCompile Include="..\..\shared\graphics\mesh.cpp" />
     <ClCompile Include="..\..\shared\graphics\quad.cpp" />
     <ClCompile Include="..\..\shared\graphics\vertexarrayobject.cpp" />
+    <ClCompile Include="..\..\shared\graphics\view.cpp" />
     <ClCompile Include="..\..\shared\log\gl_log.cpp" />
     <ClCompile Include="..\..\shared\util\boundingbox.cpp" />
+    <ClCompile Include="..\..\shared\util\context.cpp" />
     <ClCompile Include="..\..\shared\util\glfwcontext.cpp" />
     <ClCompile Include="..\..\shared\util\shader.cpp" />
     <ClCompile Include="..\..\shared\util\texture.cpp" />

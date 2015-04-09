@@ -78,6 +78,9 @@
     <ClInclude Include="..\..\shared\util\context.h">
       <Filter>src\util</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\shared\graphics\view.h">
+      <Filter>src\graphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\shared\graphics\axis.cpp">
@@ -118,6 +121,12 @@
     </ClCompile>
     <ClCompile Include="..\..\shared\graphics\vertexarrayobject.cpp">
       <Filter>src\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\shared\graphics\view.cpp">
+      <Filter>src\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\shared\util\context.cpp">
+      <Filter>src\util</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

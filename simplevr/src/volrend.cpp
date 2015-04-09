@@ -7,60 +7,7 @@
 
 #include <vector>
 
-///////////////////////////////////////////////////////////////////////////////////
-// View Class   
-///////////////////////////////////////////////////////////////////////////////////
 
-void View::setMouseRotation(const glm::vec2& cpos)
-{
-    glm::vec2 dr{ m_cursorPos - cpos };
-
-    glm::quat rotX { glm::angleAxis<float>(
-        glm::radians(dr.y) * m_mouseSpeed,
-        glm::vec3(1, 0, 0)
-        ) };
-
-    glm::quat rotY { glm::angleAxis<float>(
-        glm::radians(-dr.x) * m_mouseSpeed,
-        glm::vec3(0, 1, 0)
-        ) };
-
-    m_rotation = (rotX * rotY) * m_rotation;
-
-    m_viewDirty = true;
-}
-
-void View::setCursorPos(const glm::vec2& cpos)
-{
-    m_cursorPos = cpos;
-}
-
-void View::setViewPort(int w, int h)
-{
-    m_screenWidth = w;
-    m_screenHeight = h;
-    glViewport(0, 0, w, h);
-
-    m_viewDirty = true;
-}
-
-void View::setPosOffset(double xoff, double yoff)
-{
-    m_viewDirty = true;
-}
-
-void View::updateTransform()
-{
-    m_view = glm::lookAt(m_position, m_focus, m_up);
-
-    m_proj = glm::perspective(m_fov,
-        static_cast<float>(m_screenWidth) / m_screenHeight,
-        0.1f, 100.0f);
-
-    m_transform = m_proj * m_view;
-
-    m_viewDirty = false;
-}
 
 ///////////////////////////////////////////////////////////////////////////////////
 // VolRend class

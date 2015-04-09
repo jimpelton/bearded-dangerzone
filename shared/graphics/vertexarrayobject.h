@@ -60,6 +60,15 @@ public:
     /// 
     /// \returns The gl id of the vertex buffer object created.
     ///////////////////////////////////////////////////////////////////////////////
+    unsigned int addVbo(const std::vector<glm::vec3> &verts, unsigned int attr_idx);
+
+    ///////////////////////////////////////////////////////////////////////////////
+    /// \brief Add a vbo with the vertices in \c verts
+    ///
+    /// \note Subsequent calls to addIndexedVbo() return the previous gl id.
+    /// 
+    /// \returns The gl id of the vertex buffer object created.
+    ///////////////////////////////////////////////////////////////////////////////
     unsigned int addVbo(const std::vector<glm::vec4> &verts, unsigned int attr_idx);
 
     ///////////////////////////////////////////////////////////////////////////////

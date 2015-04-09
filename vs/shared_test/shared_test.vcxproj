@@ -20,7 +20,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\shared\graphics\axis.h" />
     <ClInclude Include="simplecontextcontroller.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

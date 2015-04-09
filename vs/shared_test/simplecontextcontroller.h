@@ -3,7 +3,10 @@
 #define simplecontextcontroller_h__
 
 #include <util/contextcontroller.h>
-#include <util/glfwcontext.h>
+#include <graphics/view.h>
+
+#include <GLFW/glfw3.h>
+
 #include <iostream>
 
 
@@ -16,9 +19,8 @@ public:
 
     virtual ~SimpleContextController();
 
-    bool init(int scr_w, int scr_h) override;
 
-    void renderLoop() override;
+    virtual void renderLoop(bd::Context &) override;
 
     virtual void cursorpos_callback(double x, double y) override;
 
@@ -30,12 +32,13 @@ public:
 
     virtual void error_callback(int error, const char *description);
 
+    void setWindow(GLFWwindow *);
 
 private:
-    bd::GlfwContext *context;
-    
+    bd::View m_view;
+    GLFWwindow *m_window;
 
-
+    glm::vec2 m_cursorPos;
 
 };
 

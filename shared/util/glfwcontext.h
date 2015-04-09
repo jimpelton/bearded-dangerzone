@@ -22,7 +22,7 @@ public:
     explicit GlfwContext(ContextController *);
     ~GlfwContext();
     
-    GLFWwindow* init(int scr_w, int scr_h);
+    void init(int scr_w, int scr_h) override;
 
     void swapBuffers() override;
 

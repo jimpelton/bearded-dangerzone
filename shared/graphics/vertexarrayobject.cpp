@@ -6,6 +6,7 @@
 namespace bd
 {
 
+
 ///////////////////////////////////////////////////////////////////////////////
 VertexArrayObject::VertexArrayObject()
     : m_bufIds{ } 
@@ -14,6 +15,7 @@ VertexArrayObject::VertexArrayObject()
     , m_name{  }
 {
 }
+
 
 ///////////////////////////////////////////////////////////////////////////////
 VertexArrayObject::~VertexArrayObject()
@@ -39,19 +41,21 @@ unsigned int VertexArrayObject::addVbo(const std::vector<float> &verts,
 {
     unsigned int vboId{ 0 };
 
-    create();
-    bind();
-
     vboId = gen_vbo(verts.data(), verts.size(), elements_per_vertex, attr_idx);
     
-    unbind();
+    return vboId;
+}
 
-    if (vboId == 0) {
-        gl_log_err("Unable to add vertex buffer to vertex buffer object."
-            "(The returned id for the vertex buffer was 0)");
-    } else {
-        m_bufIds.push_back(vboId);
-    }
+
+///////////////////////////////////////////////////////////////////////////////
+unsigned int VertexArrayObject::addVbo(const std::vector<glm::vec3> &verts, 
+    unsigned int attr_idx)
+{
+    const int elements_per_vertex{ 3 };
+    unsigned int vboId{ 0 };
+
+    vboId = gen_vbo(reinterpret_cast<const float*>(verts.data()),
+        verts.size()*elements_per_vertex, elements_per_vertex, attr_idx);
 
     return vboId;
 }
@@ -63,22 +67,10 @@ unsigned int VertexArrayObject::addVbo(const std::vector<glm::vec4> &verts,
 {
     const int elements_per_vertex{ 4 };
     unsigned int vboId{ 0 };
-
-    create();
-    bind();
     
     vboId = gen_vbo(reinterpret_cast<const float*>(verts.data()), 
         verts.size()*elements_per_vertex, elements_per_vertex, attr_idx);
-    
-    unbind();
-
-    if (vboId == 0) {
-        gl_log_err("Unable to add vertex buffer to vertex buffer object." 
-            "(The returned id for the vertex buffer was 0)");
-    } else {
-        m_bufIds.push_back(vboId);
-    }
-
+ 
     return vboId;
 }
 
@@ -91,21 +83,11 @@ unsigned int VertexArrayObject::setIndexBuffer(const std::vector<unsigned short>
     if (m_idxBufId != 0) 
         return m_idxBufId;
 
-    create();
-    bind();
-    
     iboId = gen_ibo(indices.data(), indices.size());
-
-    unbind();
-
-    if (iboId == 0) {
-        gl_log_err("Unable to set index buffer. (The returned id was 0)");
-    } else {
-        m_idxBufId = iboId;
-    }
 
     return iboId;
 }
+
 
 ///////////////////////////////////////////////////////////////////////////////
 void VertexArrayObject::bind() 
@@ -125,6 +107,7 @@ void VertexArrayObject::unbind()
 // Private Members
 ///////////////////////////////////////////////////////////////////////////////
 
+
 ///////////////////////////////////////////////////////////////////////////////
 unsigned int VertexArrayObject::gen_vbo(const float *verts, size_t length,
     unsigned elements_per_vertex, unsigned attr_idx) 
@@ -133,6 +116,10 @@ unsigned int VertexArrayObject::gen_vbo(const float *verts, size_t length,
     const void * offset{ nullptr };
 
     unsigned int vbo{ 0 };
+    
+    create();
+    bind();
+
     gl_check(glGenBuffers(1, &vbo));
     gl_check(glBindBuffer(GL_ARRAY_BUFFER, vbo));
     gl_check(glBufferData(GL_ARRAY_BUFFER, 
@@ -148,6 +135,15 @@ unsigned int VertexArrayObject::gen_vbo(const float *verts, size_t length,
         stride_between_verts, 
         offset));
 
+    unbind();
+
+    if (vbo == 0) {
+        gl_log_err("Unable to add vertex buffer to vertex buffer object."
+            "(The returned id for the vertex buffer was 0)");
+    } else {
+        m_bufIds.push_back(vbo);
+    }
+
     return vbo;
 }
 
@@ -157,12 +153,23 @@ unsigned int VertexArrayObject::gen_ibo(const unsigned short *indices, size_t le
 {
     unsigned int ibo{ 0 };
 
+    create();
+    bind();
+
     gl_check(glGenBuffers(1, &ibo));
     gl_check(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo));
     gl_check(glBufferData(GL_ELEMENT_ARRAY_BUFFER,
         length * sizeof(unsigned short),
         indices,
         GL_STATIC_DRAW));
+
+    unbind();
+
+    if (ibo == 0) {
+        gl_log_err("Unable to set index buffer. (The returned id was 0)");
+    } else {
+        m_idxBufId = ibo;
+    }
 
     return ibo;
 }

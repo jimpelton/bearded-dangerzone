@@ -26,8 +26,5 @@
     <ClInclude Include="simplecontextcontroller.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\shared\graphics\axis.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
 </Project>

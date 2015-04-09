@@ -5,7 +5,6 @@
 namespace bd {
 
 
-    ContextController* Context::m_concon = nullptr;
 
 ///////////////////////////////////////////////////////////////////////////////
 GlfwContext::GlfwContext(ContextController *concon) 
@@ -22,13 +21,14 @@ GlfwContext::~GlfwContext()
 
 
 ///////////////////////////////////////////////////////////////////////////////
-GLFWwindow* GlfwContext::init(int width, int height)
+void GlfwContext::init(int width, int height)
 {
 
     m_window = nullptr;
     if (!glfwInit()) {
         gl_log_err("could not start GLFW3");
-        return nullptr;
+        //return nullptr;
+        return;
     }
 
     glfwSetErrorCallback(GlfwContext::glfw_error_callback);
@@ -44,7 +44,8 @@ GLFWwindow* GlfwContext::init(int width, int height)
     if (!m_window) {
         gl_log_err("ERROR: could not open window with GLFW3");
         glfwTerminate();
-        return nullptr;
+        //return nullptr;
+        return;
     }
 
     glfwSetCursorPosCallback(m_window, glfw_cursorpos_callback);
@@ -57,7 +58,8 @@ GLFWwindow* GlfwContext::init(int width, int height)
     GLenum error = glewInit();
     if (error) {
         gl_log_err("could not init glew %s", glewGetErrorString(error));
-        return nullptr;
+        //return nullptr;
+        return;
     }
     
     glDebugMessageCallback((GLDEBUGPROC)bd::gl_debug_message_callback, NULL);
@@ -67,7 +69,9 @@ GLFWwindow* GlfwContext::init(int width, int height)
     gl_check(glDepthFunc(GL_LESS));
     gl_check(glClearColor(0.1f, 0.1f, 0.1f, 0.0f));
 
-    return m_window;
+    isInit(true);
+
+    //return m_window;
 }
 
 
@@ -109,7 +113,7 @@ void GlfwContext::glfw_cursorpos_callback(GLFWwindow *win, double x, double y)
 {
     /*if (m_cursor_pos_cbfunc != nullptr)
     (*m_cursor_pos_cbfunc)(x, y);*/
-    concon()->cursorpos_callback(x, y);
+    concon().cursorpos_callback(x, y);
 }
 
 
@@ -118,7 +122,7 @@ void GlfwContext::glfw_window_size_callback(GLFWwindow *win, int w, int h)
 {
     /*if (m_window_size_cbfunc != nullptr)
     (*m_window_size_cbfunc)(w, h);*/
-    concon()->window_size_callback(w, h);
+    concon().window_size_callback(w, h);
 }
 
 
@@ -127,7 +131,7 @@ void GlfwContext::glfw_keyboard_callback(GLFWwindow *window, int key, int scanco
 {
     /*if (m_keyboard_cbfunc != nullptr)
     (*m_keyboard_cbfunc)(key, scancode, action, mods);*/
-    concon()->keyboard_callback(key, scancode, action, mods);
+    concon().keyboard_callback(key, scancode, action, mods);
 }
 
 
@@ -136,7 +140,7 @@ void GlfwContext::glfw_scrollwheel_callback(GLFWwindow *window, double xoff, dou
 {
     /*if (m_scroll_wheel_cbfunc != nullptr)
     (*m_scroll_wheel_cbfunc)(xoff, yoff);*/
-    concon()->scrollwheel_callback(xoff, yoff);
+    concon().scrollwheel_callback(xoff, yoff);
 }
 
 } // namespace bd
