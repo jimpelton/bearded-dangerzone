@@ -20,5 +20,11 @@ const std::array<unsigned short, 4> Quad::elements
     //0, 1, 2, 3
 };
 
+Quad::Quad() : Transformable()
+{
+}
+
+
+
 } // namespace bd
 

@@ -10,23 +10,23 @@ namespace bd {
 
 class Transformable 
 {
+public:
     Transformable();
-    //Transformable(Transformable* parent);
 
     virtual ~Transformable();
 
-
     void update(Transformable *parent);
-    //Transformable *parent();
-    Transform* transform();
+
+    Transform& transform();
+
 private:
-    //Transformable* parent;
+    
     Transform m_transform;
 
     std::vector<Transformable*> m_children;
     
 };
 
-}
+} // namespace bd
 
 #endif

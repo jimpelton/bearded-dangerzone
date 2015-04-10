@@ -6,7 +6,6 @@ namespace bd
 
 //////////////////////////////////////////////////////////////////////////////
 Transformable::Transformable()
-    : m_parent{ nullptr }
 {
 }
 
@@ -20,29 +19,27 @@ Transformable::~Transformable()
 //////////////////////////////////////////////////////////////////////////////
 void Transformable::update(Transformable * parent)
 {
-    m_transform->update();
+    if (parent != nullptr)
+        m_transform.update(parent->transform().matrix());
+    else
+        m_transform.update(glm::mat4(1.0));
 
-    if (parent != nullptr) {
-        Transform *trans = parent->transform();
-    }
-    
-
-    for (auto &t : m_children)
+    for (Transformable *c : m_children)
     {
-        t->update(this);
+        c->update(this);
     }
 }
 
 
 //////////////////////////////////////////////////////////////////////////////
-Transformable* Transformable::parent()
-{
-    return m_parent;
-}
+//Transformable* Transformable::parent()
+//{
+//    return m_parent;
+//}
 
-Transform* Transformable::transform()
+Transform& Transformable::transform()
 {
-    return & m_transform;
+    return m_transform;
 }
 
 } // namespace bd

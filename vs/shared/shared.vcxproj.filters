@@ -134,7 +134,9 @@
     <ClCompile Include="..\..\shared\util\transform.cpp">
       <Filter>src\util</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\shared\util\transformable.cpp" />
+    <ClCompile Include="..\..\shared\util\transformable.cpp">
+      <Filter>src\util</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="shader_programs\simple.vs">
