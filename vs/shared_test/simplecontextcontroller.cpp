@@ -119,7 +119,7 @@ void SimpleContextController::cursorpos_callback(double x, double y)
 
         m_view.rotate(rotX * rotY);
     } else if (glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS) {
-
+        
 
     }
 

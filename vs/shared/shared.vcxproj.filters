@@ -81,6 +81,9 @@
     <ClInclude Include="..\..\shared\util\transform.h">
       <Filter>src\util</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\shared\util\transformable.h">
+      <Filter>src\util</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\shared\graphics\axis.cpp">
@@ -131,6 +134,7 @@
     <ClCompile Include="..\..\shared\util\transform.cpp">
       <Filter>src\util</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\shared\util\transformable.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shader_programs\simple.vs">

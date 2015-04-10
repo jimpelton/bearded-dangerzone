@@ -11,29 +11,33 @@ public:
     Transform();
     ~Transform();
 
-    void translate(glm::vec3 to);
+    void position(glm::vec3 pos);
     
-    void rotate(glm::vec3 axis, float amt);
-    
+    void rotate(float amt, glm::vec3 axis);
+    void rotate(glm::quat rot);
+
     void scale(glm::vec3 by);
 
     void lookat(glm::vec3 point, glm::vec3 up);
 
-    void update();
+    glm::mat4 update();
     
-    glm::mat4 doTransform();
-
-    Transform* parent() const { return m_parent; }
-    void parent(Transform *p) { m_parent = p; }
-
-
-
+    //Transform* parent();
 
 private:
-    Transform *m_parent;
+    //Transform *m_parent;
     glm::vec3 m_pos;
     glm::quat m_rot;
     glm::vec3 m_scale;
+
+    glm::vec3 m_oldpos;
+    glm::quat m_oldrot;
+    glm::vec3 m_oldscale;
+
+    glm::mat4 m_transform;
+    
+
+
     bool m_isDirty;
 };
 
