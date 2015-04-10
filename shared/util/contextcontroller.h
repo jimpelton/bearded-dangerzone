@@ -11,13 +11,13 @@ namespace bd
 class ContextController
 {
 public:
-    ContextController() 
-    {
-    }
+    //ContextController() 
+    //{
+    //}
 
-    virtual ~ContextController() 
-    { 
-    }
+    //virtual ~ContextController() 
+    //{ 
+    //}
 
     virtual void renderLoop(Context &) = 0;
     virtual void keyboard_callback(int key, int scancode, int action, int mods) = 0;

@@ -7,9 +7,11 @@
 
 #include <util/contextcontroller.h>
 #include <util/glfwcontext.h>
+#include <graphics/view.h>
+
+#include <GLFW/glfw3.h>
 
 #include <glm/gtc/quaternion.hpp>
-
 
 class VolRend : public bd::ContextController
 {
@@ -17,16 +19,12 @@ public:
     explicit VolRend(CommandLineOptions &cl);
     virtual ~VolRend();
 
-    bool init(int scr_w, int scr_h) override;
-    void loop();
+    void renderLoop(bd::Context &) override;
 
     virtual void cursorpos_callback(double x, double y) override;
     virtual void keyboard_callback(int key, int scancode, int action, int mods) override;
     virtual void window_size_callback(int width, int height) override;
     virtual void scrollwheel_callback(double xoff, double yoff) override;
-
-    virtual void error_callback(int error, const char *description);
-
 
 private:
     
@@ -35,8 +33,8 @@ private:
 
 
     CommandLineOptions &m_cl;
-    bd::GlfwContext m_context;
-    //View m_view;
+    GLFWwindow *m_window;
+    bd::View m_view;
     Volume m_vol;
     BlocksCollection m_col;
 

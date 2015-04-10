@@ -1,28 +1,29 @@
-#ifndef aabb_h__
-#define aabb_h__
+#ifndef boundingbox_h__
+#define boundingbox_h__
 
-#include "transform.h"
+//#include "transform.h"
+#include "util/transformable.h"
 
 #include <glm/glm.hpp>
 
 namespace bd {
 
-class BoundingBox 
+class BoundingBox : public Transformable
 {
 public:
     BoundingBox();
     ~BoundingBox();
 
-    
+    glm::vec3 min();
+    glm::vec3 max();
+
 private:
     glm::vec3 m_min;
     glm::vec3 m_max;
-
-    Transform m_tr;
 
 };
 
         
 
 } // namespace bd
-#endif // aabb_h__
+#endif // !boundingbox_h__

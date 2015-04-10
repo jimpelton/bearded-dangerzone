@@ -4,8 +4,6 @@
 
 #include <util/contextcontroller.h>
 #include <graphics/view.h>
-#include <graphics/vertexarrayobject.h>
-#include <graphics/quad.h>
 
 #include <GLFW/glfw3.h>
 
@@ -37,14 +35,9 @@ public:
     void setWindow(GLFWwindow *);
 
 private:
-    bd::View m_view;
+    double getTime();
+
     GLFWwindow *m_window;
-
-    glm::vec2 m_cursorPos;
-
-    bd::VertexArrayObject quad_vbo;
-    bd::Quad quad_geo;
-
 };
 
 #endif

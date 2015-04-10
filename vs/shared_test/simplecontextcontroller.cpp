@@ -16,26 +16,50 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include <cmath>
+#include <ctime>
 
-const std::string g_vertStr =
-"#version 400\n"
-"in vec3 vert;"
-"in vec3 col;"
-"uniform mat4 mvp;"
-"out vec3 color;"
-"void main() { "
-"    gl_Position = mvp * vec4(vert, 1.0f);"
-"    color = col;"
-"}";
+namespace 
+{
+    const std::string g_vertStr =
+        "#version 400\n"
+        "in vec3 vert;"
+        "in vec3 col;"
+        "uniform mat4 mvp;"
+        "out vec3 color;"
+        "void main() { "
+        "    gl_Position = mvp * vec4(vert, 1.0f);"
+        "    color = col;"
+        "}";
 
-const std::string g_fragStr =
-"#version 400\n"
-"in vec3 color;"
-"out vec4 out_col;"
-"void main() {"
-"    out_col = vec4(color, 1.0f);"
-//"    out_col = vec4(1.0f, 1.0f, 1.0f, 1.0f);"
-"}";
+    const std::string g_fragStr =
+        "#version 400\n"
+        "in vec3 color;"
+        "out vec4 out_col;"
+        "void main() {"
+        "    out_col = vec4(color, 1.0f);"
+        //"    out_col = vec4(1.0f, 1.0f, 1.0f, 1.0f);"
+        "}";
+
+    const std::vector<glm::vec3> qcolors{
+        { 0.0, 0.0, 0.0 },
+        { 1.0, 0.0, 0.0 },
+        { 0.0, 1.0, 0.0 },
+        { 0.0, 0.0, 1.0 }
+    };
+
+    bd::Shader vert{ bd::ShaderType::Vertex };
+    bd::Shader frag{ bd::ShaderType::Fragment };
+    bd::ShaderProgram prog;
+    bd::VertexArrayObject quad_vbo;
+    bd::Quad quad_geo;
+    glm::vec2 m_cursorPos;
+    bd::View m_view;
+
+  
+
+
+} // namespace 
 
 SimpleContextController::SimpleContextController() 
     : ContextController()
@@ -46,37 +70,42 @@ SimpleContextController::~SimpleContextController()
 {
 }
 
+double SimpleContextController::getTime()
+{
+    static float totalTime = 0.0f;
+    static std::clock_t previousTime = std::clock();
+    std::clock_t currentTime = std::clock();
+    float deltaTime = (currentTime - previousTime) / (float)CLOCKS_PER_SEC;
+    previousTime = currentTime;
+    totalTime += deltaTime;
+    
+    return totalTime;
+}
+
 void SimpleContextController::renderLoop(bd::Context &context)
 {
     bd::GlfwContext *c = dynamic_cast<bd::GlfwContext*>(&context);  // oops.
     if (c == nullptr) {
-        gl_log_err("dynamic_cast failed in renderLoop.");
+        gl_log_err("dynamic_cast failed in renderLoop().");
         return;
     }
 
     GLFWwindow *window = c->window();
     
     using namespace bd;
-    
-    Shader vert{ ShaderType::Vertex };
+   
     vert.loadFromString(g_vertStr);
-    Shader frag{ ShaderType::Fragment };
     frag.loadFromString(g_fragStr);
-    ShaderProgram prog{ &vert, &frag };
-    prog.linkProgram();
+    if (prog.linkProgram(&vert, &frag) == 0) {
+        gl_log_err("could not link shader program in renderLoop!");
+        return;
+    }
 
-    //VertexArrayObject quad;
-    std::vector<glm::vec4> qverts(Quad::verts.begin(), Quad::verts.end());
+    std::vector<glm::vec4> qverts(bd::Quad::verts.begin(), bd::Quad::verts.end());
+    std::vector<unsigned short> elems(bd::Quad::elements.begin(), bd::Quad::elements.end());
+
     quad_vbo.addVbo(qverts, 0);
-    std::vector<unsigned short> elems(Quad::elements.begin(), Quad::elements.end());
     quad_vbo.setIndexBuffer(elems);
-    
-    const std::vector<glm::vec3> qcolors{
-        { 0.0, 0.0, 0.0 },
-        { 1.0, 0.0, 0.0 },
-        { 0.0, 1.0, 0.0 },
-        { 0.0, 0.0, 1.0 }
-    };
     quad_vbo.addVbo(qcolors, 1);
 
     quad_vbo.bind();
@@ -84,26 +113,24 @@ void SimpleContextController::renderLoop(bd::Context &context)
 
     m_view.setProjectionMatrix(50.0f, 1280.f / 720.f, 0.1f, 100.f);
     m_view.setPosition(glm::vec3(0, 0, 10));
-
+    
     /// render loop ///
     do 
     {
-        gl_check(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
-
+        double totalTime = getTime();
+        glm::vec3 quad_scale{ ::cos(totalTime), ::sin(totalTime), 0.0f };
+        quad_geo.transform().scale(quad_scale);
         m_view.updateViewMatrix();
         quad_geo.update(nullptr);
-        
         glm::mat4 mvp
         { 
             m_view.getProjectionMatrix() * 
             m_view.getViewMatrix() * 
             quad_geo.transform().matrix() 
         };
-
         prog.setUniform("mvp", mvp);
-
+        gl_check(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
         gl_check(glDrawElements(GL_TRIANGLE_STRIP, Quad::verts.size(), GL_UNSIGNED_SHORT, 0));
-
         context.swapBuffers();
         context.pollEvents();
 
@@ -151,6 +178,7 @@ void SimpleContextController::cursorpos_callback(double x, double y)
         glm::vec2 delta{ cpos - m_cursorPos};
         glm::vec3 dt{ -delta.x, delta.y, 0.0f }; 
         dt *= 0.001f;
+
         quad_geo.transform().translate(dt);
     }
 
