@@ -9,6 +9,8 @@ set(SOURCE_FILES src/main.cpp
     "${SHARED_DIR}/geometry/BBox.cpp"
     "${SHARED_DIR}/log/gl_log.cpp" )
 
+add_subdirectory(src)
+
 add_executable(simplevr ${HEADER_FILES} ${SOURCE_FILES})
 
 target_link_libraries(simplevr
