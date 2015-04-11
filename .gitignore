@@ -1,3 +1,5 @@
+
+# Visual studio madness!
 *.log
 *.dll
 vs/Libs.local.props
@@ -10,3 +12,19 @@ vs/Libs.local.props
 **/Debug
 **/Release
 **/ipch
+
+
+# Build files
+Makefile
+*.cmake
+CMakeFiles
+CMakeCache.txt
+
+bin
+
+
+# Misc
+.idea
+.directory
+.settings
+
