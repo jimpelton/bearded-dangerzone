@@ -16,7 +16,7 @@ Transformable::~Transformable()
 }
 
 
-//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////      
 void Transformable::update(Transformable * parent)
 {
     if (parent != nullptr)
@@ -29,8 +29,8 @@ void Transformable::update(Transformable * parent)
         c->update(this);
     }
 }
-
-
+                                                                                                                     
+                         
 //////////////////////////////////////////////////////////////////////////////
 //Transformable* Transformable::parent()
 //{

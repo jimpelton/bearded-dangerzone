@@ -1,4 +1,6 @@
 #include "blockscollection.h"
+#include "block.h"
+#include "volume.h"
 
 #include <util/texture.h>
 #include <log/gl_log.h>
@@ -19,67 +21,65 @@ BlocksCollection::BlocksCollection()
 {
 }
 
-BlocksCollection::BlocksCollection(std::unique_ptr<float[]> &data, Volume *vol)
-    : m_blocks{ }
-    , m_block_dims_voxels{ vol->numVox() / vol->numBlocks() }
-    , m_vol{ vol }
-    , m_data{ std::move(data) }
-{
-}
+//BlocksCollection::BlocksCollection(std::unique_ptr<float[]> &data, glm::u64vec3 dataDim, 
+//    glm::u64vec3 blockDim)
+//    : m_blocks{ }
+//    , m_block_dims_voxels{  }
+//    , m_data{ std::move(data) }
+//{
+//}
 
 BlocksCollection::~BlocksCollection()
 {
 }
 
-void BlocksCollection::initBlocks() {
+// bs: number of blocks
+// vol: volume voxel dimensions
+void BlocksCollection::initBlocks(glm::u64vec3 bs, glm::u64vec3 vol)
+{
     // number of blocks in the volume for each dimension.
     // (used to get linear block index later)
-    glm::u64vec3 bs{ m_vol->numBlocks() };
+    //glm::u64vec3 bs{ m_vol->numBlocks() };
 
-    unsigned long long numblocks{ bs.x *bs.y * bs.z };
+    unsigned long long numblocks{ bd::vecCompMult(bs) };
     float dh{ 360.0f / numblocks }; // hue delta
     float hue{ 0.0f };
 
     // size of block in world coordinates
     // the blocks all cram into a volume <= 1x1x1 in world coordinate units.
-    glm::vec3 block_world_size{ m_vol->dims() / glm::vec3{ bs } };
+    glm::vec3 block_world_size{ glm::vec3{ vol } / glm::vec3{ bs } };
 
     // Loop through block coordinates and populate block fields.
     for (auto bz = 0; bz < bs.z; ++bz)
     for (auto by = 0; by < bs.y; ++by)
     for (auto bx = 0; bx < bs.x; ++bx) {
         size_t bidx{ bd::to1D(bx, by, bz, bs.x, bs.y) };
+
         glm::u64vec3 blkLoc{ bx, by, bz };
         glm::u64vec3 voxLoc{ m_block_dims_voxels * blkLoc };
         glm::vec3 worldLoc{ block_world_size *glm::vec3{ blkLoc } };
-
-        // translation for quad
-        glm::mat4 tr 
-        {
-            glm::translate(identity, (worldLoc + (worldLoc + block_world_size)) / 2.0f)
-        };
-
-        // scale quad to block size
-        // TODO: this may not be right because... quad is 2d?
-        glm::mat4 sc 
-        {
-            glm::scale(identity, glm::vec3(block_world_size.x, block_world_size.y, 0.0))
-        };
+        glm::vec3 center{ (worldLoc + (worldLoc + block_world_size)) / 2.0f };
 
         glm::vec3 col;
         bd::hsvToRgb(hue, 1.0f, 1.0f, col);
         hue += dh;
 
-        Block blk(bidx, voxLoc, m_block_dims_voxels, worldLoc, tr, sc, col);
+        Block blk(bidx, voxLoc, m_block_dims_voxels, worldLoc, col);
+        blk.transform().scale(block_world_size);
+        blk.transform().position(center);
         m_blocks.push_back(blk);
     }
 
 }
 
-void BlocksCollection::avgblocks() {
+
+// bs: blocks per dimension in volume
+// vol: data points in volume
+void BlocksCollection::avgblocks(glm::u64vec3 bs, glm::u64vec3 vol)
+{
     //number of blocks in the volume along each dimension.
-    glm::u64vec3 bs{ m_vol->numBlocks() };
-    glm::u64vec3 vol{ m_vol->numVox() };
+    /*{ m_vol->numBlocks() };
+    glm::u64vec3 vol{ m_vol->numVox() };*/
 
     // Sum voxels within blocks
     // x,y,z are voxel coordinates.
@@ -95,14 +95,12 @@ void BlocksCollection::avgblocks() {
         unsigned long long bidx{ bd::to1D(bx, by, bz, bs.x, bs.y) };
 
         // linear voxel index
-
         unsigned long long idx{ bd::to1D(x, y, z, vol.x, vol.y) };
 
         // accumulate voxel value
         Block *blk{ &(m_blocks[bidx]) };
         if (m_data[idx] > 0.5f)
             blk->avg(blk->avg() + 1);
-        //blk->avg(blk->avg() + data[idx]);
     }
 
     unsigned long long block_total_vox {
@@ -125,7 +123,9 @@ void BlocksCollection::avgblocks() {
     gl_log("Averaged %d blocks, decided %d are empty.", m_blocks.size(), emptyCount);
 }
 
-void BlocksCollection::createNonEmptyTextures() {
+// v: data dimensions of volume data
+void BlocksCollection::createNonEmptyTextures(glm::u64vec3 v) 
+{
     auto szvox =
         m_block_dims_voxels.z *
         m_block_dims_voxels.y *
@@ -134,7 +134,7 @@ void BlocksCollection::createNonEmptyTextures() {
     //std::vector<float> image(szvox, 0.0f);
     float *image = new float[szvox];
 
-    glm::u64vec3 v{ m_vol->numVox() };
+    //glm::u64vec3 v{ m_vol->numVox() };
     for (Block &b : m_blocks) {
         if (b.empty()) continue;
 
@@ -161,7 +161,8 @@ void BlocksCollection::createNonEmptyTextures() {
     delete [] image;
 }
 
-void BlocksCollection::printblocks() {
+void BlocksCollection::printblocks() 
+{
     std::stringstream ss;
 
     for (auto &b : m_blocks) {
@@ -176,6 +177,11 @@ void BlocksCollection::printblocks() {
         f.flush();
         f.close();
     }
+}
+
+const Block& BlocksCollection::getBlock(size_t idx) const
+{
+    return m_blocks[idx];
 }
 
 //template

@@ -3,6 +3,7 @@
 
 #include <log/gl_log.h>
 #include <util/context.h>
+#include <graphics/view.h>
 
 namespace bd
 {
@@ -24,6 +25,12 @@ public:
     virtual void window_size_callback(int width, int height) = 0;
     virtual void cursorpos_callback(double x, double y) = 0;
     virtual void scrollwheel_callback(double xoff, double yoff) = 0;
+
+    View& view() { return m_view; }
+
+private:
+    View m_view;
+    
 
 };
 

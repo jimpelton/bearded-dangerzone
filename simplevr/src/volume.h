@@ -2,84 +2,60 @@
 #define volume_h__
 
 #include "blockscollection.h"
-#include <util/util.h>
+
+#include <util/transformable.h>
 
 #include <glm/glm.hpp>
 
 
-class Volume 
+class Volume : public bd::Transformable
 {
 public:
+    ///////////////////////////////////////////////////////////////////////////////
+    /// \brief Default constructor.
+    /// Creates a volume with all dims 0.
+    ///////////////////////////////////////////////////////////////////////////////
+    Volume();
 
     ///////////////////////////////////////////////////////////////////////////////
-    // Constructors/Desctructor
+    /// \brief Constructs a volume with normalized dimensions.
+    /// 
+    /// \param dims The size of the volume in voxels.
     ///////////////////////////////////////////////////////////////////////////////
-
-    //Volume()
-    //    : Volume({ 0.0f, 0.0f, 0.0f }, { 0, 0, 0 }, { 0, 0, 0 })
-    //{
-    //}
+    Volume(const glm::u64vec3 &dims);
 
 
-    //Volume(const glm::vec3 &dims_world, const glm::u64vec3 &dims_vox,
-    //       const glm::uvec3 &dims_blocks)
-    //    : m_dims_world { dims_world }
-    //    , m_numVox { dims_vox }
-    //    , m_numBlocks{ dims_blocks }
-    //{
-    //}
-
-    /** \brief Constructs a volume with specified voxel dimensions. 
-      *  The world dimensions of the volume are set as dims / max(dims).
-      *  
-      *  
-      */
-    Volume(const glm::u64vec3 &dims)
-        : m_numVox{ dims }
-    {
-        auto largest = std::max({ dims.x, dims.y, dims.z });
-        if (largest != 0) {
-            m_dims_world = 
-                glm::vec3{ dims } / static_cast<float>(largest);
-        }
-    }
-
-    ~Volume()
-    {
-    }
+    ~Volume();
 
     
-    /** \brief dimsneions in world coords. */
-    glm::vec3 worldDims() const { return m_dims_world; }
+    ///////////////////////////////////////////////////////////////////////////////
+    /// \brief Dimensions in world coordinates.
+    ///////////////////////////////////////////////////////////////////////////////
+    glm::vec3 worldDims() const;
 
 
-    /** \brief dimensions in voxels */
-    glm::u64vec3 numVox() const { return m_numVox; }
+    ///////////////////////////////////////////////////////////////////////////////
+    /// \brief Volume dimensions in voxels.
+    ///////////////////////////////////////////////////////////////////////////////
+    glm::u64vec3 numVox() const;
     
+        
+    ///////////////////////////////////////////////////////////////////////////////
+    /// \brief total voxels in this volume
+    ///////////////////////////////////////////////////////////////////////////////
+    unsigned long long totalVox();
 
-    /** \brief dimensions in blocks */
-    //glm::u64vec3 numBlocks() const { return m_numBlocks; }
-
-    /** \brief total voxels in this volume */
-    unsigned long long totalVox() { return bd::vecCompMult(m_numVox); }
-
-    /** \brief total blocks in this volume */
-    //size_t totalBlocks() { return compMult(m_numBlocks); }
-
+    
 private:
     ///////////////////////////////////////////////////////////////////////////////
     // Data members
     ///////////////////////////////////////////////////////////////////////////////
 
-    /* \brief dimensions of this volume in world coords (floating point). */
-    glm::vec3 m_dims_world;
-    /* \brief dimensions of this volume in voxels. */
-    glm::u64vec3 m_numVox;
+    
+    glm::vec3 m_dims_world; ///< world coords (floating point).
+    glm::u64vec3 m_numVox;  ///< dimensions of this volume in voxels.
 
-    /* \brief dimensions of this volume in blocks. */
-    //glm::uvec3 m_numBlocks;
-
-    BlocksCollection m_collection;
+    //BlocksCollection m_collection; ///< set of subvolume blocks.
 
 };
 

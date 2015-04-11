@@ -1,12 +1,12 @@
 #ifndef context_h__
 #define context_h__
 
+
 namespace bd {
 ;
 
 class ContextController;
 
-//TODO: add virtual window() method to Context.
 class Context
 {
 
@@ -59,6 +59,7 @@ private:
     static ContextController *m_concon;
 
     bool m_isInit; ///< True if context initialized
+
 
 };
 

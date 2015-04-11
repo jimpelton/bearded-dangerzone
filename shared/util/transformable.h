@@ -15,7 +15,7 @@ public:
 
     virtual ~Transformable();
 
-    void update(Transformable *parent);
+    virtual void update(Transformable *parent);
 
     Transform& transform();
 

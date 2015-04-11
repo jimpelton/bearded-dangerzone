@@ -25,13 +25,16 @@
     <ClCompile Include="..\..\simplevr\src\geometry.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\simplevr\src\main.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\simplevr\src\transferfunction.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\simplevr\src\volrend.cpp">
+    <ClCompile Include="..\..\simplevr\src\main.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\simplevr\src\volume.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\simplevr\src\volrendloop.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
@@ -59,10 +62,10 @@
     <ClInclude Include="..\..\simplevr\src\transferfunction.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\simplevr\src\volrend.h">
+    <ClInclude Include="..\..\simplevr\src\volume.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\simplevr\src\volume.h">
+    <ClInclude Include="..\..\simplevr\src\volrendloop.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>

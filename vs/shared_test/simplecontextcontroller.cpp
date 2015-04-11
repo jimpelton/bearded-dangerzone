@@ -54,10 +54,6 @@ namespace
     bd::VertexArrayObject quad_vbo;
     bd::Quad quad_geo;
     glm::vec2 m_cursorPos;
-    bd::View m_view;
-
-  
-
 
 } // namespace 
 
@@ -111,8 +107,8 @@ void SimpleContextController::renderLoop(bd::Context &context)
     quad_vbo.bind();
     prog.bind();
 
-    m_view.setProjectionMatrix(50.0f, 1280.f / 720.f, 0.1f, 100.f);
-    m_view.setPosition(glm::vec3(0, 0, 10));
+    view().setProjectionMatrix(50.0f, 1280.f / 720.f, 0.1f, 100.f);
+    view().setPosition(glm::vec3(0, 0, 10));
     
     /// render loop ///
     do 
@@ -120,12 +116,12 @@ void SimpleContextController::renderLoop(bd::Context &context)
         double totalTime = getTime();
         glm::vec3 quad_scale{ ::cos(totalTime), ::sin(totalTime), 0.0f };
         quad_geo.transform().scale(quad_scale);
-        m_view.updateViewMatrix();
+        view().updateViewMatrix();
         quad_geo.update(nullptr);
         glm::mat4 mvp
         { 
-            m_view.getProjectionMatrix() * 
-            m_view.getViewMatrix() * 
+            view().getProjectionMatrix() * 
+            view().getViewMatrix() * 
             quad_geo.transform().matrix() 
         };
         prog.setUniform("mvp", mvp);
@@ -155,7 +151,7 @@ void SimpleContextController::cursorpos_callback(double x, double y)
             glm::vec3(0, 1, 0)
             );
 
-        m_view.rotate(rotX * rotY);
+        view().rotate(rotX * rotY);
 
     } else if (glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
         ///////  OBJECT ROTATION RIGHT BUTTON  ///////  
@@ -192,7 +188,7 @@ void SimpleContextController::keyboard_callback(int key, int scancode, int actio
 
 void SimpleContextController::window_size_callback(int width, int height)
 {
-    m_view.setViewport( 0, 0, width, height );
+    view().setViewport( 0, 0, width, height );
 }
 
 void SimpleContextController::scrollwheel_callback(double xoff, double yoff)

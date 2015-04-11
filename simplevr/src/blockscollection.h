@@ -1,7 +1,11 @@
 #ifndef blockscollection_h__
 #define blockscollection_h__
 
-#include "block.h"
+//#include "block.h"
+
+#include "util/transformable.h"
+
+#include <glm/glm.hpp>
 
 #include <vector>
 #include <memory>
@@ -25,53 +29,54 @@
 //    }
 //};
 
-class BlocksCollection {
+class Volume;
+class Block;
+
+class BlocksCollection : public bd::Transformable {
 public:
 
     BlocksCollection();
 
-    BlocksCollection(std::unique_ptr<float[]> &data);
+    BlocksCollection(std::unique_ptr<float []> &data, const Volume &v);
 
     ~BlocksCollection();
 
+
     ///////////////////////////////////////////////////////////////////////////
-    // Member functions
+    /// \brief Create the blocks for this BlocksCollection. 
+    /// 
+    /// \c initBlocks() initializes blocks with block coords, voxel coords, etc.
     ///////////////////////////////////////////////////////////////////////////
-
-    /** \brief Create the blocks for this BlocksCollection. 
-     *  
-     *  \c initBlocks() initializes blocks with block coords, voxel coords, etc.
-     */
-    void initBlocks();
+    void initBlocks(glm::u64vec3 bs, glm::u64vec3 vol);
 
 
-    //template< typename EmptyHeuristic >
-    //unsigned long long findEmpties(EmptyHeuristic isempty);
+    ///////////////////////////////////////////////////////////////////////////
+    ///  \brief Loop over blocks to determine emptyness.
+    /// 
+    ///  \param data Pointer to raw volume data.
+    ///////////////////////////////////////////////////////////////////////////
+    void avgblocks(glm::u64vec3 bs, glm::u64vec3 vol);
 
 
-    /** \brief Loop over blocks to determine emptyness.
-     * 
-     *  \param data Pointer to raw volume data.
-     */
-    void avgblocks();
+    ///////////////////////////////////////////////////////////////////////////
+    ///  \brief Generate gl textures for each block that is not empty.
+    ///  
+    ///  \param data Pointer to raw volume data.
+    ///////////////////////////////////////////////////////////////////////////
+    void createNonEmptyTextures(glm::u64vec3 v);
 
-    /** \brief Generate gl textures for each block that is not empty.
-     *  
-     *  \param data Pointer to raw volume data.
-     */
-    void createNonEmptyTextures();
 
-    /** \brief Print the output of Block::to_string() for each block to a file.
-     *
-     *  The file name used is BLOCK_DATA_FILENAME, no checks for write permissions made :( .
-     *
-     *  \param blocks vector of blocks to print.
-     */
+    ///////////////////////////////////////////////////////////////////////////
+    ///  \brief Print the output of Block::to_string() for each block to a file.
+    /// 
+    ///  The file name used is BLOCK_DATA_FILENAME, no checks for write permissions made :( .
+    /// 
+    /// \param blocks vector of blocks to print.
+    ///////////////////////////////////////////////////////////////////////////
     void printblocks();
 
-    const std::vector<Block>& blocks() const { return m_blocks; }
 
-    /** \brief Return the volume associated with this blockcollection. */
+    const Block& getBlock(size_t idx) const;
 
 private:
     ///////////////////////////////////////////////////////////////////////////////
@@ -80,13 +85,13 @@ private:
 
     std::vector<Block> m_blocks;
     
-    // size of a single block in voxels
-    glm::u64vec3 m_block_dims_voxels;
+    glm::u64vec3 m_block_dims_voxels;  ///< Size of a single block in voxels.
 
-    std::unique_ptr<float[]> m_data;
+    std::unique_ptr<float[]> m_data;   ///< a pointer to the data used to generate block textures.
 
 };
 
+//TODO: EmptyHeuristic templates
 //template <typename EmptyHeuristic>
 //unsigned long long BlocksCollection::findEmpties(EmptyHeuristic isempty)
 //{
