@@ -1,0 +1,28 @@
+#
+# shared/src/graphics/CMakeLists.txt
+#
+
+
+set(SHARED_HEADERS
+    "${SHARED_HEADERS}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/axis.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/BBox.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/mesh.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/quad.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/renderstate.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/vertexarrayobject.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/view.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/datatypes.h"
+    )
+
+
+set(SHARED_SOURCES
+    "${SHARED_SOURCES}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/axis.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/BBox.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/mesh.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/quad.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/vertexarrayobject.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/view.cpp"
+    )
+

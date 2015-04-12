@@ -2,8 +2,9 @@
 #include "block.h"
 #include "volume.h"
 
-#include <util/texture.h>
-#include <log/gl_log.h>
+#include <bd/util/util.h>
+#include <bd/util/texture.h>
+#include <bd/log/gl_log.h>
 
 #include <GL/glew.h>
 
@@ -11,7 +12,6 @@
 
 #include <fstream>
 #include <sstream>
-#include <util/util.h>
 
 const glm::mat4 identity {
     1.0f
@@ -50,9 +50,9 @@ void BlocksCollection::initBlocks(glm::u64vec3 bs, glm::u64vec3 vol)
     glm::vec3 block_world_size{ glm::vec3{ vol } / glm::vec3{ bs } };
 
     // Loop through block coordinates and populate block fields.
-    for (auto bz = 0; bz < bs.z; ++bz)
-    for (auto by = 0; by < bs.y; ++by)
-    for (auto bx = 0; bx < bs.x; ++bx) {
+    for (auto bz = 0ul; bz < bs.z; ++bz)
+    for (auto by = 0ul; by < bs.y; ++by)
+    for (auto bx = 0ul; bx < bs.x; ++bx) {
         size_t bidx{ bd::to1D(bx, by, bz, bs.x, bs.y) };
 
         glm::u64vec3 blkLoc{ bx, by, bz };
@@ -83,9 +83,9 @@ void BlocksCollection::avgblocks(glm::u64vec3 bs, glm::u64vec3 vol)
 
     // Sum voxels within blocks
     // x,y,z are voxel coordinates.
-    for (auto z = 0; z < vol.z; ++z)
-    for (auto y = 0; y < vol.y; ++y)
-    for (auto x = 0; x < vol.x; ++x) {
+    for (auto z = 0ul; z < vol.z; ++z)
+    for (auto y = 0ul; y < vol.y; ++y)
+    for (auto x = 0ul; x < vol.x; ++x) {
         // voxel --> block coordinates
         unsigned long long bx{ x / m_block_dims_voxels.x };
         unsigned long long by{ y / m_block_dims_voxels.y };

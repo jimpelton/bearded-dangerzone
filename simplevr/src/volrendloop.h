@@ -5,10 +5,10 @@
 #include "blockscollection.h"
 #include "volume.h"
 
-#include <util/contextcontroller.h>
-#include <util/glfwcontext.h>
+#include <bd/util/contextcontroller.h>
+#include <bd/util/glfwcontext.h>
 //#include <graphics/view.h>
-#include <graphics/vertexarrayobject.h>
+#include <bd/graphics/vertexarrayobject.h>
 
 #include <GLFW/glfw3.h>
 

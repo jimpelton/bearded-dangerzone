@@ -3,18 +3,15 @@
 #include "volrendloop.h"
 #include "cmdline.h"
 
-#include <util/context.h>
+#include <bd/util/context.h>
 
 #include <iostream>
-
-
 
 
 int main(int argc, char *argv[])
 {
     CommandLineOptions opts;
-    if (parseThem(argc, argv, opts) == 0) 
-    {
+    if (parseThem(argc, argv, opts) == 0) {
         std::cout << "Check command line arguments... Exiting." << std::endl;
         return 1;
     } 

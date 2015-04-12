@@ -1,3 +1,7 @@
+#
+# Top level dir
+#
+
 cmake_minimum_required(VERSION 2.8.4)
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake
@@ -22,9 +26,7 @@ if (WIN32)
 endif (WIN32)
 
 set(BIN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/bin")
-#set(SHARED_DIR "${CMAKE_CURRENT_SOURCE_DIR}/shared")
-#message(STATUS "SHARED_INCLUDES_DIR: ${SHARED_DIR}")
-message(STATUS "BIN_DIR: ${BIN_DIR}")
+set(SHARED_DIR "${CMAKE_CURRENT_SOURCE_DIR}/shared/")
 
 find_package(OpenGL REQUIRED)
 find_package(GLFW REQUIRED)
@@ -33,13 +35,16 @@ find_package(GLM REQUIRED)
 find_package(Boost REQUIRED program_options)
 #find_package(Freetype REQUIRED)
 
-include_directories(${OPENGL_INCLUDE_DIR})
-include_directories(${GLFW_INCLUDE_DIR})
-include_directories(${GLEW_INCLUDE_DIR})
-include_directories(${GLM_INCLUDE_DIR})
+message(STATUS "SHARED_DIR: ${SHARED_DIR}")
+message(STATUS "BIN_DIR: ${BIN_DIR}")
 
+include_directories("${OPENGL_INCLUDE_DIR}")
+#include_directories("${GLFW_INCLUDE_DIR}")
+include_directories("${GLEW_INCLUDE_DIR}")
+include_directories("${GLM_INCLUDE_DIR}")
 #include_directories("${SHARED_DIR}")
+
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/shared")
 #add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/template")
 #add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/instancing")
-#add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/simplevr")
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/simplevr")

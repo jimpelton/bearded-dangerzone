@@ -2,8 +2,8 @@
 
 #include "geometry.h"
 
-#include <graphics/axis.h>
-#include <graphics/quad.h>
+#include <bd/graphics/axis.h>
+#include <bd/graphics/quad.h>
 
 #include <GL/glew.h>
 

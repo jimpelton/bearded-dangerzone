@@ -1,11 +1,11 @@
 
 #include "volrendloop.h"
 
-#include <log/gl_log.h>
+#include <bd/log/gl_log.h>
 
-#include <graphics/vertexarrayobject.h>
-#include <graphics/quad.h>
-#include <util/shader.h>
+#include <bd/graphics/vertexarrayobject.h>
+#include <bd/graphics/quad.h>
+#include <bd/util/shader.h>
 
 #include <GLFW/glfw3.h>
 
@@ -135,7 +135,7 @@ void VolRendLoop::makeBlockSlices(std::vector<glm::vec4> &buffer,
     indices.clear();
     indices.reserve(idxcnt);
 
-    for (int i = 0; i < vertcnt; i+=4 )
+    for (size_t i = 0; i < vertcnt; i+=4 )
     {
         buffer.push_back(bd::Quad::verts[0]);
         buffer.push_back(bd::Quad::verts[1]);
@@ -143,7 +143,7 @@ void VolRendLoop::makeBlockSlices(std::vector<glm::vec4> &buffer,
         buffer.push_back(bd::Quad::verts[3]);
     }
 
-    for (int i = 0; i < idxcnt; i+=5) {
+    for (size_t i = 0; i < idxcnt; i+=5) {
         indices.push_back(bd::Quad::elements[0]);
         indices.push_back(bd::Quad::elements[1]);
         indices.push_back(bd::Quad::elements[2]);

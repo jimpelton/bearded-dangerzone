@@ -1,6 +1,6 @@
 #include "transferfunction.h"
 
-#include <log/gl_log.h>
+#include <bd/log/gl_log.h>
 
 #include <glm/gtx/string_cast.hpp>
 
