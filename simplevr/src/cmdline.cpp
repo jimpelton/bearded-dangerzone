@@ -6,7 +6,7 @@
 #include <iostream>
 #include <string>
 
-int parseThem(int argc, char *argv [], CommandLineOptions &opts)
+int parseThem(int argc, const char *argv[], CommandLineOptions &opts)
 try {
     using std::string;
     namespace po = boost::program_options;

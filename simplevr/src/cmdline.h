@@ -21,6 +21,6 @@ struct CommandLineOptions
     size_t d;
 };
 
-int parseThem(int argc, char *argv [], CommandLineOptions &opts);
+int parseThem(int argc, const char *argv [], CommandLineOptions &opts);
 
 #endif // cmdline_h__

@@ -1,24 +1,27 @@
 #ifndef volrend_h__
 #define volrend_h__
 
+#include <GLFW/glfw3.h>
+
 #include "cmdline.h"
 #include "blockscollection.h"
 #include "volume.h"
 
+#include <bd/util/context.h>
 #include <bd/util/contextcontroller.h>
-#include <bd/util/glfwcontext.h>
-//#include <graphics/view.h>
-#include <bd/graphics/vertexarrayobject.h>
 
-#include <GLFW/glfw3.h>
 
 #include <glm/gtc/quaternion.hpp>
+
+#include <vector>
+#include <string>
 
 class VolRendLoop : public bd::ContextController
 {
 public:
     VolRendLoop(const CommandLineOptions &);
     virtual ~VolRendLoop();
+
 
     //////////////////////////////////////////////////////////////////////////
     // Overrides
@@ -29,28 +32,32 @@ public:
     void window_size_callback(int width, int height) override;
     void scrollwheel_callback(double xoff, double yoff) override;
 
-    void window(GLFWwindow *w);
 
-private:
-    
-    void makeBlockSlices(std::vector<glm::vec4> &buffer,
+    //////////////////////////////////////////////////////////////////////////
+    // Methods
+    //////////////////////////////////////////////////////////////////////////
+    void makeBlockSlices(std::vector<glm::vec4> &vertices,
         std::vector<unsigned short> &indices);
+
     void makeVolumeRenderingShaders(const std::string &vert_path,
         const std::string &frag_path);
 
     //////////////////////////////////////////////////////////////////////////
+    // Accessors
+    //////////////////////////////////////////////////////////////////////////
+    void window(GLFWwindow *w);
+
+private:
+    //////////////////////////////////////////////////////////////////////////
     // Private Data
     //////////////////////////////////////////////////////////////////////////
-
     CommandLineOptions m_cl;
     Volume m_vol;
     BlocksCollection m_col;
     GLFWwindow *m_window;
 
-    bd::VertexArrayObject m_quadproto;
-
-    const unsigned short restart{ 0xFFFF };
-
+    //bd::VertexArrayObject m_quadproto;
+    //const unsigned short restart{ 0xFFFF };
 };
 
 #endif

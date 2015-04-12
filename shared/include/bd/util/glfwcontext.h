@@ -1,11 +1,13 @@
 #ifndef glfwcontext_h__
 #define glfwcontext_h__
 
+//#include <GL/glew.h>
+#include <GLFW/glfw3.h>
+
 #include <bd/util/context.h>
 #include <bd/util/contextcontroller.h>
 
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
+
 
 namespace bd {
 

@@ -7,9 +7,9 @@ set(SOURCE_FILES
     src/block.cpp
     src/blockscollection.cpp
     src/cmdline.cpp
-    src/geometry.cpp
+#   src/geometry.cpp
     src/transferfunction.cpp
-    src/view.cpp
+#   src/view.cpp
     src/volrendloop.cpp
     src/volume.cpp
     )
@@ -18,7 +18,7 @@ set(HEADER_FILES
     src/block.h
     src/blockscollection.h
     src/cmdline.h
-    src/geometry.h
+#   src/geometry.h
     src/transferfunction.h
     src/volrendloop.h
     src/volume.h

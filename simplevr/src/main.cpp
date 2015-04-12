@@ -1,14 +1,13 @@
 
 
 #include "volrendloop.h"
-#include "cmdline.h"
 
-#include <bd/util/context.h>
+#include <bd/util/glfwcontext.h>
 
 #include <iostream>
 
 
-int main(int argc, char *argv[])
+int main(int argc, const char *argv[])
 {
     CommandLineOptions opts;
     if (parseThem(argc, argv, opts) == 0) {
