@@ -2,71 +2,62 @@
 
 #include "geometry.h"
 
+#include <bd/log/gl_log.h>
 #include <bd/graphics/axis.h>
 #include <bd/graphics/quad.h>
 
-#include <GL/glew.h>
-
-void initQuadVbos(unsigned int vaoId, unsigned int *q_vboId, unsigned int *q_iboId)
+void makeBlockSlices(int num_slices, std::vector<glm::vec4> &vertices,
+                std::vector<unsigned short> &indices)
 {
     using bd::Quad;
-    glBindVertexArray(vaoId);
+    unsigned int n = num_slices;
+    size_t vertexCount, indexCount;
 
-    glGenBuffers(1, q_vboId);
-    glBindBuffer(GL_ARRAY_BUFFER, *q_vboId);
-    glBufferData(GL_ARRAY_BUFFER,
-        Quad::verts.size() * sizeof(decltype(Quad::verts[0])),
-        Quad::verts.data(),
-        GL_STATIC_DRAW);
-    const unsigned vertex_coord_attr = 0;
-    glEnableVertexAttribArray(vertex_coord_attr);
-    glVertexAttribPointer(vertex_coord_attr, // attribute
-        Quad::vert_element_size, // number of elements per vertex, here (x,y,z,w)
-        GL_FLOAT, // the type of each element
-        GL_FALSE, // take our values as-is
-        0, // no extra data between each position
-        0 // offset of first element
-        );
+//    std::vector<glm::vec4> vertices;
+    std::vector<glm::vec3> colors;
+//    std::vector<unsigned short> indices;
 
-    glGenBuffers(1, q_iboId);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *q_iboId);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-        Quad::elements.size() * sizeof(decltype(Quad::elements[0])),
-        Quad::elements.data(),
-        GL_STATIC_DRAW);
+    if (n == 0 || n == 1) {
+        n = 1;
+    } else if (n%2 != 0) {
+        n += 1;
+    }
 
-    glBindVertexArray(0);
-}
+    vertexCount = n * Quad::verts.size();
+    indexCount = n + n * Quad::verts.size();
 
-void initAxisVbos(unsigned int vaoId, unsigned int axis_vboId[2]) 
-{
-    using bd::Axis;
-    glBindVertexArray(vaoId);
+    vertices.clear();
+    vertices.reserve(vertexCount);
+    indices.clear();
+    indices.reserve(indexCount);
 
-    glGenBuffers(2, axis_vboId);
-    glBindBuffer(GL_ARRAY_BUFFER, axis_vboId[0]);
-    glBufferData(GL_ARRAY_BUFFER,
-        Axis::verts.size() * sizeof(decltype(Axis::verts[0])),
-        Axis::verts.data(),
-        GL_STATIC_DRAW);
-    const unsigned vertex_coord_attr = 0;
-    glEnableVertexAttribArray(vertex_coord_attr);
-    glVertexAttribPointer(vertex_coord_attr, // attribute
-        Axis::vert_element_size, // number of elements per vertex, here (x,y,z,w)
-        GL_FLOAT, // the type of each element
-        GL_FALSE, // take our values as-is
-        0, // no extra data between each position
-        0); // offset of first element
+    for (size_t i = 0; i < vertexCount; i+=4) {
+        vertices.push_back(Quad::verts[0]);
+        colors.push_back(Quad::colors[0]);
 
+        vertices.push_back(Quad::verts[1]);
+        colors.push_back(Quad::colors[1]);
 
-    glBindBuffer(GL_ARRAY_BUFFER, axis_vboId[1]);
-    glBufferData(GL_ARRAY_BUFFER,
-        Axis::colors.size() * sizeof(decltype(Axis::colors[0])),
-        Axis::colors.data(),
-        GL_STATIC_DRAW);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+        vertices.push_back(Quad::verts[2]);
+        colors.push_back(Quad::colors[2]);
 
-    glBindVertexArray(0);
+        vertices.push_back(Quad::verts[3]);
+        colors.push_back(Quad::colors[3]);
+    }
+
+    for (size_t i = 0; i < indexCount; i+=5) {
+        indices.push_back(Quad::elements[0]);
+        indices.push_back(Quad::elements[1]);
+        indices.push_back(Quad::elements[2]);
+        indices.push_back(Quad::elements[3]);
+        indices.push_back(static_cast<unsigned short>(0xFFFF));
+    }
+//
+//    m_slices_vao.addVbo(vertices, 0);
+//    m_slices_vao.addVbo(colors, 1);
+//    m_slices_vao.setIndexBuffer(indices);
+
+    gl_log("Created %d slices, %d vertices, %d indices.",
+           n, vertexCount, indexCount);
 }
 

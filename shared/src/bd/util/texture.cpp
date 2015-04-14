@@ -1,12 +1,14 @@
 
+#include <GL/glew.h>
 
 #include <bd/util/texture.h>
 #include <bd/log/gl_log.h>
+
 #include <array>
 
 
 namespace bd {
-; // <-- stop visual studio indenting
+
 
 Texture::Texture() 
     : m_id{ 0 }

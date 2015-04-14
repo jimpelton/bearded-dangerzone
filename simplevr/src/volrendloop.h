@@ -1,20 +1,19 @@
 #ifndef volrend_h__
 #define volrend_h__
 
-#include <GLFW/glfw3.h>
-
 #include "cmdline.h"
 #include "blockscollection.h"
 #include "volume.h"
 
-#include <bd/util/context.h>
 #include <bd/util/contextcontroller.h>
-
+#include <bd/util/shader.h>
+#include <bd/graphics/vertexarrayobject.h>
 
 #include <glm/gtc/quaternion.hpp>
 
 #include <vector>
 #include <string>
+
 
 class VolRendLoop : public bd::ContextController
 {
@@ -26,7 +25,8 @@ public:
     //////////////////////////////////////////////////////////////////////////
     // Overrides
     //////////////////////////////////////////////////////////////////////////
-    void renderLoop(bd::Context &) override;
+    void initialize(bd::Context &) override;
+    void renderLoop() override;
     void cursorpos_callback(double x, double y) override;
     void keyboard_callback(int key, int scancode, int action, int mods) override;
     void window_size_callback(int width, int height) override;
@@ -36,28 +36,31 @@ public:
     //////////////////////////////////////////////////////////////////////////
     // Methods
     //////////////////////////////////////////////////////////////////////////
-    void makeBlockSlices(std::vector<glm::vec4> &vertices,
-        std::vector<unsigned short> &indices);
+    void addVbaContext(const std::vector<glm::vec4> &verts,
+       const std::vector<unsigned short> &indices);
 
     void makeVolumeRenderingShaders(const std::string &vert_path,
         const std::string &frag_path);
 
-    //////////////////////////////////////////////////////////////////////////
-    // Accessors
-    //////////////////////////////////////////////////////////////////////////
-    void window(GLFWwindow *w);
-
 private:
+
+    void drawBlocks();
+
     //////////////////////////////////////////////////////////////////////////
     // Private Data
     //////////////////////////////////////////////////////////////////////////
-    CommandLineOptions m_cl;
-    Volume m_vol;
-    BlocksCollection m_col;
-    GLFWwindow *m_window;
+    const CommandLineOptions *m_cl;
 
-    //bd::VertexArrayObject m_quadproto;
-    //const unsigned short restart{ 0xFFFF };
+    float m_mouseSpeed; //{ 1.0f };
+    glm::vec2 m_cursorPos;
+
+    Volume m_vol;
+
+    bd::Shader m_volshader_vertex;
+    bd::Shader m_volshader_fragment;
+    bd::ShaderProgram m_volshader_program;
+
+    bd::VertexArrayObject m_slices_vao;
 };
 
 #endif

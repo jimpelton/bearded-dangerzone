@@ -27,10 +27,12 @@ void checkForAndLogGlError(const char *file, const char *func, int line)
 bool gl_log_close()
 {
     if (!file) {
-        fprintf(stderr, "Error: not closing gl log file %s because it was not opened.", logFileName);
+        fprintf(stderr, "Error: not closing gl log file %s because it was not"
+                " opened.\n", logFileName);
     }
     if (!glDebugFile) {
-        fprintf(stderr, "Error: not closing gl debug log file %s because it was not opened.", logFileName);
+        fprintf(stderr, "Error: not closing gl debug log file %s because it "
+                "was not opened.\n", logFileName);
     }
 
     if (!file || !glDebugFile)
@@ -60,7 +62,7 @@ bool gl_debug_log_restart()
         return false;
     }
 
-    time_t now = time(NULL);
+    std::time_t now = std::time(NULL);
     char *date = ctime(&now);
     fprintf(file, "\n------------------------\n"
             "GL debug output log. local time %s\n", date);
@@ -82,7 +84,7 @@ bool gl_log_restart()
         return false;
     }
 
-    time_t now = time(NULL);
+    std::time_t now = std::time(NULL);
     char *date = ctime(&now);
     fprintf(file, "\n------------------------\n"
             "logFileName log. local time %s\n", date);
@@ -95,7 +97,7 @@ bool gl_log_fcn(const char *message, ...)
     va_list argptr;
 
     if (!file) {
-        fprintf(stderr, "log file %s is not open for appending", logFileName);
+        fprintf(stderr, "log file %s is not open for appending\n", logFileName);
         return false;
     }
 
@@ -187,19 +189,19 @@ void log_gl_params()
     //gl_log ("-----------------------------\n");
 }
 
-void gl_debug_message_callback(GLenum source,
-                               GLenum type,
-                               GLuint id,
-                               GLenum severity,
-                               GLsizei length,
-                               const GLchar *message,
-                               void *userParam)
-{
-    const char *msg = "OGL_DEBUG: source: 0x%04X, type 0x%04X, id %u, severity 0x%0X, '%s'\n";
-    if (glDebugFile) {
-        fprintf(glDebugFile, msg, source, type, id, severity, message);
-    } 
-}
+//void gl_debug_message_callback(GLenum source,
+//                               GLenum type,
+//                               GLuint id,
+//                               GLenum severity,
+//                               GLsizei length,
+//                               const GLchar *message,
+//                               void *userParam)
+//{
+//    const char *msg = "OGL_DEBUG: source: 0x%04X, type 0x%04X, id %u, severity 0x%0X, '%s'\n";
+//    if (glDebugFile) {
+//        fprintf(glDebugFile, msg, source, type, id, severity, message);
+//    }
+//}
 
 } // namespace
 

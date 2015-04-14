@@ -12,7 +12,6 @@
 #include <utility>
 
 namespace bd {
-; // <-- argh visual studio, argh!
 
 class VertexArrayObject {
 public:

@@ -1,6 +1,22 @@
-#include <bd/util/glfwcontext.h>
 
+#include <GL/glew.h>
+
+#include <bd/util/glfwcontext.h>
 #include <bd/log/gl_log.h>
+#include <stdio.h>
+
+
+namespace {
+
+void gl_debug_message_callback(GLenum source, GLenum type, GLuint id,
+    GLenum severity, GLsizei length, const GLchar *message, void *userParam)
+{
+    gl_log("OGL_DEBUG: source: 0x%04X, type 0x%04X, id %u, severity 0x%0X, '%s'",
+        source, type, id, severity, message);
+}
+
+} // namespace
+
 
 namespace bd {
 
@@ -21,14 +37,14 @@ GlfwContext::~GlfwContext()
 
 
 ///////////////////////////////////////////////////////////////////////////////
-void GlfwContext::init(int width, int height)
+bool GlfwContext::init(int width, int height)
 {
 
     m_window = nullptr;
     if (!glfwInit()) {
         gl_log_err("could not start GLFW3");
         //return nullptr;
-        return;
+        return false;
     }
 
     glfwSetErrorCallback(GlfwContext::glfw_error_callback);
@@ -45,7 +61,7 @@ void GlfwContext::init(int width, int height)
         gl_log_err("ERROR: could not open window with GLFW3");
         glfwTerminate();
         //return nullptr;
-        return;
+        return false;
     }
 
     glfwSetCursorPosCallback(m_window, glfw_cursorpos_callback);
@@ -59,17 +75,19 @@ void GlfwContext::init(int width, int height)
     if (error) {
         gl_log_err("could not init glew %s", glewGetErrorString(error));
         //return nullptr;
-        return;
+        return false;
     }
     
-    glDebugMessageCallback((GLDEBUGPROC)bd::gl_debug_message_callback, NULL);
+    glDebugMessageCallback((GLDEBUGPROC)gl_debug_message_callback, NULL);
     glEnable(GL_DEBUG_OUTPUT);
 
     gl_check(glEnable(GL_DEPTH_TEST));
     gl_check(glDepthFunc(GL_LESS));
-    gl_check(glClearColor(0.1f, 0.1f, 0.1f, 0.0f));
+    gl_check(glClearColor(0.15f, 0.15f, 0.15f, 0.0f));
 
-    isInit(true);
+    gl_log("GLFWContext initialized...");
+
+    return true;
 
     //return m_window;
 }

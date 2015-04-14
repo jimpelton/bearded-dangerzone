@@ -5,7 +5,6 @@
 
 
 namespace bd {
-;
 
 // static
 ContextController* Context::m_concon = nullptr;
@@ -15,7 +14,8 @@ Context* Context::InitializeContext(ContextController *cc)
 {
     Context *context = new GlfwContext(cc);
     if (context) {
-        context->init(1280, 720);
+        bool success = context->init(1280, 720);
+        context->isInit(success);
     }
 
     return context;
@@ -43,7 +43,8 @@ Context::~Context()
 ///////////////////////////////////////////////////////////////////////////////
 void Context::startLoop()
 {
-    m_concon->renderLoop(*this);
+    m_concon->initialize(*this);
+    m_concon->renderLoop();
 }
 
 

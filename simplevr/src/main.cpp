@@ -1,11 +1,14 @@
 
-
+#include "cmdline.h"
 #include "volrendloop.h"
-
-#include <bd/util/glfwcontext.h>
+#include "geometry.h"
 
 #include <iostream>
 
+
+#ifndef VR_SHADER_PATH
+#define VR_SHADER_PATH
+#endif
 
 int main(int argc, const char *argv[])
 {
@@ -13,21 +16,27 @@ int main(int argc, const char *argv[])
     if (parseThem(argc, argv, opts) == 0) {
         std::cout << "Check command line arguments... Exiting." << std::endl;
         return 1;
-    } 
+    }
+    printThem(opts);
 
     VolRendLoop vr(opts);
     bd::Context *c = bd::Context::InitializeContext(&vr);
-    bd::GlfwContext *gcon = reinterpret_cast<bd::GlfwContext*>(c);
-    
-    if (gcon == nullptr) {
-        std::cout << "Downcast to GlfwContext failed." << std::endl;
+
+    if (c == nullptr) {
+        std::cout << "Context initialization failed." << std::endl;
         return 1;
     }
 
-    //vr.initBlocks();
 
-    vr.window(gcon->window());
-    gcon->startLoop();
+    vr.makeVolumeRenderingShaders("shaders/simple-vs.glsl",
+                                  "shaders/simple-color-frag.glsl");
+
+    std::vector<glm::vec4> vertices;
+    std::vector<unsigned short> indices;
+    makeBlockSlices(opts.num_slices, vertices, indices);
+    vr.addVbaContext(vertices, indices);
+
+    c->startLoop();
 
     return 0;
 }

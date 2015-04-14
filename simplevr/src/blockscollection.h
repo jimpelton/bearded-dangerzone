@@ -37,15 +37,28 @@ public:
 
     BlocksCollection();
 
-    BlocksCollection(std::unique_ptr<float []> &data, const Volume &v);
-
     ~BlocksCollection();
+
+
+    //////////////////////////////////////////////////////////////////////////
+    /// \brief Get a const reference to the block at index \c idx.
+    //////////////////////////////////////////////////////////////////////////
+    const Block& operator[](std::size_t idx) const;
+
+
+    //////////////////////////////////////////////////////////////////////////
+    /// \brief Add a block to this block collection.
+    ///
+    /// The block is added to this collection's list of transformable children
+    //////////////////////////////////////////////////////////////////////////
+    void addBlock(Block &b);
 
 
     ///////////////////////////////////////////////////////////////////////////
     /// \brief Create the blocks for this BlocksCollection. 
     /// 
-    /// \c initBlocks() initializes blocks with block coords, voxel coords, etc.
+    /// \param bs Number of blocks in volume.
+    /// \param vol Dimensions of volume data.
     ///////////////////////////////////////////////////////////////////////////
     void initBlocks(glm::u64vec3 bs, glm::u64vec3 vol);
 
@@ -53,7 +66,8 @@ public:
     ///////////////////////////////////////////////////////////////////////////
     ///  \brief Loop over blocks to determine emptyness.
     /// 
-    ///  \param data Pointer to raw volume data.
+    ///  \param bs Number of blocks in volume.
+    ///  \param vol Dimensions of volume data.
     ///////////////////////////////////////////////////////////////////////////
     void avgblocks(glm::u64vec3 bs, glm::u64vec3 vol);
 
@@ -66,17 +80,25 @@ public:
     void createNonEmptyTextures(glm::u64vec3 v);
 
 
+    //////////////////////////////////////////////////////////////////////////
+    /// \brief Set the pointer to data to be used in block processing.
+    //////////////////////////////////////////////////////////////////////////
+    void data(std::unique_ptr<float[]> data);
+
+
+    const std::vector<Block>& blocks() const;
+
+
     ///////////////////////////////////////////////////////////////////////////
     ///  \brief Print the output of Block::to_string() for each block to a file.
     /// 
     ///  The file name used is BLOCK_DATA_FILENAME, no checks for write permissions made :( .
     /// 
-    /// \param blocks vector of blocks to print.
+    ///  \param blocks vector of blocks to print.
     ///////////////////////////////////////////////////////////////////////////
-    void printblocks();
+    void printblocks() const;
+    std::string to_string() const;
 
-
-    const Block& getBlock(size_t idx) const;
 
 private:
     ///////////////////////////////////////////////////////////////////////////////

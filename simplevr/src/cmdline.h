@@ -23,4 +23,6 @@ struct CommandLineOptions
 
 int parseThem(int argc, const char *argv [], CommandLineOptions &opts);
 
+void printThem(const CommandLineOptions &cmd);
+
 #endif // cmdline_h__

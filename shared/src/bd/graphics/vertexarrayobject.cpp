@@ -1,3 +1,5 @@
+#include <GL/glew.h>
+
 #include <bd/graphics/vertexarrayobject.h>
 #include <bd/log/gl_log.h>
 

@@ -1,13 +1,11 @@
 #ifndef glfwcontext_h__
 #define glfwcontext_h__
 
-//#include <GL/glew.h>
-#include <GLFW/glfw3.h>
 
 #include <bd/util/context.h>
 #include <bd/util/contextcontroller.h>
 
-
+#include <GLFW/glfw3.h>
 
 namespace bd {
 
@@ -24,7 +22,7 @@ public:
     explicit GlfwContext(ContextController *);
     ~GlfwContext();
     
-    void init(int scr_w, int scr_h) override;
+    bool init(int scr_w, int scr_h) override;
 
     void swapBuffers() override;
 
@@ -34,9 +32,10 @@ public:
 
 private:
 
-    ///////////////////////////////////////////////////////////////////////////////
-    // GLFW static callbacks
-    ///////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////
+// GLFW static callbacks
+///////////////////////////////////////////////////////////////////////////////
     static void glfw_error_callback(int error, const char *description);
 
     static void glfw_cursorpos_callback(GLFWwindow *win, double x, double y);
@@ -44,10 +43,9 @@ private:
     static void glfw_window_size_callback(GLFWwindow *win, int w, int h);
 
     static void glfw_keyboard_callback(GLFWwindow *window, int key, int scancode,
-        int action, int mods);
+                                       int action, int mods);
 
     static void glfw_scrollwheel_callback(GLFWwindow *window, double xoff, double yoff);
-
 
     ///////////////////////////////////////////////////////////////////////////////
     // Data members

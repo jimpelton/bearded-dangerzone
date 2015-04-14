@@ -2,8 +2,14 @@
 #ifndef geometry_h__
 #define geometry_h__
 
-void initQuadVbos(unsigned int vaoId, unsigned int *q_vboId, unsigned int *q_iboId);
+#include <glm/glm.hpp>
 
-void initAxisVbos(unsigned int vaoId, unsigned int axis_vboId[2]);
+#include <vector>
+
+void makeBlockSlices(int numslices,
+                     std::vector<glm::vec4>& vertices,
+                     std::vector<unsigned short>& indexes);
+
+//void initAxisVbos(unsigned int vaoId, unsigned int axis_vboId[2]);
 
 #endif // geometry_h__

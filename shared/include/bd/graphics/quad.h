@@ -14,33 +14,15 @@ class Quad : public Transformable {
 public:
     static const std::array<glm::vec4, 4> verts;
     static const std::array<unsigned short, 4> elements;
+    static const std::array<glm::vec3, 4> colors;
     static const unsigned int vert_element_size = 4;
 
 public:
     Quad();
 
-    ~Quad() { }
+    virtual ~Quad();
 
 public:
-    //const glm::mat4& translate() const
-    //{
-    //    return m_transform;
-    //}
-
-    //void translate(const glm::mat4 &m)
-    //{
-    //    m_transform = m;
-    //}
-
-    //const glm::mat4& scale() const
-    //{
-    //    return m_scale;
-    //}
-
-    //void scale(const glm::mat4 &m)
-    //{
-    //    m_scale = m;
-    //}
 
     const glm::vec3& cColor() const
     {

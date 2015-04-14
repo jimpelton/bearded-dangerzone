@@ -1,44 +1,96 @@
 
 #include "volrendloop.h"
-
-#include <bd/log/gl_log.h>
-
-#include <bd/graphics/vertexarrayobject.h>
-#include <bd/graphics/quad.h>
-#include <bd/util/shader.h>
+#include "block.h"
 
 #include <GLFW/glfw3.h>
 
+#include <bd/util/glfwcontext.h>
+#include <bd/log/gl_log.h>
+#include <bd/graphics/quad.h>
+
 #include <vector>
 
-namespace 
+
+namespace
 {
-    float m_mouseSpeed = 1.0f;
-    glm::vec2 m_cursorPos;
-    bd::Shader m_volshader_vertex{ bd::ShaderType::Vertex };
-    bd::Shader m_volshader_fragment{ bd::ShaderType::Fragment };
-    bd::ShaderProgram m_volshader_program;
-}
+    bd::GlfwContext *m_ctx{ nullptr };
+    GLFWwindow *m_window{ nullptr };
+
+    const std::string g_vertStr =
+            "#version 400\n"
+                    "in vec3 vert;"
+                    //"in vec3 col;"
+                    "uniform mat4 mvp;"
+                    //"out vec3 color;"
+                    "void main() { "
+                    "    gl_Position = mvp * vec4(vert, 1.0f);"
+                    //"    color = col;"
+                    "}";
+
+    const std::string g_fragStr =
+            "#version 400\n"
+                    "in vec3 color;"
+                    "out vec4 out_col;"
+                    "void main() {"
+                    //"    out_col = vec4(color, 1.0f);"
+                    "    out_col = vec4(1.0f, 1.0f, 1.0f, 1.0f);"
+                    "}";
+};
 
 
 //////////////////////////////////////////////////////////////////////////
 VolRendLoop::VolRendLoop(const CommandLineOptions &cl)
-    : m_cl(cl)
-    , m_vol{  }
-    , m_window{ nullptr }
-{   
+    : m_cl(&cl)
+    , m_mouseSpeed{0.001f}
+    , m_cursorPos{ }
+    , m_vol{ }
+    , m_volshader_vertex{ bd::ShaderType::Vertex }
+    , m_volshader_fragment{ bd::ShaderType::Fragment }
+    , m_volshader_program{ }
+    , m_slices_vao{ }
+{
 }
 
 
 //////////////////////////////////////////////////////////////////////////
 VolRendLoop::~VolRendLoop() {}
 
+void VolRendLoop::initialize(bd::Context &c)
+{
+    bd::GlfwContext *glfwContext = dynamic_cast<bd::GlfwContext*>(&c);
+    if (glfwContext == nullptr) {
+        return;
+    }
+    m_ctx = glfwContext;
+}
 
 //////////////////////////////////////////////////////////////////////////
-void VolRendLoop::renderLoop(bd::Context &c)
-{   
-    
-    
+void VolRendLoop::renderLoop()
+{
+
+    view().setProjectionMatrix(50.0f, 1280.f / 720.f, 0.1f, 100.f);
+    view().setPosition(glm::vec3(0, 0, 10));
+
+    do {
+        gl_check(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+
+        m_vol.update(nullptr);
+        view().updateViewMatrix();
+
+        m_volshader_program.bind();
+        m_slices_vao.bind();
+
+        drawBlocks();
+
+        m_slices_vao.unbind();
+        m_volshader_program.unbind();
+
+        m_ctx->swapBuffers();
+        m_ctx->pollEvents();
+
+    } while ( glfwGetKey(m_window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
+              glfwWindowShouldClose(m_window) == 0  );
+
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -47,38 +99,43 @@ void VolRendLoop::renderLoop(bd::Context &c)
 
 
 //////////////////////////////////////////////////////////////////////////
-void VolRendLoop::cursorpos_callback(double x, double y) {
-    glm::vec2 cpos{ floor(x), floor(y) };
+void VolRendLoop::cursorpos_callback(double x, double y)
+{
+    glm::vec2 cpos{ std::floor(x), std::floor(y) };
 
     if (glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
         ///////  OBJECT ROTATION LEFT BUTTON  ///////
         glm::vec2 delta{ cpos - m_cursorPos };
 
-        glm::quat rotX = glm::angleAxis<float>(
-            glm::radians(delta.y) * m_mouseSpeed,
-            glm::vec3(1, 0, 0)
-            );
+        glm::quat rotX
+        {
+            glm::angleAxis<float>(glm::radians(delta.y) * m_mouseSpeed,
+                glm::vec3(1, 0, 0))
+        };
 
-        glm::quat rotY = glm::angleAxis<float>(
-            glm::radians(delta.x) * m_mouseSpeed,
-            glm::vec3(0, 1, 0)
-            );
+        glm::quat rotY
+        {
+            glm::angleAxis<float>(glm::radians(delta.x) * m_mouseSpeed,
+                glm::vec3(0, 1, 0))
+        };
 
-        m_vol.transform().rotate(rotX * rotY);
+        m_vol.rotate(rotX * rotY);
 
     } else if (glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
         ///////  CAMERA ROTATION RIGHT BUTTON  ///////
         glm::vec2 delta{ cpos - m_cursorPos };
 
-        glm::quat rotX = glm::angleAxis<float>(
-            glm::radians(delta.y) * m_mouseSpeed,
-            glm::vec3(1, 0, 0)
-            );
+        glm::quat rotX
+        {
+            glm::angleAxis<float>(glm::radians(delta.y) * m_mouseSpeed,
+                glm::vec3(1, 0, 0))
+        };
 
-        glm::quat rotY = glm::angleAxis<float>(
-            glm::radians(delta.x) * m_mouseSpeed,
-            glm::vec3(0, 1, 0)
-            );
+        glm::quat rotY
+        {
+            glm::angleAxis<float>(glm::radians(delta.x) * m_mouseSpeed,
+                glm::vec3(0, 1, 0))
+        };
 
         view().rotate(rotX * rotY);
     }
@@ -106,69 +163,71 @@ void VolRendLoop::scrollwheel_callback(double xoff, double yoff)
 
 
 //////////////////////////////////////////////////////////////////////////
-void VolRendLoop::window(GLFWwindow *w)
+//void VolRendLoop::window(GLFWwindow *w)
+//{
+//    m_window = w;
+//}
+
+
+
+void VolRendLoop::addVbaContext(const std::vector<glm::vec4> &verts,
+    const std::vector<unsigned short> &indices)
 {
-    m_window = w;
-}
+//    const std::vector<glm::vec3> qcolors{
+//            { 0.0, 0.0, 0.0 },
+//            { 1.0, 0.0, 0.0 },
+//            { 0.0, 1.0, 0.0 },
+//            { 0.0, 0.0, 1.0 }
+//    };
 
-//////////////////////////////////////////////////////////////////////////
-void VolRendLoop::makeBlockSlices(std::vector<glm::vec4> &vertices,
-    std::vector<unsigned short> &indices)
-{
-    using bd::Quad;
-    unsigned int n = m_cl.num_slices;
-    size_t vertexCount, indexCount;
-
-    if (n <= 1) {  
-        // n = 0 or 1
-        n = 1;
-    } else if (n % 2 != 0) {  
-        // n odd
-        n += 1;
-    }
-    
-    vertexCount = n * Quad::verts.size();
-    indexCount = n + n * Quad::verts.size();
-
-    vertices.clear();
-    vertices.reserve(vertexCount);
-    indices.clear();
-    indices.reserve(indexCount);
-
-    for (size_t i = 0; i < vertexCount; i+=4) {
-        vertices.push_back(bd::Quad::verts[0]);
-        vertices.push_back(bd::Quad::verts[1]);
-        vertices.push_back(bd::Quad::verts[2]);
-        vertices.push_back(bd::Quad::verts[3]);
-    }
-
-    for (size_t i = 0; i < indexCount; i+=5) {
-        indices.push_back(bd::Quad::elements[0 * i]);
-        indices.push_back(bd::Quad::elements[1 * (i+1)]);
-        indices.push_back(bd::Quad::elements[2 * (i+2)]);
-        indices.push_back(bd::Quad::elements[3 * (i+3)]);
-        indices.push_back(static_cast<unsigned short>(0xFFFF));
-    }
-
-    gl_log("Created %d slices, &d vertices, &d indices.",
-           n, vertexCount, indexCount);
-
+    m_slices_vao.addVbo(verts, 0);
+    //m_slices_vao.addVbo(qcolors, 1);
+    m_slices_vao.setIndexBuffer(indices);
 }
 
 
 void VolRendLoop::makeVolumeRenderingShaders(const std::string &vert_path, 
     const std::string &frag_path)
 {
-    m_volshader_vertex.loadFromFile(vert_path);
-    m_volshader_fragment.loadFromFile(frag_path);
+//    m_volshader_vertex.loadFromFile(vert_path);
+//    m_volshader_fragment.loadFromFile(frag_path);
 
-    unsigned int shaderId = m_volshader_program.linkProgram(&m_volshader_vertex, &m_volshader_fragment);
+    m_volshader_vertex.loadFromString(g_vertStr);
+    m_volshader_fragment.loadFromString(g_fragStr);
+
+    unsigned int shaderId
+    {
+        m_volshader_program.linkProgram(&m_volshader_vertex,
+            &m_volshader_fragment)
+    };
+
     if (shaderId == 0) {
-        gl_log_err("Could not create volume rendering shader program, id returned was 0.");
+        gl_log_err("Could not create volume rendering shader program, "
+                           "id returned was 0.");
     } else {
         gl_log("Created volume rendering shader program, id=%d", shaderId);
     }
 
 }
+
+void VolRendLoop::drawBlocks()
+{
+    using bd::Quad;
+    const std::vector<Block> &col = m_vol.collection().blocks();
+
+    for (const Block &b : col) {
+        glm::mat4 mvp
+        {
+            view().getProjectionMatrix() *
+            view().getViewMatrix() *
+            b.transform().matrix()
+        };
+
+        m_volshader_program.setUniform("mvp", mvp);
+
+        gl_check(glDrawElements(GL_TRIANGLE_STRIP, Quad::verts.size(), GL_UNSIGNED_SHORT, 0));
+    }
+}
+
 
 

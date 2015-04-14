@@ -1,5 +1,5 @@
 #
-# Top level dir
+# <root>
 #
 
 cmake_minimum_required(VERSION 2.8.4)
@@ -25,8 +25,11 @@ if (WIN32)
     add_definitions(-DNOMINMAX)
 endif (WIN32)
 
+add_definitions(-DBD_DEBUG)
+
 set(BIN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/bin")
 set(SHARED_DIR "${CMAKE_CURRENT_SOURCE_DIR}/shared/")
+set(THIRDPARTY_DIR "${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/")
 
 find_package(OpenGL REQUIRED)
 find_package(GLFW REQUIRED)
@@ -48,3 +51,8 @@ add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/shared")
 #add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/template")
 #add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/instancing")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/simplevr")
+
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/test")
+
+
+

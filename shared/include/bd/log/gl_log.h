@@ -1,7 +1,7 @@
 #ifndef gl_log_h__
 #define gl_log_h__
 
-#include <GL/glew.h>
+//#include <GL/glew.h>
 
 #ifdef _WIN32
 #define __func__ __FUNCTION__
@@ -56,9 +56,9 @@ bool gl_log_fcn(const char *message, ...);
 ///////////////////////////////////////////////////////////////////////////////
 // \brief The callback used for opengl's debug messages.
 ///////////////////////////////////////////////////////////////////////////////
-void gl_debug_message_callback(GLenum source,
-                               GLenum type, GLuint id, GLenum severity,
-                               GLsizei length, const GLchar *message, void *userParam);
+//void gl_debug_message_callback(GLenum source,
+//                               GLenum type, GLuint id, GLenum severity,
+//                               GLsizei length, const GLchar *message, void *userParam);
 
 
 ///////////////////////////////////////////////////////////////////////////////

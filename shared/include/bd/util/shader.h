@@ -3,7 +3,6 @@
 
 #include <bd/util/texture.h>
 
-
 #include <glm/glm.hpp>
 
 #include <string>

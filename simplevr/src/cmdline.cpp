@@ -59,3 +59,14 @@ try {
     return 0;
 }
 
+void printThem(const CommandLineOptions &opts)
+{
+    std::cout <<
+    "File path: "  << opts.filePath   << "\n"
+    "Data Type: "  << opts.type       << "\n"
+    "Block side: " << opts.block_side << "\n"
+    "Num slices: " << opts.num_slices << "\n"
+    "Vol width: "  << opts.w          << "\n"
+    "Vol height: " << opts.h          << "\n"
+    "Vol depth: "  << opts.d          << std::endl;
+}
