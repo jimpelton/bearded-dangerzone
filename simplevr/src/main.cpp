@@ -45,7 +45,6 @@ int main(int argc, const char *argv[])
         opts.w, opts.h, opts.d);
 
     bd::Transformable root;
-//    root.position(glm::vec3(-0.5f,-0.5f,-0.5f));
     auto blocks = bc.blocks();
     std::for_each(blocks.begin(), blocks.end(),
         [&root](auto &b) { root.addChild(&b); } );

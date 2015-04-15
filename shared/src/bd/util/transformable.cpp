@@ -30,7 +30,7 @@ void Transformable::update(Transformable * parent)
 
 void Transformable::update()
 {
-    m_transform.update(glm::mat4(1.0));
+    m_transform.update(glm::mat4(1.0f));
     updateChildren();
 }
 

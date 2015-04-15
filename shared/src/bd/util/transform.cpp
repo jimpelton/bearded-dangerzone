@@ -91,7 +91,7 @@ glm::mat4 Transform::update(const glm::mat4 &p)
         glm::mat4 r = glm::toMat4(m_rot);
         glm::mat4 t = glm::translate(I4x4, m_pos);
 
-        m_transform = p * t * r * s;
+        m_transform *= p * t * r * s;
 
         m_isDirty = false;
     }
