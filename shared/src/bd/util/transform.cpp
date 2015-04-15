@@ -106,4 +106,23 @@ const glm::mat4& Transform::matrix() const
     return m_transform;
 }
 
+
+const glm::vec3& Transform::position() const
+{
+    return m_pos;
+}
+
+
+const glm::vec3& Transform::scale() const
+{
+    return m_scale;
+}
+
+
+const glm::quat& Transform::rotation() const
+{
+    return m_rot;
+}
+
+
 } // namespace bd

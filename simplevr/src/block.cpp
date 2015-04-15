@@ -57,40 +57,66 @@ std::string Block::to_string() const
 }
 
 size_t Block::bidx() const
-{ return m_bidx; }
+{
+    return m_bidx;
+}
 
 void Block::bidx(size_t idx)
-{ m_bidx = idx; }
+{
+    m_bidx = idx;
+}
 
 glm::u64vec3 Block::loc() const
-{ return m_loc; }
+{
+    return m_loc;
+}
 
 void Block::loc(glm::u64vec3 l)
-{ m_loc = l; }
+{
+    m_loc = l;
+}
 
 glm::vec3 Block::min() const
-{ return m_min; }
+{
+    return m_min;
+}
 
 void Block::min(glm::vec3 m)
-{ m_min = m; }
+{
+    m_min = m;
+}
 
 float Block::avg() const
-{ return m_avg; }
+{
+    return m_avg;
+}
 
 void Block::avg(float a)
-{ m_avg = a; }
+{
+    m_avg = a;
+}
 
 bool Block::empty() const
-{ return m_empty; }
+{
+    return m_empty;
+}
 
 void Block::empty(bool e)
-{ m_empty = e; }
+{
+    m_empty = e;
+}
 
 unsigned int Block::texid() const
-{ return m_texid; }
+{
+    return m_texid;
+}
 
 void Block::texid(unsigned int id)
-{ m_texid = id; }
+{
+    m_texid = id;
+}
 
 glm::u64vec3 Block::numVox() const
-{ return m_numvox; }
+{
+    return m_numvox;
+}

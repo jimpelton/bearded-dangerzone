@@ -6,6 +6,7 @@
 #include "block.h"
 
 #include <iostream>
+#include <algorithm>
 
 void makeBlocks(BlocksCollection &bc,
     size_t bx, size_t by, size_t bz,
@@ -44,10 +45,11 @@ int main(int argc, const char *argv[])
         opts.w, opts.h, opts.d);
 
     bd::Transformable root;
+//    root.position(glm::vec3(-0.5f,-0.5f,-0.5f));
     auto blocks = bc.blocks();
-    for (auto &b : blocks) {
-        root.addChild(( bd::Transformable * ) &b);
-    }
+    std::for_each(blocks.begin(), blocks.end(),
+        [&root](auto &b) { root.addChild(&b); } );
+
     vr.root(&root);
     vr.addVbaContext(vertices, indices);
 

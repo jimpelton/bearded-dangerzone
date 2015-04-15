@@ -74,6 +74,7 @@ void BlocksCollection::initBlocks(glm::u64vec3 bs, glm::u64vec3 vol)
         blk.position(center);
 
         m_blocks.push_back(blk);
+
     }
 
     gl_log("Finished block init: total blocks is %d.", m_blocks.size());

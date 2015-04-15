@@ -7,9 +7,9 @@
 #define __func__ __FUNCTION__
 #endif
 
-#define gl_log(fmt_, ...) bd::gl_log_fcn("%s[%d]:%s()::" # fmt_, __FILE__, __LINE__, __func__, ##__VA_ARGS__)
+#define gl_log(fmt_, ...) bd::gl_log_fcn("%s[%d]:%s()::\n\t" # fmt_, __FILE__, __LINE__, __func__, ##__VA_ARGS__)
 
-#define gl_log_err(fmt_, ...) bd::gl_log_err_fcn("%s[%d]:%s()::" # fmt_, __FILE__, __LINE__, __func__, ##__VA_ARGS__)
+#define gl_log_err(fmt_, ...) bd::gl_log_err_fcn("%s[%d]:%s()::\n\t" # fmt_, __FILE__, __LINE__, __func__, ##__VA_ARGS__)
 
 #ifdef BD_DEBUG
 #define gl_check(fn) (fn); bd::checkForAndLogGlError(__FILE__, __func__, __LINE__);

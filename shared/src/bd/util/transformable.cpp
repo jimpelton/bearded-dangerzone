@@ -23,36 +23,23 @@ Transformable::~Transformable()
 //////////////////////////////////////////////////////////////////////////////      
 void Transformable::update(Transformable * parent)
 {
-    if (parent != nullptr)
-        m_transform.update(parent->transform().matrix());
-    else
-        m_transform.update(glm::mat4(1.0));
+    assert(parent != nullptr);
+    m_transform.update(parent->transform().matrix());
+    updateChildren();
+}
 
-    for (int i=0; i<m_children.size(); ++i) {
-        Transformable *c = m_children[i];
-
-        if (c==nullptr)
-            std::cerr<<"Oh my, a null child snuck in!" << std::endl;
-        else
-            m_children[i]->update(this);
-    }
+void Transformable::update()
+{
+    m_transform.update(glm::mat4(1.0));
+    updateChildren();
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 void Transformable::addChild(Transformable *c)
 {
-    if (c != nullptr)
-        m_children.push_back(c);
-    else
-        std::cerr << "tried to push nullptr." << std::endl;
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-const Transform& Transformable::transform() const
-{
-    return m_transform;
+    assert(c != nullptr);
+    m_children.push_back(c);
 }
 
 
@@ -83,6 +70,17 @@ void Transformable::position(const glm::vec3 &pos)
     m_transform.position(pos);
 }
 
+Transform& Transformable::transform()
+{
+    return m_transform;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//const Transform& Transformable::transform() const
+//{
+//    return m_transform;
+//}
+
 const std::vector<Transformable*>& Transformable::children() const
 {
     return m_children;
@@ -92,5 +90,16 @@ std::string Transformable::to_string() const
 {
     return BDObj::to_string() + " { children: " + std::to_string(m_children.size()) + " }";
 }
+
+void Transformable::updateChildren()
+{
+    for (auto &t : m_children)
+    {
+        t->update(this);
+    }
+}
+
 } // namespace bd
+
+
 

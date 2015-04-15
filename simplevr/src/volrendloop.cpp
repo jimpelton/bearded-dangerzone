@@ -9,6 +9,7 @@
 #include <bd/graphics/quad.h>
 
 #include <vector>
+#include <iostream>
 
 
 namespace
@@ -40,7 +41,7 @@ namespace
 
 //////////////////////////////////////////////////////////////////////////
 VolRendLoop::VolRendLoop()
-    : m_mouseSpeed{0.001f}
+    : m_mouseSpeed{1.0f}
     , m_cursorPos{ }
 
     , m_vol{ nullptr }
@@ -60,9 +61,8 @@ VolRendLoop::~VolRendLoop() {}
 void VolRendLoop::initialize(bd::Context &c)
 {
     bd::GlfwContext *glfwContext = dynamic_cast<bd::GlfwContext*>(&c);
-    if (glfwContext == nullptr) {
-        return;
-    }
+    assert(glfwContext != nullptr);
+
     m_ctx = glfwContext;
     m_window = glfwContext->window();
 }
@@ -77,7 +77,7 @@ void VolRendLoop::renderLoop()
 
     do {
 
-        m_vol->update(nullptr);
+        m_vol->update();
         view().updateViewMatrix();
 
         m_volshader_program.bind();
@@ -124,7 +124,7 @@ void VolRendLoop::cursorpos_callback(double x, double y)
                 glm::vec3(0, 1, 0))
         };
 
-        m_vol->rotate(rotX * rotY);
+        m_vol->transform().rotate(rotX * rotY);
 
     } else if (glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
         ///////  CAMERA ROTATION RIGHT BUTTON  ///////
@@ -144,6 +144,8 @@ void VolRendLoop::cursorpos_callback(double x, double y)
 
         view().rotate(rotX * rotY);
     }
+
+    m_cursorPos = cpos;
 }
 
 

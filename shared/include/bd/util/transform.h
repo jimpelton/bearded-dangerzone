@@ -66,7 +66,11 @@ public:
     // \brief Return the 4x4 matrix of this Transform.
     ///////////////////////////////////////////////////////////////////////////////
     const glm::mat4& matrix() const;
-    
+
+    const glm::vec3& position() const;
+    const glm::vec3& scale() const;
+    const glm::quat& rotation() const;
+
 private:
     glm::vec3 m_pos;
     glm::quat m_rot;

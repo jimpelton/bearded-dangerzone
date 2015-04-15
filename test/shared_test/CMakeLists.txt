@@ -26,9 +26,9 @@ add_executable(transform_test
     )
 
 
-#add_executable(transformable_test
-#    src/transformable_test.cpp
-#    )
+add_executable(transformable_test
+    src/transformable_test.cpp
+    )
 
 
 
@@ -37,8 +37,8 @@ target_link_libraries(transform_test
     )
 
 
-#target_link_libraries(transformable_test
-#    ${OPENGL_LIBRARIES} ${GLFW_LIBRARIES} ${GLEW_LIBRARIES} shared
-#    )
+target_link_libraries(transformable_test
+    ${OPENGL_LIBRARIES} ${GLFW_LIBRARIES} ${GLEW_LIBRARIES} shared
+    )
 
 #install(TARGETS transform_test RUNTIME DESTINATION ${BIN_DIR})

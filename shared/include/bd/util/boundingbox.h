@@ -13,8 +13,6 @@ public:
     BoundingBox();
     ~BoundingBox();
 
-    void update(Transformable *parent) override;
-
     glm::vec3 min();
     glm::vec3 max();
 

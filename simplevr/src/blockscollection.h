@@ -100,6 +100,7 @@ public:
     ///  \param blocks vector of blocks to print.
     ///////////////////////////////////////////////////////////////////////////
     void printblocks() const;
+
     virtual std::string to_string() const override;
 
 
