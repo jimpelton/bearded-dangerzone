@@ -2,13 +2,14 @@
 #define transformable_h__
 
 #include <bd/util/transform.h>
+#include <bd/util/bdobj.h>
 
 #include <vector>
 
 namespace bd {
 
 
-class Transformable 
+class Transformable : public BDObj
 {
 public:
     Transformable();
@@ -49,14 +50,19 @@ public:
     //////////////////////////////////////////////////////////////////////////
     void position(const glm::vec3 &pos);
 
-//////////////////////////////////////////////////////////////////////////
-///  TL;DR: the bake() method bakes for several hours.
-///
-///  Interrupting bake() will leave goods in a valid, but
-///  unspecified state (hopefully edible and not too gooey). YMMV.
-//////////////////////////////////////////////////////////////////////////
-//  template< class Yummy, class Ingredients, class Bread >
-//  Yummy bake(Bread &b, std::vector<Ingredients> pantry);
+    const std::vector<Transformable*>& children() const;
+
+    virtual std::string to_string() const override;
+
+    //////////////////////////////////////////////////////////////////////////
+    ///  TL;DR: the bake() method bakes for several hours.
+    ///
+    ///  Interrupting bake() will leave goods in a valid, but
+    ///  unspecified state (hopefully edible and not too gooey). YMMV.
+    //////////////////////////////////////////////////////////////////////////
+    //  template< class Yummy, class Ingredients, class Bread >
+    //  Yummy bake(Bread &b, std::vector<Ingredients> pantry);
+
 
 private:
     Transform m_transform;

@@ -1,0 +1,25 @@
+#!/bin/bash
+#files="CMakeFiles CMakeCache.txt cmake_install.cmake"
+
+#echo -n "Removing $files..."
+
+
+for dir in $(find ./ -name CMakeFiles); do
+    echo "Removing $dir"
+    rm -rf "$dir"
+done
+
+for f in $(find ./ -name CMakeCache.txt); do
+    echo "Removing $f"
+    rm $f
+done
+
+for f in $(find ./ -name cmake_install.cmake); do
+    echo "Removing $f"
+    rm $f
+done
+
+for f in $(find ./ -name Makefile); do
+    echo "Removing $f"
+    rm $f
+done

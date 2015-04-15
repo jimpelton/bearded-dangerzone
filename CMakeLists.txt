@@ -25,7 +25,6 @@ if (WIN32)
     add_definitions(-DNOMINMAX)
 endif (WIN32)
 
-add_definitions(-DBD_DEBUG)
 
 set(BIN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/bin")
 set(SHARED_DIR "${CMAKE_CURRENT_SOURCE_DIR}/shared/")

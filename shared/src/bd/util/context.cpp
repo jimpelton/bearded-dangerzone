@@ -12,6 +12,9 @@ ContextController* Context::m_concon = nullptr;
 // static
 Context* Context::InitializeContext(ContextController *cc)
 {
+    gl_log_restart();
+    gl_debug_log_restart();
+
     Context *context = new GlfwContext(cc);
     if (context) {
         bool success = context->init(1280, 720);
@@ -26,8 +29,6 @@ Context* Context::InitializeContext(ContextController *cc)
 Context::Context(ContextController *cc)
     : m_isInit{ false }
 {
-    gl_log_restart();
-    gl_debug_log_restart();
     m_concon = cc;
 }
 

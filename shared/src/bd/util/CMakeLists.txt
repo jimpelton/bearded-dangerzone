@@ -18,6 +18,7 @@
 
 set(util_SOURCES
     "${SHARED_SOURCES}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/bdobj.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/boundingbox.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/context.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/glfwcontext.cpp"

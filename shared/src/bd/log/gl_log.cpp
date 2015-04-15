@@ -98,6 +98,15 @@ bool gl_log_fcn(const char *message, ...)
 
     if (!file) {
         fprintf(stderr, "log file %s is not open for appending\n", logFileName);
+
+        fprintf(stdout, "(LOG): ");
+
+        va_start(argptr, message);
+        vfprintf(stdout, message, argptr);
+        va_end(argptr);
+        fprintf(stdout, "\n");
+        fflush(stdout);
+
         return false;
     }
 

@@ -16,7 +16,7 @@
 const glm::mat4 identity { 1.0f };
 
 BlocksCollection::BlocksCollection()
-    : bd::Transformable()
+    : bd::BDObj()
 {
 }
 
@@ -38,20 +38,12 @@ BlocksCollection::~BlocksCollection()
 
 
 ///////////////////////////////////////////////////////////////////////////////
-const Block& BlocksCollection::operator[](size_t idx) const
-{
-    return m_blocks[idx];
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
 // bs: number of blocks
 // vol: volume voxel dimensions
 void BlocksCollection::initBlocks(glm::u64vec3 bs, glm::u64vec3 vol)
 {
-    // number of blocks in the volume for each dimension.
-    // (used to get linear block index later)
-    //glm::u64vec3 bs{ m_vol->numBlocks() };
+    gl_log("Starting block init: Number of blocks: %dx%dx%d, "
+        "Volume dimensions: %dx%dx%d", bs.x, bs.y, bs.z, vol.x, vol.y, vol.z);
 
     unsigned long long numblocks{ bd::vecCompMult(bs) };
     float dh{ 360.0f / numblocks }; // hue delta
@@ -82,8 +74,10 @@ void BlocksCollection::initBlocks(glm::u64vec3 bs, glm::u64vec3 vol)
         blk.position(center);
 
         m_blocks.push_back(blk);
-        addBlock(blk);
     }
+
+    gl_log("Finished block init: total blocks is %d.", m_blocks.size());
+
 }
 
 
@@ -114,7 +108,7 @@ void BlocksCollection::avgblocks(glm::u64vec3 bs, glm::u64vec3 vol)
 
         // accumulate voxel value
         Block *blk{ &(m_blocks[bidx]) };
-        if (m_data[idx] > 0.5f)
+        if ((*m_data)[idx] > 0.5f)
             blk->avg(blk->avg() + 1);
     }
 
@@ -142,7 +136,6 @@ void BlocksCollection::avgblocks(glm::u64vec3 bs, glm::u64vec3 vol)
 void BlocksCollection::createNonEmptyTextures(glm::u64vec3 v) 
 {
     size_t szvox { bd::vecCompMult(m_block_dims_voxels) };
-
     float *image = new float[szvox];
 
     for (Block &b : m_blocks) {
@@ -153,7 +146,7 @@ void BlocksCollection::createNonEmptyTextures(glm::u64vec3 v)
         for (auto y = b.loc().y; y < b.loc().y + m_block_dims_voxels.y; ++y)
         for (auto x = b.loc().x; x < b.loc().x + m_block_dims_voxels.x; ++x) {
             size_t didx{ bd::to1D(x, y, z, v.x, v.y) };
-            image[imgIdx++] = m_data[didx];
+            image[imgIdx++] = (*m_data)[didx];
         } // for for for
 
 //        unsigned int t = bd::genGLTex3d(image,
@@ -173,15 +166,9 @@ void BlocksCollection::createNonEmptyTextures(glm::u64vec3 v)
 
 
 ///////////////////////////////////////////////////////////////////////////////
-void BlocksCollection::data(std::unique_ptr<float[]> data)
+void BlocksCollection::data(std::shared_ptr<float[]> data)
 {
-    m_data = std::move(data);
-}
-
-
-void BlocksCollection::addBlock(Block &b)
-{
-    addChild(&b);
+    m_data = data;
 }
 
 
@@ -195,11 +182,14 @@ const std::vector<Block>& BlocksCollection::blocks() const
 ///////////////////////////////////////////////////////////////////////////////
 void BlocksCollection::printblocks() const
 {
-    std::string s = to_string();
+    std::stringstream ss;
 
     std::ofstream f{ BLOCK_DATA_FILENAME };
     if (f.is_open()) {
-        f << s;
+        for (auto &b : m_blocks) {
+            ss << b.to_string() << '\n';
+        }
+        f << ss.str();
         f.flush();
         f.close();
     }
@@ -209,15 +199,8 @@ void BlocksCollection::printblocks() const
 ///////////////////////////////////////////////////////////////////////////////
 std::string BlocksCollection::to_string() const
 {
-    std::stringstream ss;
 
-    for (auto &b : m_blocks) {
-        ss << b.to_string() << '\n';
-    }
-
-    std::string peep{ ss.str() };
-
-    return peep;
+    return "{blocks: "+ std::to_string(m_blocks.size()) + "}" ;
 }
 
 //template

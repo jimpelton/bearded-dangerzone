@@ -17,13 +17,14 @@ public:
     ///////////////////////////////////////////////////////////////////////////////
     Volume();
 
+
     ///////////////////////////////////////////////////////////////////////////////
     /// \brief Constructs a volume with normalized dimensions.
     /// 
     /// \param dims Dimensions of data set
-    /// \param bs Number of blocks.
+
     ///////////////////////////////////////////////////////////////////////////////
-    Volume(const glm::u64vec3 &dims, const glm::u64vec3 &bs);
+    Volume(const glm::u64vec3 &dims);
 
 
     ~Volume();
@@ -46,8 +47,8 @@ public:
     ///////////////////////////////////////////////////////////////////////////////
     unsigned long long totalVox();
 
-    const BlocksCollection& collection() const;
-    
+    virtual std::string to_string() const override;
+
 private:
     ///////////////////////////////////////////////////////////////////////////////
     // Data members
@@ -55,8 +56,6 @@ private:
 
     glm::vec3 m_dims_world; ///< world coords (floating point).
     glm::u64vec3 m_numVox;  ///< dimensions of this volume in voxels.
-
-    BlocksCollection m_collection; ///< set of subvolume blocks.
 
 };
 

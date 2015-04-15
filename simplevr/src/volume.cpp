@@ -4,19 +4,20 @@
 #include <bd/util/util.h>
 
 #include <algorithm>
+#include <sstream>
 
 
 ///////////////////////////////////////////////////////////////////////////////
 Volume::Volume()
-    : Volume( glm::u64vec3(0), glm::u64vec3(1,1,1) )
+    : Volume(glm::u64vec3(0))
 {
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
-Volume::Volume(const glm::u64vec3 &dims, const glm::u64vec3 &bs)
-    : Transformable()
-    , m_numVox{ dims }
+Volume::Volume(const glm::u64vec3 &dims)
+    : m_numVox{ dims }
+    , m_dims_world{}
 {
     // normalize to the longest dimension
     auto largest = std::max({ dims.x, dims.y, dims.z });
@@ -24,11 +25,6 @@ Volume::Volume(const glm::u64vec3 &dims, const glm::u64vec3 &bs)
         m_dims_world =
             glm::vec3{ dims } / static_cast<float>(largest);
     }
-
-    addChild(&m_collection);
-
-    m_collection.initBlocks(bs, dims);
-
 }
 
 
@@ -58,8 +54,14 @@ unsigned long long Volume::totalVox()
     return bd::vecCompMult(m_numVox);
 }
 
-///////////////////////////////////////////////////////////////////////////////
-const BlocksCollection& Volume::collection() const
+
+std::string Volume::to_string() const
 {
-    return m_collection;
+    std::stringstream ss;
+    ss << bd::Transformable::to_string() <<
+    " {vox: " << m_numVox.x << "x" << m_numVox.y << "x" << m_numVox.z <<
+    "} {dims: " <<m_dims_world.x << "x" << m_dims_world.y << "x" << m_dims_world.z
+    << "}";
+
+    return ss.str();
 }

@@ -19,12 +19,12 @@ namespace
     const std::string g_vertStr =
             "#version 400\n"
                     "in vec3 vert;"
-                    //"in vec3 col;"
+                    "in vec3 col;"
                     "uniform mat4 mvp;"
-                    //"out vec3 color;"
+                    "out vec3 color;"
                     "void main() { "
                     "    gl_Position = mvp * vec4(vert, 1.0f);"
-                    //"    color = col;"
+                    "    color = col;"
                     "}";
 
     const std::string g_fragStr =
@@ -32,21 +32,23 @@ namespace
                     "in vec3 color;"
                     "out vec4 out_col;"
                     "void main() {"
-                    //"    out_col = vec4(color, 1.0f);"
-                    "    out_col = vec4(1.0f, 1.0f, 1.0f, 1.0f);"
+                    "    out_col = vec4(color, 1.0f);"
+//                    "    out_col = vec4(1.0f, 1.0f, 1.0f, 1.0f);"
                     "}";
 };
 
 
 //////////////////////////////////////////////////////////////////////////
-VolRendLoop::VolRendLoop(const CommandLineOptions &cl)
-    : m_cl(&cl)
-    , m_mouseSpeed{0.001f}
+VolRendLoop::VolRendLoop()
+    : m_mouseSpeed{0.001f}
     , m_cursorPos{ }
-    , m_vol{ }
+
+    , m_vol{ nullptr }
+
     , m_volshader_vertex{ bd::ShaderType::Vertex }
     , m_volshader_fragment{ bd::ShaderType::Fragment }
     , m_volshader_program{ }
+
     , m_slices_vao{ }
 {
 }
@@ -62,23 +64,26 @@ void VolRendLoop::initialize(bd::Context &c)
         return;
     }
     m_ctx = glfwContext;
+    m_window = glfwContext->window();
 }
 
 //////////////////////////////////////////////////////////////////////////
 void VolRendLoop::renderLoop()
 {
+    assert(m_vol != nullptr);
 
-    view().setProjectionMatrix(50.0f, 1280.f / 720.f, 0.1f, 100.f);
-    view().setPosition(glm::vec3(0, 0, 10));
+    view().setProjectionMatrix(70.0f, 1280.f / 720.f, 0.1f, 100.f);
+    view().setPosition(glm::vec3(0, 0, 50));
 
     do {
-        gl_check(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
-        m_vol.update(nullptr);
+        m_vol->update(nullptr);
         view().updateViewMatrix();
 
         m_volshader_program.bind();
         m_slices_vao.bind();
+
+        gl_check(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
         drawBlocks();
 
@@ -119,7 +124,7 @@ void VolRendLoop::cursorpos_callback(double x, double y)
                 glm::vec3(0, 1, 0))
         };
 
-        m_vol.rotate(rotX * rotY);
+        m_vol->rotate(rotX * rotY);
 
     } else if (glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
         ///////  CAMERA ROTATION RIGHT BUTTON  ///////
@@ -162,26 +167,18 @@ void VolRendLoop::scrollwheel_callback(double xoff, double yoff)
 }
 
 
-//////////////////////////////////////////////////////////////////////////
-//void VolRendLoop::window(GLFWwindow *w)
-//{
-//    m_window = w;
-//}
-
-
-
 void VolRendLoop::addVbaContext(const std::vector<glm::vec4> &verts,
     const std::vector<unsigned short> &indices)
 {
-//    const std::vector<glm::vec3> qcolors{
-//            { 0.0, 0.0, 0.0 },
-//            { 1.0, 0.0, 0.0 },
-//            { 0.0, 1.0, 0.0 },
-//            { 0.0, 0.0, 1.0 }
-//    };
+    const std::vector<glm::vec3> qcolors{
+            { 0.0, 0.0, 0.0 },
+            { 1.0, 0.0, 0.0 },
+            { 0.0, 1.0, 0.0 },
+            { 0.0, 0.0, 1.0 }
+    };
 
     m_slices_vao.addVbo(verts, 0);
-    //m_slices_vao.addVbo(qcolors, 1);
+    m_slices_vao.addVbo(qcolors, 1);
     m_slices_vao.setIndexBuffer(indices);
 }
 
@@ -213,14 +210,14 @@ void VolRendLoop::makeVolumeRenderingShaders(const std::string &vert_path,
 void VolRendLoop::drawBlocks()
 {
     using bd::Quad;
-    const std::vector<Block> &col = m_vol.collection().blocks();
+    //const std::vector<Block> &col = m_vol.collection().blocks();
 
-    for (const Block &b : col) {
+    for (auto *t : m_vol->children()) {
         glm::mat4 mvp
         {
             view().getProjectionMatrix() *
             view().getViewMatrix() *
-            b.transform().matrix()
+            t->transform().matrix()
         };
 
         m_volshader_program.setUniform("mvp", mvp);
@@ -230,4 +227,5 @@ void VolRendLoop::drawBlocks()
 }
 
 
-
+void VolRendLoop::root(bd::Transformable *v)
+{ m_vol = v;}

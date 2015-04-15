@@ -15,58 +15,39 @@
 class Block : public bd::Transformable
 {
 public:
-    // static void makeBlockSlices(unsigned int numslices);
+
+    Block();
+
+    Block(size_t bidx,
+        const glm::u64vec3 &voxloc,
+        const glm::u64vec3 &numvox,
+        const glm::vec3 &worldMinCoords,
+        const glm::vec3 &color = glm::vec3(1, 1, 1));
+
+    virtual ~Block();
 
 public:
+    size_t bidx() const;
+    void bidx(size_t idx);
 
-    Block()
-        : m_bidx{ 0 }
-        , m_loc{ 0, 0, 0 }
-        , m_min{ 0.0f, 0.0f, 0.0f }
-        , m_avg{ 0.0f }
-        , m_empty{ false }
-        , m_texid{ 0 }
-    { }
+    glm::u64vec3 loc() const;
+    void loc(glm::u64vec3 l);
 
-    Block(size_t bidx, const glm::u64vec3 &voxloc, const glm::u64vec3 &numvox,
-        const glm::vec3 &worldMinCoords, const glm::vec3 &color = glm::vec3(1, 1, 1)
-        ) 
-        : m_bidx{bidx}
-        , m_loc{voxloc}
-        , m_min{worldMinCoords}
-        , m_numvox(numvox)
-        , m_avg(0.0f)
-        , m_empty(true)
-        , m_texid(0)
-    {
-    }
+    glm::vec3 min() const;
+    void min(glm::vec3 m);
 
-public:
-    int bidx() const{ return m_bidx;}
-    void bidx(int idx){m_bidx = idx;}
+    float avg() const;
+    void avg(float a);
 
-    glm::u64vec3 loc() const{return m_loc;}
-    void loc(glm::u64vec3 l){m_loc = l;}
+    bool empty() const;
+    void empty(bool e);
 
-    glm::vec3 min() const{return m_min;}
-    void min(glm::vec3 m){m_min = m;}
+    unsigned int texid() const;
+    void texid(unsigned int id);
 
-    float avg() const{return m_avg;}
-    void avg(float a){ m_avg = a; }
+    glm::u64vec3 numVox() const;
 
-    bool empty() const{ return m_empty; }
-    void empty(bool e){m_empty = e;}
-
-    unsigned int texid() const{ return m_texid; }
-    void texid(unsigned int id) { m_texid = id; }
-
-    glm::u64vec3 numVox() const { return m_numvox; }
-
-    std::string to_string() const;
-
-    // block linear index
-    size_t m_bidx;
-
+    virtual std::string to_string() const override;
 
 private:
     // block voxel coordinates
@@ -88,6 +69,8 @@ private:
     // resource id of the texture for this block.
     unsigned int m_texid;
 
+    // block linear index
+    size_t m_bidx;
 };
 
 #endif // !block_h__

@@ -1,9 +1,9 @@
 #ifndef blockscollection_h__
 #define blockscollection_h__
 
-// #include "block.h"
 
 #include <bd/util/transformable.h>
+#include <bd/util/bdobj.h>
 
 #include <glm/glm.hpp>
 
@@ -29,10 +29,11 @@
 //    }
 //};
 
-class Volume;
+//class Volume;
 class Block;
 
-class BlocksCollection : public bd::Transformable {
+class BlocksCollection : public bd::BDObj
+{
 public:
 
     BlocksCollection();
@@ -43,7 +44,7 @@ public:
     //////////////////////////////////////////////////////////////////////////
     /// \brief Get a const reference to the block at index \c idx.
     //////////////////////////////////////////////////////////////////////////
-    const Block& operator[](std::size_t idx) const;
+//    const Block& operator[](std::size_t idx) const;
 
 
     //////////////////////////////////////////////////////////////////////////
@@ -51,12 +52,14 @@ public:
     ///
     /// The block is added to this collection's list of transformable children
     //////////////////////////////////////////////////////////////////////////
-    void addBlock(Block &b);
+//    void addBlock(Block &b);
 
 
     ///////////////////////////////////////////////////////////////////////////
     /// \brief Create the blocks for this BlocksCollection. 
-    /// 
+    /// Given a number of blocks along x, y and z axis, creates Block objects
+    /// with their dimensions and stuffs.
+    ///
     /// \param bs Number of blocks in volume.
     /// \param vol Dimensions of volume data.
     ///////////////////////////////////////////////////////////////////////////
@@ -83,7 +86,7 @@ public:
     //////////////////////////////////////////////////////////////////////////
     /// \brief Set the pointer to data to be used in block processing.
     //////////////////////////////////////////////////////////////////////////
-    void data(std::unique_ptr<float[]> data);
+    void data(std::shared_ptr<float[]> data);
 
 
     const std::vector<Block>& blocks() const;
@@ -97,7 +100,7 @@ public:
     ///  \param blocks vector of blocks to print.
     ///////////////////////////////////////////////////////////////////////////
     void printblocks() const;
-    std::string to_string() const;
+    virtual std::string to_string() const override;
 
 
 private:
@@ -109,7 +112,7 @@ private:
     
     glm::u64vec3 m_block_dims_voxels;  ///< Size of a single block in voxels.
 
-    std::unique_ptr<float[]> m_data;   ///< a pointer to the data used to generate block textures.
+    std::shared_ptr<float[]> m_data;   ///< a pointer to the data used to generate block textures.
 
 };
 

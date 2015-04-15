@@ -5,7 +5,7 @@
 
 
 namespace bd {
-;
+
 
 const glm::mat4 I4x4{ 1.0f };
 
@@ -33,6 +33,8 @@ void Transform::position(glm::vec3 pos)
     m_isDirty = true;
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
 void Transform::translate(glm::vec3 amt)
 {
     m_pos += amt;

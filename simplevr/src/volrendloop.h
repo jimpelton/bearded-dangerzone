@@ -18,7 +18,7 @@
 class VolRendLoop : public bd::ContextController
 {
 public:
-    VolRendLoop(const CommandLineOptions &);
+    VolRendLoop();
     virtual ~VolRendLoop();
 
 
@@ -42,6 +42,11 @@ public:
     void makeVolumeRenderingShaders(const std::string &vert_path,
         const std::string &frag_path);
 
+    //////////////////////////////////////////////////////////////////////////
+    /// \brief Set the root object in the scene graph, probably the volume.
+    //////////////////////////////////////////////////////////////////////////
+    void root(bd::Transformable *v);
+
 private:
 
     void drawBlocks();
@@ -49,12 +54,12 @@ private:
     //////////////////////////////////////////////////////////////////////////
     // Private Data
     //////////////////////////////////////////////////////////////////////////
-    const CommandLineOptions *m_cl;
+    //const CommandLineOptions *m_cl;
 
     float m_mouseSpeed; //{ 1.0f };
     glm::vec2 m_cursorPos;
 
-    Volume m_vol;
+    bd::Transformable *m_vol;
 
     bd::Shader m_volshader_vertex;
     bd::Shader m_volshader_fragment;
