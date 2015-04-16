@@ -125,6 +125,7 @@ void VolRendLoop::cursorpos_callback(double x, double y)
         };
 
         m_vol->transform().rotate(rotX * rotY);
+//        m_vol->transform().scale(glm::vec3(1.5f,1.5f,1.5f));
 
     } else if (glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
         ///////  CAMERA ROTATION RIGHT BUTTON  ///////

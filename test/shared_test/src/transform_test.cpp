@@ -91,7 +91,6 @@ void positionSetsPosVector()
 }
 
 
-
 //////////////////////////////////////////////////////////////////////////////
 void scaleSetsScaleVector()
 {
@@ -108,6 +107,19 @@ void orentationSetsRotationQuat()
     tr.orientation(glm::quat());
 }
 
+void rotateDoesWhatever()
+{
+    Transform tr;
+    glm::quat q(M_PI_4, glm::vec3(0.0f, 1.0f, 0.0f));
+
+    glm::vec3 v = q * glm::vec3(0.0f, 0.0f, 1.0f);
+
+//    tr.rotate(M_PI_4, glm::vec3(0.0f, 1.0f, 0.0f));
+//    glm::vec3 v = tr.rotation() * glm::vec3(0.0f, 0.0f, 1.0f);
+
+    ASSERT_EQ(v, glm::vec3(1.0f, 0.0f, 0.0f));
+
+}
 
 void rotateAccumulatesRotation()
 {
@@ -124,7 +136,10 @@ int main(int argc, char *argv[])
     TEST(defaultConstructedAtOrigin);
     TEST(positionSetsPosVector);
     TEST(scaleSetsScaleVector);
+    TEST(rotateDoesWhatever);
     TEST(rotateAccumulatesRotation);
+
     printTests();
 
+    return 0;
 }

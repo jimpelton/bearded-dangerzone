@@ -1,7 +1,11 @@
 #include <bd/util/transform.h>
 
+#include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
+#include <glm/gtx/string_cast.hpp>
+
 
 
 namespace bd {
@@ -87,11 +91,11 @@ void Transform::lookat(glm::vec3 up, glm::vec3 point)
 glm::mat4 Transform::update(const glm::mat4 &p)
 {
     if (m_isDirty) {
-        glm::mat4 s = glm::scale(I4x4, m_scale);
-        glm::mat4 r = glm::toMat4(m_rot);
-        glm::mat4 t = glm::translate(I4x4, m_pos);
+        glm::mat4 s = glm::scale(p, m_scale);
+        glm::mat4 r = p * glm::toMat4(m_rot);
+        glm::mat4 t = glm::translate(p, m_pos);
 
-        m_transform *= p * t * r * s;
+        m_transform =  /*p **/ t * r * s;
 
         m_isDirty = false;
     }

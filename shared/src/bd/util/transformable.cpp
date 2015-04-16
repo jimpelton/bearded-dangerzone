@@ -1,8 +1,15 @@
 #include <bd/util/transformable.h>
+
+#include <glm/gtx/string_cast.hpp>
+
 #include <iostream>
+#include <glm/gtx/quaternion.hpp>
 
 namespace bd
 {
+namespace {
+    const glm::mat4 I4x4{ 1.0f };
+}
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -30,7 +37,8 @@ void Transformable::update(Transformable * parent)
 
 void Transformable::update()
 {
-    m_transform.update(glm::mat4(1.0f));
+    m_transform.update(m_transform.matrix());
+
     updateChildren();
 }
 
