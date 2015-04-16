@@ -1,4 +1,4 @@
-#include <bd/util/shader.h>
+#include <bd/graphics/shader.h>
 
 #include <bd/log/gl_log.h>
 

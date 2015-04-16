@@ -1,16 +1,19 @@
 #ifndef block_h__
 #define block_h__
 
-#include <bd/util/transformable.h>
+#include <bd/scene/transformable.h>
 
 #include <glm/glm.hpp>
 
 #include <string>
 #include <cstdlib>
 
+
 #ifndef BLOCK_DATA_FILENAME
 #define BLOCK_DATA_FILENAME "block_data.txt"
 #endif
+
+// class bd::Transformable;
 
 class Block : public bd::Transformable
 {

@@ -6,7 +6,7 @@
 #include "volume.h"
 
 #include <bd/util/contextcontroller.h>
-#include <bd/util/shader.h>
+#include <bd/graphics/shader.h>
 #include <bd/graphics/vertexarrayobject.h>
 
 #include <glm/gtc/quaternion.hpp>

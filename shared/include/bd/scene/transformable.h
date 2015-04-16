@@ -1,7 +1,7 @@
 #ifndef transformable_h__
 #define transformable_h__
 
-#include <bd/util/transform.h>
+#include <bd/scene/transform.h>
 #include <bd/util/bdobj.h>
 
 #include <vector>

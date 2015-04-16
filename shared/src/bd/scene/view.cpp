@@ -1,6 +1,6 @@
 
 
-#include <bd/graphics/view.h>
+#include <bd/scene/view.h>
 
 #include <GL/glew.h>
 

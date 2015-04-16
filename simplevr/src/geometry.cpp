@@ -3,7 +3,6 @@
 #include "geometry.h"
 
 #include <bd/log/gl_log.h>
-#include <bd/graphics/axis.h>
 #include <bd/graphics/quad.h>
 
 void makeBlockSlices(int num_slices, std::vector<glm::vec4> &vertices,

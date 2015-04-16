@@ -2,7 +2,7 @@
 #define contextcontroller_h__
 
 #include <bd/util/context.h>
-#include <bd/graphics/view.h>
+#include <bd/scene/view.h>
 
 namespace bd
 {

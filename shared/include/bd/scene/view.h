@@ -6,7 +6,7 @@
 #include <glm/gtc/quaternion.hpp>
 
 namespace bd {
-;
+
 class View
 {
 

@@ -6,7 +6,7 @@
 
 #include <bd/util/glfwcontext.h>
 #include <bd/log/gl_log.h>
-#include <bd/graphics/quad.h>
+#include <bd/graphics/shader.h>
 
 #include <vector>
 #include <iostream>

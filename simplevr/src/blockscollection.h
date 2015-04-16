@@ -2,7 +2,7 @@
 #define blockscollection_h__
 
 
-#include <bd/util/transformable.h>
+#include <bd/scene/transformable.h>
 #include <bd/util/bdobj.h>
 
 #include <glm/glm.hpp>

@@ -1,7 +1,7 @@
 #ifndef boundingbox_h__
 #define boundingbox_h__
 
-#include <bd/util/transformable.h>
+#include <bd/scene/transformable.h>
 
 #include <glm/glm.hpp>
 

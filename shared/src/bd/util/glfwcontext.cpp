@@ -1,8 +1,8 @@
 
 #include <GL/glew.h>
 
-#include <bd/util/glfwcontext.h>
 #include <bd/log/gl_log.h>
+#include <bd/util/glfwcontext.h>
 #include <stdio.h>
 
 

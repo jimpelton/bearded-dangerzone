@@ -1,7 +1,7 @@
 #include <bd/util/boundingbox.h>
 
 namespace bd {
-;
+
 
 
 BoundingBox::BoundingBox()

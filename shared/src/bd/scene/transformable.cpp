@@ -1,4 +1,4 @@
-#include <bd/util/transformable.h>
+#include <bd/scene/transformable.h>
 
 #include <glm/gtx/string_cast.hpp>
 

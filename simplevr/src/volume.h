@@ -3,7 +3,7 @@
 
 #include "blockscollection.h"
 
-#include <bd/util/transformable.h>
+#include <bd/scene/transformable.h>
 
 #include <glm/glm.hpp>
 

@@ -1,7 +1,7 @@
 #ifndef quad_h__
 #define quad_h__
 
-#include <bd/util/transformable.h>
+#include <bd/scene/transformable.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>

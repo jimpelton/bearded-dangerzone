@@ -136,6 +136,7 @@ int main(int argc, char *argv[])
     TEST(defaultConstructedAtOrigin);
     TEST(positionSetsPosVector);
     TEST(scaleSetsScaleVector);
+    TEST(orentationSetsRotationQuat);
     TEST(rotateDoesWhatever);
     TEST(rotateAccumulatesRotation);
 

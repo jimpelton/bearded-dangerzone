@@ -8,7 +8,6 @@
 
 namespace bd {
 
-; // <-- stop VS from indenting (so rediculous!)
 
 class Axis {
 public:
