@@ -2,8 +2,8 @@
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
 
-#include <bd/util/transform.h>
-#include <bd/util/transformable.h>
+#include <bd/scene/transform.h>
+#include <bd/scene/transformable.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtx/string_cast.hpp>

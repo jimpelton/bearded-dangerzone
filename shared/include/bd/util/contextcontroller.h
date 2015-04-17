@@ -8,11 +8,11 @@ namespace bd
 {
 ;
 
-class ContextController
+class RenderLoop
 {
 public:
-    ContextController() { }
-    virtual ~ContextController() { }
+    RenderLoop() { }
+    virtual ~RenderLoop() { }
 
     virtual void initialize(Context &) = 0;
 

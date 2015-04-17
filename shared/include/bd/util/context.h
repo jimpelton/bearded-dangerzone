@@ -5,21 +5,21 @@
 namespace bd {
 ;
 
-class ContextController;
+class RenderLoop;
 
 class Context
 {
 
 public:
 
-    static Context* InitializeContext(ContextController *cc);
-    static ContextController& concon();
+    static Context* InitializeContext(RenderLoop *cc);
+    static RenderLoop& renderLoop();
 
 
     ///////////////////////////////////////////////////////////////////////////////
     // Constructors/Destructor
     ///////////////////////////////////////////////////////////////////////////////
-    Context(ContextController *cc);
+    Context(RenderLoop *cc);
     virtual ~Context();
 
     
@@ -55,10 +55,9 @@ public:
 private:
     void isInit(bool);
 
-    static ContextController *m_concon;
+    static RenderLoop *m_concon;
 
     bool m_isInit; ///< True if context initialized
-
 
 };
 

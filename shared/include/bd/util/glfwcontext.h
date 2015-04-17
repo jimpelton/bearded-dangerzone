@@ -19,7 +19,7 @@ namespace bd {
 class GlfwContext : public Context {
 public:
 
-    explicit GlfwContext(ContextController *);
+    explicit GlfwContext(RenderLoop *);
     ~GlfwContext();
     
     bool init(int scr_w, int scr_h) override;

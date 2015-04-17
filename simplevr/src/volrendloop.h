@@ -15,7 +15,7 @@
 #include <string>
 
 
-class VolRendLoop : public bd::ContextController
+class VolRendLoop : public bd::RenderLoop
 {
 public:
     VolRendLoop();
@@ -55,7 +55,7 @@ private:
     // Private Data
     //////////////////////////////////////////////////////////////////////////
 
-    float m_mouseSpeed; //{ 1.0f };
+    float m_mouseSpeed;
     glm::vec2 m_cursorPos;
 
     bd::Transformable *m_vol;

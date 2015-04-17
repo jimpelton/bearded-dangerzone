@@ -7,10 +7,10 @@
 namespace bd {
 
 // static
-ContextController* Context::m_concon = nullptr;
+RenderLoop * Context::m_concon = nullptr;
 
 // static
-Context* Context::InitializeContext(ContextController *cc)
+Context* Context::InitializeContext(RenderLoop *cc)
 {
     gl_log_restart();
     gl_debug_log_restart();
@@ -26,7 +26,7 @@ Context* Context::InitializeContext(ContextController *cc)
 
 
 ///////////////////////////////////////////////////////////////////////////////
-Context::Context(ContextController *cc)
+Context::Context(RenderLoop *cc)
     : m_isInit{ false }
 {
     m_concon = cc;
@@ -50,7 +50,7 @@ void Context::startLoop()
 
 
 ///////////////////////////////////////////////////////////////////////////////
-ContextController& Context::concon()
+RenderLoop & Context::renderLoop()
 { 
     return *m_concon; 
 }

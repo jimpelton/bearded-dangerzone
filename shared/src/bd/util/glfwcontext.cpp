@@ -23,7 +23,7 @@ namespace bd {
 
 
 ///////////////////////////////////////////////////////////////////////////////
-GlfwContext::GlfwContext(ContextController *concon) 
+GlfwContext::GlfwContext(RenderLoop *concon)
     : Context(concon)
 {
 }
@@ -131,7 +131,7 @@ void GlfwContext::glfw_cursorpos_callback(GLFWwindow *win, double x, double y)
 {
     /*if (m_cursor_pos_cbfunc != nullptr)
     (*m_cursor_pos_cbfunc)(x, y);*/
-    concon().cursorpos_callback(x, y);
+    renderLoop().cursorpos_callback(x, y);
 }
 
 
@@ -140,7 +140,7 @@ void GlfwContext::glfw_window_size_callback(GLFWwindow *win, int w, int h)
 {
     /*if (m_window_size_cbfunc != nullptr)
     (*m_window_size_cbfunc)(w, h);*/
-    concon().window_size_callback(w, h);
+    renderLoop().window_size_callback(w, h);
 }
 
 
@@ -149,7 +149,7 @@ void GlfwContext::glfw_keyboard_callback(GLFWwindow *window, int key, int scanco
 {
     /*if (m_keyboard_cbfunc != nullptr)
     (*m_keyboard_cbfunc)(key, scancode, action, mods);*/
-    concon().keyboard_callback(key, scancode, action, mods);
+    renderLoop().keyboard_callback(key, scancode, action, mods);
 }
 
 
@@ -158,7 +158,7 @@ void GlfwContext::glfw_scrollwheel_callback(GLFWwindow *window, double xoff, dou
 {
     /*if (m_scroll_wheel_cbfunc != nullptr)
     (*m_scroll_wheel_cbfunc)(xoff, yoff);*/
-    concon().scrollwheel_callback(xoff, yoff);
+    renderLoop().scrollwheel_callback(xoff, yoff);
 }
 
 } // namespace bd
