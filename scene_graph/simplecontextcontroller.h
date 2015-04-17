@@ -37,6 +37,7 @@ public:
 
 private:
     double getTime();
+
     bd::Transformable *m_root;
 };
 

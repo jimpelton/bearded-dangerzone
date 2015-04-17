@@ -14,15 +14,15 @@ try {
     boost::program_options::variables_map m_vm;
     po::options_description desc("Allowed options");
     desc.add_options()
-        ("raw-file", po::value<string>()->required(), "Volume file")
+        ("raw-file", po::value<string>()->default_value(""), "Volume file")
         ("help,h", "Show help message")
         ("dat,d", po::value<string>(), "(optional) Path to dat raw file description")
-        ("type,t", po::value<string>()->required(), "Data type. C numeric primitives are accepted: char, float, \"unsigned int\", etc.")
-        ("side,s", po::value<int>()->required(), "Length in voxels of a block side")
+        ("type,t", po::value<string>()->default_value("float"), "Data type. C numeric primitives are accepted: char, float, \"unsigned int\", etc.")
+        ("side,s", po::value<int>()->required()->default_value(1), "Number of blocks/volume dimension")
         ("slices,l", po::value<int>()->default_value(1), "Slices per block (default=1)")
-        ("xdim,x", po::value<int>()->required(), "X dimension of volume")
-        ("ydim,y", po::value<int>()->required(), "Y dimension of volume")
-        ("zdim,z", po::value<int>()->required(), "Z dimension of volume")
+        ("xdim,x", po::value<int>()->default_value(32), "X dimension of volume")
+        ("ydim,y", po::value<int>()->default_value(32), "Y dimension of volume")
+        ("zdim,z", po::value<int>()->default_value(32), "Z dimension of volume")
         ;
 
     po::positional_options_description p;

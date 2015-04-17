@@ -1,4 +1,12 @@
 
+//////////////////////////////////////////////////////////////////////////////
+// SimpleVr
+//
+//////////////////////////////////////////////////////////////////////////////
+
+
+
+
 #include "cmdline.h"
 #include "volrendloop.h"
 #include "geometry.h"
@@ -27,9 +35,10 @@ int main(int argc, const char *argv[])
 
     VolRendLoop vr;
     bd::Context *c = bd::Context::InitializeContext(&vr);
-    assert(c!=nullptr);
-
-    std::cout << "Context initialization failed." << std::endl;
+    if (c == nullptr) {
+        std::cout << "Context initialization failed." << std::endl;
+        exit(1);
+    }
 
     vr.makeVolumeRenderingShaders(
         "shaders/simple-vs.glsl",
@@ -40,8 +49,7 @@ int main(int argc, const char *argv[])
     makeBlockSlices(opts.num_slices, vertices, indices);
 
     BlocksCollection bc;
-    makeBlocks(bc,
-        opts.block_side, opts.block_side, opts.block_side,
+    makeBlocks(bc, opts.block_side, opts.block_side, opts.block_side,
         opts.w, opts.h, opts.d);
 
     bd::Transformable root;

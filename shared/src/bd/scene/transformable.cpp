@@ -51,43 +51,11 @@ void Transformable::addChild(Transformable *c)
 }
 
 
-///////////////////////////////////////////////////////////////////////////////
-void Transformable::scale(const glm::vec3 &by)
-{
-    m_transform.scale(by);
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-void Transformable::rotate(const glm::quat &amt)
-{
-    m_transform.rotate(amt);
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-void Transformable::translate(const glm::vec3 &amt)
-{
-    m_transform.translate(amt);
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-void Transformable::position(const glm::vec3 &pos)
-{
-    m_transform.position(pos);
-}
-
 Transform& Transformable::transform()
 {
     return m_transform;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-//const Transform& Transformable::transform() const
-//{
-//    return m_transform;
-//}
 
 const std::vector<Transformable*>& Transformable::children() const
 {

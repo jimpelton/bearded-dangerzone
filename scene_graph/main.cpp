@@ -15,9 +15,15 @@
 #include <vector>
 
 
-bd::VertexArrayObject vao;
-bd::Transformable root;
 
+//std::vector<glm::vec4> qverts(bd::Quad::verts.begin(), bd::Quad::verts.end());
+//std::vector<unsigned short> elems(bd::Quad::elements.begin(), bd::Quad::elements.end());
+//
+//m_vao.addVbo(qverts, 0);
+//m_vao.setIndexBuffer(elems);
+//m_vao.addVbo(qcolors, 1);
+//
+//m_vao.bind();
 
 
 void makeTree()
@@ -49,13 +55,16 @@ int main(int argc, char* argv[])
         { 0.0, 0.0, 1.0 }
     };
 
+    bd::VertexArrayObject vao;
+
     vao.addVbo(qverts, 0);
     vao.setIndexBuffer(elems);
     vao.addVbo(qcolors, 1);
+
+    bd::Transformable root;
     scc->setRoot(&root);
 
     context->startLoop();
-
 
     return 0;
 }

@@ -51,8 +51,8 @@ namespace
     bd::Shader vert{ bd::ShaderType::Vertex };
     bd::Shader frag{ bd::ShaderType::Fragment };
     bd::ShaderProgram prog;
-    bd::VertexArrayObject quad_vbo;
-    bd::Quad quad_geo;
+
+    bd::VertexArrayObject m_vao;
     glm::vec2 m_cursorPos;
 
     GLFWwindow *m_window { nullptr };
@@ -89,29 +89,23 @@ void SimpleContextController::initialize(bd::Context &context)
         gl_log_err("dynamic_cast failed in renderLoop().");
         return;
     }
+
     m_ctx = c;
     m_window = c->window();
+
+    vert.loadFromString(g_vertStr);
+    frag.loadFromString(g_fragStr);
+
+    if (prog.linkProgram(&vert, &frag) == 0) {
+        gl_log_err("could not link shader program in renderLoop!");
+        return;
+    }
 }
 
 void SimpleContextController::renderLoop()
 {
     using namespace bd;
-   
-    vert.loadFromString(g_vertStr);
-    frag.loadFromString(g_fragStr);
-    if (prog.linkProgram(&vert, &frag) == 0) {
-        gl_log_err("could not link shader program in renderLoop!");
-        return;
-    }
 
-    std::vector<glm::vec4> qverts(bd::Quad::verts.begin(), bd::Quad::verts.end());
-    std::vector<unsigned short> elems(bd::Quad::elements.begin(), bd::Quad::elements.end());
-
-    quad_vbo.addVbo(qverts, 0);
-    quad_vbo.setIndexBuffer(elems);
-    quad_vbo.addVbo(qcolors, 1);
-
-    quad_vbo.bind();
     prog.bind();
 
     view().setProjectionMatrix(50.0f, 1280.f / 720.f, 0.1f, 100.f);
@@ -121,18 +115,24 @@ void SimpleContextController::renderLoop()
     do 
     {
         double totalTime = getTime();
+
         glm::vec3 quad_scale{ ::cos(totalTime), ::sin(totalTime), 0.0f };
-        quad_geo.transform().scale(quad_scale);
+
+        m_root->transform().scale(quad_scale);
+
         view().updateViewMatrix();
-        quad_geo.update(nullptr);
+
+        m_root->update();
+
         glm::mat4 mvp
         { 
             view().getProjectionMatrix() * 
             view().getViewMatrix() * 
-            quad_geo.transform().matrix() 
+            m_root->transform().matrix()
         };
 
         prog.setUniform("mvp", mvp);
+
         gl_check(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
         gl_check(glDrawElements(GL_TRIANGLE_STRIP, Quad::verts.size(), GL_UNSIGNED_SHORT, 0));
         m_ctx->swapBuffers();
@@ -150,12 +150,12 @@ void SimpleContextController::cursorpos_callback(double x, double y)
         glm::vec2 delta { cpos - m_cursorPos };
         
         glm::quat rotX = glm::angleAxis<float>(
-            glm::radians(delta.y) * 1.0,
+            glm::radians(delta.y) * 1.0f,
             glm::vec3(1, 0, 0)
             );
 
         glm::quat rotY = glm::angleAxis<float>(
-            glm::radians(delta.x) * 1.0,
+            glm::radians(delta.x) * 1.0f,
             glm::vec3(0, 1, 0)
             );
 
@@ -166,16 +166,16 @@ void SimpleContextController::cursorpos_callback(double x, double y)
         glm::vec2 delta{ cpos - m_cursorPos };
 
         glm::quat rotX = glm::angleAxis<float>(
-            glm::radians(delta.y) * 1.0,
+            glm::radians(delta.y) * 1.0f,
             glm::vec3(1, 0, 0)
             );
 
         glm::quat rotY = glm::angleAxis<float>(
-            glm::radians(delta.x) * 1.0,
+            glm::radians(delta.x) * 1.0f,
             glm::vec3(0, 1, 0)
             );
 
-        quad_geo.transform().rotate(rotX * rotY);
+        m_root->transform().rotate(rotX * rotY);
 
     } else if (glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS) {
         ///////  OBJECT MOVEMENT MIDDLE BUTTON  ///////  
@@ -183,7 +183,7 @@ void SimpleContextController::cursorpos_callback(double x, double y)
         glm::vec3 dt{ -delta.x, delta.y, 0.0f }; 
         dt *= 0.001f;
 
-        quad_geo.transform().translate(dt);
+        m_root->transform().translate(dt);
     }
 
     m_cursorPos = cpos;

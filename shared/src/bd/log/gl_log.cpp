@@ -12,6 +12,7 @@ namespace bd {
 const char *logFileName = "gl.log";
 const char *glDebugFileName = "gl_debug.log";
 FILE *file = NULL;
+
 FILE *glDebugFile = NULL;
 
 void checkForAndLogGlError(const char *file, const char *func, int line)
