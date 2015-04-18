@@ -9,7 +9,6 @@
 #include <bd/graphics/vertexarrayobject.h>
 #include <bd/graphics/quad.h>
 
-//#include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
 #include <glm/glm.hpp>
@@ -21,38 +20,20 @@
 
 namespace 
 {
-    const std::string g_vertStr =
-        "#version 400\n"
-        "in vec3 vert;"
-        "in vec3 col;"
-        "uniform mat4 mvp;"
-        "out vec3 color;"
-        "void main() { "
-        "    gl_Position = mvp * vec4(vert, 1.0f);"
-        "    color = col;"
-        "}";
-
-    const std::string g_fragStr =
-        "#version 400\n"
-        "in vec3 color;"
-        "out vec4 out_col;"
-        "void main() {"
-        "    out_col = vec4(color, 1.0f);"
-        //"    out_col = vec4(1.0f, 1.0f, 1.0f, 1.0f);"
-        "}";
-
-    const std::vector<glm::vec3> qcolors{
-        { 0.0, 0.0, 0.0 },
-        { 1.0, 0.0, 0.0 },
-        { 0.0, 1.0, 0.0 },
-        { 0.0, 0.0, 1.0 }
-    };
 
     bd::Shader vert{ bd::ShaderType::Vertex };
     bd::Shader frag{ bd::ShaderType::Fragment };
     bd::ShaderProgram prog;
+    bd::VertexArrayObject vao;
 
-    bd::VertexArrayObject m_vao;
+    std::vector<glm::vec4> vertices;
+    std::vector<unsigned short> indices;
+    std::vector<glm::vec4> qverts(bd::Quad::verts.begin(), bd::Quad::verts.end());
+    std::vector<glm::vec3> colors(bd::Quad::colors.begin(), bd::Quad::colors.end());
+    std::vector<unsigned short> elems(bd::Quad::elements.begin(), bd::Quad::elements.end());
+
+
+
     glm::vec2 m_cursorPos;
 
     GLFWwindow *m_window { nullptr };
@@ -100,26 +81,27 @@ void SimpleContextController::initialize(bd::Context &context)
         gl_log_err("could not link shader program in renderLoop!");
         return;
     }
+
+    vao.addVbo(qverts, 0);
+    vao.addVbo(colors, 1);
+    vao.setIndexBuffer(elems);
 }
 
 void SimpleContextController::renderLoop()
 {
     using namespace bd;
 
-    prog.bind();
-
-    view().setProjectionMatrix(50.0f, 1280.f / 720.f, 0.1f, 100.f);
+    view().setProjectionMatrix(50.0f, 1280.f / 720.f, 0.1f, 10000.f);
     view().setPosition(glm::vec3(0, 0, 10));
-    
+
+
     /// render loop ///
     do 
     {
         double totalTime = getTime();
 
         glm::vec3 quad_scale{ ::cos(totalTime), ::sin(totalTime), 0.0f };
-
         m_root->transform().scale(quad_scale);
-
         view().updateViewMatrix();
 
         m_root->update();
@@ -131,10 +113,12 @@ void SimpleContextController::renderLoop()
             m_root->transform().matrix()
         };
 
+        prog.bind();
         prog.setUniform("mvp", mvp);
 
         gl_check(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
         gl_check(glDrawElements(GL_TRIANGLE_STRIP, Quad::verts.size(), GL_UNSIGNED_SHORT, 0));
+
         m_ctx->swapBuffers();
         m_ctx->pollEvents();
 

@@ -7,7 +7,125 @@
 #include <ctime>
 #include <iostream>
 
+namespace {
+
+///////////////////////////////////////////////////////////////////////////////
+const char *gl_debug_type_str(GLenum type)
+{
+    const char *str = "";
+
+    switch (type) {
+        case GL_DEBUG_TYPE_ERROR:
+            str = "ERROR";
+            break;
+        case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
+            str = "UNDEFINED BEHAVIOR";
+            break;
+        case GL_DEBUG_TYPE_PORTABILITY:
+            str = "PORTABILITY";
+            break;
+        case GL_DEBUG_TYPE_PERFORMANCE:
+            str = "PERFORMANCE";
+            break;
+        case GL_DEBUG_TYPE_OTHER:
+            str = "OTHER";
+            break;
+        default:
+            str = "UNKNOWN ERROR TYPE";
+            break;
+    }
+
+    return str;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+const char *gl_debug_severity_str(GLenum severity)
+{
+    const char *str = "";
+
+    switch (severity) {
+        case GL_DEBUG_SEVERITY_LOW:
+            str = "LOW";
+            break;
+        case GL_DEBUG_SEVERITY_MEDIUM:
+            str = "MEDIUM";
+            break;
+        case GL_DEBUG_SEVERITY_HIGH:
+            str = "HIGH";
+            break;
+        case GL_DEBUG_SEVERITY_NOTIFICATION:
+            str = "NOTIFY";
+            break;
+        default:
+            str = "UNKNOWN SEVERITY";
+            break;
+    }
+
+    return str;
+}
+
+const char* gl_debug_source_str(GLenum source)
+{
+   const char* src = "";
+    switch(source){
+        case GL_DEBUG_SOURCE_API:
+            src = "GL_DEBUG_SOURCE_API";
+            break;
+        case GL_DEBUG_SOURCE_SHADER_COMPILER:
+            src = "GL_DEBUG_SOURCE_SHADER_COMPILER";
+            break;
+        case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
+            src = "GL_DEBUG_SOURCE_WINDOW_SYSTEM";
+            break;
+        case GL_DEBUG_SOURCE_THIRD_PARTY:
+            src = "GL_DEBUG_SOURCE_THIRD_PARTY";
+            break;
+        case GL_DEBUG_SOURCE_APPLICATION:
+            src = "GL_DEBUG_SOURCE_APPLICATION";
+            break;
+        case GL_DEBUG_SOURCE_OTHER:
+            src = "GL_DEBUG_SOURCE_OTHER";
+            break;
+        default:
+            src = "UNKNOWN SOURCE";
+            break;
+    }
+
+    return src;
+}
+
+const char* gl_err_num_str(GLenum err)
+{
+    const char* str = "";
+    switch(err){
+        case GL_NO_ERROR:
+            str = "GL_NO_ERROR"; break;
+        case GL_INVALID_ENUM:
+            str = "GL_INVALID_ENUM"; break;
+        case GL_INVALID_VALUE:
+            str = "GL_INVALID_VALUE"; break;
+        case GL_INVALID_OPERATION:
+            str = "GL_INVALID_OPERATION"; break;
+        case GL_STACK_OVERFLOW:
+            str = "GL_STACK_OVERFLOW"; break;
+        case GL_STACK_UNDERFLOW:
+            str = "GL_STACK_UNDERFLOW"; break;
+        case GL_OUT_OF_MEMORY:
+            str = "GL_OUT_OF_MEMORY"; break;
+        default:
+            str = "UNKNONW ERROR CODE"; break;
+    }
+
+    return str;
+}
+
+} // namespace
+
+
 namespace bd {
+
+namespace {
 
 const char *logFileName = "gl.log";
 const char *glDebugFileName = "gl_debug.log";
@@ -15,16 +133,50 @@ FILE *file = NULL;
 
 FILE *glDebugFile = NULL;
 
+} // namespace
+
+
+///////////////////////////////////////////////////////////////////////////////
+void gl_debug_message_callback(GLenum source, GLenum type, GLuint id,
+    GLenum severity, GLsizei length, const GLchar *message, void *userParam)
+{
+    const char* sev = gl_debug_severity_str(severity);
+    const char* typ = gl_debug_type_str(type);
+    const char* src = gl_debug_source_str(source);
+    gl_log("OGL_DEBUG: source: %s, type: %s, id %u, severity %s, '%s'",
+        src, typ, id, sev, message);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+void subscribe_debug_callbacks()
+{
+    gl_log("Registering for GL debug message callbacks.");
+    GLuint unusedIds = 0;
+    glDebugMessageControl(GL_DONT_CARE,
+        GL_DONT_CARE,
+        GL_DONT_CARE,
+        0,
+        &unusedIds,
+        GL_TRUE);
+    glDebugMessageCallback(( GLDEBUGPROC ) gl_debug_message_callback, NULL);
+    //glEnable(GL_DEBUG_OUTPUT);
+    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+}
+
+///////////////////////////////////////////////////////////////////////////////
 void checkForAndLogGlError(const char *file, const char *func, int line)
 {
-    const char* fmt = "(OGL): %s[%d]:%s():: 0x%04X";
+    const char* fmt = "(OGL): %s[%d]:%s():: %s (0x%04X)";
+//    const char* fmt = "(OGL): %s[%d]:%s():: 0x%04X";
     GLint error;
     while ((error = glGetError()) != GL_NO_ERROR) {
-        //fprintf(stderr, fmt, file, line, func, error);
-        gl_log_err_fcn(fmt, file, line, func, error);
+        const char* estr = gl_err_num_str(error);
+        gl_log_err_fcn(fmt, file, line, func, estr, error);
     }
 }
 
+///////////////////////////////////////////////////////////////////////////////
 bool gl_log_close()
 {
     if (!file) {
@@ -49,6 +201,7 @@ bool gl_log_close()
     return true;
 }
 
+///////////////////////////////////////////////////////////////////////////////
 bool gl_debug_log_restart()
 {
     if (!glDebugFile) {
@@ -71,6 +224,7 @@ bool gl_debug_log_restart()
     return true;
 }
 
+///////////////////////////////////////////////////////////////////////////////
 bool gl_log_restart()
 {
     if (!file) {
@@ -93,6 +247,7 @@ bool gl_log_restart()
     return true;
 }
 
+///////////////////////////////////////////////////////////////////////////////
 bool gl_log_fcn(const char *message, ...)
 {
     va_list argptr;
@@ -122,6 +277,7 @@ bool gl_log_fcn(const char *message, ...)
     return true;
 }
 
+///////////////////////////////////////////////////////////////////////////////
 bool gl_log_err_fcn(const char *message, ...)
 {
     va_list argptr;
@@ -149,6 +305,7 @@ bool gl_log_err_fcn(const char *message, ...)
     return true;
 }
 
+///////////////////////////////////////////////////////////////////////////////
 void log_gl_params()
 {
     GLenum params [] = {
@@ -198,20 +355,6 @@ void log_gl_params()
     gl_log("%s %u", names[11], (unsigned int)s);
     //gl_log ("-----------------------------\n");
 }
-
-//void gl_debug_message_callback(GLenum source,
-//                               GLenum type,
-//                               GLuint id,
-//                               GLenum severity,
-//                               GLsizei length,
-//                               const GLchar *message,
-//                               void *userParam)
-//{
-//    const char *msg = "OGL_DEBUG: source: 0x%04X, type 0x%04X, id %u, severity 0x%0X, '%s'\n";
-//    if (glDebugFile) {
-//        fprintf(glDebugFile, msg, source, type, id, severity, message);
-//    }
-//}
 
 } // namespace
 

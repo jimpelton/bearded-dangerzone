@@ -39,6 +39,27 @@ private:
     double getTime();
 
     bd::Transformable *m_root;
+
+
+    const std::string g_vertStr =
+        "#version 400\n"
+        "in vec3 vert;"
+        "in vec3 col;"
+        "uniform mat4 mvp;"
+        "out vec3 color;"
+        "void main() { "
+        "    gl_Position = mvp * vec4(vert, 1.0f);"
+        "    color = col;"
+        "}";
+
+    const std::string g_fragStr =
+        "#version 400\n"
+        "in vec3 color;"
+        "out vec4 out_col;"
+        "void main() {"
+        "    out_col = vec4(color, 1.0f);"
+        //"    out_col = vec4(1.0f, 1.0f, 1.0f, 1.0f);"
+        "}";
 };
 
 #endif

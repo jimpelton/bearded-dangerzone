@@ -6,18 +6,6 @@
 #include <stdio.h>
 
 
-namespace {
-
-void gl_debug_message_callback(GLenum source, GLenum type, GLuint id,
-    GLenum severity, GLsizei length, const GLchar *message, void *userParam)
-{
-    gl_log("OGL_DEBUG: source: 0x%04X, type 0x%04X, id %u, severity 0x%0X, '%s'",
-        source, type, id, severity, message);
-}
-
-} // namespace
-
-
 namespace bd {
 
 
@@ -77,9 +65,8 @@ bool GlfwContext::init(int width, int height)
         //return nullptr;
         return false;
     }
-    
-    glDebugMessageCallback((GLDEBUGPROC)gl_debug_message_callback, NULL);
-    glEnable(GL_DEBUG_OUTPUT);
+
+    subscribe_debug_callbacks();
 
     gl_check(glEnable(GL_DEPTH_TEST));
     gl_check(glDepthFunc(GL_LESS));

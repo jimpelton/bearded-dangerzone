@@ -1,7 +1,3 @@
-
-
-
-
 #ifndef transformable_h__
 #define transformable_h__
 
@@ -9,6 +5,7 @@
 #include <bd/util/bdobj.h>
 
 #include <vector>
+
 
 namespace bd {
 

@@ -42,24 +42,6 @@ int main(int argc, char* argv[])
     }
 
 
-    std::vector<glm::vec4> vertices;
-
-    std::vector<unsigned short> indices;
-    std::vector<glm::vec4> qverts(bd::Quad::verts.begin(), bd::Quad::verts.end());
-    std::vector<unsigned short> elems(bd::Quad::elements.begin(), bd::Quad::elements.end());
-
-    const std::vector<glm::vec3> qcolors{
-        { 0.0, 0.0, 0.0 },
-        { 1.0, 0.0, 0.0 },
-        { 0.0, 1.0, 0.0 },
-        { 0.0, 0.0, 1.0 }
-    };
-
-    bd::VertexArrayObject vao;
-
-    vao.addVbo(qverts, 0);
-    vao.setIndexBuffer(elems);
-    vao.addVbo(qcolors, 1);
 
     bd::Transformable root;
     scc->setRoot(&root);

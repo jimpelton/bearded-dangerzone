@@ -20,6 +20,8 @@
 
 namespace bd {
 
+void subscribe_debug_callbacks();
+
 ///////////////////////////////////////////////////////////////////////////////
 // \brief Check for any and all opengl errors at any given time.
 // Dumps errors into gl log file and stderr.

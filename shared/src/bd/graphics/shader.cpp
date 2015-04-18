@@ -57,23 +57,23 @@ unsigned int Shader::compileShader(const char* shader)
     };
 
     GLenum gl_type = shTypes.at(static_cast<int>(m_type));
-    GLuint shaderId = glCreateShader(gl_type);
+    GLuint shaderId = gl_check(glCreateShader(gl_type));
 
     gl_log("Created shader, type: 0x%x04, id: %d", gl_type, shaderId);
-    glShaderSource(shaderId, 1, &shader, nullptr);
+    gl_check(glShaderSource(shaderId, 1, &shader, nullptr));
 
-    glCompileShader(shaderId);
+    gl_check(glCompileShader(shaderId));
 
     // Check for errors.
     GLint result = GL_FALSE;
     int infoLogLength;
 
-    glGetShaderiv(shaderId, GL_COMPILE_STATUS, &result);
-    glGetShaderiv(shaderId, GL_INFO_LOG_LENGTH, &infoLogLength);
+    gl_check(glGetShaderiv(shaderId, GL_COMPILE_STATUS, &result));
+    gl_check(glGetShaderiv(shaderId, GL_INFO_LOG_LENGTH, &infoLogLength));
 
     if (infoLogLength > 1) {
         std::vector<char> msg(infoLogLength + 1);
-        glGetShaderInfoLog(shaderId, infoLogLength, nullptr, &msg[0]);
+        gl_check(glGetShaderInfoLog(shaderId, infoLogLength, nullptr, &msg[0]));
         gl_log("%s", &msg[0]);
     }
     
@@ -109,25 +109,25 @@ unsigned int ShaderProgram::linkProgram()
     if (!checkBuilt()) 
         return 0;
     
-    GLuint programId = glCreateProgram();
+    GLuint programId = gl_check(glCreateProgram());
     gl_log("Created program id: %d", programId);
 
-    glAttachShader(programId, m_vert->id());
-    glAttachShader(programId, m_frag->id());
+   gl_check(glAttachShader(programId, m_vert->id()));
+   gl_check(glAttachShader(programId, m_frag->id()));
 
     gl_log("Linking program");
-    glLinkProgram(programId);
+    gl_check(glLinkProgram(programId));
 
     // Check the program
     int InfoLogLength = 0;
     GLint result = GL_FALSE;
 
-    glGetProgramiv(programId, GL_LINK_STATUS, &result);
-    glGetProgramiv(programId, GL_INFO_LOG_LENGTH, &InfoLogLength);
+    gl_check(glGetProgramiv(programId, GL_LINK_STATUS, &result));
+    gl_check(glGetProgramiv(programId, GL_INFO_LOG_LENGTH, &InfoLogLength));
 
     if (InfoLogLength > 1) {
         std::vector<char> programErrorMessage(InfoLogLength + 1);
-        glGetProgramInfoLog(programId, InfoLogLength, nullptr, &programErrorMessage[0]);
+        gl_check(glGetProgramInfoLog(programId, InfoLogLength, nullptr, &programErrorMessage[0]));
         gl_log("%s", &programErrorMessage[0]);
     }
 
