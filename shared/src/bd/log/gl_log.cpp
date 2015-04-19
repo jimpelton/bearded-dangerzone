@@ -143,7 +143,7 @@ void gl_debug_message_callback(GLenum source, GLenum type, GLuint id,
     const char* sev = gl_debug_severity_str(severity);
     const char* typ = gl_debug_type_str(type);
     const char* src = gl_debug_source_str(source);
-    gl_log("OGL_DEBUG: source: %s, type: %s, id %u, severity %s, '%s'",
+    gl_log_err("OGL_DEBUG: source: %s, type: %s, id %u, severity %s, '%s'",
         src, typ, id, sev, message);
 }
 
@@ -167,11 +167,12 @@ void subscribe_debug_callbacks()
 ///////////////////////////////////////////////////////////////////////////////
 void checkForAndLogGlError(const char *file, const char *func, int line)
 {
-    const char* fmt = "(OGL): %s[%d]:%s():: %s (0x%04X)";
-//    const char* fmt = "(OGL): %s[%d]:%s():: 0x%04X";
+    const char* fmt = "(OGL): %s[%d]:%s():: \n\t%s (0x%04X)";
+//    const char* fmt = "(OGL): %s[%d]:%s():: \n\t0x%04X";
     GLint error;
     while ((error = glGetError()) != GL_NO_ERROR) {
         const char* estr = gl_err_num_str(error);
+
         gl_log_err_fcn(fmt, file, line, func, estr, error);
     }
 }
@@ -235,14 +236,15 @@ bool gl_log_restart()
     }
 
     if (!file) {
-        fprintf(stderr, "Could not open logFileName log file %s for writing\n", logFileName);
+        fprintf(stderr, "Could not open logFileName log file %s for writing, "
+            "will use stdout/stderr instead.\n", logFileName);
         return false;
     }
 
     std::time_t now = std::time(NULL);
     char *date = ctime(&now);
-    fprintf(file, "\n------------------------\n"
-            "logFileName log. local time %s\n", date);
+    fprintf(file, "\n-------------BEGIN LOG---------\n"
+                  "logFileName log. local time %s\n", date);
 
     return true;
 }

@@ -190,17 +190,19 @@ void VolRendLoop::addVbaContext(const std::vector<glm::vec4> &verts,
 void VolRendLoop::makeVolumeRenderingShaders(const std::string &vert_path, 
     const std::string &frag_path)
 {
-//    m_volshader_vertex.loadFromFile(vert_path);
-//    m_volshader_fragment.loadFromFile(frag_path);
+    if (vert_path.empty())
+        m_volshader_vertex.loadFromString(g_vertStr);
+    else
+        m_volshader_vertex.loadFromFile(vert_path);
 
-    m_volshader_vertex.loadFromString(g_vertStr);
-    m_volshader_fragment.loadFromString(g_fragStr);
+    if (frag_path.empty())
+        m_volshader_fragment.loadFromString(g_fragStr);
+    else
+        m_volshader_fragment.loadFromFile(frag_path);
 
-    unsigned int shaderId
-    {
-        m_volshader_program.linkProgram(&m_volshader_vertex,
-            &m_volshader_fragment)
-    };
+
+    unsigned int shaderId { m_volshader_program.linkProgram(&m_volshader_vertex,
+            &m_volshader_fragment) };
 
     if (shaderId == 0) {
         gl_log_err("Could not create volume rendering shader program, "
@@ -214,11 +216,9 @@ void VolRendLoop::makeVolumeRenderingShaders(const std::string &vert_path,
 void VolRendLoop::drawBlocks()
 {
     using bd::Quad;
-    //const std::vector<Block> &col = m_vol.collection().blocks();
 
     for (auto *t : m_vol->children()) {
-        glm::mat4 mvp
-        {
+        glm::mat4 mvp {
             view().getProjectionMatrix() *
             view().getViewMatrix() *
             t->transform().matrix()
@@ -226,10 +226,13 @@ void VolRendLoop::drawBlocks()
 
         m_volshader_program.setUniform("mvp", mvp);
 
-        gl_check(glDrawElements(GL_TRIANGLE_STRIP, Quad::verts.size(), GL_UNSIGNED_SHORT, 0));
+        gl_check(glDrawElements(GL_TRIANGLE_STRIP, Quad::verts.size(),
+            GL_UNSIGNED_SHORT, 0));
     }
 }
 
 
 void VolRendLoop::root(bd::Transformable *v)
-{ m_vol = v;}
+{
+    m_vol = v;
+}

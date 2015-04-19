@@ -3,18 +3,17 @@
 #include <bd/graphics/vertexarrayobject.h>
 #include <bd/log/gl_log.h>
 
-#include <utility>
-
 namespace bd
 {
 
 
 ///////////////////////////////////////////////////////////////////////////////
-VertexArrayObject::VertexArrayObject()
+VertexArrayObject::VertexArrayObject(VertexArrayObject::Method m)
     : m_bufIds{ } 
     , m_idxBufId{ 0 } 
     , m_id{ 0 }
     , m_name{  }
+    , m_method{ m }
 {
 }
 
@@ -106,8 +105,22 @@ void VertexArrayObject::unbind()
 
 
 ///////////////////////////////////////////////////////////////////////////////
+unsigned int VertexArrayObject::numElements() const
+{
+    return m_numEle;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+VertexArrayObject::Method VertexArrayObject::method() const
+{
+    return m_method;
+}
+
+///////////////////////////////////////////////////////////////////////////////
 // Private Members
 ///////////////////////////////////////////////////////////////////////////////
+
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -141,8 +154,9 @@ unsigned int VertexArrayObject::gen_vbo(const float *verts, size_t length,
 
     if (vbo == 0) {
         gl_log_err("Unable to add vertex buffer to vertex buffer object."
-            "(The returned id for the vertex buffer was 0)");
+            "(The returned id for the generated vertex buffer was 0)");
     } else {
+        checkEqualVertexCount(length, elements_per_vertex);
         m_bufIds.push_back(vbo);
     }
 
@@ -168,14 +182,28 @@ unsigned int VertexArrayObject::gen_ibo(const unsigned short *indices, size_t le
     unbind();
 
     if (ibo == 0) {
-        gl_log_err("Unable to set index buffer. (The returned id was 0)");
+        gl_log_err("Unable to set index buffer. (The returned id for the generated "
+            "element buffer was 0)");
     } else {
+        checkEqualVertexCount(length, 1);
         m_idxBufId = ibo;
     }
 
     return ibo;
 }
 
+void VertexArrayObject::checkEqualVertexCount(size_t length, unsigned int elements_per_vertex)
+{
+    unsigned int verts = length/elements_per_vertex;
+    if (m_bufIds.size() > 0) {
+        if (m_numEle != verts) {
+            gl_log_err("Supplied vertex (or index) buffers have non-equal element count "
+                "(adding anyway)! old=%d, this=%d.", m_numEle, verts);
+        }
+    } else {
+        m_numEle = verts;
+    }
 
+}
 
 } // namespace bd

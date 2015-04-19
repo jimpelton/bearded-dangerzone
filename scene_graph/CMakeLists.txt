@@ -6,11 +6,11 @@ project(scene_graph)
 
 set(scene_graph_SOURCE_FILES
     main.cpp
-    simplecontextcontroller.cpp
+    simplerenderloop.cpp
     )
 
 set(simplevr_HEADER_FILES
-    simplecontextcontroller.h
+    simplerenderloop.h
     )
 
 

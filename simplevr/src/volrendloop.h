@@ -5,7 +5,7 @@
 #include "blockscollection.h"
 #include "volume.h"
 
-#include <bd/util/contextcontroller.h>
+#include <bd/util/renderloop.h>
 #include <bd/graphics/shader.h>
 #include <bd/graphics/vertexarrayobject.h>
 
@@ -43,7 +43,7 @@ public:
         const std::string &frag_path);
 
     //////////////////////////////////////////////////////////////////////////
-    /// \brief Set the root object in the scene graph, probably the volume.
+    /// \brief Set the root object in the scene graph.
     //////////////////////////////////////////////////////////////////////////
     void root(bd::Transformable *v);
 

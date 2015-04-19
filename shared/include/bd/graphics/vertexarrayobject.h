@@ -16,11 +16,15 @@ namespace bd {
 class VertexArrayObject {
 public:
 
+    enum class Method
+    {
+        ELEMENTS, ARRAYS
+    };
 
     ///////////////////////////////////////////////////////////////////////////////
     // Ctor/Dtor
     ///////////////////////////////////////////////////////////////////////////////
-    VertexArrayObject();
+    VertexArrayObject(Method);
 
     ~VertexArrayObject();
 
@@ -79,6 +83,12 @@ public:
     ///////////////////////////////////////////////////////////////////////////////
     unsigned int setIndexBuffer(const std::vector<unsigned short> &indices);
 
+    //////////////////////////////////////////////////////////////////////////
+    /// \brief Number of elements in index array.
+    //////////////////////////////////////////////////////////////////////////
+    unsigned int numElements() const;
+
+    Method method() const;
 
     ///////////////////////////////////////////////////////////////////////////////
     /// \brief Bind this VertexArrayObject to the context.
@@ -100,6 +110,7 @@ private:
 
     unsigned int gen_ibo(const unsigned short *indices, size_t length);
 
+    void checkEqualVertexCount(size_t, unsigned int);
 
     ///////////////////////////////////////////////////////////////////////////////
     // Private Data
@@ -108,7 +119,8 @@ private:
     std::vector<unsigned int> m_bufIds; //< gl ids of vert buffers
     unsigned int m_idxBufId; //< gl id of the index buffer
     unsigned int m_id; //< gl id of the VAO rep'd by this instance.
-
+    unsigned int m_numEle; //< Number of elements in index array (= #of verts)
+    Method m_method; //< Render method.
     std::string m_name;
 };
 

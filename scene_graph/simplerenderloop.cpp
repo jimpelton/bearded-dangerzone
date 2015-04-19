@@ -1,5 +1,5 @@
 
-#include "simplecontextcontroller.h"
+#include "simplerenderloop.h"
 
 
 #include <bd/log/gl_log.h>
@@ -8,6 +8,7 @@
 #include <bd/util/glfwcontext.h>
 #include <bd/graphics/vertexarrayobject.h>
 #include <bd/graphics/quad.h>
+#include <bd/scene/renderstate.h>
 
 #include <GLFW/glfw3.h>
 
@@ -18,13 +19,14 @@
 #include <cmath>
 #include <ctime>
 
-namespace 
-{
+//namespace
+//{
 
     bd::Shader vert{ bd::ShaderType::Vertex };
     bd::Shader frag{ bd::ShaderType::Fragment };
     bd::ShaderProgram prog;
-    bd::VertexArrayObject vao;
+    bd::VertexArrayObject vao{ bd::VertexArrayObject::Method::ELEMENTS };
+    bd::RenderState *state;
 
     std::vector<glm::vec4> vertices;
     std::vector<unsigned short> indices;
@@ -32,25 +34,23 @@ namespace
     std::vector<glm::vec3> colors(bd::Quad::colors.begin(), bd::Quad::colors.end());
     std::vector<unsigned short> elems(bd::Quad::elements.begin(), bd::Quad::elements.end());
 
-
-
     glm::vec2 m_cursorPos;
 
     GLFWwindow *m_window { nullptr };
     bd::GlfwContext *m_ctx { nullptr };
 
-} // namespace 
+//} // namespace
 
-SimpleContextController::SimpleContextController() 
+SimpleRenderLoop::SimpleRenderLoop()
     : RenderLoop()
 {
 }
 
-SimpleContextController::~SimpleContextController() 
+SimpleRenderLoop::~SimpleRenderLoop()
 {
 }
 
-double SimpleContextController::getTime()
+double SimpleRenderLoop::getTime()
 {
     static float totalTime = 0.0f;
     static std::clock_t previousTime = std::clock();
@@ -63,31 +63,36 @@ double SimpleContextController::getTime()
 }
 
 
-void SimpleContextController::initialize(bd::Context &context)
+void SimpleRenderLoop::initialize(bd::Context &context)
 {
     bd::GlfwContext *c = dynamic_cast<bd::GlfwContext*>(&context);  // oops.
     if (c == nullptr) {
-        gl_log_err("dynamic_cast failed in renderLoop().");
+        gl_log_err("The dynamic_cast failed in initialize().");
         return;
     }
 
     m_ctx = c;
     m_window = c->window();
 
-    vert.loadFromString(g_vertStr);
-    frag.loadFromString(g_fragStr);
+    vert.loadFromString(m_vertStr);
+    frag.loadFromString(m_fragStr);
 
     if (prog.linkProgram(&vert, &frag) == 0) {
         gl_log_err("could not link shader program in renderLoop!");
         return;
     }
 
-    vao.addVbo(qverts, 0);
-    vao.addVbo(colors, 1);
-    vao.setIndexBuffer(elems);
+    if (vao.create() != 0) {
+        vao.addVbo(qverts, 0);
+        vao.addVbo(colors, 1);
+        vao.setIndexBuffer(elems);
+    }
+
+    state = new bd::RenderState(&vao, &prog);
+
 }
 
-void SimpleContextController::renderLoop()
+void SimpleRenderLoop::renderLoop()
 {
     using namespace bd;
 
@@ -100,7 +105,7 @@ void SimpleContextController::renderLoop()
     {
         double totalTime = getTime();
 
-        glm::vec3 quad_scale{ ::cos(totalTime), ::sin(totalTime), 0.0f };
+        glm::vec3 quad_scale{ ::cos(totalTime) + 1, ::sin(totalTime) + 1, 0.0f };
         m_root->transform().scale(quad_scale);
         view().updateViewMatrix();
 
@@ -113,11 +118,7 @@ void SimpleContextController::renderLoop()
             m_root->transform().matrix()
         };
 
-        prog.bind();
-        prog.setUniform("mvp", mvp);
-
-        gl_check(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
-        gl_check(glDrawElements(GL_TRIANGLE_STRIP, Quad::verts.size(), GL_UNSIGNED_SHORT, 0));
+        state->draw();
 
         m_ctx->swapBuffers();
         m_ctx->pollEvents();
@@ -126,7 +127,7 @@ void SimpleContextController::renderLoop()
               glfwWindowShouldClose(m_window) == 0  );
 }
 
-void SimpleContextController::cursorpos_callback(double x, double y)
+void SimpleRenderLoop::cursorpos_callback(double x, double y)
 {
     glm::vec2 cpos{ floor(x), floor(y) };
     if (glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
@@ -173,27 +174,27 @@ void SimpleContextController::cursorpos_callback(double x, double y)
     m_cursorPos = cpos;
 }
 
-void SimpleContextController::keyboard_callback(int key, int scancode, int action, int mods)
+void SimpleRenderLoop::keyboard_callback(int key, int scancode, int action, int mods)
 {
     
 }
 
-void SimpleContextController::window_size_callback(int width, int height)
+void SimpleRenderLoop::window_size_callback(int width, int height)
 {
     view().setViewport( 0, 0, width, height );
 }
 
-void SimpleContextController::scrollwheel_callback(double xoff, double yoff)
+void SimpleRenderLoop::scrollwheel_callback(double xoff, double yoff)
 {
     
 }
 
-void SimpleContextController::error_callback(int error, const char* description)
+void SimpleRenderLoop::error_callback(int error, const char* description)
 {
     std::cerr << "Error: [" << error << "] Desc: " << description << std::endl;
 }
 
-void SimpleContextController::setRoot(bd::Transformable *t)
+void SimpleRenderLoop::setRoot(bd::Transformable *t)
 {
     m_root = t;
 }

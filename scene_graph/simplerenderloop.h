@@ -2,7 +2,7 @@
 #ifndef simplerenderloop_h__
 #define simplerenderloop_h__
 
-#include <bd/util/contextcontroller.h>
+#include <bd/util/renderloop.h>
 #include <bd/scene/view.h>
 #include <bd/scene/transformable.h>
 
@@ -10,13 +10,13 @@
 
 
 
-class SimpleContextController : public bd::RenderLoop
+class SimpleRenderLoop : public bd::RenderLoop
 {
 public:
 
-    SimpleContextController();
+    SimpleRenderLoop();
 
-    virtual ~SimpleContextController();
+    virtual ~SimpleRenderLoop();
 
 
     virtual void renderLoop() override;
@@ -41,7 +41,7 @@ private:
     bd::Transformable *m_root;
 
 
-    const std::string g_vertStr =
+    const std::string m_vertStr =
         "#version 400\n"
         "in vec3 vert;"
         "in vec3 col;"
@@ -52,7 +52,7 @@ private:
         "    color = col;"
         "}";
 
-    const std::string g_fragStr =
+    const std::string m_fragStr =
         "#version 400\n"
         "in vec3 color;"
         "out vec4 out_col;"

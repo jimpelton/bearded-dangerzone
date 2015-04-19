@@ -2,14 +2,13 @@
 // Created by jim on 4/16/15.
 //
 
-#include "simplecontextcontroller.h"
+#include "simplerenderloop.h"
 
-#include <bd/scene/transform.h>
 #include <bd/scene/transformable.h>
 #include <bd/graphics/vertexarrayobject.h>
 #include <bd/graphics/quad.h>
 #include <bd/util/context.h>
-#include <bd/util/contextcontroller.h>
+#include <bd/util/renderloop.h>
 #include <bd/log/gl_log.h>
 
 #include <vector>
@@ -33,11 +32,11 @@ void makeTree()
 
 int main(int argc, char* argv[])
 {
-    SimpleContextController * scc = new SimpleContextController();
+    SimpleRenderLoop * scc = new SimpleRenderLoop();
     bd::Context *context = bd::Context::InitializeContext(scc);
 
     if (!context) {
-        gl_log_err("Unable to initialize SimpleContextController...exiting.");
+        gl_log_err("Unable to initialize SimpleRenderLoop...exiting.");
         exit(1);
     }
 

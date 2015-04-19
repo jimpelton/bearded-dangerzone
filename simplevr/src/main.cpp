@@ -41,9 +41,7 @@ int main(int argc, const char *argv[])
         exit(1);
     }
 
-    vr.makeVolumeRenderingShaders(
-        "shaders/simple-vs.glsl",
-        "shaders/simple-color-frag.glsl");
+    vr.makeVolumeRenderingShaders("", "");
 
 //    std::vector<glm::vec4> vertices;
 //    std::vector<unsigned short> indices;
