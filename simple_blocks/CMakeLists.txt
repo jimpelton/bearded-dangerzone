@@ -8,7 +8,11 @@ project(simple_blocks)
 
 include_directories("${SHARED_DIR}/include")
 
-add_executable(simple_blocks src/main.cpp)
+
+set(simple_blocks_HEADERS src/block.h src/cmdline.h)
+set(simple_blocks_SOURCES src/main.cpp src/block.cpp src/cmdline.cpp)
+
+add_executable(simple_blocks "${simple_blocks_HEADERS}" "${simple_blocks_SOURCES}")
 
 target_link_libraries(
     simple_blocks

@@ -258,19 +258,20 @@ void loop(GLFWwindow *window)
         // Coordinate Axis
         bd::VertexArrayObject *vao = g_vaoIds[0];
         vao->bind();
-        gl_check(glDrawArrays(GL_LINES, 0, 6));
+            gl_check(glDrawArrays(GL_LINES, 0, 6));
         vao->unbind();
 
         // Quad geometry
         vao = g_vaoIds[1];
         vao->bind();
-        gl_check(
-            glDrawElements(GL_TRIANGLE_STRIP, vao->numElements(),
-                GL_UNSIGNED_SHORT, 0));
+            gl_check(glDrawElements(GL_TRIANGLE_STRIP, vao->numElements(), GL_UNSIGNED_SHORT, 0));
         vao->unbind();
 
         vao = g_vaoIds[2];
         vao->bind();
+            gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, 0));
+            gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, (GLvoid*)(4 * sizeof(GLushort))));
+            gl_check(glDrawElements(GL_LINES, 8, GL_UNSIGNED_SHORT, (GLvoid*)(8 * sizeof(GLushort))));
         vao->unbind();
 
         glfwSwapBuffers(window);

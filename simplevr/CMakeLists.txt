@@ -19,8 +19,8 @@ set(simplevr_SOURCE_FILES
     )
 
 set(simplevr_HEADER_FILES
-    src/block.h
     src/blockscollection.h
+    src/block.h
     src/cmdline.h
     src/geometry.h
     src/transferfunction.h
