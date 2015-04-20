@@ -37,7 +37,7 @@ public:
     // Methods
     //////////////////////////////////////////////////////////////////////////
     void addVbaContext(const std::vector<glm::vec4> &verts,
-       const std::vector<unsigned short> &indices);
+       const std::vector<glm::vec3> &colors, const std::vector<unsigned short> &indices);
 
     void makeVolumeRenderingShaders(const std::string &vert_path,
         const std::string &frag_path);

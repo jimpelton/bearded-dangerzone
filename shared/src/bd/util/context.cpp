@@ -44,7 +44,10 @@ Context::~Context()
 ///////////////////////////////////////////////////////////////////////////////
 void Context::startLoop()
 {
+    gl_log("Context initializing renderloop.");
     m_concon->initialize(*this);
+
+    gl_log("Starting render loop.");
     m_concon->renderLoop();
 }
 

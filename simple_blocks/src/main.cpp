@@ -45,7 +45,7 @@ const glm::vec3 X_AXIS{ 1.0f, 0.0f, 0.0f };
 const glm::vec3 Y_AXIS{ 0.0f, 1.0f, 0.0f };
 const glm::vec3 Z_AXIS{ 0.0f, 0.0f, 1.0f };
 
-GLuint g_uniform_mvp;
+GLint g_uniform_mvp;
 GLuint g_shaderProgramId;
 std::vector<bd::VertexArrayObject *> g_vaoIds;
 
@@ -269,6 +269,9 @@ void loop(GLFWwindow *window)
                 GL_UNSIGNED_SHORT, 0));
         vao->unbind();
 
+        vao = g_vaoIds[2];
+        vao->bind();
+        vao->unbind();
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -356,29 +359,64 @@ void genAxisVao(bd::VertexArrayObject &vao)
 {
 
     const std::array<glm::vec4, 6> verts
-        {
-            glm::vec4(0.0f, 0.0f, 0.0f, 1.0f),
-            glm::vec4(0.5f, 0.0f, 0.0f, 1.0f),
+    {
+        glm::vec4(0.0f, 0.0f, 0.0f, 1.0f),
+        glm::vec4(0.5f, 0.0f, 0.0f, 1.0f),
 
-            glm::vec4(0.0f, 0.0f, 0.0f, 1.0f),
-            glm::vec4(0.0f, 0.5f, 0.0f, 1.0f),
+        glm::vec4(0.0f, 0.0f, 0.0f, 1.0f),
+        glm::vec4(0.0f, 0.5f, 0.0f, 1.0f),
 
-            glm::vec4(0.0f, 0.0f, 0.0f, 1.0f),
-            glm::vec4(0.0f, 0.0f, 0.5f, 1.0f)
-        };
+        glm::vec4(0.0f, 0.0f, 0.0f, 1.0f),
+        glm::vec4(0.0f, 0.0f, 0.5f, 1.0f)
+    };
 
     const std::array<glm::vec3, 6> colors
-        {
-            glm::vec3(1.0f, 0.0f, 0.0f),  // x: red
-            glm::vec3(1.0f, 0.0f, 0.0f),
-            glm::vec3(0.0f, 1.0f, 0.0f),  // y: green
-            glm::vec3(0.0f, 1.0f, 0.0f),
-            glm::vec3(0.0f, 0.0f, 1.0f),  // z: blue
-            glm::vec3(0.0f, 0.0f, 1.0f)
-        };
+    {
+        glm::vec3(1.0f, 0.0f, 0.0f),  // x: red
+        glm::vec3(1.0f, 0.0f, 0.0f),
+        glm::vec3(0.0f, 1.0f, 0.0f),  // y: green
+        glm::vec3(0.0f, 1.0f, 0.0f),
+        glm::vec3(0.0f, 0.0f, 1.0f),  // z: blue
+        glm::vec3(0.0f, 0.0f, 1.0f)
+    };
 
     vao.addVbo(( float * ) (verts.data()), verts.size() * 4, 4, 0);
     vao.addVbo(( float * ) (colors.data()), colors.size() * 3, 3, 1);
+
+}
+
+void genBoxVao(bd::VertexArrayObject &vao)
+{
+    const std::array<glm::vec4, 8> verts {
+        glm::vec4(-0.5, -0.5, -0.5, 1.0),
+        glm::vec4(0.5, -0.5, -0.5, 1.0),
+        glm::vec4(0.5, 0.5, -0.5, 1.0),
+        glm::vec4(-0.5, 0.5, -0.5, 1.0),
+        glm::vec4(-0.5, -0.5, 0.5, 1.0),
+        glm::vec4(0.5, -0.5, 0.5, 1.0),
+        glm::vec4(0.5, 0.5, 0.5, 1.0),
+        glm::vec4(-0.5, 0.5, 0.5, 1.0)
+    };
+    const std::array<glm::vec3, 8> colors{
+        glm::vec3(0.5, 0.5, 0.5),
+        glm::vec3(0.5, 0.5, 0.5),
+        glm::vec3(0.5, 0.5, 0.5),
+        glm::vec3(0.5, 0.5, 0.5),
+        glm::vec3(0.5, 0.5, 0.5),
+        glm::vec3(0.5, 0.5, 0.5),
+        glm::vec3(0.5, 0.5, 0.5),
+        glm::vec3(0.5, 0.5, 0.5)
+    };
+
+    const std::array<unsigned short, 16> elements {
+        0, 1, 2, 3,
+        4, 5, 6, 7,
+        0, 4, 1, 5, 2, 6, 3, 7
+    };
+
+    vao.addVbo((float *) (verts.data()), verts.size()*4, 4, 0);
+    vao.addVbo((float *) (colors.data()), colors.size()*3, 3, 1);
+    vao.setIndexBuffer((unsigned short *)(elements.data()), elements.size());
 
 }
 
@@ -412,14 +450,19 @@ int main(int argc, char *argv[])
     bd::VertexArrayObject quad(bd::VertexArrayObject::Method::ELEMENTS);
     quad.create();
 
-    bd::VertexArrayObject axis(bd::VertexArrayObject::Method::ELEMENTS);
+    bd::VertexArrayObject axis(bd::VertexArrayObject::Method::ARRAYS);
     axis.create();
+
+    bd::VertexArrayObject box(bd::VertexArrayObject::Method::ELEMENTS);
+    box.create();
 
     genQuadVao(quad);
     genAxisVao(axis);
+    genBoxVao(box);
 
     g_vaoIds.push_back(&axis);
     g_vaoIds.push_back(&quad);
+    g_vaoIds.push_back(&box);
 
     loop(window);
     cleanup();

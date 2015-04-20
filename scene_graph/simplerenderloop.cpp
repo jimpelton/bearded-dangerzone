@@ -22,22 +22,24 @@
 //namespace
 //{
 
-    bd::Shader vert{ bd::ShaderType::Vertex };
-    bd::Shader frag{ bd::ShaderType::Fragment };
-    bd::ShaderProgram prog;
-    bd::VertexArrayObject vao{ bd::VertexArrayObject::Method::ELEMENTS };
-    bd::RenderState *state;
+bd::Shader vert{ bd::ShaderType::Vertex };
+bd::Shader frag{ bd::ShaderType::Fragment };
+bd::ShaderProgram prog;
+bd::VertexArrayObject vao{ bd::VertexArrayObject::Method::ELEMENTS };
+bd::RenderState *state { nullptr };
 
-    std::vector<glm::vec4> vertices;
-    std::vector<unsigned short> indices;
-    std::vector<glm::vec4> qverts(bd::Quad::verts.begin(), bd::Quad::verts.end());
-    std::vector<glm::vec3> colors(bd::Quad::colors.begin(), bd::Quad::colors.end());
-    std::vector<unsigned short> elems(bd::Quad::elements.begin(), bd::Quad::elements.end());
+bd::Transformable root;
 
-    glm::vec2 m_cursorPos;
+std::vector<glm::vec4> vertices;
+std::vector<unsigned short> indices;
+std::vector<glm::vec4> qverts(bd::Quad::verts.begin(), bd::Quad::verts.end());
+std::vector<glm::vec3> colors(bd::Quad::colors.begin(), bd::Quad::colors.end());
+std::vector<unsigned short> elems(bd::Quad::elements.begin(), bd::Quad::elements.end());
 
-    GLFWwindow *m_window { nullptr };
-    bd::GlfwContext *m_ctx { nullptr };
+glm::vec2 m_cursorPos;
+
+GLFWwindow *m_window { nullptr };
+bd::GlfwContext *m_ctx { nullptr };
 
 //} // namespace
 
@@ -96,29 +98,34 @@ void SimpleRenderLoop::renderLoop()
 {
     using namespace bd;
 
-    view().setProjectionMatrix(50.0f, 1280.f / 720.f, 0.1f, 10000.f);
-    view().setPosition(glm::vec3(0, 0, 10));
-
+//    view().setProjectionMatrix(50.0f, 1280.f / 720.f, 0.1f, 10000.f);
+//    view().setPosition(glm::vec3(5, 5, -5));
+    glm::mat4 proj { glm::perspective(60.0f, 1280.0f / 720.0f, 0.1f, 100.0f)};
+    glm::mat4 view { glm::lookAt(glm::vec3(0,0,-100), glm::vec3(0,0,0), glm::vec3(0,1,0)) };
 
     /// render loop ///
     do 
     {
         double totalTime = getTime();
 
-        glm::vec3 quad_scale{ ::cos(totalTime) + 1, ::sin(totalTime) + 1, 0.0f };
-        m_root->transform().scale(quad_scale);
-        view().updateViewMatrix();
-
-        m_root->update();
+//        glm::vec3 quad_scale{ ::cos(totalTime) + 1, ::sin(totalTime) + 1, 0.0f };
+//        m_root->transform().scale(quad_scale);
+//        view().updateViewMatrix();
+//        m_root->update();
 
         glm::mat4 mvp
         { 
-            view().getProjectionMatrix() * 
-            view().getViewMatrix() * 
-            m_root->transform().matrix()
+//            view().getProjectionMatrix() *
+//            view().getViewMatrix() *
+//            m_root->transform().matrix()
+            proj * view
         };
 
+
+        state->bind();
+        prog.setUniform("mvp", mvp);
         state->draw();
+        state->unbind();
 
         m_ctx->swapBuffers();
         m_ctx->pollEvents();
@@ -144,7 +151,7 @@ void SimpleRenderLoop::cursorpos_callback(double x, double y)
             glm::vec3(0, 1, 0)
             );
 
-        view().rotate(rotX * rotY);
+//        view().rotate(rotX * rotY);
 
     } else if (glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
         ///////  OBJECT ROTATION RIGHT BUTTON  ///////  
@@ -160,7 +167,7 @@ void SimpleRenderLoop::cursorpos_callback(double x, double y)
             glm::vec3(0, 1, 0)
             );
 
-        m_root->transform().rotate(rotX * rotY);
+//        m_root->transform().rotate(rotX * rotY);
 
     } else if (glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS) {
         ///////  OBJECT MOVEMENT MIDDLE BUTTON  ///////  
@@ -168,7 +175,7 @@ void SimpleRenderLoop::cursorpos_callback(double x, double y)
         glm::vec3 dt{ -delta.x, delta.y, 0.0f }; 
         dt *= 0.001f;
 
-        m_root->transform().translate(dt);
+//        m_root->transform().translate(dt);
     }
 
     m_cursorPos = cpos;

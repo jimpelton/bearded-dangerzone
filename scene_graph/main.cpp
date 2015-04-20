@@ -40,10 +40,7 @@ int main(int argc, char* argv[])
         exit(1);
     }
 
-
-
-    bd::Transformable root;
-    scc->setRoot(&root);
+//    scc->setRoot(&root);
 
     context->startLoop();
 

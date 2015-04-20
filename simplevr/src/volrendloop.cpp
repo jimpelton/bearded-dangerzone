@@ -51,7 +51,7 @@ VolRendLoop::VolRendLoop()
     , m_volshader_fragment{ bd::ShaderType::Fragment }
     , m_volshader_program{ }
 
-    , m_slices_vao{ }
+    , m_slices_vao{ bd::VertexArrayObject::Method::ELEMENTS }
 {
 }
 
@@ -59,6 +59,8 @@ VolRendLoop::VolRendLoop()
 //////////////////////////////////////////////////////////////////////////
 VolRendLoop::~VolRendLoop() {}
 
+
+//////////////////////////////////////////////////////////////////////////
 void VolRendLoop::initialize(bd::Context &c)
 {
     bd::GlfwContext *glfwContext = dynamic_cast<bd::GlfwContext*>(&c);
@@ -66,6 +68,7 @@ void VolRendLoop::initialize(bd::Context &c)
 
     m_ctx = glfwContext;
     m_window = glfwContext->window();
+
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -172,18 +175,23 @@ void VolRendLoop::scrollwheel_callback(double xoff, double yoff)
 
 
 void VolRendLoop::addVbaContext(const std::vector<glm::vec4> &verts,
-    const std::vector<unsigned short> &indices)
+    const std::vector<glm::vec3> &colors, const std::vector<unsigned short> &indices)
 {
-    const std::vector<glm::vec3> qcolors{
-            { 0.0, 0.0, 0.0 },
-            { 1.0, 0.0, 0.0 },
-            { 0.0, 1.0, 0.0 },
-            { 0.0, 0.0, 1.0 }
-    };
 
-    m_slices_vao.addVbo(verts, 0);
-    m_slices_vao.addVbo(qcolors, 1);
-    m_slices_vao.setIndexBuffer(indices);
+    if (verts.size() > 0)
+        m_slices_vao.addVbo(verts, 0);
+    else
+        gl_log_err("Verts vector has 0 size.");
+
+    if (colors.size() > 0)
+        m_slices_vao.addVbo(colors, 1);
+    else
+        gl_log_err("Colors vector has 0 size.");
+
+    if (indices.size() > 0)
+        m_slices_vao.setIndexBuffer(indices);
+    else
+        gl_log_err("Indices vector has 0 size.");
 }
 
 

@@ -29,12 +29,23 @@ VertexArrayObject::~VertexArrayObject()
 ///////////////////////////////////////////////////////////////////////////////
 unsigned int VertexArrayObject::create() 
 {
-    if (m_id == 0)
-        gl_check(glGenVertexArrays(1, &m_id));
+    if (m_id == 0) {
+        gl_check(glGenVertexArrays(1, &m_id  ));
+        gl_log("Created vertex array object, id=%d", m_id);
+    }
 
     return m_id;
 }
 
+unsigned int VertexArrayObject::addVbo(const float *verts,
+    size_t length, unsigned elements_per_vertex, unsigned attr_idx)
+{
+    unsigned int vboId{ 0 };
+
+    vboId = gen_vbo(verts, length, elements_per_vertex, attr_idx);
+
+    return vboId;
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 unsigned int VertexArrayObject::addVbo(const std::vector<float> &verts, 
@@ -89,6 +100,17 @@ unsigned int VertexArrayObject::setIndexBuffer(const std::vector<unsigned short>
     return iboId;
 }
 
+unsigned int VertexArrayObject::setIndexBuffer(unsigned short * indices, size_t length)
+{
+    unsigned int iboId{ 0 };
+
+    if (m_idxBufId != 0)
+        return m_idxBufId;
+
+    iboId = gen_ibo(indices, length);
+
+    return iboId;
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 void VertexArrayObject::bind() 
@@ -131,7 +153,9 @@ unsigned int VertexArrayObject::gen_vbo(const float *verts, size_t length,
     const void * offset{ nullptr };
 
     unsigned int vbo{ 0 };
-    
+
+    checkEqualVertexCount(length, elements_per_vertex);
+
     create();
     bind();
 
@@ -156,8 +180,8 @@ unsigned int VertexArrayObject::gen_vbo(const float *verts, size_t length,
         gl_log_err("Unable to add vertex buffer to vertex buffer object."
             "(The returned id for the generated vertex buffer was 0)");
     } else {
-        checkEqualVertexCount(length, elements_per_vertex);
         m_bufIds.push_back(vbo);
+        gl_log("Created VBO, id=%d, verticies=%d", vbo, length/elements_per_vertex);
     }
 
     return vbo;
@@ -168,6 +192,8 @@ unsigned int VertexArrayObject::gen_vbo(const float *verts, size_t length,
 unsigned int VertexArrayObject::gen_ibo(const unsigned short *indices, size_t length)
 {
     unsigned int ibo{ 0 };
+
+    checkEqualVertexCount(length, 1);
 
     create();
     bind();
@@ -185,8 +211,8 @@ unsigned int VertexArrayObject::gen_ibo(const unsigned short *indices, size_t le
         gl_log_err("Unable to set index buffer. (The returned id for the generated "
             "element buffer was 0)");
     } else {
-        checkEqualVertexCount(length, 1);
         m_idxBufId = ibo;
+        gl_log("Created IBO, id=%d, elements=%d", ibo, length);
     }
 
     return ibo;
@@ -198,7 +224,7 @@ void VertexArrayObject::checkEqualVertexCount(size_t length, unsigned int elemen
     if (m_bufIds.size() > 0) {
         if (m_numEle != verts) {
             gl_log_err("Supplied vertex (or index) buffers have non-equal element count "
-                "(adding anyway)! old=%d, this=%d.", m_numEle, verts);
+                "(adding to GL anyway)! old=%d, this=%d.", m_numEle, verts);
         }
     } else {
         m_numEle = verts;

@@ -29,6 +29,9 @@ public:
     //////////////////////////////////////////////////////////////////////////
     void draw();
 
+    void bind();
+    void unbind();
+
 private:
     void drawElementArrays();
     void drawArrays();

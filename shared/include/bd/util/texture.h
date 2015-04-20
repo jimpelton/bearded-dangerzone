@@ -17,7 +17,7 @@ public:
 
     enum class Format : int
     {
-        OneChannel
+        R, RG, RGB, RGBA
     };
 
 
@@ -33,7 +33,8 @@ public:
     ///////////////////////////////////////////////////////////////////////////////
     unsigned int genGLTex1d();
     
-    unsigned int genGLTex2d();
+    unsigned int genGLTex2d(float* img, Format ity,
+    Format ety, size_t w, size_t h);
 
     unsigned int genGLTex3d(float *img, Format internal, Format external, 
         size_t w, size_t h, size_t d);

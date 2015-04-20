@@ -100,8 +100,6 @@ private:
     // Private Members
     ///////////////////////////////////////////////////////////////////////////////
     
-
-
     /** \brief Map uniform name to location. */
     using ParamTable = std::map< std::string, unsigned int >;
     

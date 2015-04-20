@@ -43,6 +43,16 @@ public:
     unsigned int create();
 
     ///////////////////////////////////////////////////////////////////////////////
+    /// \brief Add a vbo with \c length vertices supplied in \c verts
+    ///
+    /// \note Subsequent calls to addIndexedVbo() return the previous gl id.
+    ///
+    /// \returns The gl id of the vertex buffer object created.
+    ///////////////////////////////////////////////////////////////////////////////
+    unsigned int addVbo(float const *verts, size_t length,
+        unsigned int elements_per_vertex, unsigned int attr_idx);
+
+    ///////////////////////////////////////////////////////////////////////////////
     /// \brief Add a vbo with the vertices in \c verts
     ///
     /// \note Subsequent calls to addIndexedVbo() return the previous gl id.
@@ -72,6 +82,16 @@ public:
     ///////////////////////////////////////////////////////////////////////////////
     unsigned int addVbo(const std::vector<glm::vec4> &verts, unsigned int attr_idx);
 
+
+    ///////////////////////////////////////////////////////////////////////////////
+    /// \brief Add an index buffer to be bound with this VAO with \c length indices.
+    ///
+    /// \note Subsequent calls to setIndexBuffer() have no effect and return the
+    ///  id of the index buffer.
+    ///
+    /// \returns The gl id of the index buffer created.
+    ///////////////////////////////////////////////////////////////////////////////
+    unsigned int setIndexBuffer(unsigned short *indices, size_t length);
 
     ///////////////////////////////////////////////////////////////////////////////
     /// \brief Add an index buffer to be bound with this VAO.
@@ -122,6 +142,8 @@ private:
     unsigned int m_numEle; //< Number of elements in index array (= #of verts)
     Method m_method; //< Render method.
     std::string m_name;
+
+
 };
 
 } // namespace bd

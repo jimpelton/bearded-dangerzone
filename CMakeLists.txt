@@ -51,9 +51,10 @@ add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/shared")
 #add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/instancing")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/simplevr")
 
-add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/test")
+#add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/test")
 
-add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/scene_graph")
+#add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/scene_graph")
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/simple_blocks")
 
 
 
