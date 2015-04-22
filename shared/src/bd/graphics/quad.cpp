@@ -19,9 +19,9 @@ const std::array<glm::vec4, 4> Quad::verts_xy
 const std::array<glm::vec4, 4> Quad::verts_yz
 {
     glm::vec4(0.0f, -0.5f, -0.5f, 1.0f), // 0 ll
-    glm::vec4(0.0f, -0.5f,  0.5f, 1.0f), // 1 lr
-    glm::vec4(0.0f,  0.5f, -0.5f, 1.0f), // 2 ur
-    glm::vec4(0.0f,  0.5f,  0.5f, 1.0f)  // 3 ul
+    glm::vec4(0.0f,  0.5f, -0.5f, 1.0f), // 1 lr
+    glm::vec4(0.0f,  0.5f,  0.5f, 1.0f), // 2 ur
+    glm::vec4(0.0f, -0.5f,  0.5f, 1.0f)  // 3 ul
 };
 
 const std::array<glm::vec4, 4> Quad::verts_xz

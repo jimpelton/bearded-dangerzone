@@ -1,4 +1,5 @@
 #include "block.h"
+#include "cmdline.h"
 
 #include <bd/log/gl_log.h>
 #include <bd/graphics/vertexarrayobject.h>
@@ -6,6 +7,7 @@
 #include <bd/graphics/BBox.h>
 #include <bd/util/util.h>
 #include <bd/graphics/axis.h>
+#include <bd/graphics/quad.h>
 
 
 #include <GL/glew.h>
@@ -25,8 +27,8 @@
 
 #include <cstdarg>
 #include <ctime>
-#include <bd/graphics/quad.h>
 #include <iostream>
+#include <glm/gtx/string_cast.hpp>
 
 const char *vertex_shader =
     "#version 400\n"
@@ -272,7 +274,10 @@ void loop(GLFWwindow *window)
         for(auto &b : g_blocks) {
             glm::mat4 mmvp = mvp * b.transform().matrix();
             gl_check(glUniformMatrix4fv(g_uniform_mvp, 1, GL_FALSE, glm::value_ptr(mmvp)));
-            gl_check(glDrawElements(GL_TRIANGLE_STRIP, bd::Quad::elements.size(), GL_UNSIGNED_SHORT, 0));
+//            gl_check(glDrawElements(GL_TRIANGLE_STRIP, bd::Quad::elements.size(), GL_UNSIGNED_SHORT, 0));
+            gl_check(glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, 0));
+            gl_check(glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, (GLvoid*)(4*sizeof(unsigned short))));
+            gl_check(glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, (GLvoid*)(8*sizeof(unsigned short))));
         }
         vao->unbind();
 
@@ -327,13 +332,13 @@ GLFWwindow *init()
     glfwMakeContextCurrent(window);
 
     glewExperimental = GL_TRUE;
-    GLenum error = glewInit();
+    GLenum error = gl_check(glewInit());
     if (error) {
         gl_log("could not init glew %s", glewGetErrorString(error));
         return nullptr;
     }
 
-    bd::checkForAndLogGlError(__FILE__, __func__, __LINE__);
+//    bd::checkForAndLogGlError(__FILE__, __func__, __LINE__);
     bd::subscribe_debug_callbacks();
 
     gl_check(glEnable(GL_DEPTH_TEST));
@@ -343,34 +348,37 @@ GLFWwindow *init()
     return window;
 }
 
-constexpr
-size_t numverts(size_t i){
-    return i * 3;
-}
-
 void genQuadVao(bd::VertexArrayObject &vao)
 {
-
-//    const size_t num_verts { bd::Quad::verts_xy.size() * 3 };
-
-    std::array<glm::vec4, numverts(bd::Quad::verts_xy.size())> vbuf;
-    auto it =
-        std::copy(bd::Quad::verts_xy.begin(), bd::Quad::verts_xy.end(), vbuf.begin());
+    // copy 3 sets of quad verts, each aligned with different plane
+    std::array<glm::vec4, 12> vbuf;
+    auto it = std::copy(bd::Quad::verts_xy.begin(), bd::Quad::verts_xy.end(),  vbuf.begin());
     it = std::copy(bd::Quad::verts_xz.begin(), bd::Quad::verts_xz.end(), it);
     std::copy(bd::Quad::verts_yz.begin(), bd::Quad::verts_yz.end(), it);
 
+    for(auto &v : vbuf){
+        std::cout << glm::to_string(v) << std::endl;
+    }
+
+    std::array<glm::vec3, 12> cbuf;
+    auto cit = std::copy(bd::Quad::colors.begin(), bd::Quad::colors.end(),  cbuf.begin());
+    cit = std::copy(bd::Quad::colors.begin(), bd::Quad::colors.end(), cit);
+    std::copy(bd::Quad::colors.begin(), bd::Quad::colors.end(), cit);
+
+    std::array<unsigned short, 12> ebuf {
+        0, 1, 3, 2,
+        4, 5, 7, 6,
+        8, 9, 11, 10
+    };
+
     // vertex positions into attribute 0
-    vao.addVbo((float *) vbuf.data(),
-        vbuf.size() * bd::Quad::vert_element_size,
+    vao.addVbo((float *) vbuf.data(), vbuf.size() * bd::Quad::vert_element_size,
         bd::Quad::vert_element_size, 0);
 
     // vertex colors into attribute 1
-    vao.addVbo(( float * ) (bd::Quad::colors.data()),
-        bd::Quad::colors.size() * 3,
-        3, 1);
+    vao.addVbo(( float * ) (cbuf.data()), cbuf.size() * 3, 3, 1);
 
-    vao.setIndexBuffer(( unsigned short * ) (bd::Quad::elements.data()),
-        bd::Quad::elements.size());
+    vao.setIndexBuffer(( unsigned short * ) (ebuf.data()), ebuf.size());
 }
 
 void genAxisVao(bd::VertexArrayObject &vao)
@@ -446,8 +454,34 @@ void cleanup()
     glDeleteProgram(g_shaderProgramId);
 }
 
-int main(int argc, char *argv[])
+int main(int argc, const char *argv[])
 {
+//    CommandLineOptions clo;
+//    if (parseThem(argc, argv, clo) == 0) {
+//        return 0;
+//    }
+
+    size_t x=0;
+    size_t y=0;
+    size_t z=0;
+    std::vector<std::string> args(argv, argv+argc);
+    auto it = args.begin();
+    for (; it != args.end(); ++it) {
+        std::string val{*it};
+        std::string next;
+        if (it + 1 != args.end()) {
+            next = *(it + 1);
+            std::cout << val << " " << next << std::endl;
+            if (val == "-x") {
+                x = atoll((*(it + 1)).c_str());
+            } else if (val == "-y") {
+                y = atoll((*(it + 1)).c_str());
+            } else if (val == "-z") {
+                z = atoll((*(it + 1)).c_str());
+            }
+        }
+    }
+
     bd::gl_log_restart();
 
     GLFWwindow *window;
@@ -478,7 +512,7 @@ int main(int argc, char *argv[])
     g_vaoIds.push_back(&quadVbo);
     g_vaoIds.push_back(&boxVbo);
 
-    initBlocks(glm::u64vec3(10,10,10), glm::u64vec3(1024,1024,1024));
+    initBlocks(glm::u64vec3(x, y, z), glm::u64vec3(1024,1024,1024));
 
     loop(window);
     cleanup();
