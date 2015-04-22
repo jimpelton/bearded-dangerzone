@@ -343,11 +343,25 @@ GLFWwindow *init()
     return window;
 }
 
+constexpr
+size_t numverts(size_t i){
+    return i * 3;
+}
+
 void genQuadVao(bd::VertexArrayObject &vao)
 {
+
+//    const size_t num_verts { bd::Quad::verts_xy.size() * 3 };
+
+    std::array<glm::vec4, numverts(bd::Quad::verts_xy.size())> vbuf;
+    auto it =
+        std::copy(bd::Quad::verts_xy.begin(), bd::Quad::verts_xy.end(), vbuf.begin());
+    it = std::copy(bd::Quad::verts_xz.begin(), bd::Quad::verts_xz.end(), it);
+    std::copy(bd::Quad::verts_yz.begin(), bd::Quad::verts_yz.end(), it);
+
     // vertex positions into attribute 0
-    vao.addVbo(( float * ) (bd::Quad::verts.data()),
-        bd::Quad::verts.size() * bd::Quad::vert_element_size,
+    vao.addVbo((float *) vbuf.data(),
+        vbuf.size() * bd::Quad::vert_element_size,
         bd::Quad::vert_element_size, 0);
 
     // vertex colors into attribute 1

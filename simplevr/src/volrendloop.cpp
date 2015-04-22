@@ -234,7 +234,7 @@ void VolRendLoop::drawBlocks()
 
         m_volshader_program.setUniform("mvp", mvp);
 
-        gl_check(glDrawElements(GL_TRIANGLE_STRIP, Quad::verts.size(),
+        gl_check(glDrawElements(GL_TRIANGLE_STRIP, Quad::elements.size(),
             GL_UNSIGNED_SHORT, 0));
     }
 }

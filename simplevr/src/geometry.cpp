@@ -22,8 +22,8 @@ void makeBlockSlices(int num_slices, std::vector<glm::vec4> &vertices,
         n += 1;
     }
 
-    vertexCount = n * Quad::verts.size();
-    indexCount = n + n * Quad::verts.size();
+    vertexCount = n * Quad::verts_xy.size();
+    indexCount = n + n * Quad::verts_xy.size();
 
     vertices.clear();
     vertices.reserve(vertexCount);
@@ -31,16 +31,16 @@ void makeBlockSlices(int num_slices, std::vector<glm::vec4> &vertices,
     indices.reserve(indexCount);
 
     for (size_t i = 0; i < vertexCount; i+=4) {
-        vertices.push_back(Quad::verts[0]);
+        vertices.push_back(Quad::verts_xy[0]);
         colors.push_back(Quad::colors[0]);
 
-        vertices.push_back(Quad::verts[1]);
+        vertices.push_back(Quad::verts_xy[1]);
         colors.push_back(Quad::colors[1]);
 
-        vertices.push_back(Quad::verts[2]);
+        vertices.push_back(Quad::verts_xy[2]);
         colors.push_back(Quad::colors[2]);
 
-        vertices.push_back(Quad::verts[3]);
+        vertices.push_back(Quad::verts_xy[3]);
         colors.push_back(Quad::colors[3]);
     }
 

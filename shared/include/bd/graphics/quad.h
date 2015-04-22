@@ -13,18 +13,23 @@ namespace bd {
 
 class Quad : public Transformable, public IDrawable {
 public:
-    static const std::array<glm::vec4, 4> verts;
-    static const std::array<unsigned short, 4> elements;
-    static const std::array<glm::vec3, 4> colors;
-    static const unsigned int vert_element_size = 4;
+    static const std::array<glm::vec4, 4> verts_xy; ///< initially in xy-plane
 
-public:
+    static const std::array<glm::vec4, 4> verts_yz; ///< initially in yz-plane
+    static const std::array<glm::vec4, 4> verts_xz; ///< initially in xz-plane
+
+    static const std::array<unsigned short, 4> elements;
+
+    static const std::array<glm::vec3, 4> colors;
+
+    static const unsigned int vert_element_size = 4; ///< number of elements in single vertex
+
     Quad();
     virtual ~Quad();
 
     virtual void draw();
 };
 
-} /* namespace bd */
+} // namespace bd
 
-#endif
+#endif // !quad_h__

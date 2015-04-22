@@ -68,7 +68,7 @@ int main(int argc, const char *argv[])
 //    std::vector<glm::vec4> vertices(bd::Box::vertices.begin(), bd::Box::vertices.end());
 //    std::vector<unsigned short> indices(bd::Box::elements.begin(), bd::Box::elements.end());
     std::vector<glm::vec3> colors(bd::Quad::colors.begin(), bd::Quad::colors.end());
-    std::vector<glm::vec4> vertices(bd::Quad::verts.begin(), bd::Quad::verts.end());
+    std::vector<glm::vec4> vertices(bd::Quad::verts_xy.begin(), bd::Quad::verts_xy.end());
     std::vector<unsigned short> indices(bd::Quad::elements.begin(), bd::Quad::elements.end());
     bd::Transformable root;
     vr.root(&root);

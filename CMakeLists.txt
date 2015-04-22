@@ -8,12 +8,12 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake
       ${CMAKE_MODULE_PATH})
 
 if (UNIX)
-#   set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
-#   set(CMAKE_AR "/usr/bin/llvm-ar")
-#   set(CMAKE_LINKER "/usr/bin/llvm-ld")
-#   set(CMAKE_NM "/usr/bin/llvm-nm")
-#   set(CMAKE_OBJDUMP "/usr/bin/llvm-objdump")
-#   set(CMAKE_RANLIB "/usr/bin/llvm-ranlib")
+   set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
+   set(CMAKE_AR "/usr/bin/llvm-ar")
+   set(CMAKE_LINKER "/usr/bin/llvm-ld")
+   set(CMAKE_NM "/usr/bin/llvm-nm")
+   set(CMAKE_OBJDUMP "/usr/bin/llvm-objdump")
+   set(CMAKE_RANLIB "/usr/bin/llvm-ranlib")
 
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 -std=c++14 -Wall -fdiagnostics-color=auto")
 
