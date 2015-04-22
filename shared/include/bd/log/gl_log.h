@@ -1,7 +1,6 @@
 #ifndef gl_log_h__
 #define gl_log_h__
 
-//#include <GL/glew.h>
 
 #ifdef _WIN32
 #define __func__ __FUNCTION__
@@ -9,7 +8,7 @@
 
 #define gl_log(fmt_, ...) bd::gl_log_fcn("%s[%d]:%s()::\n\t" # fmt_, __FILE__, __LINE__, __func__, ##__VA_ARGS__)
 
-#define gl_log_err(fmt_, ...) bd::gl_log_err_fcn("%s[%d]:%s()::\n\t" # fmt_, __FILE__, __LINE__, __func__, ##__VA_ARGS__)
+#define gl_log_err(fmt_, ...) bd::gl_log_err_fcn(nullptr, "%s[%d]:%s()::\n\t" # fmt_, __FILE__, __LINE__, __func__, ##__VA_ARGS__)
 
 #ifdef BD_DEBUG
 #define gl_check(fn) (fn); bd::checkForAndLogGlError(__FILE__, __func__, __LINE__);
@@ -66,7 +65,7 @@ bool gl_log_fcn(const char *message, ...);
 ///////////////////////////////////////////////////////////////////////////////
 // \brief Dumps an error message to both stderr and the log file.
 ///////////////////////////////////////////////////////////////////////////////
-bool gl_log_err_fcn(const char *message, ...);
+bool gl_log_err_fcn(const char *prefix, const char *message, ...);
 
 
 ///////////////////////////////////////////////////////////////////////////////

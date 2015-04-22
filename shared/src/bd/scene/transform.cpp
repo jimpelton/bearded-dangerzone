@@ -31,7 +31,7 @@ Transform::~Transform()
 
 
 //////////////////////////////////////////////////////////////////////////////
-void Transform::position(glm::vec3 pos)
+void Transform::origin(glm::vec3 pos)
 {
     m_pos = pos;
     m_isDirty = true;
@@ -111,7 +111,7 @@ const glm::mat4& Transform::matrix() const
 }
 
 
-const glm::vec3& Transform::position() const
+const glm::vec3& Transform::origin() const
 {
     return m_pos;
 }

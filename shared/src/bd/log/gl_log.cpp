@@ -133,6 +133,11 @@ FILE *file = NULL;
 
 FILE *glDebugFile = NULL;
 
+const char *ogl = "OGL";
+const char *gcb = "GCB";
+const char *err = "ERR";
+const char *log = "LOG";
+
 } // namespace
 
 
@@ -143,7 +148,7 @@ void gl_debug_message_callback(GLenum source, GLenum type, GLuint id,
     const char* sev = gl_debug_severity_str(severity);
     const char* typ = gl_debug_type_str(type);
     const char* src = gl_debug_source_str(source);
-    gl_log_err("OGL_DEBUG: source: %s, type: %s, id %u, severity %s, '%s'",
+    gl_log_err_fcn(gcb, "Source: %s,\n\tType: %s,\n\tId %u,\n\tSeverity %s,\n\t'%s'",
         src, typ, id, sev, message);
 }
 
@@ -167,13 +172,13 @@ void subscribe_debug_callbacks()
 ///////////////////////////////////////////////////////////////////////////////
 void checkForAndLogGlError(const char *file, const char *func, int line)
 {
-    const char* fmt = "(OGL): %s[%d]:%s():: \n\t%s (0x%04X)";
+    const char* fmt = "%s[%d]:%s():: \n\t%s (0x%04X)";
 //    const char* fmt = "(OGL): %s[%d]:%s():: \n\t0x%04X";
     GLint error;
     while ((error = glGetError()) != GL_NO_ERROR) {
         const char* estr = gl_err_num_str(error);
 
-        gl_log_err_fcn(fmt, file, line, func, estr, error);
+        gl_log_err_fcn(ogl, fmt, file, line, func, estr, error);
     }
 }
 
@@ -213,7 +218,7 @@ bool gl_debug_log_restart()
     }
 
     if (!glDebugFile) {
-        fprintf(stderr, "ERROR: could not open GL debug output log file %s for writing\n", logFileName);
+        fprintf(stderr, "ERROR: could not open GL debug output log file %s for writing\n", glDebugFileName);
         return false;
     }
 
@@ -231,13 +236,12 @@ bool gl_log_restart()
     if (!file) {
         file = fopen(logFileName, "a");
     } else {
-        fprintf(stderr, "Log file was already opened.\n");
+        fprintf(stderr, "Log file %s was already opened.\n", logFileName);
         return true;
     }
 
     if (!file) {
-        fprintf(stderr, "Could not open logFileName log file %s for writing, "
-            "will use stdout/stderr instead.\n", logFileName);
+        fprintf(stderr, "Could not open %s for writing, will use stdout/stderr instead.\n", logFileName);
         return false;
     }
 
@@ -254,8 +258,9 @@ bool gl_log_fcn(const char *message, ...)
 {
     va_list argptr;
 
+    // print to stdout if no file open.
     if (!file) {
-        fprintf(stderr, "log file %s is not open for appending\n", logFileName);
+        fprintf(stderr, "Log file %s is not open for appending\n", logFileName);
 
         fprintf(stdout, "(LOG): ");
 
@@ -265,7 +270,7 @@ bool gl_log_fcn(const char *message, ...)
         fprintf(stdout, "\n");
         fflush(stdout);
 
-        return false;
+        return true;
     }
 
     fprintf(file, "(LOG): ");
@@ -280,29 +285,30 @@ bool gl_log_fcn(const char *message, ...)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-bool gl_log_err_fcn(const char *message, ...)
+bool gl_log_err_fcn(const char *prefix, const char *message, ...)
 {
-    va_list argptr;
-
-    if (!file) {
-        fprintf(stderr, "ERROR: Log file %s was not open for appending\n", logFileName);
-        return false;
+    if (!prefix) {
+        prefix = err;
     }
 
-    fprintf(file, "(ERR): ");
-    fprintf(stderr, "(ERR): ");
+    va_list argptr;
 
-    va_start(argptr, message);
-    vfprintf(file, message, argptr);
-    va_end(argptr);
+    if (file) {
+        fprintf(file, "(%s): ", prefix);
+        va_start(argptr, message);
+        vfprintf(file, message, argptr);
+        va_end(argptr);
+        fprintf(file, "\n");
+        fflush(file);
+    }
+
+    fprintf(stderr, "(%s): ", prefix);
 
     va_start(argptr, message);
     vfprintf(stderr, message, argptr);
     va_end(argptr);
 
-    fprintf(file, "\n");
     fprintf(stderr, "\n");
-    fflush(file);
 
     return true;
 }

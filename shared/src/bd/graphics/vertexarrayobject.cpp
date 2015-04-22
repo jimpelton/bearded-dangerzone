@@ -154,7 +154,7 @@ unsigned int VertexArrayObject::gen_vbo(const float *verts, size_t length,
 
     unsigned int vbo{ 0 };
 
-    checkEqualVertexCount(length, elements_per_vertex);
+//  checkEqualVertexCount(length, elements_per_vertex);
 
     create();
     bind();
@@ -193,7 +193,7 @@ unsigned int VertexArrayObject::gen_ibo(const unsigned short *indices, size_t le
 {
     unsigned int ibo{ 0 };
 
-    checkEqualVertexCount(length, 1);
+//  checkEqualVertexCount(length, 1);
 
     create();
     bind();
@@ -212,6 +212,7 @@ unsigned int VertexArrayObject::gen_ibo(const unsigned short *indices, size_t le
             "element buffer was 0)");
     } else {
         m_idxBufId = ibo;
+        m_numEle = length;
         gl_log("Created IBO, id=%d, elements=%d", ibo, length);
     }
 
@@ -223,13 +224,10 @@ void VertexArrayObject::checkEqualVertexCount(size_t length, unsigned int elemen
     unsigned int verts = length/elements_per_vertex;
     if (m_bufIds.size() > 0) {
         if (m_numEle != verts) {
-            gl_log_err("Supplied vertex (or index) buffers have non-equal element count "
+            gl_log_err("Supplied vertex buffers have non-equal element count "
                 "(adding to GL anyway)! old=%d, this=%d.", m_numEle, verts);
         }
-    } else {
-        m_numEle = verts;
     }
-
 }
 
 } // namespace bd

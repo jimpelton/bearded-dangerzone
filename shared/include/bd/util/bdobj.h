@@ -17,6 +17,7 @@ public:
     BDObj();
     BDObj(const std::string&);
     virtual ~BDObj();
+    void id(const std::string &);
     virtual std::string to_string() const;
 
 private:

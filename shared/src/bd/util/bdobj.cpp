@@ -23,6 +23,11 @@ BDObj::~BDObj()
 {
 }
 
+void BDObj::id(const std::string &id)
+{
+    ID = id;
+}
+
 std::string BDObj::to_string() const
 {
     return ID;

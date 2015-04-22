@@ -1,4 +1,7 @@
+
+#include <bd/log/gl_log.h>
 #include <bd/graphics/axis.h>
+#include <GL/glew.h>
 
 namespace bd {
 
@@ -31,14 +34,14 @@ const std::array<unsigned short, 6> Axis::elements
     0, 3
 };
 
-    Axis::Axis() : Axis(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f)) { }
+Axis::Axis()
+    : Transformable()
+{
+}
 
-    Axis::Axis(const glm::vec3 &center, const glm::vec3 &dims)
-        : m_colorX { glm::vec3(1, 0, 0) }
-        , m_colorY { glm::vec3(0, 1, 0) }
-        , m_colorZ { glm::vec3(0, 0, 1) }
-    {
-        transform().scale(dims);
-        transform().position(center);
-    }
+void Axis::draw()
+{
+    gl_check(glDrawArrays(GL_LINES, 0, verts.size()));
+}
+
 } /* namespace  bd */

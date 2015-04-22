@@ -122,7 +122,3 @@ glm::u64vec3 Block::numVox() const
 {
     return m_numvox;
 }
-
-void Block::origin(glm::vec3 const &aConst) const {
-
-}

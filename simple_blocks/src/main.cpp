@@ -1,5 +1,11 @@
+#include "block.h"
+
 #include <bd/log/gl_log.h>
 #include <bd/graphics/vertexarrayobject.h>
+#include <bd/scene/transformable.h>
+#include <bd/graphics/BBox.h>
+#include <bd/util/util.h>
+#include <bd/graphics/axis.h>
 
 
 #include <GL/glew.h>
@@ -19,6 +25,8 @@
 
 #include <cstdarg>
 #include <ctime>
+#include <bd/graphics/quad.h>
+#include <iostream>
 
 const char *vertex_shader =
     "#version 400\n"
@@ -48,9 +56,9 @@ const glm::vec3 Z_AXIS{ 0.0f, 0.0f, 1.0f };
 GLint g_uniform_mvp;
 GLuint g_shaderProgramId;
 std::vector<bd::VertexArrayObject *> g_vaoIds;
+std::vector<Block> g_blocks;
 
 glm::quat g_rotation;
-glm::mat4 g_modelMatrix{ 1.0 };
 glm::mat4 g_viewMatrix;
 glm::mat4 g_projectionMatrix;
 glm::mat4 g_vpMatrix;
@@ -64,6 +72,9 @@ float g_screenWidth{ 1280.0f };
 float g_screenHeight{ 720.0f };
 float g_fov{ 50.0f };
 bool g_viewDirty{ true };
+
+bd::Axis g_axis;
+bd::Box g_box;
 
 void cleanup();
 
@@ -80,7 +91,7 @@ void glfw_error_callback(int error, const char *description);
 
 void glfw_window_size_callback(GLFWwindow *window, int width, int height);
 
-void updateMvpMatrix();
+void updateViewMatrix();
 
 void setRotation(const glm::vec2 &dr);
 
@@ -219,7 +230,9 @@ void setRotation(const glm::vec2 &dr)
     g_viewDirty = true;
 }
 
-void updateMvpMatrix()
+
+///////////////////////////////////////////////////////////////////////////////
+void updateViewMatrix()
 {
     g_viewMatrix = glm::lookAt(g_camPosition, g_camFocus, g_camUp);
     g_projectionMatrix = glm::perspective(g_fov, g_screenWidth / g_screenHeight,
@@ -228,50 +241,54 @@ void updateMvpMatrix()
     g_viewDirty = false;
 }
 
-//void drawBoundingBox(bearded::dangerzone::geometry::BBox *b, unsigned int vaoIdx)
-//{
-//    glm::mat4 mvp = g_vpMatrix * b->transform() * glm::toMat4(g_rotation);
-//
-//    glUseProgram(g_shaderProgramId);
-//    glUniformMatrix4fv(g_uniform_mvp, 1, GL_FALSE, glm::value_ptr(mvp));
-//    glBindVertexArray(g_vaoIds[vaoIdx]);
-//    glDrawElementsInstanced(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, 0, 2);
-//    glDrawElementsInstanced(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, (GLvoid*)(4 * sizeof(GLushort)), 2);
-//    glDrawElementsInstanced(GL_LINES, 8, GL_UNSIGNED_SHORT, (GLvoid*)(8 * sizeof(GLushort)), 2);
-//    glBindVertexArray(0);
-//}
 
+///////////////////////////////////////////////////////////////////////////////
 void loop(GLFWwindow *window)
 {
     glUseProgram(g_shaderProgramId);
+
+    glm::mat4 mvp{ 1.0f };
+    bd::VertexArrayObject *vao = nullptr;
 
     do {
         gl_check(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
         if (g_viewDirty) {
-            updateMvpMatrix();
+            updateViewMatrix();
         }
-
-        gl_check(glUniformMatrix4fv(g_uniform_mvp, 1, GL_FALSE,
-            glm::value_ptr(g_vpMatrix * glm::toMat4(g_rotation))));
+        mvp = g_vpMatrix * glm::toMat4(g_rotation);
 
         // Coordinate Axis
-        bd::VertexArrayObject *vao = g_vaoIds[0];
+        vao = g_vaoIds[0];
         vao->bind();
-            gl_check(glDrawArrays(GL_LINES, 0, 6));
+        gl_check(glUniformMatrix4fv(g_uniform_mvp, 1, GL_FALSE, glm::value_ptr(mvp)));
+        g_axis.draw();
         vao->unbind();
+
 
         // Quad geometry
         vao = g_vaoIds[1];
         vao->bind();
-            gl_check(glDrawElements(GL_TRIANGLE_STRIP, vao->numElements(), GL_UNSIGNED_SHORT, 0));
+        for(auto &b : g_blocks) {
+            glm::mat4 mmvp = mvp * b.transform().matrix();
+            gl_check(glUniformMatrix4fv(g_uniform_mvp, 1, GL_FALSE, glm::value_ptr(mmvp)));
+            gl_check(glDrawElements(GL_TRIANGLE_STRIP, bd::Quad::elements.size(), GL_UNSIGNED_SHORT, 0));
+        }
         vao->unbind();
 
+
+        // wireframe box
         vao = g_vaoIds[2];
         vao->bind();
+        for(auto &b : g_blocks) {
+            glm::mat4 mmvp = mvp * b.transform().matrix();
+            gl_check(glUniformMatrix4fv(g_uniform_mvp, 1, GL_FALSE, glm::value_ptr(mmvp)));
             gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, 0));
-            gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, (GLvoid*)(4 * sizeof(GLushort))));
-            gl_check(glDrawElements(GL_LINES, 8, GL_UNSIGNED_SHORT, (GLvoid*)(8 * sizeof(GLushort))));
+            gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT,
+                ( GLvoid * ) (4 * sizeof(GLushort))));
+            gl_check(glDrawElements(GL_LINES, 8, GL_UNSIGNED_SHORT,
+                ( GLvoid * ) (8 * sizeof(GLushort))));
+        }
         vao->unbind();
 
         glfwSwapBuffers(window);
@@ -297,8 +314,7 @@ GLFWwindow *init()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    window = glfwCreateWindow(1280, 720, "Minimal Instance Rendering!!!", NULL,
-        NULL);
+    window = glfwCreateWindow(1280, 720, "Minimal Instance Rendering!!!", NULL, NULL);
     if (!window) {
         gl_log("ERROR: could not open window with GLFW3");
         glfwTerminate();
@@ -317,110 +333,93 @@ GLFWwindow *init()
         return nullptr;
     }
 
+    bd::checkForAndLogGlError(__FILE__, __func__, __LINE__);
     bd::subscribe_debug_callbacks();
 
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
-    glClearColor(0.1f, 0.1f, 0.1f, 0.0f);
+    gl_check(glEnable(GL_DEPTH_TEST));
+    gl_check(glDepthFunc(GL_LESS));
+    gl_check(glClearColor(0.1f, 0.1f, 0.1f, 0.0f));
 
     return window;
 }
 
 void genQuadVao(bd::VertexArrayObject &vao)
 {
-    const std::array<glm::vec4, 4> verts
-        {
-            glm::vec4(-0.5f, -0.5f, 0.0f, 1.0f), // 0 ll
-            glm::vec4(0.5f, -0.5f, 0.0f, 1.0f), // 1 lr
-            glm::vec4(0.5f, 0.5f, 0.0f, 1.0f), // 2 ur
-            glm::vec4(-0.5f, 0.5f, 0.0f, 1.0f) // 3 ul
-        };
+    // vertex positions into attribute 0
+    vao.addVbo(( float * ) (bd::Quad::verts.data()),
+        bd::Quad::verts.size() * bd::Quad::vert_element_size,
+        bd::Quad::vert_element_size, 0);
 
-    const std::array<unsigned short, 4> elements
-        {
-            0, 1, 3, 2      // triangle strip maybe?
-            //0, 1, 2, 3    // line strip maybe?
-        };
+    // vertex colors into attribute 1
+    vao.addVbo(( float * ) (bd::Quad::colors.data()),
+        bd::Quad::colors.size() * 3,
+        3, 1);
 
-    const std::array<glm::vec3, 4> colors
-        {
-            glm::vec3(0.0f, 0.0f, 0.0f),
-            glm::vec3(1.0f, 0.0f, 0.0f),
-            glm::vec3(0.0f, 1.0f, 0.0f),
-            glm::vec3(0.0f, 0.0f, 1.0f)
-        };
-
-    vao.addVbo(( float * ) (verts.data()), verts.size() * 4, 4, 0);
-    vao.addVbo(( float * ) (colors.data()), colors.size() * 3, 3, 1);
-    vao.setIndexBuffer(( unsigned short * ) (elements.data()), elements.size());
-
+    vao.setIndexBuffer(( unsigned short * ) (bd::Quad::elements.data()),
+        bd::Quad::elements.size());
 }
 
 void genAxisVao(bd::VertexArrayObject &vao)
 {
+    // vertex positions into attribute 0
+    vao.addVbo(( float * ) (bd::Axis::verts.data()),
+        bd::Axis::verts.size() * bd::Axis::vert_element_size,
+        bd::Axis::vert_element_size, 0);
 
-    const std::array<glm::vec4, 6> verts
-    {
-        glm::vec4(0.0f, 0.0f, 0.0f, 1.0f),
-        glm::vec4(0.5f, 0.0f, 0.0f, 1.0f),
-
-        glm::vec4(0.0f, 0.0f, 0.0f, 1.0f),
-        glm::vec4(0.0f, 0.5f, 0.0f, 1.0f),
-
-        glm::vec4(0.0f, 0.0f, 0.0f, 1.0f),
-        glm::vec4(0.0f, 0.0f, 0.5f, 1.0f)
-    };
-
-    const std::array<glm::vec3, 6> colors
-    {
-        glm::vec3(1.0f, 0.0f, 0.0f),  // x: red
-        glm::vec3(1.0f, 0.0f, 0.0f),
-        glm::vec3(0.0f, 1.0f, 0.0f),  // y: green
-        glm::vec3(0.0f, 1.0f, 0.0f),
-        glm::vec3(0.0f, 0.0f, 1.0f),  // z: blue
-        glm::vec3(0.0f, 0.0f, 1.0f)
-    };
-
-    vao.addVbo(( float * ) (verts.data()), verts.size() * 4, 4, 0);
-    vao.addVbo(( float * ) (colors.data()), colors.size() * 3, 3, 1);
-
+    // vertex colors into attribute 1
+    vao.addVbo(( float * ) (bd::Axis::colors.data()),
+        bd::Axis::colors.size() * 3,
+        3, 1);
 }
 
 void genBoxVao(bd::VertexArrayObject &vao)
 {
-    const std::array<glm::vec4, 8> verts {
-        glm::vec4(-0.5, -0.5, -0.5, 1.0),
-        glm::vec4(0.5, -0.5, -0.5, 1.0),
-        glm::vec4(0.5, 0.5, -0.5, 1.0),
-        glm::vec4(-0.5, 0.5, -0.5, 1.0),
-        glm::vec4(-0.5, -0.5, 0.5, 1.0),
-        glm::vec4(0.5, -0.5, 0.5, 1.0),
-        glm::vec4(0.5, 0.5, 0.5, 1.0),
-        glm::vec4(-0.5, 0.5, 0.5, 1.0)
-    };
-    const std::array<glm::vec3, 8> colors{
-        glm::vec3(0.5, 0.5, 0.5),
-        glm::vec3(0.5, 0.5, 0.5),
-        glm::vec3(0.5, 0.5, 0.5),
-        glm::vec3(0.5, 0.5, 0.5),
-        glm::vec3(0.5, 0.5, 0.5),
-        glm::vec3(0.5, 0.5, 0.5),
-        glm::vec3(0.5, 0.5, 0.5),
-        glm::vec3(0.5, 0.5, 0.5)
-    };
 
-    const std::array<unsigned short, 16> elements {
-        0, 1, 2, 3,
-        4, 5, 6, 7,
-        0, 4, 1, 5, 2, 6, 3, 7
-    };
+    // vertex positions into attribute 0
+    vao.addVbo((float *) (bd::Box::vertices.data()),
+        bd::Box::vertices.size()*bd::Box::vert_element_size,
+        bd::Box::vert_element_size, 0);
 
-    vao.addVbo((float *) (verts.data()), verts.size()*4, 4, 0);
-    vao.addVbo((float *) (colors.data()), colors.size()*3, 3, 1);
-    vao.setIndexBuffer((unsigned short *)(elements.data()), elements.size());
+    // vertex colors into attribute 1
+    vao.addVbo((float *) (bd::Box::colors.data()),
+        bd::Box::colors.size()*3,
+        3, 1);
+
+    vao.setIndexBuffer((unsigned short *)(bd::Box::elements.data()),
+        bd::Box::elements.size());
 
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// bs: number of blocks
+// vol: volume voxel dimensions
+void initBlocks(glm::u64vec3 nb, glm::u64vec3 vd)
+{
+    gl_log("Starting block init: Number of blocks: %dx%dx%d, "
+        "Volume dimensions: %dx%dx%d", nb.x, nb.y, nb.z, vd.x, vd.y, vd.z);
+
+    // block world dims
+    glm::vec3 blk_dims{ 1.0f / glm::vec3(nb) };
+
+    // Loop through block coordinates and populate block fields.
+    for (auto bz = 0ul; bz < nb.z; ++bz)
+    for (auto by = 0ul; by < nb.y; ++by)
+    for (auto bx = 0ul; bx < nb.x; ++bx) {
+
+        // i,j,k block identifier
+        glm::u64vec3 blkId{ bx, by, bz };
+        // lower left corner in world coordinates
+        glm::vec3 worldLoc{ (blk_dims * glm::vec3( blkId ))  - 0.5f }; // - 0.5f;
+        // origin in world coordiates
+        glm::vec3 blk_origin{ (worldLoc + (worldLoc + blk_dims)) * 0.5f };
+
+        Block blk { glm::u64vec3(bx, by, bz), blk_dims, blk_origin };
+        g_blocks.push_back(blk);
+    }
+
+    gl_log("Finished block init: total blocks is %d.", g_blocks.size());
+
+}
 
 void cleanup()
 {
@@ -448,22 +447,24 @@ int main(int argc, char *argv[])
     g_shaderProgramId = linkProgram({ vsId, fsId });
     g_uniform_mvp = glGetUniformLocation(g_shaderProgramId, "mvp");
 
-    bd::VertexArrayObject quad(bd::VertexArrayObject::Method::ELEMENTS);
-    quad.create();
+    bd::VertexArrayObject quadVbo(bd::VertexArrayObject::Method::ELEMENTS);
+    quadVbo.create();
 
-    bd::VertexArrayObject axis(bd::VertexArrayObject::Method::ARRAYS);
-    axis.create();
+    bd::VertexArrayObject axisVbo(bd::VertexArrayObject::Method::ARRAYS);
+    axisVbo.create();
 
-    bd::VertexArrayObject box(bd::VertexArrayObject::Method::ELEMENTS);
-    box.create();
+    bd::VertexArrayObject boxVbo(bd::VertexArrayObject::Method::ELEMENTS);
+    boxVbo.create();
 
-    genQuadVao(quad);
-    genAxisVao(axis);
-    genBoxVao(box);
+    genQuadVao(quadVbo);
+    genAxisVao(axisVbo);
+    genBoxVao(boxVbo);
 
-    g_vaoIds.push_back(&axis);
-    g_vaoIds.push_back(&quad);
-    g_vaoIds.push_back(&box);
+    g_vaoIds.push_back(&axisVbo);
+    g_vaoIds.push_back(&quadVbo);
+    g_vaoIds.push_back(&boxVbo);
+
+    initBlocks(glm::u64vec3(10,10,10), glm::u64vec3(1024,1024,1024));
 
     loop(window);
     cleanup();

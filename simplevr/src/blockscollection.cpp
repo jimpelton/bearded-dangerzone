@@ -71,7 +71,7 @@ void BlocksCollection::initBlocks(glm::u64vec3 bs, glm::u64vec3 vol)
         Block blk(bidx, voxLoc, m_block_dims_voxels, worldLoc, col);
 
         blk.transform().scale(block_world_size);
-        blk.transform().position(center);
+        blk.transform().origin(center);
 
         m_blocks.push_back(blk);
 

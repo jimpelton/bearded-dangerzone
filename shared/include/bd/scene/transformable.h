@@ -54,11 +54,12 @@ public:
     //  template< class Yummy, class Ingredients, class Bread >
     //  Yummy bake(Bread &b, std::vector<Ingredients> pantry);
 
+protected:
+    Transform m_transform;
 
 private:
     void updateChildren();
 
-    Transform m_transform;
     std::vector<Transformable*> m_children;
 };
 

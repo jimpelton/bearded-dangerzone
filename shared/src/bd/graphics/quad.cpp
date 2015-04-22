@@ -3,6 +3,8 @@
 #include <glm/glm.hpp>
 
 #include <array>
+#include <bd/log/gl_log.h>
+#include <GL/glew.h>
 
 namespace bd {
 
@@ -35,6 +37,11 @@ Quad::Quad() : Transformable()
 
 Quad::~Quad()
 {
+}
+
+void Quad::draw()
+{
+    gl_check(glDrawElements(GL_TRIANGLE_STRIP, elements.size(), GL_UNSIGNED_SHORT, 0));
 }
 
 } // namespace bd
