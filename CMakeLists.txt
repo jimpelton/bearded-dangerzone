@@ -41,7 +41,7 @@ include_directories("${GLM_INCLUDE_DIR}")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/shared")
 #add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/template")
 #add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/instancing")
-add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/simplevr")
+#add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/simplevr")
 
 #add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/test")
 

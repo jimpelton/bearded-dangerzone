@@ -30,33 +30,36 @@
 #include <cstdarg>
 #include <ctime>
 #include <iostream>
+#include <bd/file/datatypes.h>
 
 const char *vertex_shader =
     "#version 400\n"
-    "in vec3 v;"
-    "in vec3 in_col;"
-    "uniform mat4 btrans"
-    "uniform mat4 mvp;"
-    "out vec3 vcol;"
-    "void main () {"
-    "  gl_Position = mvp * vec4(v, 1.0);"
-    "  vcol = btrans * v;"
-    "}";
+        "in vec3 v;"
+        "in vec3 in_col;"
+        "uniform mat4 mvp;"
+        "out vec3 vcol;"
+        "void main () {"
+        "  gl_Position = mvp * vec4(v, 1.0);"
+        "  vcol = in_col;"
+        "}";
 
 const char *fragment_shader =
     "#version 400\n"
-    "in vec3 vcol;"
-    "out vec4 frag_colour;"
-    "void main () {"
-    "  frag_colour = vec4(vcol, 1.0);"
-    "}";
+        "in vec3 vcol;"
+        "out vec4 frag_colour;"
+        "void main () {"
+        "  frag_colour = vec4(vcol, 1.0);"
+        "}";
 
-const glm::vec3 X_AXIS{ 1.0f, 0.0f, 0.0f };
-const glm::vec3 Y_AXIS{ 0.0f, 1.0f, 0.0f };
-const glm::vec3 Z_AXIS{ 0.0f, 0.0f, 1.0f };
+const glm::vec3 X_AXIS{1.0f, 0.0f, 0.0f};
+const glm::vec3 Y_AXIS{0.0f, 1.0f, 0.0f};
+const glm::vec3 Z_AXIS{0.0f, 0.0f, 1.0f};
 
-enum class SliceSet { XZ, YZ, XY, NoneOfEm, AllOfEm };
-SliceSet g_selectedSliceSet{ SliceSet::XZ };
+enum class SliceSet
+{
+    XZ, YZ, XY, NoneOfEm, AllOfEm
+};
+SliceSet g_selectedSliceSet{SliceSet::XZ};
 
 GLint g_uniform_mvp;
 GLuint g_shaderProgramId;
@@ -67,17 +70,17 @@ glm::quat g_rotation;
 glm::mat4 g_viewMatrix;
 glm::mat4 g_projectionMatrix;
 glm::mat4 g_vpMatrix;
-glm::vec3 g_camPosition{ 0.0f, 0.0f, -10.0f };
-glm::vec3 g_camFocus{ 0.0f, 0.0f, 0.0f };
-glm::vec3 g_camUp{ 0.0f, 1.0f, 0.0f };
+glm::vec3 g_camPosition{0.0f, 0.0f, -10.0f};
+glm::vec3 g_camFocus{0.0f, 0.0f, 0.0f};
+glm::vec3 g_camUp{0.0f, 1.0f, 0.0f};
 glm::vec2 g_cursorPos;
 
-float g_mouseSpeed{ 1.0f };
-float g_screenWidth{ 1280.0f };
-float g_screenHeight{ 720.0f };
-float g_fov{ 50.0f };
-bool g_viewDirty{ true };
-bool g_modelDirty{ true };
+float g_mouseSpeed{1.0f};
+float g_screenWidth{1280.0f};
+float g_screenHeight{720.0f};
+float g_fov{50.0f};
+bool g_viewDirty{true};
+bool g_modelDirty{true};
 
 
 bd::Axis g_axis;
@@ -92,7 +95,7 @@ GLuint compileShader(GLenum type, const char *shader);
 void glfw_cursorpos_callback(GLFWwindow *window, double x, double y);
 
 void glfw_keyboard_callback(GLFWwindow *window, int key, int scancode, int action,
-    int mods);
+                            int mods);
 
 void glfw_error_callback(int error, const char *description);
 
@@ -115,10 +118,10 @@ void glfw_error_callback(int error, const char *description)
 }
 
 void glfw_keyboard_callback(GLFWwindow *window, int key, int scancode, int action,
-    int mods)
+                            int mods)
 {
     if (action != GLFW_PRESS) {
-        switch(key){
+        switch (key) {
             case GLFW_KEY_0:
                 g_selectedSliceSet = SliceSet::NoneOfEm;
                 break;
@@ -273,83 +276,98 @@ void loop(GLFWwindow *window)
 {
     glUseProgram(g_shaderProgramId);
 
-    glm::mat4 mvp{ 1.0f };
+    glm::mat4 mvp{1.0f};
     bd::VertexArrayObject *vao = nullptr;
 
     do {
 
-    gl_check(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+        gl_check(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
-    if (g_viewDirty) {
-        updateViewMatrix();
-    }
+        if (g_viewDirty) {
+            updateViewMatrix();
+        }
 
-    if (g_modelDirty) {
-        mvp = g_vpMatrix * glm::toMat4(g_rotation);
-        g_modelDirty = false;
-    }
-
-
-    // Coordinate Axis
-    vao = g_vaoIds[0];
-    vao->bind();
-    gl_check(glUniformMatrix4fv(g_uniform_mvp, 1, GL_FALSE, glm::value_ptr(mvp)));
-    g_axis.draw();
-    vao->unbind();
+        if (g_modelDirty) {
+            mvp = g_vpMatrix * glm::toMat4(g_rotation);
+            g_modelDirty = false;
+        }
 
 
-    /// Quad geometry ///
-    vao = g_vaoIds[1];
-    vao->bind();
-    for(auto &b : g_blocks) {
-        glm::mat4 mmvp = mvp * b.transform().matrix();
-        gl_check(glUniformMatrix4fv(g_uniform_mvp, 1, GL_FALSE, glm::value_ptr(mmvp)));
-
-        switch(g_selectedSliceSet) {
-            case SliceSet::XY:
-                gl_check(glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, 0));
-                break;
-            case SliceSet::YZ:
-                gl_check(glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT,
-                    ( GLvoid * ) (4 * sizeof(unsigned short))));
-                break;
-            case SliceSet::XZ:
-                gl_check(glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT,
-                    ( GLvoid * ) (8 * sizeof(unsigned short))));
-                break;
-            case SliceSet::AllOfEm:
-                gl_check(glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, 0));
-                gl_check(glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT,
-                    ( GLvoid * ) (4 * sizeof(unsigned short))));
-                gl_check(glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT,
-                    ( GLvoid * ) (8 * sizeof(unsigned short))));
-                break;
-            case SliceSet::NoneOfEm:
-            default:
-                break;
-        } // switch
-
-    } // for
-    vao->unbind();
+        // Coordinate Axis
+        vao = g_vaoIds[0];
+        vao->bind();
+        gl_check(
+            glUniformMatrix4fv(g_uniform_mvp, 1, GL_FALSE, glm::value_ptr(mvp)));
+        g_axis.draw();
+        vao->unbind();
 
 
-    /// wireframe boxs ///
-    vao = g_vaoIds[2];
-    vao->bind();
-    for(auto &b : g_blocks) {
-        glm::mat4 mmvp = mvp * b.transform().matrix();
-        gl_check(glUniformMatrix4fv(g_uniform_mvp, 1, GL_FALSE, glm::value_ptr(mmvp)));
-        gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, 0));
-        gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT,
-            ( GLvoid * ) (4 * sizeof(GLushort))));
-        gl_check(glDrawElements(GL_LINES, 8, GL_UNSIGNED_SHORT,
-            ( GLvoid * ) (8 * sizeof(GLushort))));
-    } // for
-    vao->unbind();
+        /// Quad geometry ///
+        vao = g_vaoIds[1];
+        vao->bind();
+        for (auto &b : g_blocks) {
+            if (!b.empty()) {
+                glm::mat4 mmvp = mvp * b.transform().matrix();
+                gl_check(glUniformMatrix4fv(g_uniform_mvp, 1, GL_FALSE,
+                    glm::value_ptr(mmvp)));
+
+                switch (g_selectedSliceSet) {
+                    case SliceSet::XY:
+                        gl_check(
+                            glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT,
+                                0));
+                        break;
+                    case SliceSet::YZ:
+                        gl_check(
+                            glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT,
+                                (GLvoid *) (4 * sizeof(unsigned short))));
+                        break;
+                    case SliceSet::XZ:
+                        gl_check(
+                            glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT,
+                                (GLvoid *) (8 * sizeof(unsigned short))));
+                        break;
+                    case SliceSet::AllOfEm:
+                        gl_check(
+                            glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT,
+                                0));
+                        gl_check(
+                            glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT,
+                                (GLvoid *) (4 * sizeof(unsigned short))));
+                        gl_check(
+                            glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT,
+                                (GLvoid *) (8 * sizeof(unsigned short))));
+                        break;
+                    case SliceSet::NoneOfEm:
+                    default:
+                        break;
+                } // switch
+            } // if
+
+        } // for
+        vao->unbind();
 
 
-    glfwSwapBuffers(window);
-    glfwPollEvents();
+        /// wireframe boxs ///
+        vao = g_vaoIds[2];
+        vao->bind();
+        for (auto &b : g_blocks) {
+            if (!b.empty()) {
+                glm::mat4 mmvp = mvp * b.transform().matrix();
+                gl_check(glUniformMatrix4fv(g_uniform_mvp, 1, GL_FALSE,
+                    glm::value_ptr(mmvp)));
+                gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, 0));
+                gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT,
+                    (GLvoid *) (4 * sizeof(GLushort))));
+                gl_check(glDrawElements(GL_LINES, 8, GL_UNSIGNED_SHORT,
+                    (GLvoid *) (8 * sizeof(GLushort))));
+            } // if
+        } // for
+        vao->unbind();
+
+
+        glfwSwapBuffers(window);
+        glfwPollEvents();
 
     } while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
              glfwWindowShouldClose(window) == 0);
@@ -408,21 +426,25 @@ void genQuadVao(bd::VertexArrayObject &vao)
     // copy 3 sets of quad verts, each aligned with different plane
     std::array<glm::vec4, 12> vbuf;
     // x-y quad
-    auto vbufIter = std::copy(bd::Quad::verts_xy.begin(), bd::Quad::verts_xy.end(), vbuf.begin());
+    auto vbufIter = std::copy(bd::Quad::verts_xy.begin(), bd::Quad::verts_xy.end(),
+        vbuf.begin());
     // x-z quad
-    vbufIter = std::copy(bd::Quad::verts_xz.begin(), bd::Quad::verts_xz.end(), vbufIter);
+    vbufIter = std::copy(bd::Quad::verts_xz.begin(), bd::Quad::verts_xz.end(),
+        vbufIter);
     // y-z quad
     std::copy(bd::Quad::verts_yz.begin(), bd::Quad::verts_yz.end(), vbufIter);
 
     // copy the bd::Quad vertex colors 3 times
     std::array<glm::vec3, 12> colorBuf;
-    auto colorIter = std::copy(bd::Quad::colors.begin(), bd::Quad::colors.end(), colorBuf.begin());
-    colorIter = std::copy(bd::Quad::colors.begin(), bd::Quad::colors.end(), colorIter);
+    auto colorIter = std::copy(bd::Quad::colors.begin(), bd::Quad::colors.end(),
+        colorBuf.begin());
+    colorIter = std::copy(bd::Quad::colors.begin(), bd::Quad::colors.end(),
+        colorIter);
     std::copy(bd::Quad::colors.begin(), bd::Quad::colors.end(), colorIter);
 
 
     // Element index buffer
-    std::array<unsigned short, 12> ebuf {
+    std::array<unsigned short, 12> ebuf{
         0, 1, 3, 2,     // x-y
         4, 5, 7, 6,     // x-z
         8, 9, 11, 10    // y-z
@@ -434,9 +456,9 @@ void genQuadVao(bd::VertexArrayObject &vao)
         bd::Quad::vert_element_size, 0);
 
     // vertex colors into attribute 1
-    vao.addVbo(( float * ) (colorBuf.data()), colorBuf.size() * 3, 3, 1);
+    vao.addVbo((float *) (colorBuf.data()), colorBuf.size() * 3, 3, 1);
 
-    vao.setIndexBuffer(( unsigned short * ) (ebuf.data()), ebuf.size());
+    vao.setIndexBuffer((unsigned short *) (ebuf.data()), ebuf.size());
 }
 
 
@@ -444,12 +466,12 @@ void genQuadVao(bd::VertexArrayObject &vao)
 void genAxisVao(bd::VertexArrayObject &vao)
 {
     // vertex positions into attribute 0
-    vao.addVbo(( float * ) (bd::Axis::verts.data()),
+    vao.addVbo((float *) (bd::Axis::verts.data()),
         bd::Axis::verts.size() * bd::Axis::vert_element_size,
         bd::Axis::vert_element_size, 0);
 
     // vertex colors into attribute 1
-    vao.addVbo(( float * ) (bd::Axis::colors.data()),
+    vao.addVbo((float *) (bd::Axis::colors.data()),
         bd::Axis::colors.size() * 3,
         3, 1);
 }
@@ -461,15 +483,15 @@ void genBoxVao(bd::VertexArrayObject &vao)
 
     // vertex positions into attribute 0
     vao.addVbo((float *) (bd::Box::vertices.data()),
-        bd::Box::vertices.size()*bd::Box::vert_element_size,
+        bd::Box::vertices.size() * bd::Box::vert_element_size,
         bd::Box::vert_element_size, 0);
 
     // vertex colors into attribute 1
     vao.addVbo((float *) (bd::Box::colors.data()),
-        bd::Box::colors.size()*3,
+        bd::Box::colors.size() * 3,
         3, 1);
 
-    vao.setIndexBuffer((unsigned short *)(bd::Box::elements.data()),
+    vao.setIndexBuffer((unsigned short *) (bd::Box::elements.data()),
         bd::Box::elements.size());
 
 }
@@ -477,13 +499,17 @@ void genBoxVao(bd::VertexArrayObject &vao)
 ///////////////////////////////////////////////////////////////////////////////
 // bs: number of blocks
 // vol: volume voxel dimensions
-void initBlocks(glm::u64vec3 nb, glm::u64vec3 vd)
+void initBlocks(const glm::u64vec3 &nb, const glm::u64vec3 &vd)
 {
-    gl_log("Starting block init: Number of blocks: %dx%dx%d, "
-        "Volume dimensions: %dx%dx%d", nb.x, nb.y, nb.z, vd.x, vd.y, vd.z);
 
     // block world dims
-    glm::vec3 blk_dims{ 1.0f / glm::vec3(nb) };
+    glm::vec3 blk_dims{1.0f / glm::vec3(nb)};
+
+    gl_log("Starting block init: Number of blocks: %dx%dx%d, "
+        "Volume dimensions: %dx%dx%d Block dimensions: %.2f,%.2f,%.2f",
+        nb.x, nb.y, nb.z,
+        vd.x, vd.y, vd.z,
+        blk_dims.x, blk_dims.y, blk_dims.z);
 
     // Loop through block coordinates and populate block fields.
     for (auto bz = 0ul; bz < nb.z; ++bz)
@@ -491,13 +517,13 @@ void initBlocks(glm::u64vec3 nb, glm::u64vec3 vd)
     for (auto bx = 0ul; bx < nb.x; ++bx) {
 
         // i,j,k block identifier
-        glm::u64vec3 blkId{ bx, by, bz };
+        glm::u64vec3 blkId{bx, by, bz};
         // lower left corner in world coordinates
-        glm::vec3 worldLoc{ (blk_dims * glm::vec3( blkId ))  - 0.5f }; // - 0.5f;
+        glm::vec3 worldLoc{(blk_dims * glm::vec3(blkId)) - 0.5f}; // - 0.5f;
         // origin in world coordiates
-        glm::vec3 blk_origin{ (worldLoc + (worldLoc + blk_dims)) * 0.5f };
+        glm::vec3 blk_origin{(worldLoc + (worldLoc + blk_dims)) * 0.5f};
 
-        Block blk { glm::u64vec3(bx, by, bz), blk_dims, blk_origin };
+        Block blk{glm::u64vec3(bx, by, bz), blk_dims, blk_origin};
         g_blocks.push_back(blk);
     }
 
@@ -505,15 +531,86 @@ void initBlocks(glm::u64vec3 nb, glm::u64vec3 vd)
 
 }
 
-std::unique_ptr<float[]> readData(const std::string &path, size_t w, size_t h, size_t d) {
-    bd::DataReader<float, float> reader;
-    reader.loadRaw3d(path, w, h, d);
-    float *rawdata = reader.takeOwnership();
 
-    return rawdata;
+/////////////////////////////////////////////////////////////////////////////////
+//std::unique_ptr<float[]> readData(const std::string &path, size_t w, size_t h,
+//                                  size_t d)
+//{
+//    bd::DataReader<float, float> reader;
+//    reader.loadRaw3d(path, w, h, d);
+//    float *rawdata = reader.takeOwnership();
+//
+//    return std::unique_ptr<float[]>(rawdata);
+//}
+
+
+/////////////////////////////////////////////////////////////////////////////////
+std::unique_ptr<float[]> readData(const std::string &dtype, const std::string &fpath,
+    size_t volx, size_t voly, size_t volz)
+{
+    bd::DataType t = bd::DataTypesMap.at(dtype);
+    float *rawdata = nullptr;
+    switch (t) {
+    case bd::DataType::Float:
+    {
+        bd::DataReader<float, float> reader;
+        reader.loadRaw3d(fpath, volx, voly, volz);
+        rawdata = reader.takeOwnership();
+        break;
+    }
+    case bd::DataType::UnsignedCharacter:
+    {
+        bd::DataReader<unsigned char, float> reader;
+        reader.loadRaw3d(fpath, volx, voly, volz);
+        rawdata = reader.takeOwnership();
+        break;
+    }
+    case bd::DataType::UnsignedShort:
+    {
+        bd::DataReader<unsigned short, float> reader;
+        reader.loadRaw3d(fpath, volx, voly, volz);
+        rawdata = reader.takeOwnership();
+        break;
+    }
+    default:
+        break;
+    }
+
+    return std::unique_ptr<float[]>(rawdata);
 }
+/////////////////////////////////////////////////////////////////////////////////
+void filterBlocks(float *data, std::vector<Block> &blocks, glm::u64vec3 numBlks,
+      glm::u64vec3 volsz, float threshold=0.1f)
+{
+    size_t emptyCount { 0 };
+    glm::u64vec3 bsz{ volsz / numBlks };
+    size_t blkPoints = bd::vecCompMult(bsz);
+    for (auto &b : blocks) {
+        glm::u64vec3 bst{ b.ijk() * bsz }; // block start = block index * block size
+        float avg{ 0.0f };
 
+        for (auto k = bst.z; k < bst.z + bsz.z; ++k)
+        for (auto j = bst.y; j < bst.y + bsz.y; ++j)
+        for (auto i = bst.x; i < bst.x + bsz.x; ++i) {
+            size_t dataIdx{ bd::to1D(i, j, k, volsz.x, volsz.y) };
+            float val = data[dataIdx];
+            avg += val;
+        } // for for for
 
+        avg /= blkPoints;
+
+        if (avg < threshold) {
+            b.empty(true);
+            emptyCount += 1;
+            glm::u64vec3 ijk{ b.ijk() };
+//            std::cout << "Block " << ijk.x << ", " << ijk.y << ", " << ijk.z <<
+//            " marked empty." << std::endl;
+        }
+    } // for auto
+
+    gl_log("%d/%d blocks removed.", emptyCount, bd::vecCompMult(numBlks));
+
+}
 
 
 void cleanup()
@@ -529,31 +626,10 @@ void cleanup()
 
 int main(int argc, const char *argv[])
 {
-//    CommandLineOptions clo;
-//    if (parseThem(argc, argv, clo) == 0) {
-//        return 0;
-//    }
-
-    size_t x=0;
-    size_t y=0;
-    size_t z=0;
-    std::vector<std::string> args(argv, argv+argc);
-    auto it = args.begin();
-    for (; it != args.end(); ++it) {
-        std::string val{*it};
-        std::string next;
-        if (it + 1 != args.end()) {
-            next = *(it + 1);
-            std::cout << val << " " << next << std::endl;
-            if (val == "-x") {
-                x = atoll((*(it + 1)).c_str());
-            } else if (val == "-y") {
-                y = atoll((*(it + 1)).c_str());
-            } else if (val == "-z") {
-                z = atoll((*(it + 1)).c_str());
-            }
-        }
-    }
+   CommandLineOptions clo;
+   if (parseThem(argc, argv, clo) == 0) {
+       return 0;
+   }
 
     bd::gl_log_restart();
 
@@ -565,7 +641,7 @@ int main(int argc, const char *argv[])
 
     GLuint vsId = compileShader(GL_VERTEX_SHADER, vertex_shader);
     GLuint fsId = compileShader(GL_FRAGMENT_SHADER, fragment_shader);
-    g_shaderProgramId = linkProgram({ vsId, fsId });
+    g_shaderProgramId = linkProgram({vsId, fsId});
     g_uniform_mvp = glGetUniformLocation(g_shaderProgramId, "mvp");
 
     bd::VertexArrayObject quadVbo(bd::VertexArrayObject::Method::ELEMENTS);
@@ -585,7 +661,18 @@ int main(int argc, const char *argv[])
     g_vaoIds.push_back(&quadVbo);
     g_vaoIds.push_back(&boxVbo);
 
-    initBlocks(glm::u64vec3(x, y, z), glm::u64vec3(1024,1024,1024));
+    initBlocks(glm::u64vec3{clo.numblk_x, clo.numblk_y, clo.numblk_z},
+        glm::u64vec3{clo.w, clo.h, clo.d});
+
+    std::unique_ptr<float[]> data {
+        std::move( readData(clo.type, clo.filePath, clo.w, clo.h, clo.d) )
+    };
+
+    filterBlocks(data.get(), g_blocks,
+        {clo.numblk_x, clo.numblk_y, clo.numblk_z},
+        {clo.w, clo.h, clo.d},
+        clo.threshold
+    );
 
     loop(window);
     cleanup();

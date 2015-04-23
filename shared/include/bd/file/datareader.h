@@ -10,10 +10,11 @@
 namespace bd {
 
 /**
-* \brief Read data and convert from ExternTy to InternTy
-* \tparam ExternTy Type read from file.
-* \tparam InternTy Type data is converted to.
-*/
+ * \brief Read data and convert from ExternTy to InternTy.
+ * Optionally, normalize to [0..1] range.
+ * \tparam ExternTy Type read from file.
+ * \tparam InternTy Type data is converted to.
+ */
 template <typename ExternTy, typename InternTy>
 class DataReader {
 public:

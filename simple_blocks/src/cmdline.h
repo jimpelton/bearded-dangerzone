@@ -9,8 +9,12 @@ struct CommandLineOptions
     std::string filePath;
     // volume data type
     std::string type;
-    // voxels per side of block
-    int block_side;
+    // number of blocks X
+    size_t numblk_x;
+    // number of blocks Y
+    size_t numblk_y;
+    // number of blocks Z
+    size_t numblk_z;
     // slices per block
     unsigned int num_slices;
     // vol width
@@ -19,6 +23,9 @@ struct CommandLineOptions
     size_t h;
     // vol depth
     size_t d;
+    // threshold
+    float threshold;
+
 };
 
 int parseThem(int argc, const char *argv [], CommandLineOptions &opts);

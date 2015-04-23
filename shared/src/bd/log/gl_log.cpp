@@ -9,6 +9,7 @@
 
 namespace {
 
+
 ///////////////////////////////////////////////////////////////////////////////
 const char *gl_debug_type_str(GLenum type)
 {
@@ -65,6 +66,8 @@ const char *gl_debug_severity_str(GLenum severity)
     return str;
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
 const char* gl_debug_source_str(GLenum source)
 {
    const char* src = "";
@@ -95,6 +98,8 @@ const char* gl_debug_source_str(GLenum source)
     return src;
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
 const char* gl_err_num_str(GLenum err)
 {
     const char* str = "";
@@ -136,7 +141,7 @@ FILE *glDebugFile = NULL;
 const char *ogl = "OGL";
 const char *gcb = "GCB";
 const char *err = "ERR";
-const char *log = "LOG";
+//const char *log = "LOG";
 
 } // namespace
 

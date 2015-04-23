@@ -12,8 +12,8 @@ VertexArrayObject::VertexArrayObject(VertexArrayObject::Method m)
     : m_bufIds{ } 
     , m_idxBufId{ 0 } 
     , m_id{ 0 }
-    , m_name{  }
     , m_method{ m }
+    , m_name{  }
 {
 }
 
