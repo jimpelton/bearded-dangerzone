@@ -8,7 +8,7 @@
 #include <bd/util/util.h>
 #include <bd/graphics/axis.h>
 #include <bd/graphics/quad.h>
-
+#include <bd/file/datareader.h>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -17,10 +17,12 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/string_cast.hpp>
 
 #include <string>
 #include <vector>
 #include <array>
+#include <memory>
 
 #include <sstream>
 #include <fstream>
@@ -28,7 +30,6 @@
 #include <cstdarg>
 #include <ctime>
 #include <iostream>
-#include <glm/gtx/string_cast.hpp>
 
 const char *vertex_shader =
     "#version 400\n"
@@ -419,25 +420,6 @@ void genQuadVao(bd::VertexArrayObject &vao)
     colorIter = std::copy(bd::Quad::colors.begin(), bd::Quad::colors.end(), colorIter);
     std::copy(bd::Quad::colors.begin(), bd::Quad::colors.end(), colorIter);
 
-//    // Texture coordinates
-//    std::array<glm::vec3, 12> texBuf {
-//        glm::vec3(0.0f, 0.0f, 0.0f),
-//        glm::vec3(1.0f, 0.0f, 0.0f),
-//        glm::vec3(0.0f, 1.0f, 0.0f),
-//        glm::vec3(1.0f, 1.0f, 0.0f),
-//
-//        glm::vec3(0.0f, 0.0f, 0.0f),
-//        glm::vec3(1.0f, 0.0f, 0.0f),
-//        glm::vec3(0.0f, 0.0f, 1.0f),
-//        glm::vec3(1.0f, 0.0f, 1.0f),
-//
-//        glm::vec3(0.0f, 0.0f, 0.0f),
-//        glm::vec3(1.0f, 0.0f, 0.0f),
-//        glm::vec3(0.0f, 1.0f, 0.0f),
-//        glm::vec3(1.0f, 1.0f, 0.0f),
-//    };
-
-
 
     // Element index buffer
     std::array<unsigned short, 12> ebuf {
@@ -445,6 +427,7 @@ void genQuadVao(bd::VertexArrayObject &vao)
         4, 5, 7, 6,     // x-z
         8, 9, 11, 10    // y-z
     };
+
 
     // vertex positions into attribute 0
     vao.addVbo((float *) vbuf.data(), vbuf.size() * bd::Quad::vert_element_size,
@@ -521,6 +504,17 @@ void initBlocks(glm::u64vec3 nb, glm::u64vec3 vd)
     gl_log("Finished block init: total blocks is %d.", g_blocks.size());
 
 }
+
+std::unique_ptr<float[]> readData(const std::string &path, size_t w, size_t h, size_t d) {
+    bd::DataReader<float, float> reader;
+    reader.loadRaw3d(path, w, h, d);
+    float *rawdata = reader.takeOwnership();
+
+    return rawdata;
+}
+
+
+
 
 void cleanup()
 {
