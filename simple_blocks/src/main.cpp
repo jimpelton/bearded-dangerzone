@@ -32,28 +32,30 @@
 
 const char *vertex_shader =
     "#version 400\n"
-        "in vec3 vp;"
-        "in vec3 in_col;"
-        "uniform mat4 mvp;"
-        "out vec3 vcol;"
-        "void main () {"
-        "  gl_Position = mvp * vec4(vp, 1.0);"
-        "  vcol = in_col;"
-        "}";
+    "in vec3 v;"
+    "in vec3 in_col;"
+    "uniform mat4 btrans"
+    "uniform mat4 mvp;"
+    "out vec3 vcol;"
+    "void main () {"
+    "  gl_Position = mvp * vec4(v, 1.0);"
+    "  vcol = btrans * v;"
+    "}";
 
 const char *fragment_shader =
     "#version 400\n"
-        "in vec3 vcol;"
-        "out vec4 frag_colour;"
-        "void main () {"
-        "  frag_colour = vec4(vcol, 1.0);"
-        "}";
-
-//const unsigned int NUMBOXES{ 1 };
+    "in vec3 vcol;"
+    "out vec4 frag_colour;"
+    "void main () {"
+    "  frag_colour = vec4(vcol, 1.0);"
+    "}";
 
 const glm::vec3 X_AXIS{ 1.0f, 0.0f, 0.0f };
 const glm::vec3 Y_AXIS{ 0.0f, 1.0f, 0.0f };
 const glm::vec3 Z_AXIS{ 0.0f, 0.0f, 1.0f };
+
+enum class SliceSet { XZ, YZ, XY, NoneOfEm, AllOfEm };
+SliceSet g_selectedSliceSet{ SliceSet::XZ };
 
 GLint g_uniform_mvp;
 GLuint g_shaderProgramId;
@@ -74,6 +76,8 @@ float g_screenWidth{ 1280.0f };
 float g_screenHeight{ 720.0f };
 float g_fov{ 50.0f };
 bool g_viewDirty{ true };
+bool g_modelDirty{ true };
+
 
 bd::Axis g_axis;
 bd::Box g_box;
@@ -112,6 +116,25 @@ void glfw_error_callback(int error, const char *description)
 void glfw_keyboard_callback(GLFWwindow *window, int key, int scancode, int action,
     int mods)
 {
+    if (action != GLFW_PRESS) {
+        switch(key){
+            case GLFW_KEY_0:
+                g_selectedSliceSet = SliceSet::NoneOfEm;
+                break;
+            case GLFW_KEY_1:
+                g_selectedSliceSet = SliceSet::XY;
+                break;
+            case GLFW_KEY_2:
+                g_selectedSliceSet = SliceSet::XZ;
+                break;
+            case GLFW_KEY_3:
+                g_selectedSliceSet = SliceSet::YZ;
+                break;
+            case GLFW_KEY_4:
+                g_selectedSliceSet = SliceSet::AllOfEm;
+                break;
+        }
+    }
 }
 
 void glfw_window_size_callback(GLFWwindow *window, int width, int height)
@@ -229,7 +252,7 @@ void setRotation(const glm::vec2 &dr)
 
     g_rotation = (rotX * rotY) * g_rotation;
 
-    g_viewDirty = true;
+    g_modelDirty = true;
 }
 
 
@@ -253,51 +276,79 @@ void loop(GLFWwindow *window)
     bd::VertexArrayObject *vao = nullptr;
 
     do {
-        gl_check(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
-        if (g_viewDirty) {
-            updateViewMatrix();
-        }
+    gl_check(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+
+    if (g_viewDirty) {
+        updateViewMatrix();
+    }
+
+    if (g_modelDirty) {
         mvp = g_vpMatrix * glm::toMat4(g_rotation);
-
-        // Coordinate Axis
-        vao = g_vaoIds[0];
-        vao->bind();
-        gl_check(glUniformMatrix4fv(g_uniform_mvp, 1, GL_FALSE, glm::value_ptr(mvp)));
-        g_axis.draw();
-        vao->unbind();
+        g_modelDirty = false;
+    }
 
 
-        // Quad geometry
-        vao = g_vaoIds[1];
-        vao->bind();
-        for(auto &b : g_blocks) {
-            glm::mat4 mmvp = mvp * b.transform().matrix();
-            gl_check(glUniformMatrix4fv(g_uniform_mvp, 1, GL_FALSE, glm::value_ptr(mmvp)));
-//            gl_check(glDrawElements(GL_TRIANGLE_STRIP, bd::Quad::elements.size(), GL_UNSIGNED_SHORT, 0));
-            gl_check(glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, 0));
-            gl_check(glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, (GLvoid*)(4*sizeof(unsigned short))));
-            gl_check(glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, (GLvoid*)(8*sizeof(unsigned short))));
-        }
-        vao->unbind();
+    // Coordinate Axis
+    vao = g_vaoIds[0];
+    vao->bind();
+    gl_check(glUniformMatrix4fv(g_uniform_mvp, 1, GL_FALSE, glm::value_ptr(mvp)));
+    g_axis.draw();
+    vao->unbind();
 
 
-        // wireframe box
-        vao = g_vaoIds[2];
-        vao->bind();
-        for(auto &b : g_blocks) {
-            glm::mat4 mmvp = mvp * b.transform().matrix();
-            gl_check(glUniformMatrix4fv(g_uniform_mvp, 1, GL_FALSE, glm::value_ptr(mmvp)));
-            gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, 0));
-            gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT,
-                ( GLvoid * ) (4 * sizeof(GLushort))));
-            gl_check(glDrawElements(GL_LINES, 8, GL_UNSIGNED_SHORT,
-                ( GLvoid * ) (8 * sizeof(GLushort))));
-        }
-        vao->unbind();
+    /// Quad geometry ///
+    vao = g_vaoIds[1];
+    vao->bind();
+    for(auto &b : g_blocks) {
+        glm::mat4 mmvp = mvp * b.transform().matrix();
+        gl_check(glUniformMatrix4fv(g_uniform_mvp, 1, GL_FALSE, glm::value_ptr(mmvp)));
 
-        glfwSwapBuffers(window);
-        glfwPollEvents();
+        switch(g_selectedSliceSet) {
+            case SliceSet::XY:
+                gl_check(glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, 0));
+                break;
+            case SliceSet::YZ:
+                gl_check(glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT,
+                    ( GLvoid * ) (4 * sizeof(unsigned short))));
+                break;
+            case SliceSet::XZ:
+                gl_check(glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT,
+                    ( GLvoid * ) (8 * sizeof(unsigned short))));
+                break;
+            case SliceSet::AllOfEm:
+                gl_check(glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, 0));
+                gl_check(glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT,
+                    ( GLvoid * ) (4 * sizeof(unsigned short))));
+                gl_check(glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT,
+                    ( GLvoid * ) (8 * sizeof(unsigned short))));
+                break;
+            case SliceSet::NoneOfEm:
+            default:
+                break;
+        } // switch
+
+    } // for
+    vao->unbind();
+
+
+    /// wireframe boxs ///
+    vao = g_vaoIds[2];
+    vao->bind();
+    for(auto &b : g_blocks) {
+        glm::mat4 mmvp = mvp * b.transform().matrix();
+        gl_check(glUniformMatrix4fv(g_uniform_mvp, 1, GL_FALSE, glm::value_ptr(mmvp)));
+        gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, 0));
+        gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT,
+            ( GLvoid * ) (4 * sizeof(GLushort))));
+        gl_check(glDrawElements(GL_LINES, 8, GL_UNSIGNED_SHORT,
+            ( GLvoid * ) (8 * sizeof(GLushort))));
+    } // for
+    vao->unbind();
+
+
+    glfwSwapBuffers(window);
+    glfwPollEvents();
 
     } while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
              glfwWindowShouldClose(window) == 0);
@@ -319,7 +370,7 @@ GLFWwindow *init()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    window = glfwCreateWindow(1280, 720, "Minimal Instance Rendering!!!", NULL, NULL);
+    window = glfwCreateWindow(1280, 720, "Blocks", NULL, NULL);
     if (!window) {
         gl_log("ERROR: could not open window with GLFW3");
         glfwTerminate();
@@ -328,6 +379,7 @@ GLFWwindow *init()
 
     glfwSetCursorPosCallback(window, glfw_cursorpos_callback);
     glfwSetWindowSizeCallback(window, glfw_window_size_callback);
+    glfwSetKeyCallback(window, glfw_keyboard_callback);
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
     glfwMakeContextCurrent(window);
 
@@ -348,27 +400,50 @@ GLFWwindow *init()
     return window;
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
 void genQuadVao(bd::VertexArrayObject &vao)
 {
     // copy 3 sets of quad verts, each aligned with different plane
     std::array<glm::vec4, 12> vbuf;
-    auto it = std::copy(bd::Quad::verts_xy.begin(), bd::Quad::verts_xy.end(),  vbuf.begin());
-    it = std::copy(bd::Quad::verts_xz.begin(), bd::Quad::verts_xz.end(), it);
-    std::copy(bd::Quad::verts_yz.begin(), bd::Quad::verts_yz.end(), it);
+    // x-y quad
+    auto vbufIter = std::copy(bd::Quad::verts_xy.begin(), bd::Quad::verts_xy.end(), vbuf.begin());
+    // x-z quad
+    vbufIter = std::copy(bd::Quad::verts_xz.begin(), bd::Quad::verts_xz.end(), vbufIter);
+    // y-z quad
+    std::copy(bd::Quad::verts_yz.begin(), bd::Quad::verts_yz.end(), vbufIter);
 
-    for(auto &v : vbuf){
-        std::cout << glm::to_string(v) << std::endl;
-    }
+    // copy the bd::Quad vertex colors 3 times
+    std::array<glm::vec3, 12> colorBuf;
+    auto colorIter = std::copy(bd::Quad::colors.begin(), bd::Quad::colors.end(), colorBuf.begin());
+    colorIter = std::copy(bd::Quad::colors.begin(), bd::Quad::colors.end(), colorIter);
+    std::copy(bd::Quad::colors.begin(), bd::Quad::colors.end(), colorIter);
 
-    std::array<glm::vec3, 12> cbuf;
-    auto cit = std::copy(bd::Quad::colors.begin(), bd::Quad::colors.end(),  cbuf.begin());
-    cit = std::copy(bd::Quad::colors.begin(), bd::Quad::colors.end(), cit);
-    std::copy(bd::Quad::colors.begin(), bd::Quad::colors.end(), cit);
+//    // Texture coordinates
+//    std::array<glm::vec3, 12> texBuf {
+//        glm::vec3(0.0f, 0.0f, 0.0f),
+//        glm::vec3(1.0f, 0.0f, 0.0f),
+//        glm::vec3(0.0f, 1.0f, 0.0f),
+//        glm::vec3(1.0f, 1.0f, 0.0f),
+//
+//        glm::vec3(0.0f, 0.0f, 0.0f),
+//        glm::vec3(1.0f, 0.0f, 0.0f),
+//        glm::vec3(0.0f, 0.0f, 1.0f),
+//        glm::vec3(1.0f, 0.0f, 1.0f),
+//
+//        glm::vec3(0.0f, 0.0f, 0.0f),
+//        glm::vec3(1.0f, 0.0f, 0.0f),
+//        glm::vec3(0.0f, 1.0f, 0.0f),
+//        glm::vec3(1.0f, 1.0f, 0.0f),
+//    };
 
+
+
+    // Element index buffer
     std::array<unsigned short, 12> ebuf {
-        0, 1, 3, 2,
-        4, 5, 7, 6,
-        8, 9, 11, 10
+        0, 1, 3, 2,     // x-y
+        4, 5, 7, 6,     // x-z
+        8, 9, 11, 10    // y-z
     };
 
     // vertex positions into attribute 0
@@ -376,11 +451,13 @@ void genQuadVao(bd::VertexArrayObject &vao)
         bd::Quad::vert_element_size, 0);
 
     // vertex colors into attribute 1
-    vao.addVbo(( float * ) (cbuf.data()), cbuf.size() * 3, 3, 1);
+    vao.addVbo(( float * ) (colorBuf.data()), colorBuf.size() * 3, 3, 1);
 
     vao.setIndexBuffer(( unsigned short * ) (ebuf.data()), ebuf.size());
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
 void genAxisVao(bd::VertexArrayObject &vao)
 {
     // vertex positions into attribute 0
@@ -394,6 +471,8 @@ void genAxisVao(bd::VertexArrayObject &vao)
         3, 1);
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
 void genBoxVao(bd::VertexArrayObject &vao)
 {
 
