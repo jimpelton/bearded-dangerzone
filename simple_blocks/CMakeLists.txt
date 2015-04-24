@@ -25,5 +25,8 @@ target_link_libraries(
     shared
     )
 
+add_custom_command(TARGET simple_blocks POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_CURRENT_SOURCE_DIR}/shaders $<TARGET_FILE_DIR:simple_blocks>/shaders)
 
 install(TARGETS simple_blocks RUNTIME DESTINATION ${BIN_DIR})
