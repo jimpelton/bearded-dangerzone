@@ -23,9 +23,10 @@ struct CommandLineOptions
     size_t h;
     // vol depth
     size_t d;
-    // threshold
-    float threshold;
-
+    // threshold max
+    float tmax;
+    // threshold minimum
+    float tmin;
 };
 
 int parseThem(int argc, const char *argv [], CommandLineOptions &opts);

@@ -76,8 +76,8 @@ glm::vec3 g_camUp{0.0f, 1.0f, 0.0f};
 glm::vec2 g_cursorPos;
 
 float g_mouseSpeed{1.0f};
-float g_screenWidth{1280.0f};
-float g_screenHeight{720.0f};
+int g_screenWidth{1000};
+int g_screenHeight{1000};
 float g_fov{50.0f};
 bool g_viewDirty{true};
 bool g_modelDirty{true};
@@ -264,8 +264,8 @@ void setRotation(const glm::vec2 &dr)
 void updateViewMatrix()
 {
     g_viewMatrix = glm::lookAt(g_camPosition, g_camFocus, g_camUp);
-    g_projectionMatrix = glm::perspective(g_fov, g_screenWidth / g_screenHeight,
-        0.1f, 100.0f);
+    g_projectionMatrix = glm::perspective(g_fov,
+        g_screenWidth / static_cast<float>(g_screenHeight), 0.1f, 100.0f);
     g_vpMatrix = g_projectionMatrix * g_viewMatrix;
     g_viewDirty = false;
 }
@@ -389,7 +389,7 @@ GLFWwindow *init()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    window = glfwCreateWindow(1280, 720, "Blocks", NULL, NULL);
+    window = glfwCreateWindow(g_screenWidth, g_screenHeight, "Blocks", NULL, NULL);
     if (!window) {
         gl_log("ERROR: could not open window with GLFW3");
         glfwTerminate();
@@ -499,7 +499,7 @@ void genBoxVao(bd::VertexArrayObject &vao)
 ///////////////////////////////////////////////////////////////////////////////
 // bs: number of blocks
 // vol: volume voxel dimensions
-void initBlocks(const glm::u64vec3 &nb, const glm::u64vec3 &vd)
+void initBlocks(glm::u64vec3 nb, glm::u64vec3 vd)
 {
 
     // block world dims
@@ -580,7 +580,7 @@ std::unique_ptr<float[]> readData(const std::string &dtype, const std::string &f
 }
 /////////////////////////////////////////////////////////////////////////////////
 void filterBlocks(float *data, std::vector<Block> &blocks, glm::u64vec3 numBlks,
-      glm::u64vec3 volsz, float threshold=0.1f)
+      glm::u64vec3 volsz, float tmin=0.1f, float tmax=0.9f)
 {
     size_t emptyCount { 0 };
     glm::u64vec3 bsz{ volsz / numBlks };
@@ -599,10 +599,10 @@ void filterBlocks(float *data, std::vector<Block> &blocks, glm::u64vec3 numBlks,
 
         avg /= blkPoints;
 
-        if (avg < threshold) {
+        if (avg < tmin || avg > tmax) {
             b.empty(true);
             emptyCount += 1;
-            glm::u64vec3 ijk{ b.ijk() };
+//            glm::u64vec3 ijk{ b.ijk() };
 //            std::cout << "Block " << ijk.x << ", " << ijk.y << ", " << ijk.z <<
 //            " marked empty." << std::endl;
         }
@@ -671,7 +671,7 @@ int main(int argc, const char *argv[])
     filterBlocks(data.get(), g_blocks,
         {clo.numblk_x, clo.numblk_y, clo.numblk_z},
         {clo.w, clo.h, clo.d},
-        clo.threshold
+        clo.tmin, clo.tmax
     );
 
     loop(window);

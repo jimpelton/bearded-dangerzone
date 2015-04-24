@@ -23,7 +23,8 @@ try {
         ("nbx",    po::value<size_t >()->default_value(1),  "Num blocks X")
         ("nby",    po::value<size_t >()->default_value(1),  "Num blocks Y")
         ("nbz",    po::value<size_t >()->default_value(1),  "Num blocks Z")
-        ("threshold,r", po::value<float>()->default_value(0.1f),  "Threshold")
+        ("tmin",   po::value<float>()->default_value(0.1f),  "Min threshold")
+        ("tmax",   po::value<float>()->default_value(0.9f),  "Max threshold")
         ;
 
     po::command_line_parser parser{ argc, argv };
@@ -46,7 +47,8 @@ try {
     opts.numblk_x = m_vm["nbx"].as<size_t>();
     opts.numblk_y = m_vm["nby"].as<size_t>();
     opts.numblk_z = m_vm["nbz"].as<size_t>();
-    opts.threshold = m_vm["threshold"].as<float>();
+    opts.tmin = m_vm["tmin"].as<float>();
+    opts.tmax = m_vm["tmax"].as<float>();
 
     return static_cast<int>(m_vm.size());
 
@@ -65,5 +67,5 @@ void printThem(const CommandLineOptions &opts)
     "Vol width: "  << opts.w          << "\n"
     "Vol height: " << opts.h          << "\n"
     "Vol depth: "  << opts.d          << "\n"
-    "Threshold: "  << opts.threshold << std::endl;
+    "Threshold (min-max): "  << opts.tmin << "-" << opts.tmax << std::endl;
 }
