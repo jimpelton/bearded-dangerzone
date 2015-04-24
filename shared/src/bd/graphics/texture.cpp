@@ -25,7 +25,7 @@ Texture::~Texture()
 {
 }
 
-unsigned int Texture::genGLTex1d()
+unsigned int Texture::genGLTex1d(float *img, Format ity, Format ety, size_t w)
 {
     m_type = Type::Tex1D;
     return 0;
@@ -57,7 +57,6 @@ unsigned int Texture::genGLTex2d(float* img, Format ity,
     gl_check(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP));
 
     gl_check(glBindTexture(GL_TEXTURE_2D, 0));
-
 
     return texId;
 }

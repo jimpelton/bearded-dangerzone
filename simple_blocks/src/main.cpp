@@ -9,6 +9,8 @@
 #include <bd/graphics/axis.h>
 #include <bd/graphics/quad.h>
 #include <bd/file/datareader.h>
+#include <bd/file/datatypes.h>
+#include <bd/graphics/shader.h>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -30,7 +32,6 @@
 #include <cstdarg>
 #include <ctime>
 #include <iostream>
-#include <bd/file/datatypes.h>
 
 const char *vertex_shader =
     "#version 400\n"
@@ -60,6 +61,8 @@ enum class SliceSet
     XZ, YZ, XY, NoneOfEm, AllOfEm
 };
 SliceSet g_selectedSliceSet{SliceSet::XZ};
+
+bd::ShaderProgram g_simpleShader;
 
 GLint g_uniform_mvp;
 GLuint g_shaderProgramId;
@@ -117,6 +120,8 @@ void glfw_error_callback(int error, const char *description)
     gl_log_err("GLFW ERROR: code %i msg: %s", error, description);
 }
 
+
+/////////////////////////////////////////////////////////////////////////////////
 void glfw_keyboard_callback(GLFWwindow *window, int key, int scancode, int action,
                             int mods)
 {
@@ -141,6 +146,8 @@ void glfw_keyboard_callback(GLFWwindow *window, int key, int scancode, int actio
     }
 }
 
+
+/////////////////////////////////////////////////////////////////////////////////
 void glfw_window_size_callback(GLFWwindow *window, int width, int height)
 {
     g_screenWidth = width;
@@ -148,6 +155,8 @@ void glfw_window_size_callback(GLFWwindow *window, int width, int height)
     glViewport(0, 0, width, height);
 }
 
+
+/////////////////////////////////////////////////////////////////////////////////
 void glfw_cursorpos_callback(GLFWwindow *window, double x, double y)
 {
     glm::vec2 cpos(floor(x), floor(y));
@@ -162,6 +171,9 @@ void glfw_cursorpos_callback(GLFWwindow *window, double x, double y)
 /************************************************************************/
 /* S H A D E R   C O M P I L I N G                                      */
 /************************************************************************/
+
+
+/////////////////////////////////////////////////////////////////////////////////
 GLuint loadShader(GLenum type, std::string filepath)
 {
     GLuint shaderId = 0;
@@ -184,6 +196,8 @@ GLuint loadShader(GLenum type, std::string filepath)
     return shaderId;
 }
 
+
+/////////////////////////////////////////////////////////////////////////////////
 GLuint compileShader(GLenum type, const char *shader)
 {
     // Create shader and compile
@@ -209,6 +223,8 @@ GLuint compileShader(GLenum type, const char *shader)
     return shaderId;
 }
 
+
+/////////////////////////////////////////////////////////////////////////////////
 GLuint linkProgram(const std::vector<GLuint> &shaderIds)
 {
     GLuint programId = gl_check(glCreateProgram());
@@ -242,6 +258,8 @@ GLuint linkProgram(const std::vector<GLuint> &shaderIds)
 /*     D R A W I N'                                                     */
 /************************************************************************/
 
+
+/////////////////////////////////////////////////////////////////////////////////
 void setRotation(const glm::vec2 &dr)
 {
     glm::quat rotX = glm::angleAxis<float>(
@@ -296,8 +314,9 @@ void loop(GLFWwindow *window)
         // Coordinate Axis
         vao = g_vaoIds[0];
         vao->bind();
-        gl_check(
-            glUniformMatrix4fv(g_uniform_mvp, 1, GL_FALSE, glm::value_ptr(mvp)));
+//        gl_check(
+//            glUniformMatrix4fv(g_uniform_mvp, 1, GL_FALSE, glm::value_ptr(mvp)));
+        g_simpleShader.setUniform("mvp", mvp);
         g_axis.draw();
         vao->unbind();
 
@@ -308,8 +327,9 @@ void loop(GLFWwindow *window)
         for (auto &b : g_blocks) {
             if (!b.empty()) {
                 glm::mat4 mmvp = mvp * b.transform().matrix();
-                gl_check(glUniformMatrix4fv(g_uniform_mvp, 1, GL_FALSE,
-                    glm::value_ptr(mmvp)));
+//                gl_check(glUniformMatrix4fv(g_uniform_mvp, 1, GL_FALSE,
+//                    glm::value_ptr(mmvp)));
+                g_simpleShader.setUniform("mvp", mmvp);
 
                 switch (g_selectedSliceSet) {
                     case SliceSet::XY:
@@ -354,8 +374,11 @@ void loop(GLFWwindow *window)
         for (auto &b : g_blocks) {
             if (!b.empty()) {
                 glm::mat4 mmvp = mvp * b.transform().matrix();
-                gl_check(glUniformMatrix4fv(g_uniform_mvp, 1, GL_FALSE,
-                    glm::value_ptr(mmvp)));
+                g_simpleShader.setUniform("mvp", mmvp);
+
+//                gl_check(glUniformMatrix4fv(g_uniform_mvp, 1, GL_FALSE,
+//                    glm::value_ptr(mmvp)));
+
                 gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, 0));
                 gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT,
                     (GLvoid *) (4 * sizeof(GLushort))));
@@ -373,6 +396,8 @@ void loop(GLFWwindow *window)
              glfwWindowShouldClose(window) == 0);
 }
 
+
+/////////////////////////////////////////////////////////////////////////////////
 GLFWwindow *init()
 {
     GLFWwindow *window = nullptr;
@@ -578,6 +603,8 @@ std::unique_ptr<float[]> readData(const std::string &dtype, const std::string &f
 
     return std::unique_ptr<float[]>(rawdata);
 }
+
+
 /////////////////////////////////////////////////////////////////////////////////
 void filterBlocks(float *data, std::vector<Block> &blocks, glm::u64vec3 numBlks,
       glm::u64vec3 volsz, float tmin=0.1f, float tmax=0.9f)
@@ -598,6 +625,7 @@ void filterBlocks(float *data, std::vector<Block> &blocks, glm::u64vec3 numBlks,
         } // for for for
 
         avg /= blkPoints;
+        b.avg(avg);
 
         if (avg < tmin || avg > tmax) {
             b.empty(true);
@@ -613,6 +641,7 @@ void filterBlocks(float *data, std::vector<Block> &blocks, glm::u64vec3 numBlks,
 }
 
 
+/////////////////////////////////////////////////////////////////////////////////
 void cleanup()
 {
     std::vector<GLuint> bufIds;
@@ -624,6 +653,24 @@ void cleanup()
     glDeleteProgram(g_shaderProgramId);
 }
 
+
+/////////////////////////////////////////////////////////////////////////////////
+void printBlocks()
+{
+    std::ofstream block_file("blocks.txt", std::ofstream::trunc);
+    if (block_file.is_open()) {
+        for (auto &b : g_blocks) {
+            glm::u64vec3 ijk{ b.ijk() };
+            block_file << "(" << ijk.x << "," << ijk.y << "," << ijk.z <<
+            "):\t" << b.avg() << "\n";
+        }
+    }
+    block_file.flush();
+    block_file.close();
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////
 int main(int argc, const char *argv[])
 {
    CommandLineOptions clo;
@@ -639,10 +686,22 @@ int main(int argc, const char *argv[])
         return 1;
     }
 
-    GLuint vsId = compileShader(GL_VERTEX_SHADER, vertex_shader);
-    GLuint fsId = compileShader(GL_FRAGMENT_SHADER, fragment_shader);
-    g_shaderProgramId = linkProgram({vsId, fsId});
-    g_uniform_mvp = glGetUniformLocation(g_shaderProgramId, "mvp");
+    g_shaderProgramId = g_simpleShader.linkProgram(
+        "shaders/vert_vertexcolor_passthrough.glsl",
+        "shaders/frag_vertcolor.glsl"
+    );
+
+    if (g_shaderProgramId == 0) {
+        gl_log_err("Error building shader.");
+        return 1;
+    }
+
+//    GLuint vsId = compileShader(GL_VERTEX_SHADER, vertex_shader);
+//    GLuint fsId = compileShader(GL_FRAGMENT_SHADER, fragment_shader);
+//    g_shaderProgramId = linkProgram({vsId, fsId});
+//    g_uniform_mvp = glGetUniformLocation(g_shaderProgramId, "mvp");
+
+
 
     bd::VertexArrayObject quadVbo(bd::VertexArrayObject::Method::ELEMENTS);
     quadVbo.create();
@@ -673,6 +732,10 @@ int main(int argc, const char *argv[])
         {clo.w, clo.h, clo.d},
         clo.tmin, clo.tmax
     );
+
+    if (clo.printBlocks) {
+        printBlocks();
+    }
 
     loop(window);
     cleanup();

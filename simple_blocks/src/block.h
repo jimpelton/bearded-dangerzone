@@ -27,12 +27,15 @@ public:
     bool empty() const;
     void empty(bool);
 
+    float avg() const;
+    void avg(float);
+
     virtual std::string to_string() const override;
 
 private:
     glm::u64vec3 m_ijk;  ///< Block's location in block coordinates
     bool m_empty;        ///< True if this block was determined empty.
-
+    float m_avg;
 };
 
 #endif // !block_h__

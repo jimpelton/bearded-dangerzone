@@ -31,7 +31,7 @@ public:
     ///////////////////////////////////////////////////////////////////////////////
     // Interface 
     ///////////////////////////////////////////////////////////////////////////////
-    unsigned int genGLTex1d();
+    unsigned int genGLTex1d(float *img, Format ity, Format ety, size_t w);
     
     unsigned int genGLTex2d(float* img, Format ity,
     Format ety, size_t w, size_t h);

@@ -18,6 +18,8 @@
 
 Block::Block(const glm::u64vec3 &ijk, const glm::vec3 &dims, const glm::vec3 &origin)
     : m_ijk{ ijk }
+    , m_empty{ false }
+    , m_avg{ 0.0f }
 {
     transform().scale(dims);
     transform().origin(origin);
@@ -56,6 +58,20 @@ bool Block::empty() const
 void Block::empty(bool b)
 {
     m_empty = b;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+float Block::avg() const
+{
+    return m_avg;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+void Block::avg(float a)
+{
+    m_avg = a;
 }
 
 

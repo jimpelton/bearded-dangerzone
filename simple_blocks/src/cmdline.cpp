@@ -25,6 +25,7 @@ try {
         ("nbz",    po::value<size_t >()->default_value(1),  "Num blocks Z")
         ("tmin",   po::value<float>()->default_value(0.1f),  "Min threshold")
         ("tmax",   po::value<float>()->default_value(0.9f),  "Max threshold")
+        ("print-blocks",  "Dump block info to blocks.txt.")
         ;
 
     po::command_line_parser parser{ argc, argv };
@@ -40,6 +41,7 @@ try {
     po::notify(m_vm);
 
     opts.filePath = m_vm["file"].as<std::string>();
+    opts.printBlocks = m_vm.count("print-blocks") ? true : false;
     opts.type = m_vm["type"].as<std::string>();
     opts.w = m_vm["xdim"].as<size_t>();
     opts.h = m_vm["ydim"].as<size_t>();

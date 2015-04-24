@@ -9,6 +9,8 @@ struct CommandLineOptions
     std::string filePath;
     // volume data type
     std::string type;
+    // true if block data should be dumped to file
+    bool printBlocks;
     // number of blocks X
     size_t numblk_x;
     // number of blocks Y

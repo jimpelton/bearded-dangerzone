@@ -57,7 +57,9 @@ public:
     // Constructors/Destructor
     ////////////////////////////////////////////////////////////////////////////////
     ShaderProgram();
-    ShaderProgram(const Shader *vert, const Shader *frag);
+
+    ShaderProgram(Shader *vert, Shader *frag);
+
     virtual ~ShaderProgram();
 
     /** 
@@ -70,8 +72,13 @@ public:
       * \brief Link provided frag and vertex shaders.
       * \return The non-zero gl identifier for the program, 0 on error.
       */
-    unsigned int linkProgram(const Shader *vert, const Shader *frag);
+    unsigned int linkProgram(Shader *vert, Shader *frag);
 
+    /**
+      * \brief Open, build and link shaders in files at provided paths.
+      * \return The non-zero gl identifier for the program, 0 on error.
+      */
+    unsigned int linkProgram(const std::string &vertPath, const std::string &fragPath);
 
     /** 
       * \brief Sets the shader uniform specified by \c param to \c val.
@@ -109,8 +116,8 @@ private:
     ////////////////////////////////////////////////////////////////////////////////
     // Member Data
     ////////////////////////////////////////////////////////////////////////////////
-    const Shader *m_vert;
-    const Shader *m_frag;
+    Shader *m_vert;
+    Shader *m_frag;
     unsigned int m_programId; ///< The opengl shader program id
     ParamTable m_params;  ///< Uniform locations
     TextureTable m_textures;  ///< Texture sampler locatons

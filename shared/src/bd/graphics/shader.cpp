@@ -90,7 +90,7 @@ ShaderProgram::ShaderProgram()
 
 
 ///////////////////////////////////////////////////////////////////////////////
-ShaderProgram::ShaderProgram(const Shader* vert, const Shader* frag) 
+ShaderProgram::ShaderProgram(Shader* vert, Shader* frag)
     : m_vert{ vert }
     , m_frag{ frag }
 {
@@ -136,13 +136,24 @@ unsigned int ShaderProgram::linkProgram()
 
 
 ///////////////////////////////////////////////////////////////////////////////
-unsigned int ShaderProgram::linkProgram(const Shader *vert, const Shader *frag)
+unsigned int ShaderProgram::linkProgram(Shader *vert, Shader *frag)
 {
     m_vert = vert;
     m_frag = frag;
     return linkProgram();
 }
 
+unsigned int ShaderProgram::linkProgram(const std::string &vertPath,
+    const std::string &fragPath)
+{
+    Shader *vert = new Shader(ShaderType::Vertex);
+    vert->loadFromFile(vertPath);
+
+    Shader *frag = new Shader(ShaderType::Fragment);
+    frag->loadFromFile(fragPath);
+
+    return linkProgram(vert, frag);
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 void ShaderProgram::setUniform(const std::string &param, glm::mat4 &val)
