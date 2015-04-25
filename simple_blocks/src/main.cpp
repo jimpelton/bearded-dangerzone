@@ -45,9 +45,12 @@ bool g_toggleBlockBoxes{ false };
 //TODO: bool g_toggleVolumeBox{ false };
 
 bd::ShaderProgram g_simpleShader;
+bd::ShaderProgram g_volumeShader;
+
 
 std::vector<bd::VertexArrayObject *> g_vaoIds;
 std::vector<Block> g_blocks;
+std::vector<Block*> g_nonEmptyBlocks;
 
 glm::quat g_rotation;
 glm::mat4 g_viewMatrix;
@@ -166,92 +169,6 @@ void glfw_scrollwheel_callback(GLFWwindow *window, double xoff, double yoff)
 }
 
 /************************************************************************/
-/* S H A D E R   C O M P I L I N G                                      */
-/************************************************************************/
-
-
-/////////////////////////////////////////////////////////////////////////////////
-//GLuint loadShader(GLenum type, std::string filepath)
-//{
-//    GLuint shaderId = 0;
-//    std::ifstream file(filepath.c_str());
-//    if (!file.is_open()) {
-//        gl_log("Couldn't open %s", filepath.c_str());
-//        return 0;
-//    }
-//
-//    std::stringstream shaderCode;
-//    shaderCode << file.rdbuf();
-//
-//    std::string code = shaderCode.str();
-//    const char *ptrCode = code.c_str();
-//    file.close();
-//
-//    gl_log("Compiling shader: %s", filepath.c_str());
-//    shaderId = compileShader(type, ptrCode);
-//
-//    return shaderId;
-//}
-
-
-/////////////////////////////////////////////////////////////////////////////////
-//GLuint compileShader(GLenum type, const char *shader)
-//{
-//    // Create shader and compile
-//    GLuint shaderId = gl_check(glCreateShader(type));
-//    gl_log("Created shader, type: 0x%x04, id: %d", type, shaderId);
-//    gl_check(glShaderSource(shaderId, 1, &shader, NULL));
-//
-//    gl_check(glCompileShader(shaderId));
-//
-//    // Check for errors.
-//    GLint Result = GL_FALSE;
-//    GLint infoLogLength;
-//
-//    gl_check(glGetShaderiv(shaderId, GL_COMPILE_STATUS, &Result));
-//    gl_check(glGetShaderiv(shaderId, GL_INFO_LOG_LENGTH, &infoLogLength));
-//
-//    if (infoLogLength > 1) {
-//        std::vector<char> msg(infoLogLength + 1);
-//        glGetShaderInfoLog(shaderId, infoLogLength, NULL, &msg[0]);
-//        gl_log("%s", &msg[0]);
-//    }
-//
-//    return shaderId;
-//}
-
-
-///////////////////////////////////////////////////////////////////////////////////
-//GLuint linkProgram(const std::vector<GLuint> &shaderIds)
-//{
-//    GLuint programId = gl_check(glCreateProgram());
-//    gl_log("Created program id: %d", programId);
-//
-//    for (auto &sh : shaderIds) {
-//        gl_check(glAttachShader(programId, sh));
-//    }
-//
-//    gl_log("Linking program");
-//    gl_check(glLinkProgram(programId));
-//
-//    // Check the program
-//    GLint result = GL_FALSE;
-//    GLint infoLogLength = 0;
-//
-//    gl_check(glGetProgramiv(programId, GL_LINK_STATUS, &result));
-//    gl_check(glGetProgramiv(programId, GL_INFO_LOG_LENGTH, &infoLogLength));
-//
-//    if (infoLogLength > 1) {
-//        std::vector<char> programErrorMessage(infoLogLength + 1);
-//        gl_check(glGetProgramInfoLog(programId, infoLogLength, NULL,
-//            &programErrorMessage[0]));
-//        gl_log("%s", &programErrorMessage[0]);
-//    }
-//
-//    return programId;
-//}
-
-/************************************************************************/
 /*     D R A W I N'                                                     */
 /************************************************************************/
 
@@ -319,9 +236,8 @@ void loop(GLFWwindow *window)
         /// Quad geometry ///
         vao = g_vaoIds[1];
         vao->bind();
-        for (auto &b : g_blocks) {
-        if (!b.empty()) {
-            glm::mat4 mmvp = mvp * b.transform().matrix();
+        for (auto *b : g_nonEmptyBlocks) {
+            glm::mat4 mmvp = mvp * b->transform().matrix();
             g_simpleShader.setUniform("mvp", mmvp);
 
             switch (g_selectedSliceSet) {
@@ -347,7 +263,6 @@ void loop(GLFWwindow *window)
             default:
                 break;
             } // switch
-        } // if
 
         } // for
         vao->unbind();
@@ -356,10 +271,9 @@ void loop(GLFWwindow *window)
         /// wireframe boxs ///
         vao = g_vaoIds[2];
         vao->bind();
-        for (auto &b : g_blocks) {
-        if (!b.empty()) {
+        for (auto *b : g_nonEmptyBlocks) {
 
-            glm::mat4 mmvp = mvp * b.transform().matrix();
+            glm::mat4 mmvp = mvp * b->transform().matrix();
             g_simpleShader.setUniform("mvp", mmvp);
 
             gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, 0));
@@ -368,7 +282,6 @@ void loop(GLFWwindow *window)
             gl_check(glDrawElements(GL_LINES, 8, GL_UNSIGNED_SHORT,
                 (GLvoid *) (8 * sizeof(GLushort))));
 
-        } // if
         } // for
         vao->unbind();
 
@@ -513,7 +426,6 @@ void genBoxVao(bd::VertexArrayObject &vao)
 // vol: volume voxel dimensions
 void initBlocks(glm::u64vec3 nb, glm::u64vec3 vd)
 {
-
     // block world dims
     glm::vec3 blk_dims{1.0f / glm::vec3(nb)};
 
@@ -607,6 +519,8 @@ void filterBlocks(float *data, std::vector<Block> &blocks, glm::u64vec3 numBlks,
 //            glm::u64vec3 ijk{ b.ijk() };
 //            std::cout << "Block " << ijk.x << ", " << ijk.y << ", " << ijk.z <<
 //            " marked empty." << std::endl;
+        } else {
+            g_nonEmptyBlocks.push_back(&b);
         }
     } // for auto
 
@@ -668,8 +582,17 @@ int main(int argc, const char *argv[])
     );
 
     if (programId == 0) {
-        gl_log_err("Error building shader.");
+        gl_log_err("Error building passthrough shader, program id was 0.");
         return 1;
+    }
+
+    GLuint volumeProgramId = g_volumeShader.linkProgram(
+        "shaders/vert_3dtexcoordgeneration.glsl",
+        "shaders/frag_volumesampler_noshading.glsl"
+    );
+
+    if (volumeProgramId == 0) {
+        gl_log_err("Error building volume sampling shader, program id was 0.");
     }
 
     bd::VertexArrayObject quadVbo(bd::VertexArrayObject::Method::ELEMENTS);
