@@ -100,6 +100,7 @@ ShaderProgram::ShaderProgram(Shader* vert, Shader* frag)
 ///////////////////////////////////////////////////////////////////////////////
 ShaderProgram::~ShaderProgram()
 {
+    //TODO: cleanup opengl shaders ... glDelete?
 }
 
 

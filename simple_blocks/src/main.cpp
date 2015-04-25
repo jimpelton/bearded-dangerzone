@@ -3,7 +3,6 @@
 
 #include <bd/log/gl_log.h>
 #include <bd/graphics/vertexarrayobject.h>
-#include <bd/scene/transformable.h>
 #include <bd/graphics/BBox.h>
 #include <bd/util/util.h>
 #include <bd/graphics/axis.h>
@@ -33,25 +32,6 @@
 #include <ctime>
 #include <iostream>
 
-const char *vertex_shader =
-    "#version 400\n"
-        "in vec3 v;"
-        "in vec3 in_col;"
-        "uniform mat4 mvp;"
-        "out vec3 vcol;"
-        "void main () {"
-        "  gl_Position = mvp * vec4(v, 1.0);"
-        "  vcol = in_col;"
-        "}";
-
-const char *fragment_shader =
-    "#version 400\n"
-        "in vec3 vcol;"
-        "out vec4 frag_colour;"
-        "void main () {"
-        "  frag_colour = vec4(vcol, 1.0);"
-        "}";
-
 const glm::vec3 X_AXIS{1.0f, 0.0f, 0.0f};
 const glm::vec3 Y_AXIS{0.0f, 1.0f, 0.0f};
 const glm::vec3 Z_AXIS{0.0f, 0.0f, 1.0f};
@@ -61,11 +41,11 @@ enum class SliceSet
     XZ, YZ, XY, NoneOfEm, AllOfEm
 };
 SliceSet g_selectedSliceSet{SliceSet::XZ};
+bool g_toggleBlockBoxes{ false };
+//TODO: bool g_toggleVolumeBox{ false };
 
 bd::ShaderProgram g_simpleShader;
 
-GLint g_uniform_mvp;
-GLuint g_shaderProgramId;
 std::vector<bd::VertexArrayObject *> g_vaoIds;
 std::vector<Block> g_blocks;
 
@@ -73,7 +53,7 @@ glm::quat g_rotation;
 glm::mat4 g_viewMatrix;
 glm::mat4 g_projectionMatrix;
 glm::mat4 g_vpMatrix;
-glm::vec3 g_camPosition{0.0f, 0.0f, -10.0f};
+glm::vec3 g_camPosition{0.0f, 0.0f, -2.0f};
 glm::vec3 g_camFocus{0.0f, 0.0f, 0.0f};
 glm::vec3 g_camUp{0.0f, 1.0f, 0.0f};
 glm::vec2 g_cursorPos;
@@ -81,35 +61,36 @@ glm::vec2 g_cursorPos;
 float g_mouseSpeed{1.0f};
 int g_screenWidth{1000};
 int g_screenHeight{1000};
-float g_fov{50.0f};
+float g_fov_deg{50.0f};
 bool g_viewDirty{true};
 bool g_modelDirty{true};
-
 
 bd::Axis g_axis;
 bd::Box g_box;
 
-void cleanup();
 
-GLuint loadShader(GLenum type, std::string filepath);
+//GLuint loadShader(GLenum type, std::string filepath);
 
-GLuint compileShader(GLenum type, const char *shader);
+//GLuint compileShader(GLenum type, const char *shader);
 
 void glfw_cursorpos_callback(GLFWwindow *window, double x, double y);
 
 void glfw_keyboard_callback(GLFWwindow *window, int key, int scancode, int action,
-                            int mods);
+    int mods);
 
 void glfw_error_callback(int error, const char *description);
 
 void glfw_window_size_callback(GLFWwindow *window, int width, int height);
 
+void glfw_scrollwheel_callback(GLFWwindow *window, double xoff, double yoff);
+
 void updateViewMatrix();
 
 void setRotation(const glm::vec2 &dr);
 
-//void drawBoundingBox();
 void loop(GLFWwindow *window);
+
+void cleanup();
 
 
 /************************************************************************/
@@ -123,7 +104,7 @@ void glfw_error_callback(int error, const char *description)
 
 /////////////////////////////////////////////////////////////////////////////////
 void glfw_keyboard_callback(GLFWwindow *window, int key, int scancode, int action,
-                            int mods)
+    int mods)
 {
     if (action != GLFW_PRESS) {
         switch (key) {
@@ -153,6 +134,7 @@ void glfw_window_size_callback(GLFWwindow *window, int width, int height)
     g_screenWidth = width;
     g_screenHeight = height;
     glViewport(0, 0, width, height);
+    g_viewDirty = true;
 }
 
 
@@ -168,91 +150,106 @@ void glfw_cursorpos_callback(GLFWwindow *window, double x, double y)
     g_cursorPos = cpos;
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+void glfw_scrollwheel_callback(GLFWwindow *window, double xoff, double yoff)
+{
+    float fov = static_cast<float>(g_fov_deg +(yoff*1.75f));
+
+    std::cout << "fov: " << fov << std::endl;
+
+    if (fov<1 || fov>120) return;
+
+    g_fov_deg = fov;
+
+    g_viewDirty = true;
+}
+
 /************************************************************************/
 /* S H A D E R   C O M P I L I N G                                      */
 /************************************************************************/
 
 
 /////////////////////////////////////////////////////////////////////////////////
-GLuint loadShader(GLenum type, std::string filepath)
-{
-    GLuint shaderId = 0;
-    std::ifstream file(filepath.c_str());
-    if (!file.is_open()) {
-        gl_log("Couldn't open %s", filepath.c_str());
-        return 0;
-    }
-
-    std::stringstream shaderCode;
-    shaderCode << file.rdbuf();
-
-    std::string code = shaderCode.str();
-    const char *ptrCode = code.c_str();
-    file.close();
-
-    gl_log("Compiling shader: %s", filepath.c_str());
-    shaderId = compileShader(type, ptrCode);
-
-    return shaderId;
-}
-
-
-/////////////////////////////////////////////////////////////////////////////////
-GLuint compileShader(GLenum type, const char *shader)
-{
-    // Create shader and compile
-    GLuint shaderId = gl_check(glCreateShader(type));
-    gl_log("Created shader, type: 0x%x04, id: %d", type, shaderId);
-    gl_check(glShaderSource(shaderId, 1, &shader, NULL));
-
-    gl_check(glCompileShader(shaderId));
-
-    // Check for errors.
-    GLint Result = GL_FALSE;
-    GLint infoLogLength;
-
-    gl_check(glGetShaderiv(shaderId, GL_COMPILE_STATUS, &Result));
-    gl_check(glGetShaderiv(shaderId, GL_INFO_LOG_LENGTH, &infoLogLength));
-
-    if (infoLogLength > 1) {
-        std::vector<char> msg(infoLogLength + 1);
-        glGetShaderInfoLog(shaderId, infoLogLength, NULL, &msg[0]);
-        gl_log("%s", &msg[0]);
-    }
-
-    return shaderId;
-}
+//GLuint loadShader(GLenum type, std::string filepath)
+//{
+//    GLuint shaderId = 0;
+//    std::ifstream file(filepath.c_str());
+//    if (!file.is_open()) {
+//        gl_log("Couldn't open %s", filepath.c_str());
+//        return 0;
+//    }
+//
+//    std::stringstream shaderCode;
+//    shaderCode << file.rdbuf();
+//
+//    std::string code = shaderCode.str();
+//    const char *ptrCode = code.c_str();
+//    file.close();
+//
+//    gl_log("Compiling shader: %s", filepath.c_str());
+//    shaderId = compileShader(type, ptrCode);
+//
+//    return shaderId;
+//}
 
 
 /////////////////////////////////////////////////////////////////////////////////
-GLuint linkProgram(const std::vector<GLuint> &shaderIds)
-{
-    GLuint programId = gl_check(glCreateProgram());
-    gl_log("Created program id: %d", programId);
+//GLuint compileShader(GLenum type, const char *shader)
+//{
+//    // Create shader and compile
+//    GLuint shaderId = gl_check(glCreateShader(type));
+//    gl_log("Created shader, type: 0x%x04, id: %d", type, shaderId);
+//    gl_check(glShaderSource(shaderId, 1, &shader, NULL));
+//
+//    gl_check(glCompileShader(shaderId));
+//
+//    // Check for errors.
+//    GLint Result = GL_FALSE;
+//    GLint infoLogLength;
+//
+//    gl_check(glGetShaderiv(shaderId, GL_COMPILE_STATUS, &Result));
+//    gl_check(glGetShaderiv(shaderId, GL_INFO_LOG_LENGTH, &infoLogLength));
+//
+//    if (infoLogLength > 1) {
+//        std::vector<char> msg(infoLogLength + 1);
+//        glGetShaderInfoLog(shaderId, infoLogLength, NULL, &msg[0]);
+//        gl_log("%s", &msg[0]);
+//    }
+//
+//    return shaderId;
+//}
 
-    for (auto &sh : shaderIds) {
-        gl_check(glAttachShader(programId, sh));
-    }
 
-    gl_log("Linking program");
-    gl_check(glLinkProgram(programId));
-
-    // Check the program
-    GLint result = GL_FALSE;
-    GLint infoLogLength = 0;
-
-    gl_check(glGetProgramiv(programId, GL_LINK_STATUS, &result));
-    gl_check(glGetProgramiv(programId, GL_INFO_LOG_LENGTH, &infoLogLength));
-
-    if (infoLogLength > 1) {
-        std::vector<char> programErrorMessage(infoLogLength + 1);
-        gl_check(glGetProgramInfoLog(programId, infoLogLength, NULL,
-            &programErrorMessage[0]));
-        gl_log("%s", &programErrorMessage[0]);
-    }
-
-    return programId;
-}
+///////////////////////////////////////////////////////////////////////////////////
+//GLuint linkProgram(const std::vector<GLuint> &shaderIds)
+//{
+//    GLuint programId = gl_check(glCreateProgram());
+//    gl_log("Created program id: %d", programId);
+//
+//    for (auto &sh : shaderIds) {
+//        gl_check(glAttachShader(programId, sh));
+//    }
+//
+//    gl_log("Linking program");
+//    gl_check(glLinkProgram(programId));
+//
+//    // Check the program
+//    GLint result = GL_FALSE;
+//    GLint infoLogLength = 0;
+//
+//    gl_check(glGetProgramiv(programId, GL_LINK_STATUS, &result));
+//    gl_check(glGetProgramiv(programId, GL_INFO_LOG_LENGTH, &infoLogLength));
+//
+//    if (infoLogLength > 1) {
+//        std::vector<char> programErrorMessage(infoLogLength + 1);
+//        gl_check(glGetProgramInfoLog(programId, infoLogLength, NULL,
+//            &programErrorMessage[0]));
+//        gl_log("%s", &programErrorMessage[0]);
+//    }
+//
+//    return programId;
+//}
 
 /************************************************************************/
 /*     D R A W I N'                                                     */
@@ -263,12 +260,12 @@ GLuint linkProgram(const std::vector<GLuint> &shaderIds)
 void setRotation(const glm::vec2 &dr)
 {
     glm::quat rotX = glm::angleAxis<float>(
-        glm::radians(dr.y) * g_mouseSpeed,
+        glm::radians(-dr.y) * g_mouseSpeed,
         glm::vec3(1, 0, 0)
     );
 
     glm::quat rotY = glm::angleAxis<float>(
-        glm::radians(-dr.x) * g_mouseSpeed,
+        glm::radians(dr.x) * g_mouseSpeed,
         glm::vec3(0, 1, 0)
     );
 
@@ -282,25 +279,24 @@ void setRotation(const glm::vec2 &dr)
 void updateViewMatrix()
 {
     g_viewMatrix = glm::lookAt(g_camPosition, g_camFocus, g_camUp);
-    g_projectionMatrix = glm::perspective(g_fov,
+    g_projectionMatrix = glm::perspective(glm::radians(g_fov_deg),
         g_screenWidth / static_cast<float>(g_screenHeight), 0.1f, 100.0f);
     g_vpMatrix = g_projectionMatrix * g_viewMatrix;
     g_viewDirty = false;
+    g_modelDirty = true;
+
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 void loop(GLFWwindow *window)
 {
-    glUseProgram(g_shaderProgramId);
-
     glm::mat4 mvp{1.0f};
     bd::VertexArrayObject *vao = nullptr;
 
+    g_simpleShader.bind();
+
     do {
-
-        gl_check(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
-
         if (g_viewDirty) {
             updateViewMatrix();
         }
@@ -310,12 +306,11 @@ void loop(GLFWwindow *window)
             g_modelDirty = false;
         }
 
+        gl_check(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
         // Coordinate Axis
         vao = g_vaoIds[0];
         vao->bind();
-//        gl_check(
-//            glUniformMatrix4fv(g_uniform_mvp, 1, GL_FALSE, glm::value_ptr(mvp)));
         g_simpleShader.setUniform("mvp", mvp);
         g_axis.draw();
         vao->unbind();
@@ -325,44 +320,34 @@ void loop(GLFWwindow *window)
         vao = g_vaoIds[1];
         vao->bind();
         for (auto &b : g_blocks) {
-            if (!b.empty()) {
-                glm::mat4 mmvp = mvp * b.transform().matrix();
-//                gl_check(glUniformMatrix4fv(g_uniform_mvp, 1, GL_FALSE,
-//                    glm::value_ptr(mmvp)));
-                g_simpleShader.setUniform("mvp", mmvp);
+        if (!b.empty()) {
+            glm::mat4 mmvp = mvp * b.transform().matrix();
+            g_simpleShader.setUniform("mvp", mmvp);
 
-                switch (g_selectedSliceSet) {
-                    case SliceSet::XY:
-                        gl_check(
-                            glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT,
-                                0));
-                        break;
-                    case SliceSet::YZ:
-                        gl_check(
-                            glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT,
-                                (GLvoid *) (4 * sizeof(unsigned short))));
-                        break;
-                    case SliceSet::XZ:
-                        gl_check(
-                            glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT,
-                                (GLvoid *) (8 * sizeof(unsigned short))));
-                        break;
-                    case SliceSet::AllOfEm:
-                        gl_check(
-                            glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT,
-                                0));
-                        gl_check(
-                            glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT,
-                                (GLvoid *) (4 * sizeof(unsigned short))));
-                        gl_check(
-                            glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT,
-                                (GLvoid *) (8 * sizeof(unsigned short))));
-                        break;
-                    case SliceSet::NoneOfEm:
-                    default:
-                        break;
-                } // switch
-            } // if
+            switch (g_selectedSliceSet) {
+            case SliceSet::XY:
+                gl_check( glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, 0));
+                break;
+            case SliceSet::YZ:
+                gl_check( glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT,
+                    (GLvoid *) (4 * sizeof(unsigned short))));
+                break;
+            case SliceSet::XZ:
+                gl_check( glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT,
+                        (GLvoid *) (8 * sizeof(unsigned short))));
+                break;
+            case SliceSet::AllOfEm:
+                gl_check( glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, 0));
+                gl_check( glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT,
+                    (GLvoid *) (4 * sizeof(unsigned short))));
+                gl_check( glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT,
+                        (GLvoid *) (8 * sizeof(unsigned short))));
+                break;
+            case SliceSet::NoneOfEm:
+            default:
+                break;
+            } // switch
+        } // if
 
         } // for
         vao->unbind();
@@ -372,22 +357,20 @@ void loop(GLFWwindow *window)
         vao = g_vaoIds[2];
         vao->bind();
         for (auto &b : g_blocks) {
-            if (!b.empty()) {
-                glm::mat4 mmvp = mvp * b.transform().matrix();
-                g_simpleShader.setUniform("mvp", mmvp);
+        if (!b.empty()) {
 
-//                gl_check(glUniformMatrix4fv(g_uniform_mvp, 1, GL_FALSE,
-//                    glm::value_ptr(mmvp)));
+            glm::mat4 mmvp = mvp * b.transform().matrix();
+            g_simpleShader.setUniform("mvp", mmvp);
 
-                gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, 0));
-                gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT,
-                    (GLvoid *) (4 * sizeof(GLushort))));
-                gl_check(glDrawElements(GL_LINES, 8, GL_UNSIGNED_SHORT,
-                    (GLvoid *) (8 * sizeof(GLushort))));
-            } // if
+            gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, 0));
+            gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT,
+                (GLvoid *) (4 * sizeof(GLushort))));
+            gl_check(glDrawElements(GL_LINES, 8, GL_UNSIGNED_SHORT,
+                (GLvoid *) (8 * sizeof(GLushort))));
+
+        } // if
         } // for
         vao->unbind();
-
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -424,6 +407,8 @@ GLFWwindow *init()
     glfwSetCursorPosCallback(window, glfw_cursorpos_callback);
     glfwSetWindowSizeCallback(window, glfw_window_size_callback);
     glfwSetKeyCallback(window, glfw_keyboard_callback);
+    glfwSetScrollCallback(window, glfw_scrollwheel_callback);
+
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
     glfwMakeContextCurrent(window);
 
@@ -434,7 +419,6 @@ GLFWwindow *init()
         return nullptr;
     }
 
-//    bd::checkForAndLogGlError(__FILE__, __func__, __LINE__);
     bd::subscribe_debug_callbacks();
 
     gl_check(glEnable(GL_DEPTH_TEST));
@@ -451,20 +435,25 @@ void genQuadVao(bd::VertexArrayObject &vao)
     // copy 3 sets of quad verts, each aligned with different plane
     std::array<glm::vec4, 12> vbuf;
     // x-y quad
-    auto vbufIter = std::copy(bd::Quad::verts_xy.begin(), bd::Quad::verts_xy.end(),
-        vbuf.begin());
+    auto vbufIter =
+        std::copy(bd::Quad::verts_xy.begin(), bd::Quad::verts_xy.end(), vbuf.begin());
+
     // x-z quad
-    vbufIter = std::copy(bd::Quad::verts_xz.begin(), bd::Quad::verts_xz.end(),
-        vbufIter);
+    vbufIter =
+        std::copy(bd::Quad::verts_xz.begin(), bd::Quad::verts_xz.end(), vbufIter);
+
     // y-z quad
     std::copy(bd::Quad::verts_yz.begin(), bd::Quad::verts_yz.end(), vbufIter);
 
     // copy the bd::Quad vertex colors 3 times
     std::array<glm::vec3, 12> colorBuf;
-    auto colorIter = std::copy(bd::Quad::colors.begin(), bd::Quad::colors.end(),
-        colorBuf.begin());
-    colorIter = std::copy(bd::Quad::colors.begin(), bd::Quad::colors.end(),
-        colorIter);
+
+    auto colorIter =
+        std::copy(bd::Quad::colors.begin(), bd::Quad::colors.end(), colorBuf.begin());
+
+    colorIter =
+        std::copy(bd::Quad::colors.begin(), bd::Quad::colors.end(), colorIter);
+
     std::copy(bd::Quad::colors.begin(), bd::Quad::colors.end(), colorIter);
 
 
@@ -474,7 +463,6 @@ void genQuadVao(bd::VertexArrayObject &vao)
         4, 5, 7, 6,     // x-z
         8, 9, 11, 10    // y-z
     };
-
 
     // vertex positions into attribute 0
     vao.addVbo((float *) vbuf.data(), vbuf.size() * bd::Quad::vert_element_size,
@@ -505,7 +493,6 @@ void genAxisVao(bd::VertexArrayObject &vao)
 ///////////////////////////////////////////////////////////////////////////////
 void genBoxVao(bd::VertexArrayObject &vao)
 {
-
     // vertex positions into attribute 0
     vao.addVbo((float *) (bd::Box::vertices.data()),
         bd::Box::vertices.size() * bd::Box::vert_element_size,
@@ -553,20 +540,7 @@ void initBlocks(glm::u64vec3 nb, glm::u64vec3 vd)
     }
 
     gl_log("Finished block init: total blocks is %d.", g_blocks.size());
-
 }
-
-
-/////////////////////////////////////////////////////////////////////////////////
-//std::unique_ptr<float[]> readData(const std::string &path, size_t w, size_t h,
-//                                  size_t d)
-//{
-//    bd::DataReader<float, float> reader;
-//    reader.loadRaw3d(path, w, h, d);
-//    float *rawdata = reader.takeOwnership();
-//
-//    return std::unique_ptr<float[]>(rawdata);
-//}
 
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -636,6 +610,8 @@ void filterBlocks(float *data, std::vector<Block> &blocks, glm::u64vec3 numBlks,
         }
     } // for auto
 
+    // TODO: create list of pointers to non-empty blocks.
+
     gl_log("%d/%d blocks removed.", emptyCount, bd::vecCompMult(numBlks));
 
 }
@@ -644,13 +620,13 @@ void filterBlocks(float *data, std::vector<Block> &blocks, glm::u64vec3 numBlks,
 /////////////////////////////////////////////////////////////////////////////////
 void cleanup()
 {
-    std::vector<GLuint> bufIds;
+//    std::vector<GLuint> bufIds;
 //    for (unsigned i=0; i<NUMBOXES; ++i) {
 //        bufIds.push_back(g_bbox[i].iboId());
 //        bufIds.push_back(g_bbox[i].vboId());
 //    }
 //    glDeleteBuffers(NUMBOXES, &bufIds[0]);
-    glDeleteProgram(g_shaderProgramId);
+//    glDeleteProgram(g_shaderProgramId);
 }
 
 
@@ -686,22 +662,15 @@ int main(int argc, const char *argv[])
         return 1;
     }
 
-    g_shaderProgramId = g_simpleShader.linkProgram(
+    GLuint programId = g_simpleShader.linkProgram(
         "shaders/vert_vertexcolor_passthrough.glsl",
         "shaders/frag_vertcolor.glsl"
     );
 
-    if (g_shaderProgramId == 0) {
+    if (programId == 0) {
         gl_log_err("Error building shader.");
         return 1;
     }
-
-//    GLuint vsId = compileShader(GL_VERTEX_SHADER, vertex_shader);
-//    GLuint fsId = compileShader(GL_FRAGMENT_SHADER, fragment_shader);
-//    g_shaderProgramId = linkProgram({vsId, fsId});
-//    g_uniform_mvp = glGetUniformLocation(g_shaderProgramId, "mvp");
-
-
 
     bd::VertexArrayObject quadVbo(bd::VertexArrayObject::Method::ELEMENTS);
     quadVbo.create();
@@ -720,8 +689,8 @@ int main(int argc, const char *argv[])
     g_vaoIds.push_back(&quadVbo);
     g_vaoIds.push_back(&boxVbo);
 
-    initBlocks(glm::u64vec3{clo.numblk_x, clo.numblk_y, clo.numblk_z},
-        glm::u64vec3{clo.w, clo.h, clo.d});
+    initBlocks( glm::u64vec3{clo.numblk_x, clo.numblk_y, clo.numblk_z},
+        glm::u64vec3{clo.w, clo.h, clo.d} );
 
     std::unique_ptr<float[]> data {
         std::move( readData(clo.type, clo.filePath, clo.w, clo.h, clo.d) )
