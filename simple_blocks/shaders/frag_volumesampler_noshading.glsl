@@ -1,7 +1,7 @@
 #version 400 core
 
 // Interpolated values from the vertex shaders
-in vec3 UVW;
+in vec3 vcol;
 
 // Ouput data
 out vec4 color;
@@ -16,5 +16,7 @@ void main() {
 //	color = texture(tf_sampler, tfScalingVal*volVal);
 
   	color = vec4(volVal, volVal, volVal, volVal);
-//  color = vec4(UVW, 1.0f);
+    //if(volVal == 0.0f) color.x = 1.0f;
+
+//  color = vec4(vcol, 1.0f);
 }
