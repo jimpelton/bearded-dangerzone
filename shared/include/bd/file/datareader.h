@@ -145,7 +145,7 @@ DataReader<ExternTy, InternTy>::loadRaw3d
     using std::ifstream;
     using std::filebuf;
 
-    gl_log("Opening %s", imagepath.c_str());
+    gl_log("Opening %s, normalize=%d", imagepath.c_str(), normalize);
 
     ifstream rawfile;
     rawfile.exceptions(ifstream::failbit | ifstream::badbit);
@@ -248,10 +248,24 @@ DataReader<ExternTy, InternTy>::normalize_copy
     const ExternTy *image,
     InternTy *internal
 ) {
+    gl_log("Normalizing data");
+
+    InternTy min = std::numeric_limits<InternTy>::max();
+    InternTy max = std::numeric_limits<InternTy>::lowest();
+
     InternTy amt = shiftAmt();
+
     for (size_t idx = 0; idx < m_numVoxels; ++idx) {
-        internal[idx] = (static_cast<InternTy>(image[idx]) + amt) / m_max;
+        float d = (static_cast<InternTy>(image[idx]) + amt) / m_max;
+        if (d > max) max = static_cast<InternTy>(d);
+        if (d < min) min = static_cast<InternTy>(d);
+        internal[idx] = d;
     }
+
+    m_max = max;
+    m_min = min;
+
+    gl_log("Max: %.2f, Min: %.2f", m_max, m_min);
 }
 
 } // namespace bd
