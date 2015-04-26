@@ -40,9 +40,15 @@ enum class SliceSet
 {
     XZ, YZ, XY, NoneOfEm, AllOfEm
 };
-SliceSet g_selectedSliceSet{SliceSet::XZ};
+SliceSet g_selectedSliceSet{SliceSet::XY};
 bool g_toggleBlockBoxes{ false };
 //TODO: bool g_toggleVolumeBox{ false };
+
+enum class ObjType : unsigned int
+{
+    Axis, Quads, Boxes
+};
+
 
 bd::ShaderProgram g_simpleShader;
 bd::ShaderProgram g_volumeShader;
@@ -227,15 +233,16 @@ void loop(GLFWwindow *window)
         gl_check(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
         g_simpleShader.bind();
-        // Coordinate Axis
-        vao = g_vaoIds[0];
+
+        ////////  Axis    /////////////////////////////////////////
+        vao = g_vaoIds[static_cast<uint>(ObjType::Axis)];
         vao->bind();
         g_simpleShader.setUniform("mvp", mvp);
         g_axis.draw();
         vao->unbind();
 
-        /// wireframe boxs ///
-        vao = g_vaoIds[2];
+        ////////  BBoxes  /////////////////////////////////////////
+        vao = g_vaoIds[static_cast<uint>(ObjType::Boxes)];
         vao->bind();
         for (auto *b : g_nonEmptyBlocks) {
 
@@ -251,25 +258,25 @@ void loop(GLFWwindow *window)
         } // for
         vao->unbind();
 
+        //////// Quad Geo /////////////////////////////////////////
         g_volumeShader.bind();
-        /// Quad geometry ///
-        vao = g_vaoIds[1];
+        vao = g_vaoIds[static_cast<uint>(ObjType::Quads)];
         vao->bind();
         for (auto *b : g_nonEmptyBlocks) {
             b->texture().bind();
             glm::mat4 mmvp = mvp * b->transform().matrix();
-            //g_simpleShader.setUniform("mvp", mmvp);
+//            g_simpleShader.setUniform("mvp", mmvp);
             g_volumeShader.setUniform("mvp", mmvp);
 
             switch (g_selectedSliceSet) {
             case SliceSet::XY:
                 gl_check( glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, 0));
                 break;
-            case SliceSet::YZ:
+            case SliceSet::XZ:
                 gl_check( glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT,
                     (GLvoid *) (4 * sizeof(unsigned short))));
                 break;
-            case SliceSet::XZ:
+            case SliceSet::YZ:
                 gl_check( glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT,
                         (GLvoid *) (8 * sizeof(unsigned short))));
                 break;
@@ -373,19 +380,20 @@ void genQuadVao(bd::VertexArrayObject &vao)
 
     std::copy(bd::Quad::colors.begin(), bd::Quad::colors.end(), colorIter);
 
-    std::array<glm::vec3, 12> texcoords{
+    std::array<glm::vec3, 12> texcoords_3d{
+        // x-y quad
         glm::vec3(0.0f, 0.0f, 0.0f), // 0 ll
         glm::vec3(1.0, 0.0f, 0.0f), // 1 lr
         glm::vec3(1.0f, 1.0f, 0.0f), // 2 ur
         glm::vec3(0.0f,  1.0f, 0.0f),  // 3 ul
 
-
+        // x-z quad
         glm::vec3(0.0f, 0.0f, 0.0f), // 0 ll
         glm::vec3(1.0f, 0.0f, 0.0f), // 1 lr
         glm::vec3(1.0f, 0.0f, 1.0f), // 2 ur
         glm::vec3(0.0f, 0.0f, 1.0f),  // 3 ul
 
-
+        // y-z quad
         glm::vec3(0.0f, 0.0f, 0.0f), // 0 ll
         glm::vec3(0.0f, 1.0f, 0.0f), // 1 lr
         glm::vec3(0.0f, 1.0f, 1.0f), // 2 ur
@@ -406,7 +414,7 @@ void genQuadVao(bd::VertexArrayObject &vao)
 
     // vertex colors into attribute 1
 //    vao.addVbo((float *) (colorBuf.data()), colorBuf.size() * 3, 3, 1);
-    vao.addVbo((float *) (texcoords.data()), texcoords.size() * 3, 3, 1);
+    vao.addVbo((float *) (texcoords_3d.data()), texcoords_3d.size() * 3, 3, 1);
 
     vao.setIndexBuffer((unsigned short *) (ebuf.data()), ebuf.size());
 }
@@ -641,9 +649,10 @@ int main(int argc, const char *argv[])
     genAxisVao(axisVbo);
     genBoxVao(boxVbo);
 
-    g_vaoIds.push_back(&axisVbo);
-    g_vaoIds.push_back(&quadVbo);
-    g_vaoIds.push_back(&boxVbo);
+    g_vaoIds.reserve(3);
+    g_vaoIds[static_cast<uint>(ObjType::Axis)] =  &axisVbo;
+    g_vaoIds[static_cast<uint>(ObjType::Quads)] = &quadVbo;
+    g_vaoIds[static_cast<uint>(ObjType::Boxes)] = &boxVbo;
 
     initBlocks( glm::u64vec3{clo.numblk_x, clo.numblk_y, clo.numblk_z},
         glm::u64vec3{clo.w, clo.h, clo.d}
