@@ -40,19 +40,21 @@ enum class SliceSet
 {
     XZ, YZ, XY, NoneOfEm, AllOfEm
 };
-SliceSet g_selectedSliceSet{SliceSet::XY};
-bool g_toggleBlockBoxes{ false };
-//TODO: bool g_toggleVolumeBox{ false };
 
 enum class ObjType : unsigned int
 {
     Axis, Quads, Boxes
 };
 
+SliceSet g_selectedSliceSet{SliceSet::XY};
+
+bd::Axis g_axis;
+bd::Box g_box;
 
 bd::ShaderProgram g_simpleShader;
 bd::ShaderProgram g_volumeShader;
 
+Texture g_tfuncTex;
 
 std::vector<bd::VertexArrayObject *> g_vaoIds;
 std::vector<Block> g_blocks;
@@ -73,9 +75,8 @@ int g_screenHeight{1000};
 float g_fov_deg{50.0f};
 bool g_viewDirty{true};
 bool g_modelDirty{true};
-
-bd::Axis g_axis;
-bd::Box g_box;
+bool g_toggleBlockBoxes{ false };
+//TODO: bool g_toggleVolumeBox{ false };
 
 
 //GLuint loadShader(GLenum type, std::string filepath);
@@ -264,6 +265,7 @@ void loop(GLFWwindow *window)
         vao->bind();
         for (auto *b : g_nonEmptyBlocks) {
             b->texture().bind();
+            g_tfuncTex.bind();
             glm::mat4 mmvp = mvp * b->transform().matrix();
 //            g_simpleShader.setUniform("mvp", mmvp);
             g_volumeShader.setUniform("mvp", mmvp);
@@ -370,15 +372,15 @@ void genQuadVao(bd::VertexArrayObject &vao)
     std::copy(bd::Quad::verts_yz.begin(), bd::Quad::verts_yz.end(), vbufIter);
 
     // copy the bd::Quad vertex colors 3 times
-    std::array<glm::vec3, 12> colorBuf;
-
-    auto colorIter =
-        std::copy(bd::Quad::colors.begin(), bd::Quad::colors.end(), colorBuf.begin());
-
-    colorIter =
-        std::copy(bd::Quad::colors.begin(), bd::Quad::colors.end(), colorIter);
-
-    std::copy(bd::Quad::colors.begin(), bd::Quad::colors.end(), colorIter);
+//    std::array<glm::vec3, 12> colorBuf;
+//
+//    auto colorIter =
+//        std::copy(bd::Quad::colors.begin(), bd::Quad::colors.end(), colorBuf.begin());
+//
+//    colorIter =
+//        std::copy(bd::Quad::colors.begin(), bd::Quad::colors.end(), colorIter);
+//
+//    std::copy(bd::Quad::colors.begin(), bd::Quad::colors.end(), colorIter);
 
     std::array<glm::vec3, 12> texcoords_3d{
         // x-y quad
@@ -488,7 +490,8 @@ void initBlocks(glm::u64vec3 nb, glm::u64vec3 vd)
 
 
 /////////////////////////////////////////////////////////////////////////////////
-std::unique_ptr<float[]> readData(const std::string &dtype, const std::string &fpath,
+std::unique_ptr<float[]> readVolumeData(const std::string &dtype,
+    const std::string &fpath,
     size_t volx, size_t voly, size_t volz)
 {
     bd::DataType t = bd::DataTypesMap.at(dtype);
@@ -525,7 +528,7 @@ std::unique_ptr<float[]> readData(const std::string &dtype, const std::string &f
 
 /////////////////////////////////////////////////////////////////////////////////
 void filterBlocks(float *data, std::vector<Block> &blocks, glm::u64vec3 numBlks,
-      glm::u64vec3 volsz, float tmin=0.1f, float tmax=0.9f)
+      glm::u64vec3 volsz, float tmin=0.0f, float tmax=1.0f)
 {
     size_t emptyCount { 0 };
     glm::u64vec3 bsz{ volsz / numBlks };
@@ -561,6 +564,10 @@ void filterBlocks(float *data, std::vector<Block> &blocks, glm::u64vec3 numBlks,
             b.texture().genGLTex3d(image.data(),
                 Texture::Format::RED, Texture::Format::RED,
                 bsz.x, bsz.y, bsz.z);
+
+            if (b.texture().id() == 0) {
+                gl_log_err("failed to make a texture, sorry about it.");
+            }
 
             g_nonEmptyBlocks.push_back(&b);
         }
@@ -601,12 +608,56 @@ void printBlocks()
 
 
 /////////////////////////////////////////////////////////////////////////////////
+void loadTransfter_1dtformat(const std::string &filename, Texture &transferTex)
+{
+    std::ifstream file(filename.c_str(), std::ifstream::in);
+    if (!file.is_open()) {
+        gl_log_err("Caint open tfunc file: %s", filename.c_str());
+        return ;
+    }
+
+    size_t lineNum { 0 };
+    size_t numKnots{ 0 };
+
+    file >> numKnots; // number of entries/lines in the 1dt file.
+    lineNum++;
+    if (numKnots > 8192) {
+        gl_log_err("The 1dt transfer function has %d knots but max allowed is 8192)."
+            "Skipping loading the transfer function file.", numKnots);
+        return ;
+    }
+
+    glm::vec4 *rgba{ new glm::vec4[numKnots] };
+
+    float r, g, b, a;
+    while ( lineNum < numKnots && file >> r >> g >> b >> a ) { // every line after line 1 is a space sep'd quad.
+        rgba[lineNum] = { r, g, b, a };
+        lineNum++;
+    }
+
+    file.close();
+
+    transferTex.genGLTex1d(reinterpret_cast<float*>(rgba), Texture::Format::RGBA,
+        Texture::Format::RGBA, numKnots);
+    transferTex.textureUnit(1);
+
+    unsigned int smp =  g_volumeShader.getParamLocation("tf_sampler");
+    transferTex.samplerLocation(smp);
+
+    delete[] rgba;
+    //return texId;
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////
 int main(int argc, const char *argv[])
 {
-   CommandLineOptions clo;
-   if (parseThem(argc, argv, clo) == 0) {
-       return 0;
-   }
+    CommandLineOptions clo;
+    if (parseThem(argc, argv, clo) == 0) {
+        return 0;
+    }
+
+    printThem();
 
     bd::gl_log_restart();
 
@@ -659,7 +710,7 @@ int main(int argc, const char *argv[])
     );
 
     std::unique_ptr<float[]> data {
-        std::move( readData(clo.type, clo.filePath, clo.w, clo.h, clo.d) )
+        std::move(readVolumeData(clo.type, clo.filePath, clo.w, clo.h, clo.d) )
     };
 
     filterBlocks(data.get(), g_blocks,
@@ -671,6 +722,8 @@ int main(int argc, const char *argv[])
     if (clo.printBlocks) {
         printBlocks();
     }
+
+    loadTransfter_1dtformat(clo.tfuncPath, g_tfuncTex);
 
     loop(window);
     cleanup();

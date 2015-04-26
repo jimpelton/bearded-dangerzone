@@ -5,23 +5,31 @@
 #include <bd/graphics/shader.h>
 
 
+///////////////////////////////////////////////////////////////////////////////
+/// \brief  Wraps up GL texture creation and binds it when asked.
+/// \note If Texture is wrapping a 3D texture, then the texture unit
+///   \c GL_TEXTURE0+static_cast<unsigned>(Sampler::Volume) is activated.
+///
+/// \note If a 1D texture is wrapped then the texture unit bound is
+///   \c GL_TEXTURE0+static_cast<unsigned>(Sampler::Transfer) is activated.
+///////////////////////////////////////////////////////////////////////////////
 class Texture
 {
 public:
 
-    enum class Target : int
+    enum class Target : unsigned int
     {
         Tex1D, Tex2D, Tex3D
     };
 
-    enum class Format : int
+    enum class Format : unsigned int
     {
         RED, RG, RGB, RGBA
     };
 
-    enum class Sampler : int
+    enum class Sampler : unsigned int
     {
-        Volume, Transfer
+        Volume, Transfer, Poop
     };
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -40,7 +48,7 @@ public:
     unsigned int genGLTex1d(float *img, Format ity, Format ety, size_t w);
     
     unsigned int genGLTex2d(float* img, Format ity,
-    Format ety, size_t w, size_t h);
+        Format ety, size_t w, size_t h);
 
     unsigned int genGLTex3d(float *img, Format internal, Format external, 
         size_t w, size_t h, size_t d);
@@ -64,6 +72,7 @@ private:
     unsigned int m_samplerUniform;  ///< OpenGL id of the texture sampler to use.
     unsigned int m_unit; ///< Texture sampling unit.
     Target m_type;         ///< the gl target to bind to.
+//    Sampler m_sampler; ///
 };
 
 

@@ -7,6 +7,8 @@ struct CommandLineOptions
 {
     // raw file path
     std::string filePath;
+    // transfer function file path
+    std::string tfuncPath;
     // volume data type
     std::string type;
     // true if block data should be dumped to file
@@ -33,6 +35,6 @@ struct CommandLineOptions
 
 int parseThem(int argc, const char *argv [], CommandLineOptions &opts);
 
-void printThem(const CommandLineOptions &cmd);
+void printThem();
 
 #endif // cmdline_h__
