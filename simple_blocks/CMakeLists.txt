@@ -9,8 +9,8 @@ project(simple_blocks)
 include_directories("${SHARED_DIR}/include")
 
 
-set(simple_blocks_HEADERS src/block.h src/cmdline.h)
-set(simple_blocks_SOURCES src/main.cpp src/block.cpp src/cmdline.cpp)
+set(simple_blocks_HEADERS src/block.h src/cmdline.h src/texture.h)
+set(simple_blocks_SOURCES src/main.cpp src/block.cpp src/cmdline.cpp src/texture.cpp)
 
 add_executable(simple_blocks "${simple_blocks_HEADERS}" "${simple_blocks_SOURCES}")
 

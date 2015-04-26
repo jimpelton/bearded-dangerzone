@@ -20,6 +20,7 @@ Block::Block(const glm::u64vec3 &ijk, const glm::vec3 &dims, const glm::vec3 &or
     : m_ijk{ ijk }
     , m_empty{ false }
     , m_avg{ 0.0f }
+    , m_tex{  }
 {
     transform().scale(dims);
     transform().origin(origin);
@@ -32,6 +33,10 @@ Block::~Block()
 {
 }
 
+//void Block::draw()
+//{
+//
+//}
 
 ///////////////////////////////////////////////////////////////////////////////
 glm::u64vec3 Block::ijk() const
@@ -74,14 +79,26 @@ void Block::avg(float a)
     m_avg = a;
 }
 
+Texture& Block::texture()
+{
+    return m_tex;
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 std::string Block::to_string() const
 {
     std::stringstream ss;
-        ss <<  "ijk: (" << m_ijk.x << ',' << m_ijk.y << ',' << m_ijk.z << ")\n"
-        "Origin: " << m_transform.origin().x << ',' << m_transform.origin().y << ',' << m_transform.origin().z ;
+    ss <<  "ijk: (" << m_ijk.x << ',' << m_ijk.y << ',' << m_ijk.z << ")\n"
+        "Origin: " << m_transform.origin().x << ',' << m_transform.origin().y << ',' <<
+        m_transform.origin().z <<
+        "Empty: " << (m_empty ? "True\n" : "False\n");
 
     return ss.str();
+}
+
+std::ostream& operator<<(std::ostream &os, const Block &b)
+{
+    return os << b.to_string();
 }
 

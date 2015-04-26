@@ -88,7 +88,7 @@ public:
     void setUniform(const std::string &param, glm::mat4 &val);
     void setUniform(const std::string &param, glm::vec4 &val);
     void setUniform(const std::string &param, glm::vec3 &val);
-    void setUniform(const std::string &param, const Texture &tex);
+//    void setUniform(const std::string &param, const Texture &tex);
 
     /**  
       * \brief Get the id of the spec'd param.
@@ -111,7 +111,7 @@ private:
     using ParamTable = std::map< std::string, unsigned int >;
     
     /** \brief Maps sampler location, Texture */
-    using TextureTable = std::map<unsigned int, const Texture* >;
+//    using TextureTable = std::map<unsigned int, const Texture* >;
     
     ////////////////////////////////////////////////////////////////////////////////
     // Member Data
@@ -121,7 +121,7 @@ private:
     Shader *m_frag;
     unsigned int m_programId; ///< The opengl shader program id
     ParamTable m_params;  ///< Uniform locations
-    TextureTable m_textures;  ///< Texture sampler locatons
+//    TextureTable m_textures;  ///< Texture sampler locatons
 
 };
 

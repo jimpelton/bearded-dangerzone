@@ -205,13 +205,14 @@ void updateViewMatrix()
 }
 
 
+
+
 ///////////////////////////////////////////////////////////////////////////////
 void loop(GLFWwindow *window)
 {
     glm::mat4 mvp{1.0f};
     bd::VertexArrayObject *vao = nullptr;
 
-    g_simpleShader.bind();
 
     do {
         if (g_viewDirty) {
@@ -225,6 +226,7 @@ void loop(GLFWwindow *window)
 
         gl_check(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
+        g_simpleShader.bind();
         // Coordinate Axis
         vao = g_vaoIds[0];
         vao->bind();
@@ -232,13 +234,32 @@ void loop(GLFWwindow *window)
         g_axis.draw();
         vao->unbind();
 
+        /// wireframe boxs ///
+        vao = g_vaoIds[2];
+        vao->bind();
+        for (auto *b : g_nonEmptyBlocks) {
 
+            glm::mat4 mmvp = mvp * b->transform().matrix();
+            g_simpleShader.setUniform("mvp", mmvp);
+
+            gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, 0));
+            gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT,
+                (GLvoid *) (4 * sizeof(GLushort))));
+            gl_check(glDrawElements(GL_LINES, 8, GL_UNSIGNED_SHORT,
+                (GLvoid *) (8 * sizeof(GLushort))));
+
+        } // for
+        vao->unbind();
+
+        g_volumeShader.bind();
         /// Quad geometry ///
         vao = g_vaoIds[1];
         vao->bind();
         for (auto *b : g_nonEmptyBlocks) {
+            b->texture().bind();
             glm::mat4 mmvp = mvp * b->transform().matrix();
-            g_simpleShader.setUniform("mvp", mmvp);
+            //g_simpleShader.setUniform("mvp", mmvp);
+            g_volumeShader.setUniform("mvp", mmvp);
 
             switch (g_selectedSliceSet) {
             case SliceSet::XY:
@@ -267,23 +288,6 @@ void loop(GLFWwindow *window)
         } // for
         vao->unbind();
 
-
-        /// wireframe boxs ///
-        vao = g_vaoIds[2];
-        vao->bind();
-        for (auto *b : g_nonEmptyBlocks) {
-
-            glm::mat4 mmvp = mvp * b->transform().matrix();
-            g_simpleShader.setUniform("mvp", mmvp);
-
-            gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, 0));
-            gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT,
-                (GLvoid *) (4 * sizeof(GLushort))));
-            gl_check(glDrawElements(GL_LINES, 8, GL_UNSIGNED_SHORT,
-                (GLvoid *) (8 * sizeof(GLushort))));
-
-        } // for
-        vao->unbind();
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -369,6 +373,25 @@ void genQuadVao(bd::VertexArrayObject &vao)
 
     std::copy(bd::Quad::colors.begin(), bd::Quad::colors.end(), colorIter);
 
+    std::array<glm::vec3, 12> texcoords{
+        glm::vec3(0.0f, 0.0f, 0.0f), // 0 ll
+        glm::vec3(1.0, 0.0f, 0.0f), // 1 lr
+        glm::vec3(1.0f, 1.0f, 0.0f), // 2 ur
+        glm::vec3(0.0f,  1.0f, 0.0f),  // 3 ul
+
+
+        glm::vec3(0.0f, 0.0f, 0.0f), // 0 ll
+        glm::vec3(1.0f, 0.0f, 0.0f), // 1 lr
+        glm::vec3(1.0f, 0.0f, 1.0f), // 2 ur
+        glm::vec3(0.0f, 0.0f, 1.0f),  // 3 ul
+
+
+        glm::vec3(0.0f, 0.0f, 0.0f), // 0 ll
+        glm::vec3(0.0f, 1.0f, 0.0f), // 1 lr
+        glm::vec3(0.0f, 1.0f, 1.0f), // 2 ur
+        glm::vec3(0.0f, 0.0f, 1.0f)  // 3 ul
+    };
+
 
     // Element index buffer
     std::array<unsigned short, 12> ebuf{
@@ -382,7 +405,8 @@ void genQuadVao(bd::VertexArrayObject &vao)
         bd::Quad::vert_element_size, 0);
 
     // vertex colors into attribute 1
-    vao.addVbo((float *) (colorBuf.data()), colorBuf.size() * 3, 3, 1);
+//    vao.addVbo((float *) (colorBuf.data()), colorBuf.size() * 3, 3, 1);
+    vao.addVbo((float *) (texcoords.data()), texcoords.size() * 3, 3, 1);
 
     vao.setIndexBuffer((unsigned short *) (ebuf.data()), ebuf.size());
 }
@@ -498,15 +522,21 @@ void filterBlocks(float *data, std::vector<Block> &blocks, glm::u64vec3 numBlks,
     size_t emptyCount { 0 };
     glm::u64vec3 bsz{ volsz / numBlks };
     size_t blkPoints = bd::vecCompMult(bsz);
+
+    std::vector<float> image;
+    image.reserve(blkPoints);
+
     for (auto &b : blocks) {
         glm::u64vec3 bst{ b.ijk() * bsz }; // block start = block index * block size
         float avg{ 0.0f };
 
+        size_t imageIdx = 0;
         for (auto k = bst.z; k < bst.z + bsz.z; ++k)
         for (auto j = bst.y; j < bst.y + bsz.y; ++j)
         for (auto i = bst.x; i < bst.x + bsz.x; ++i) {
             size_t dataIdx{ bd::to1D(i, j, k, volsz.x, volsz.y) };
             float val = data[dataIdx];
+            image[imageIdx++] = val;
             avg += val;
         } // for for for
 
@@ -516,10 +546,14 @@ void filterBlocks(float *data, std::vector<Block> &blocks, glm::u64vec3 numBlks,
         if (avg < tmin || avg > tmax) {
             b.empty(true);
             emptyCount += 1;
-//            glm::u64vec3 ijk{ b.ijk() };
-//            std::cout << "Block " << ijk.x << ", " << ijk.y << ", " << ijk.z <<
-//            " marked empty." << std::endl;
         } else {
+            unsigned int smp =  g_volumeShader.getParamLocation("volume_sampler");
+            b.texture().samplerLocation(smp);
+            b.texture().textureUnit(0);
+            b.texture().genGLTex3d(image.data(),
+                Texture::Format::RED, Texture::Format::RED,
+                bsz.x, bsz.y, bsz.z);
+
             g_nonEmptyBlocks.push_back(&b);
         }
     } // for auto
@@ -550,13 +584,11 @@ void printBlocks()
     std::ofstream block_file("blocks.txt", std::ofstream::trunc);
     if (block_file.is_open()) {
         for (auto &b : g_blocks) {
-            glm::u64vec3 ijk{ b.ijk() };
-            block_file << "(" << ijk.x << "," << ijk.y << "," << ijk.z <<
-            "):\t" << b.avg() << "\n";
+            block_file << b << "\n";
         }
+        block_file.flush();
+        block_file.close();
     }
-    block_file.flush();
-    block_file.close();
 }
 
 
@@ -587,12 +619,13 @@ int main(int argc, const char *argv[])
     }
 
     GLuint volumeProgramId = g_volumeShader.linkProgram(
-        "shaders/vert_3dtexcoordgeneration.glsl",
+        "shaders/vert_vertexcolor_passthrough.glsl",
         "shaders/frag_volumesampler_noshading.glsl"
     );
 
     if (volumeProgramId == 0) {
         gl_log_err("Error building volume sampling shader, program id was 0.");
+        return 1;
     }
 
     bd::VertexArrayObject quadVbo(bd::VertexArrayObject::Method::ELEMENTS);
@@ -613,7 +646,8 @@ int main(int argc, const char *argv[])
     g_vaoIds.push_back(&boxVbo);
 
     initBlocks( glm::u64vec3{clo.numblk_x, clo.numblk_y, clo.numblk_z},
-        glm::u64vec3{clo.w, clo.h, clo.d} );
+        glm::u64vec3{clo.w, clo.h, clo.d}
+    );
 
     std::unique_ptr<float[]> data {
         std::move( readData(clo.type, clo.filePath, clo.w, clo.h, clo.d) )

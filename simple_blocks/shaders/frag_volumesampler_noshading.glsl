@@ -13,7 +13,7 @@ uniform sampler3D volume_sampler;
 
 void main() {
 	float volVal = texture(volume_sampler, UVW).x;
-	color = vec4(1.0f, 1.0f, 1.0f, volVal);
+	color = vec4(1.0f, 1.0f, 1.0f, 1.0f) * volVal;
 
 //	color = texture(tf_sampler, tfScalingVal*volVal);
 }
