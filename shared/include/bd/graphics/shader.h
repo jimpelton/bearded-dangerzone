@@ -88,6 +88,8 @@ public:
     void setUniform(const std::string &param, glm::mat4 &val);
     void setUniform(const std::string &param, glm::vec4 &val);
     void setUniform(const std::string &param, glm::vec3 &val);
+    void setUniform(const std::string &param, float val);
+
 //    void setUniform(const std::string &param, const Texture &tex);
 
     /**  

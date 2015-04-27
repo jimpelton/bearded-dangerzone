@@ -99,6 +99,7 @@ ShaderProgram::ShaderProgram(Shader *vert, Shader *frag)
 ShaderProgram::~ShaderProgram()
 {
     //TODO: cleanup opengl shaders ... glDelete?
+    gl_log_err("I might be a memory leak. Who cares! This be academia, foo!");
 }
 
 
@@ -176,6 +177,14 @@ void ShaderProgram::setUniform(const std::string &param, glm::vec3 &val)
 {
     unsigned int loc = getParamLocation(param);
     gl_check(glUniform3fv(loc, 1, glm::value_ptr(val)));
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+void ShaderProgram::setUniform(const std::string &param, float val )
+{
+    unsigned int loc = getParamLocation(param);
+    gl_check(glUniform1f(loc, val));
 }
 
 

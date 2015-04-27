@@ -78,6 +78,8 @@ bool g_modelDirty{true};
 bool g_toggleBlockBoxes{ false };
 //TODO: bool g_toggleVolumeBox{ false };
 
+float g_scaleValue{ 1.0f };
+
 
 //GLuint loadShader(GLenum type, std::string filepath);
 
@@ -116,7 +118,7 @@ void glfw_error_callback(int error, const char *description)
 void glfw_keyboard_callback(GLFWwindow *window, int key, int scancode, int action,
     int mods)
 {
-    if (action != GLFW_PRESS) {
+    if (action == GLFW_PRESS) {
         switch (key) {
             case GLFW_KEY_0:
                 g_selectedSliceSet = SliceSet::NoneOfEm;
@@ -133,6 +135,34 @@ void glfw_keyboard_callback(GLFWwindow *window, int key, int scancode, int actio
             case GLFW_KEY_4:
                 g_selectedSliceSet = SliceSet::AllOfEm;
                 break;
+            case GLFW_KEY_B:
+                g_toggleBlockBoxes = !g_toggleBlockBoxes;
+                break;
+        }
+    }
+
+    if (action != GLFW_RELEASE){
+        switch(key) {
+        case GLFW_KEY_PERIOD:
+            if (mods & GLFW_MOD_SHIFT)
+                g_scaleValue += 0.1f;
+            else if (mods & GLFW_MOD_CONTROL)
+                g_scaleValue += 0.001f;
+            else
+                g_scaleValue += 0.01f;
+
+//        cout << "Transfer function scaler: " << g_scaleValue << endl;
+            break;
+        case GLFW_KEY_COMMA:
+            if (mods & GLFW_MOD_SHIFT)
+                g_scaleValue -= 0.1f;
+            else if (mods & GLFW_MOD_CONTROL)
+                g_scaleValue -= 0.001f;
+            else
+                g_scaleValue -= 0.01f;
+
+//        cout << "Transfer function scaler: " << g_scaleValue << endl;
+            break;
         }
     }
 }
@@ -206,12 +236,12 @@ void updateViewMatrix()
     g_projectionMatrix = glm::perspective(glm::radians(g_fov_deg),
         g_screenWidth / static_cast<float>(g_screenHeight), 0.1f, 100.0f);
     g_vpMatrix = g_projectionMatrix * g_viewMatrix;
+
     g_viewDirty = false;
+    // update the mvp in render loop
     g_modelDirty = true;
 
 }
-
-
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -233,42 +263,44 @@ void loop(GLFWwindow *window)
 
         gl_check(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
-        g_simpleShader.bind();
 
         ////////  Axis    /////////////////////////////////////////
         vao = g_vaoIds[static_cast<uint>(ObjType::Axis)];
         vao->bind();
+        g_simpleShader.bind();
         g_simpleShader.setUniform("mvp", mvp);
         g_axis.draw();
         vao->unbind();
 
-        ////////  BBoxes  /////////////////////////////////////////
-        vao = g_vaoIds[static_cast<uint>(ObjType::Boxes)];
-        vao->bind();
-        for (auto *b : g_nonEmptyBlocks) {
+        if (g_toggleBlockBoxes) {
+            ////////  BBoxes  /////////////////////////////////////////
+            vao = g_vaoIds[static_cast<uint>(ObjType::Boxes)];
+            vao->bind();
+            for (auto *b : g_nonEmptyBlocks) {
 
-            glm::mat4 mmvp = mvp * b->transform().matrix();
-            g_simpleShader.setUniform("mvp", mmvp);
+                glm::mat4 mmvp = mvp * b->transform().matrix();
+                g_simpleShader.setUniform("mvp", mmvp);
 
-            gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, 0));
-            gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT,
-                (GLvoid *) (4 * sizeof(GLushort))));
-            gl_check(glDrawElements(GL_LINES, 8, GL_UNSIGNED_SHORT,
-                (GLvoid *) (8 * sizeof(GLushort))));
+                gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, 0));
+                gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT,
+                    ( GLvoid * ) (4 * sizeof(GLushort))));
+                gl_check(glDrawElements(GL_LINES, 8, GL_UNSIGNED_SHORT,
+                    ( GLvoid * ) (8 * sizeof(GLushort))));
 
-        } // for
-        vao->unbind();
+            } // for
+            vao->unbind();
+        }
 
         //////// Quad Geo /////////////////////////////////////////
-        g_volumeShader.bind();
         vao = g_vaoIds[static_cast<uint>(ObjType::Quads)];
         vao->bind();
+        g_volumeShader.bind();
+        g_tfuncTex.bind();
         for (auto *b : g_nonEmptyBlocks) {
             b->texture().bind();
-            g_tfuncTex.bind();
             glm::mat4 mmvp = mvp * b->transform().matrix();
-//            g_simpleShader.setUniform("mvp", mmvp);
             g_volumeShader.setUniform("mvp", mmvp);
+            g_volumeShader.setUniform("tfScalingVal", g_scaleValue);
 
             switch (g_selectedSliceSet) {
             case SliceSet::XY:
@@ -280,14 +312,14 @@ void loop(GLFWwindow *window)
                 break;
             case SliceSet::YZ:
                 gl_check( glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT,
-                        (GLvoid *) (8 * sizeof(unsigned short))));
+                    (GLvoid *) (8 * sizeof(unsigned short))));
                 break;
             case SliceSet::AllOfEm:
                 gl_check( glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, 0));
                 gl_check( glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT,
-                    (GLvoid *) (4 * sizeof(unsigned short))));
+                    (GLvoid *) (4 * sizeof(unsigned short))) );
                 gl_check( glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT,
-                        (GLvoid *) (8 * sizeof(unsigned short))));
+                    (GLvoid *) (8 * sizeof(unsigned short))));
                 break;
             case SliceSet::NoneOfEm:
             default:
@@ -305,54 +337,6 @@ void loop(GLFWwindow *window)
              glfwWindowShouldClose(window) == 0);
 }
 
-
-/////////////////////////////////////////////////////////////////////////////////
-GLFWwindow *init()
-{
-    GLFWwindow *window = nullptr;
-    if (!glfwInit()) {
-        gl_log("could not start GLFW3");
-        return nullptr;
-    }
-
-    glfwSetErrorCallback(glfw_error_callback);
-    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
-    // number of samples to use for multi sampling
-    glfwWindowHint(GLFW_SAMPLES, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-    window = glfwCreateWindow(g_screenWidth, g_screenHeight, "Blocks", NULL, NULL);
-    if (!window) {
-        gl_log("ERROR: could not open window with GLFW3");
-        glfwTerminate();
-        return nullptr;
-    }
-
-    glfwSetCursorPosCallback(window, glfw_cursorpos_callback);
-    glfwSetWindowSizeCallback(window, glfw_window_size_callback);
-    glfwSetKeyCallback(window, glfw_keyboard_callback);
-    glfwSetScrollCallback(window, glfw_scrollwheel_callback);
-
-    glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
-    glfwMakeContextCurrent(window);
-
-    glewExperimental = GL_TRUE;
-    GLenum error = gl_check(glewInit());
-    if (error) {
-        gl_log("could not init glew %s", glewGetErrorString(error));
-        return nullptr;
-    }
-
-    bd::subscribe_debug_callbacks();
-
-    gl_check(glEnable(GL_DEPTH_TEST));
-    gl_check(glDepthFunc(GL_LESS));
-    gl_check(glClearColor(0.1f, 0.1f, 0.1f, 0.0f));
-
-    return window;
-}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -491,8 +475,7 @@ void initBlocks(glm::u64vec3 nb, glm::u64vec3 vd)
 
 /////////////////////////////////////////////////////////////////////////////////
 std::unique_ptr<float[]> readVolumeData(const std::string &dtype,
-    const std::string &fpath,
-    size_t volx, size_t voly, size_t volz)
+    const std::string &fpath, size_t volx, size_t voly, size_t volz)
 {
     bd::DataType t = bd::DataTypesMap.at(dtype);
     float *rawdata = nullptr;
@@ -577,6 +560,61 @@ void filterBlocks(float *data, std::vector<Block> &blocks, glm::u64vec3 numBlks,
 
     gl_log("%d/%d blocks removed.", emptyCount, bd::vecCompMult(numBlks));
 
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////
+GLFWwindow *init()
+{
+    GLFWwindow *window = nullptr;
+    if (!glfwInit()) {
+        gl_log("could not start GLFW3");
+        return nullptr;
+    }
+
+    glfwSetErrorCallback(glfw_error_callback);
+    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
+
+    // number of samples to use for multi sampling
+    //glfwWindowHint(GLFW_SAMPLES, 4);
+
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+    window = glfwCreateWindow(g_screenWidth, g_screenHeight, "Blocks", NULL, NULL);
+    if (!window) {
+        gl_log("ERROR: could not open window with GLFW3");
+        glfwTerminate();
+        return nullptr;
+    }
+
+    glfwSetCursorPosCallback(window, glfw_cursorpos_callback);
+    glfwSetWindowSizeCallback(window, glfw_window_size_callback);
+    glfwSetKeyCallback(window, glfw_keyboard_callback);
+    glfwSetScrollCallback(window, glfw_scrollwheel_callback);
+
+    glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
+    glfwMakeContextCurrent(window);
+
+    glewExperimental = GL_TRUE;
+    GLenum error = gl_check(glewInit());
+    if (error) {
+        gl_log("could not init glew %s", glewGetErrorString(error));
+        return nullptr;
+    }
+
+    bd::subscribe_debug_callbacks();
+
+    gl_check(glClearColor(0.1f, 0.1f, 0.1f, 0.0f));
+
+    gl_check(glEnable(GL_DEPTH_TEST));
+    gl_check(glDepthFunc(GL_LESS));
+
+    gl_check(glEnable(GL_BLEND));
+    gl_check(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+
+    return window;
 }
 
 
@@ -667,20 +705,20 @@ int main(int argc, const char *argv[])
         return 1;
     }
 
-    GLuint programId = g_simpleShader.linkProgram(
+    GLuint programId { g_simpleShader.linkProgram(
         "shaders/vert_vertexcolor_passthrough.glsl",
-        "shaders/frag_vertcolor.glsl"
-    );
+        "shaders/frag_vertcolor.glsl")
+    };
 
     if (programId == 0) {
         gl_log_err("Error building passthrough shader, program id was 0.");
         return 1;
     }
 
-    GLuint volumeProgramId = g_volumeShader.linkProgram(
+    GLuint volumeProgramId{ g_volumeShader.linkProgram(
         "shaders/vert_vertexcolor_passthrough.glsl",
-        "shaders/frag_volumesampler_noshading.glsl"
-    );
+        "shaders/frag_volumesampler_noshading.glsl")
+    };
 
     if (volumeProgramId == 0) {
         gl_log_err("Error building volume sampling shader, program id was 0.");
