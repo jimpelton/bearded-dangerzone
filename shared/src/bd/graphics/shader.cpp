@@ -159,7 +159,7 @@ unsigned int ShaderProgram::linkProgram(const std::string &vertPath,
 ///////////////////////////////////////////////////////////////////////////////
 void ShaderProgram::setUniform(const std::string &param, glm::mat4 &val)
 {
-    unsigned int loc = getParamLocation(param);
+    unsigned int loc = getUniformLocation(param);
     gl_check(glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(val)));
 }
 
@@ -167,7 +167,7 @@ void ShaderProgram::setUniform(const std::string &param, glm::mat4 &val)
 ///////////////////////////////////////////////////////////////////////////////
 void ShaderProgram::setUniform(const std::string &param, glm::vec4 &val)
 {
-    unsigned int loc = getParamLocation(param);
+    unsigned int loc = getUniformLocation(param);
     gl_check(glUniform4fv(loc, 1, glm::value_ptr(val)));
 }
 
@@ -175,7 +175,7 @@ void ShaderProgram::setUniform(const std::string &param, glm::vec4 &val)
 ///////////////////////////////////////////////////////////////////////////////
 void ShaderProgram::setUniform(const std::string &param, glm::vec3 &val)
 {
-    unsigned int loc = getParamLocation(param);
+    unsigned int loc = getUniformLocation(param);
     gl_check(glUniform3fv(loc, 1, glm::value_ptr(val)));
 }
 
@@ -183,7 +183,7 @@ void ShaderProgram::setUniform(const std::string &param, glm::vec3 &val)
 ///////////////////////////////////////////////////////////////////////////////
 void ShaderProgram::setUniform(const std::string &param, float val )
 {
-    unsigned int loc = getParamLocation(param);
+    unsigned int loc = getUniformLocation(param);
     gl_check(glUniform1f(loc, val));
 }
 
@@ -191,13 +191,13 @@ void ShaderProgram::setUniform(const std::string &param, float val )
 ///////////////////////////////////////////////////////////////////////////////
 //void ShaderProgram::setUniform(const std::string &param, const Texture &tex)
 //{
-//    unsigned int loc = getParamLocation(param);
+//    unsigned int loc = getUniformLocation(param);
 //    m_textures[loc] = &tex;
 //}
 
 
 ///////////////////////////////////////////////////////////////////////////////
-unsigned int ShaderProgram::getParamLocation(const std::string &param)
+unsigned int ShaderProgram::getUniformLocation(const std::string &param)
 {
     unsigned int rval = 0;
     ParamTable::iterator found = m_params.find(param);

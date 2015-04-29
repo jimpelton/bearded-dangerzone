@@ -15,7 +15,7 @@ BDObj::BDObj()
 }
 
 BDObj::BDObj(const std::string &id)
-    : ID{ "{" + id + "}" }
+    : ID( std::string( "{" + id + "}" ) )
 {
 }
 

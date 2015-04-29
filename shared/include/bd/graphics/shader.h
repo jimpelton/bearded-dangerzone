@@ -96,7 +96,7 @@ public:
       * \brief Get the id of the spec'd param.
       * \return The non-zero gl identifier, or 0 if param has never been set.
       */
-    unsigned int getParamLocation(const std::string &param);
+    unsigned int getUniformLocation(const std::string &param);
 
     void bind();
     void unbind();

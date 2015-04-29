@@ -32,9 +32,9 @@
 #include <ctime>
 #include <iostream>
 
-const glm::vec3 X_AXIS{1.0f, 0.0f, 0.0f};
-const glm::vec3 Y_AXIS{0.0f, 1.0f, 0.0f};
-const glm::vec3 Z_AXIS{0.0f, 0.0f, 1.0f};
+const glm::vec3 X_AXIS{ 1.0f, 0.0f, 0.0f };
+const glm::vec3 Y_AXIS{ 0.0f, 1.0f, 0.0f };
+const glm::vec3 Z_AXIS{ 0.0f, 0.0f, 1.0f };
 
 enum class SliceSet
 {
@@ -46,7 +46,7 @@ enum class ObjType : unsigned int
     Axis, Quads, Boxes
 };
 
-SliceSet g_selectedSliceSet{SliceSet::XY};
+SliceSet g_selectedSliceSet{ SliceSet::XY };
 
 bd::Axis g_axis;
 bd::Box g_box;
@@ -64,17 +64,17 @@ glm::quat g_rotation;
 glm::mat4 g_viewMatrix;
 glm::mat4 g_projectionMatrix;
 glm::mat4 g_vpMatrix;
-glm::vec3 g_camPosition{0.0f, 0.0f, -2.0f};
-glm::vec3 g_camFocus{0.0f, 0.0f, 0.0f};
-glm::vec3 g_camUp{0.0f, 1.0f, 0.0f};
+glm::vec3 g_camPosition{ 0.0f, 0.0f, -2.0f };
+glm::vec3 g_camFocus{ 0.0f, 0.0f, 0.0f };
+glm::vec3 g_camUp{ 0.0f, 1.0f, 0.0f };
 glm::vec2 g_cursorPos;
 
-float g_mouseSpeed{1.0f};
-int g_screenWidth{1000};
-int g_screenHeight{1000};
-float g_fov_deg{50.0f};
-bool g_viewDirty{true};
-bool g_modelDirty{true};
+float g_mouseSpeed{ 1.0f };
+int g_screenWidth{ 1000 };
+int g_screenHeight{ 1000 };
+float g_fov_deg{ 50.0f };
+bool g_viewDirty{ true };
+bool g_modelDirty{ true };
 bool g_toggleBlockBoxes{ false };
 //TODO: bool g_toggleVolumeBox{ false };
 
@@ -120,29 +120,29 @@ void glfw_keyboard_callback(GLFWwindow *window, int key, int scancode, int actio
 {
     if (action == GLFW_PRESS) {
         switch (key) {
-            case GLFW_KEY_0:
-                g_selectedSliceSet = SliceSet::NoneOfEm;
-                break;
-            case GLFW_KEY_1:
-                g_selectedSliceSet = SliceSet::XY;
-                break;
-            case GLFW_KEY_2:
-                g_selectedSliceSet = SliceSet::XZ;
-                break;
-            case GLFW_KEY_3:
-                g_selectedSliceSet = SliceSet::YZ;
-                break;
-            case GLFW_KEY_4:
-                g_selectedSliceSet = SliceSet::AllOfEm;
-                break;
-            case GLFW_KEY_B:
-                g_toggleBlockBoxes = !g_toggleBlockBoxes;
-                break;
+        case GLFW_KEY_0:
+            g_selectedSliceSet = SliceSet::NoneOfEm;
+            break;
+        case GLFW_KEY_1:
+            g_selectedSliceSet = SliceSet::XY;
+            break;
+        case GLFW_KEY_2:
+            g_selectedSliceSet = SliceSet::XZ;
+            break;
+        case GLFW_KEY_3:
+            g_selectedSliceSet = SliceSet::YZ;
+            break;
+        case GLFW_KEY_4:
+            g_selectedSliceSet = SliceSet::AllOfEm;
+            break;
+        case GLFW_KEY_B:
+            g_toggleBlockBoxes = !g_toggleBlockBoxes;
+            break;
         }
     }
 
     if (action != GLFW_RELEASE){
-        switch(key) {
+        switch (key) {
         case GLFW_KEY_PERIOD:
             if (mods & GLFW_MOD_SHIFT)
                 g_scaleValue += 0.1f;
@@ -151,7 +151,7 @@ void glfw_keyboard_callback(GLFWwindow *window, int key, int scancode, int actio
             else
                 g_scaleValue += 0.01f;
 
-//        cout << "Transfer function scaler: " << g_scaleValue << endl;
+            //        cout << "Transfer function scaler: " << g_scaleValue << endl;
             break;
         case GLFW_KEY_COMMA:
             if (mods & GLFW_MOD_SHIFT)
@@ -161,7 +161,7 @@ void glfw_keyboard_callback(GLFWwindow *window, int key, int scancode, int actio
             else
                 g_scaleValue -= 0.01f;
 
-//        cout << "Transfer function scaler: " << g_scaleValue << endl;
+            //        cout << "Transfer function scaler: " << g_scaleValue << endl;
             break;
         }
     }
@@ -194,11 +194,11 @@ void glfw_cursorpos_callback(GLFWwindow *window, double x, double y)
 ///////////////////////////////////////////////////////////////////////////////
 void glfw_scrollwheel_callback(GLFWwindow *window, double xoff, double yoff)
 {
-    float fov = static_cast<float>(g_fov_deg +(yoff*1.75f));
+    float fov = static_cast<float>(g_fov_deg + (yoff*1.75f));
 
     std::cout << "fov: " << fov << std::endl;
 
-    if (fov<1 || fov>120) return;
+    if (fov < 1 || fov>120) return;
 
     g_fov_deg = fov;
 
@@ -216,12 +216,12 @@ void setRotation(const glm::vec2 &dr)
     glm::quat rotX = glm::angleAxis<float>(
         glm::radians(-dr.y) * g_mouseSpeed,
         glm::vec3(1, 0, 0)
-    );
+        );
 
     glm::quat rotY = glm::angleAxis<float>(
         glm::radians(dr.x) * g_mouseSpeed,
         glm::vec3(0, 1, 0)
-    );
+        );
 
     g_rotation = (rotX * rotY) * g_rotation;
 
@@ -245,10 +245,70 @@ void updateViewMatrix()
 
 
 ///////////////////////////////////////////////////////////////////////////////
+void drawNonEmptyBoundingBoxes(const glm::mat4 &mvp)
+{
+    for (auto *b : g_nonEmptyBlocks) {
+
+        glm::mat4 mmvp = mvp * b->transform().matrix();
+        g_simpleShader.setUniform("mvp", mmvp);
+
+        gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, 0));
+        gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT,
+            (GLvoid *)(4 * sizeof(GLushort))));
+        gl_check(glDrawElements(GL_LINES, 8, GL_UNSIGNED_SHORT,
+            (GLvoid *)(8 * sizeof(GLushort))));
+
+    } // for
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+void drawNonEmptyBlocks(const glm::mat4 &mvp)
+{
+    g_volumeShader.bind();
+
+    for (auto *b : g_nonEmptyBlocks) {
+        b->texture().bind();
+        glm::mat4 mmvp = mvp * b->transform().matrix();
+        g_volumeShader.setUniform("mvp", mmvp);
+        g_volumeShader.setUniform("tfScalingVal", g_scaleValue);
+
+        switch (g_selectedSliceSet) {
+        case SliceSet::XY:
+            gl_check(glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, 0));
+            break;
+        case SliceSet::XZ:
+            gl_check(glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT,
+                (GLvoid *)(4 * sizeof(unsigned short))));
+            break;
+        case SliceSet::YZ:
+            gl_check(glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT,
+                (GLvoid *)(8 * sizeof(unsigned short))));
+            break;
+        case SliceSet::AllOfEm:
+            gl_check(glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, 0));
+            gl_check(glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT,
+                (GLvoid *)(4 * sizeof(unsigned short))));
+            gl_check(glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT,
+                (GLvoid *)(8 * sizeof(unsigned short))));
+            break;
+        case SliceSet::NoneOfEm:
+        default:
+            break;
+        } // switch
+
+    } // for
+}
+
+///////////////////////////////////////////////////////////////////////////////
 void loop(GLFWwindow *window)
 {
-    glm::mat4 mvp{1.0f};
+    gl_log("Entered render loop.");
+    glm::mat4 mvp{ 1.0f };
     bd::VertexArrayObject *vao = nullptr;
+    
+    g_volumeShader.bind();
+    g_tfuncTex.bind(); //TODO:  move tfunc bind out of render loop
 
 
     do {
@@ -265,7 +325,7 @@ void loop(GLFWwindow *window)
 
 
         ////////  Axis    /////////////////////////////////////////
-        vao = g_vaoIds[static_cast<uint>(ObjType::Axis)];
+        vao = g_vaoIds[static_cast<unsigned int>(ObjType::Axis)];
         vao->bind();
         g_simpleShader.bind();
         g_simpleShader.setUniform("mvp", mvp);
@@ -274,59 +334,16 @@ void loop(GLFWwindow *window)
 
         if (g_toggleBlockBoxes) {
             ////////  BBoxes  /////////////////////////////////////////
-            vao = g_vaoIds[static_cast<uint>(ObjType::Boxes)];
+            vao = g_vaoIds[static_cast<unsigned int>(ObjType::Boxes)];
             vao->bind();
-            for (auto *b : g_nonEmptyBlocks) {
-
-                glm::mat4 mmvp = mvp * b->transform().matrix();
-                g_simpleShader.setUniform("mvp", mmvp);
-
-                gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, 0));
-                gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT,
-                    ( GLvoid * ) (4 * sizeof(GLushort))));
-                gl_check(glDrawElements(GL_LINES, 8, GL_UNSIGNED_SHORT,
-                    ( GLvoid * ) (8 * sizeof(GLushort))));
-
-            } // for
+            drawNonEmptyBoundingBoxes(mvp);
             vao->unbind();
         }
 
         //////// Quad Geo /////////////////////////////////////////
-        vao = g_vaoIds[static_cast<uint>(ObjType::Quads)];
+        vao = g_vaoIds[static_cast<unsigned int>(ObjType::Quads)];
         vao->bind();
-        g_volumeShader.bind();
-        g_tfuncTex.bind();
-        for (auto *b : g_nonEmptyBlocks) {
-            b->texture().bind();
-            glm::mat4 mmvp = mvp * b->transform().matrix();
-            g_volumeShader.setUniform("mvp", mmvp);
-            g_volumeShader.setUniform("tfScalingVal", g_scaleValue);
-
-            switch (g_selectedSliceSet) {
-            case SliceSet::XY:
-                gl_check( glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, 0));
-                break;
-            case SliceSet::XZ:
-                gl_check( glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT,
-                    (GLvoid *) (4 * sizeof(unsigned short))));
-                break;
-            case SliceSet::YZ:
-                gl_check( glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT,
-                    (GLvoid *) (8 * sizeof(unsigned short))));
-                break;
-            case SliceSet::AllOfEm:
-                gl_check( glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, 0));
-                gl_check( glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT,
-                    (GLvoid *) (4 * sizeof(unsigned short))) );
-                gl_check( glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT,
-                    (GLvoid *) (8 * sizeof(unsigned short))));
-                break;
-            case SliceSet::NoneOfEm:
-            default:
-                break;
-            } // switch
-
-        } // for
+        drawNonEmptyBlocks(mvp);
         vao->unbind();
 
 
@@ -334,9 +351,10 @@ void loop(GLFWwindow *window)
         glfwPollEvents();
 
     } while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
-             glfwWindowShouldClose(window) == 0);
-}
+        glfwWindowShouldClose(window) == 0);
 
+    gl_log("Render loop exited.");
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -356,22 +374,22 @@ void genQuadVao(bd::VertexArrayObject &vao)
     std::copy(bd::Quad::verts_yz.begin(), bd::Quad::verts_yz.end(), vbufIter);
 
     // copy the bd::Quad vertex colors 3 times
-//    std::array<glm::vec3, 12> colorBuf;
-//
-//    auto colorIter =
-//        std::copy(bd::Quad::colors.begin(), bd::Quad::colors.end(), colorBuf.begin());
-//
-//    colorIter =
-//        std::copy(bd::Quad::colors.begin(), bd::Quad::colors.end(), colorIter);
-//
-//    std::copy(bd::Quad::colors.begin(), bd::Quad::colors.end(), colorIter);
+    //    std::array<glm::vec3, 12> colorBuf;
+    //
+    //    auto colorIter =
+    //        std::copy(bd::Quad::colors.begin(), bd::Quad::colors.end(), colorBuf.begin());
+    //
+    //    colorIter =
+    //        std::copy(bd::Quad::colors.begin(), bd::Quad::colors.end(), colorIter);
+    //
+    //    std::copy(bd::Quad::colors.begin(), bd::Quad::colors.end(), colorIter);
 
     std::array<glm::vec3, 12> texcoords_3d{
         // x-y quad
         glm::vec3(0.0f, 0.0f, 0.0f), // 0 ll
         glm::vec3(1.0, 0.0f, 0.0f), // 1 lr
         glm::vec3(1.0f, 1.0f, 0.0f), // 2 ur
-        glm::vec3(0.0f,  1.0f, 0.0f),  // 3 ul
+        glm::vec3(0.0f, 1.0f, 0.0f),  // 3 ul
 
         // x-z quad
         glm::vec3(0.0f, 0.0f, 0.0f), // 0 ll
@@ -395,14 +413,14 @@ void genQuadVao(bd::VertexArrayObject &vao)
     };
 
     // vertex positions into attribute 0
-    vao.addVbo((float *) vbuf.data(), vbuf.size() * bd::Quad::vert_element_size,
+    vao.addVbo((float *)vbuf.data(), vbuf.size() * bd::Quad::vert_element_size,
         bd::Quad::vert_element_size, 0);
 
     // vertex colors into attribute 1
-//    vao.addVbo((float *) (colorBuf.data()), colorBuf.size() * 3, 3, 1);
-    vao.addVbo((float *) (texcoords_3d.data()), texcoords_3d.size() * 3, 3, 1);
+    //    vao.addVbo((float *) (colorBuf.data()), colorBuf.size() * 3, 3, 1);
+    vao.addVbo((float *)(texcoords_3d.data()), texcoords_3d.size() * 3, 3, 1);
 
-    vao.setIndexBuffer((unsigned short *) (ebuf.data()), ebuf.size());
+    vao.setIndexBuffer((unsigned short *)(ebuf.data()), ebuf.size());
 }
 
 
@@ -410,12 +428,12 @@ void genQuadVao(bd::VertexArrayObject &vao)
 void genAxisVao(bd::VertexArrayObject &vao)
 {
     // vertex positions into attribute 0
-    vao.addVbo((float *) (bd::Axis::verts.data()),
+    vao.addVbo((float *)(bd::Axis::verts.data()),
         bd::Axis::verts.size() * bd::Axis::vert_element_size,
         bd::Axis::vert_element_size, 0);
 
     // vertex colors into attribute 1
-    vao.addVbo((float *) (bd::Axis::colors.data()),
+    vao.addVbo((float *)(bd::Axis::colors.data()),
         bd::Axis::colors.size() * 3,
         3, 1);
 }
@@ -425,16 +443,16 @@ void genAxisVao(bd::VertexArrayObject &vao)
 void genBoxVao(bd::VertexArrayObject &vao)
 {
     // vertex positions into attribute 0
-    vao.addVbo((float *) (bd::Box::vertices.data()),
+    vao.addVbo((float *)(bd::Box::vertices.data()),
         bd::Box::vertices.size() * bd::Box::vert_element_size,
         bd::Box::vert_element_size, 0);
 
     // vertex colors into attribute 1
-    vao.addVbo((float *) (bd::Box::colors.data()),
+    vao.addVbo((float *)(bd::Box::colors.data()),
         bd::Box::colors.size() * 3,
         3, 1);
 
-    vao.setIndexBuffer((unsigned short *) (bd::Box::elements.data()),
+    vao.setIndexBuffer((unsigned short *)(bd::Box::elements.data()),
         bd::Box::elements.size());
 
 }
@@ -445,7 +463,7 @@ void genBoxVao(bd::VertexArrayObject &vao)
 void initBlocks(glm::u64vec3 nb, glm::u64vec3 vd)
 {
     // block world dims
-    glm::vec3 blk_dims{1.0f / glm::vec3(nb)};
+    glm::vec3 blk_dims{ 1.0f / glm::vec3(nb) };
 
     gl_log("Starting block init: Number of blocks: %dx%dx%d, "
         "Volume dimensions: %dx%dx%d Block dimensions: %.2f,%.2f,%.2f",
@@ -459,13 +477,13 @@ void initBlocks(glm::u64vec3 nb, glm::u64vec3 vd)
     for (auto bx = 0ul; bx < nb.x; ++bx) {
 
         // i,j,k block identifier
-        glm::u64vec3 blkId{bx, by, bz};
+        glm::u64vec3 blkId{ bx, by, bz };
         // lower left corner in world coordinates
-        glm::vec3 worldLoc{(blk_dims * glm::vec3(blkId)) - 0.5f}; // - 0.5f;
+        glm::vec3 worldLoc{ (blk_dims * glm::vec3(blkId)) - 0.5f }; // - 0.5f;
         // origin in world coordiates
-        glm::vec3 blk_origin{(worldLoc + (worldLoc + blk_dims)) * 0.5f};
+        glm::vec3 blk_origin{ (worldLoc + (worldLoc + blk_dims)) * 0.5f };
 
-        Block blk{glm::u64vec3(bx, by, bz), blk_dims, blk_origin};
+        Block blk{ glm::u64vec3(bx, by, bz), blk_dims, blk_origin };
         g_blocks.push_back(blk);
     }
 
@@ -474,7 +492,7 @@ void initBlocks(glm::u64vec3 nb, glm::u64vec3 vd)
 
 
 /////////////////////////////////////////////////////////////////////////////////
-std::unique_ptr<float[]> readVolumeData(const std::string &dtype,
+std::unique_ptr<float []> readVolumeData(const std::string &dtype,
     const std::string &fpath, size_t volx, size_t voly, size_t volz)
 {
     bd::DataType t = bd::DataTypesMap.at(dtype);
@@ -505,20 +523,22 @@ std::unique_ptr<float[]> readVolumeData(const std::string &dtype,
         break;
     }
 
-    return std::unique_ptr<float[]>(rawdata);
+    return std::unique_ptr<float []>(rawdata);
 }
 
 
 /////////////////////////////////////////////////////////////////////////////////
+/// \brief Marks blocks as empty if average is outside of [tmin..tmax]
+///////////////////////////////////////////////////////////////////////////////
 void filterBlocks(float *data, std::vector<Block> &blocks, glm::u64vec3 numBlks,
-      glm::u64vec3 volsz, float tmin=0.0f, float tmax=1.0f)
+    glm::u64vec3 volsz, float tmin = 0.0f, float tmax = 1.0f)
 {
-    size_t emptyCount { 0 };
+    size_t emptyCount{ 0 };
     glm::u64vec3 bsz{ volsz / numBlks };
     size_t blkPoints = bd::vecCompMult(bsz);
 
     std::vector<float> image;
-    image.reserve(blkPoints);
+    image.resize(blkPoints);
 
     for (auto &b : blocks) {
         glm::u64vec3 bst{ b.ijk() * bsz }; // block start = block index * block size
@@ -541,7 +561,7 @@ void filterBlocks(float *data, std::vector<Block> &blocks, glm::u64vec3 numBlks,
             b.empty(true);
             emptyCount += 1;
         } else {
-            unsigned int smp =  g_volumeShader.getParamLocation("volume_sampler");
+            unsigned int smp = g_volumeShader.getUniformLocation("volume_sampler");
             b.texture().samplerLocation(smp);
             b.texture().textureUnit(0);
             b.texture().genGLTex3d(image.data(),
@@ -564,7 +584,7 @@ void filterBlocks(float *data, std::vector<Block> &blocks, glm::u64vec3 numBlks,
 
 
 /////////////////////////////////////////////////////////////////////////////////
-GLFWwindow *init()
+GLFWwindow* init()
 {
     GLFWwindow *window = nullptr;
     if (!glfwInit()) {
@@ -582,7 +602,7 @@ GLFWwindow *init()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    window = glfwCreateWindow(g_screenWidth, g_screenHeight, "Blocks", NULL, NULL);
+    window = glfwCreateWindow(g_screenWidth, g_screenHeight, "Blocks", nullptr, nullptr);
     if (!window) {
         gl_log("ERROR: could not open window with GLFW3");
         glfwTerminate();
@@ -621,13 +641,13 @@ GLFWwindow *init()
 /////////////////////////////////////////////////////////////////////////////////
 void cleanup()
 {
-//    std::vector<GLuint> bufIds;
-//    for (unsigned i=0; i<NUMBOXES; ++i) {
-//        bufIds.push_back(g_bbox[i].iboId());
-//        bufIds.push_back(g_bbox[i].vboId());
-//    }
-//    glDeleteBuffers(NUMBOXES, &bufIds[0]);
-//    glDeleteProgram(g_shaderProgramId);
+    //    std::vector<GLuint> bufIds;
+    //    for (unsigned i=0; i<NUMBOXES; ++i) {
+    //        bufIds.push_back(g_bbox[i].iboId());
+    //        bufIds.push_back(g_bbox[i].vboId());
+    //    }
+    //    glDeleteBuffers(NUMBOXES, &bufIds[0]);
+    //    glDeleteProgram(g_shaderProgramId);
 }
 
 
@@ -646,15 +666,17 @@ void printBlocks()
 
 
 /////////////////////////////////////////////////////////////////////////////////
-void loadTransfter_1dtformat(const std::string &filename, Texture &transferTex)
+unsigned int loadTransfter_1dtformat(const std::string &filename, Texture &transferTex)
 {
+    gl_log("Reading transfer function file in .1dt format");
+
     std::ifstream file(filename.c_str(), std::ifstream::in);
     if (!file.is_open()) {
         gl_log_err("Caint open tfunc file: %s", filename.c_str());
-        return ;
+        return 0;
     }
 
-    size_t lineNum { 0 };
+    size_t lineNum{ 0 };
     size_t numKnots{ 0 };
 
     file >> numKnots; // number of entries/lines in the 1dt file.
@@ -662,33 +684,42 @@ void loadTransfter_1dtformat(const std::string &filename, Texture &transferTex)
     if (numKnots > 8192) {
         gl_log_err("The 1dt transfer function has %d knots but max allowed is 8192)."
             "Skipping loading the transfer function file.", numKnots);
-        return ;
+        return 0;
     }
 
     glm::vec4 *rgba{ new glm::vec4[numKnots] };
-
+    // read rest of file consisting of rgba colors    
     float r, g, b, a;
-    while ( lineNum < numKnots && file >> r >> g >> b >> a ) { // every line after line 1 is a space sep'd quad.
+    while (lineNum < numKnots && file >> r >> g >> b >> a) { 
         rgba[lineNum] = { r, g, b, a };
         lineNum++;
     }
 
     file.close();
 
-    transferTex.genGLTex1d(reinterpret_cast<float*>(rgba), Texture::Format::RGBA,
-        Texture::Format::RGBA, numKnots);
+    unsigned int texId{ 
+        transferTex.genGLTex1d(reinterpret_cast<float*>(rgba), Texture::Format::RGBA,
+            Texture::Format::RGBA, numKnots)
+    };
+
+    if (texId == 0) {
+        gl_log_err("Could not make transfer function texture, returned id was 0.");
+        return texId;
+    }
+
     transferTex.textureUnit(1);
 
-    unsigned int smp =  g_volumeShader.getParamLocation("tf_sampler");
+    unsigned int smp{ g_volumeShader.getUniformLocation("tf_sampler") };
     transferTex.samplerLocation(smp);
 
-    delete[] rgba;
-    //return texId;
+    delete [] rgba;
+
+    return texId;
 }
 
 
 /////////////////////////////////////////////////////////////////////////////////
-int main(int argc, const char *argv[])
+int main(int argc, const char *argv [])
 {
     CommandLineOptions clo;
     if (parseThem(argc, argv, clo) == 0) {
@@ -705,7 +736,7 @@ int main(int argc, const char *argv[])
         return 1;
     }
 
-    GLuint programId { g_simpleShader.linkProgram(
+    GLuint programId{ g_simpleShader.linkProgram(
         "shaders/vert_vertexcolor_passthrough.glsl",
         "shaders/frag_vertcolor.glsl")
     };
@@ -738,30 +769,33 @@ int main(int argc, const char *argv[])
     genAxisVao(axisVbo);
     genBoxVao(boxVbo);
 
-    g_vaoIds.reserve(3);
-    g_vaoIds[static_cast<uint>(ObjType::Axis)] =  &axisVbo;
-    g_vaoIds[static_cast<uint>(ObjType::Quads)] = &quadVbo;
-    g_vaoIds[static_cast<uint>(ObjType::Boxes)] = &boxVbo;
+    g_vaoIds.resize(3);
+    g_vaoIds[static_cast<unsigned int>(ObjType::Axis)] = &axisVbo;
+    g_vaoIds[static_cast<unsigned int>(ObjType::Quads)] = &quadVbo;
+    g_vaoIds[static_cast<unsigned int>(ObjType::Boxes)] = &boxVbo;
 
-    initBlocks( glm::u64vec3{clo.numblk_x, clo.numblk_y, clo.numblk_z},
-        glm::u64vec3{clo.w, clo.h, clo.d}
+    initBlocks(glm::u64vec3{ clo.numblk_x, clo.numblk_y, clo.numblk_z },
+        glm::u64vec3{ clo.w, clo.h, clo.d }
     );
 
-    std::unique_ptr<float[]> data {
-        std::move(readVolumeData(clo.type, clo.filePath, clo.w, clo.h, clo.d) )
+    std::unique_ptr<float []> data{
+        std::move(readVolumeData(clo.type, clo.filePath, clo.w, clo.h, clo.d))
     };
 
-    filterBlocks(data.get(), g_blocks,
-        {clo.numblk_x, clo.numblk_y, clo.numblk_z},
-        {clo.w, clo.h, clo.d},
-        clo.tmin, clo.tmax
+    filterBlocks(data.get(), g_blocks, { clo.numblk_x, clo.numblk_y, clo.numblk_z },
+        { clo.w, clo.h, clo.d }, clo.tmin, clo.tmax
     );
 
     if (clo.printBlocks) {
         printBlocks();
     }
 
-    loadTransfter_1dtformat(clo.tfuncPath, g_tfuncTex);
+    unsigned int texid{ loadTransfter_1dtformat(clo.tfuncPath, g_tfuncTex) };
+
+    if (texid == 0) {
+        gl_log_err("Exiting because tfunc texture was not bound.");
+        exit(1);
+    }
 
     loop(window);
     cleanup();
