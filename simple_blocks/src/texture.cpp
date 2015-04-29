@@ -47,7 +47,7 @@ unsigned int Texture::genGLTex1d(float *img, Format ity, Format ety, size_t w)
     gl_check(glBindTexture(GL_TEXTURE_1D, texId));
 
     using uint = unsigned int;
-    gl_check(glTexImage1D (
+    gl_check(glTexImage1D(
         GL_TEXTURE_1D,
         0,
         texfmt.at(static_cast<uint>(ity)),
@@ -122,9 +122,9 @@ unsigned int Texture::genGLTex3d(float* img, Format ity,
 
     gl_check(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
     gl_check(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-    gl_check(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP));
-    gl_check(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP));
-    gl_check(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP));
+    gl_check(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+    gl_check(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+    gl_check(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE));
 
     gl_check(glBindTexture(GL_TEXTURE_3D, 0));
 
