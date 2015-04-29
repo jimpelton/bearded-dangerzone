@@ -6,7 +6,9 @@ cmake_minimum_required(VERSION 2.8)
 
 project(shared LANGUAGES CXX)
 
+# Enables gl_check() macros.
 add_definitions(-DBD_DEBUG)
+
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 
