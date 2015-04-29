@@ -66,7 +66,7 @@ unsigned int Texture::genGLTex1d(float *img, Format ity, Format ety, size_t w)
 //    m_sampler = Sampler::Transfer;
     m_id = texId;
 
-    return 0;
+    return texId;
 }
 
 unsigned int Texture::genGLTex2d(float* img, Format ity, Format ety,
