@@ -262,11 +262,8 @@ void drawNonEmptyBoundingBoxes(const glm::mat4 &mvp)
 }
 
 
-///////////////////////////////////////////////////////////////////////////////
-void drawNonEmptyBlocks(const glm::mat4 &mvp)
+void drawNonEmptyBlocks_Forward(const glm::mat4 &mvp)
 {
-    g_volumeShader.bind();
-
     for (auto *b : g_nonEmptyBlocks) {
         b->texture().bind();
         glm::mat4 mmvp = mvp * b->transform().matrix();
@@ -298,6 +295,29 @@ void drawNonEmptyBlocks(const glm::mat4 &mvp)
         } // switch
 
     } // for
+
+}
+
+
+void drawNonEmptyBlocks_Reverse(const glm::mat4 &mvp)
+{
+    
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+void drawNonEmptyBlocks(const glm::mat4 &mvp)
+{
+    g_volumeShader.bind();
+
+    //TODO: determine +/- dir of viewing vector.
+    if (true){
+        drawNonEmptyBlocks_Forward(mvp);
+    } else {
+        drawNonEmptyBlocks_Reverse(mvp);
+    }
+
+
 }
 
 ///////////////////////////////////////////////////////////////////////////////
