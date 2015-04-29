@@ -82,7 +82,7 @@ try
     opts.tmin = tmin.getValue();
     opts.tmax = tmax.getValue();
 
-    return 1;
+    return cmd.getArgList().size();
 
 } catch (TCLAP::ArgException &e) {
     std::cout << "Error parsing command line args: " << e.error() << " for argument " 
