@@ -33,8 +33,19 @@ struct CommandLineOptions
     float tmin;
 };
 
+
+///////////////////////////////////////////////////////////////////////////////
+/// \brief Parses command line args and populates \c opts.
+///
+/// If non-zero arg was returned, then the parse was successful, but it does 
+/// not mean that valid or all of the required args were provided on the 
+/// command line.
+///
+/// \returns 0 on parse failure, non-zero if the parse was successful.
+///////////////////////////////////////////////////////////////////////////////
 int parseThem(int argc, const char *argv [], CommandLineOptions &opts);
 
-void printThem();
+
+void printThem(CommandLineOptions &);
 
 #endif // cmdline_h__

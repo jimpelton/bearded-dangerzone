@@ -7,7 +7,6 @@
 
 #include <iostream>
 #include <string>
-#include <bd/log/gl_log.h>
 
 
 
@@ -91,9 +90,16 @@ try
 }
 
 
-void printThem()
+void printThem(CommandLineOptions &opts)
 {
-    std::cout << "Not implemented\n";
+    std::cout <<
+        "File path: " << opts.filePath << "\n"
+        "Data Type: " << opts.type     << "\n"
+        "Vol dims (w X h X d): "   << opts.w        << " X " << opts.h        << " X " << opts.d        << "\n"
+        "Num blocks (x X y X z): " << opts.numblk_x << " X " << opts.numblk_y << " X " << opts.numblk_z << "\n"
+        "Threshold (min-max): "    << opts.tmin     << " - " << opts.tmax     << "\n"
+        "Print blocks: "           << (opts.printBlocks ? "True" : "False")   << 
+    std::endl;
 }
 
 

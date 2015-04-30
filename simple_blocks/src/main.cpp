@@ -2,35 +2,40 @@
 #include "cmdline.h"
 
 #include <bd/log/gl_log.h>
-#include <bd/graphics/vertexarrayobject.h>
-#include <bd/graphics/BBox.h>
-#include <bd/util/util.h>
+
+#include <bd/graphics/shader.h>
 #include <bd/graphics/axis.h>
+#include <bd/graphics/BBox.h>
+
+#include <bd/graphics/vertexarrayobject.h>
 #include <bd/graphics/quad.h>
+
+#include <bd/util/util.h>
+
 #include <bd/file/datareader.h>
 #include <bd/file/datatypes.h>
-#include <bd/graphics/shader.h>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include <glm/gtx/string_cast.hpp>
 
 #include <string>
 #include <vector>
 #include <array>
 #include <memory>
 
-#include <sstream>
 #include <fstream>
 
-#include <cstdarg>
-#include <ctime>
 #include <iostream>
+
+#ifdef _WIN32
+#include <nvToolsExt.h>
+#endif
+
+
 
 const glm::vec3 X_AXIS{ 1.0f, 0.0f, 0.0f };
 const glm::vec3 Y_AXIS{ 0.0f, 1.0f, 0.0f };
@@ -64,7 +69,7 @@ glm::quat g_rotation;
 glm::mat4 g_viewMatrix;
 glm::mat4 g_projectionMatrix;
 glm::mat4 g_vpMatrix;
-glm::vec3 g_camPosition{ 0.0f, 0.0f, -2.0f };
+glm::vec3 g_camPosition{ 0.0f, 0.0f, 2.0f }; // looking down +Z axis.
 glm::vec3 g_camFocus{ 0.0f, 0.0f, 0.0f };
 glm::vec3 g_camUp{ 0.0f, 1.0f, 0.0f };
 glm::vec2 g_cursorPos;
@@ -271,6 +276,7 @@ void drawNonEmptyBlocks_Forward(const glm::mat4 &mvp)
         g_volumeShader.setUniform("tfScalingVal", g_scaleValue);
 
         switch (g_selectedSliceSet) {
+        
         case SliceSet::XY:
             gl_check(glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, 0));
             break;
@@ -746,7 +752,7 @@ int main(int argc, const char *argv [])
         return 0;
     }
 
-    printThem();
+    printThem(clo);
 
     bd::gl_log_restart();
 
