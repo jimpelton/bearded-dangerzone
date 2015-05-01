@@ -4,16 +4,45 @@
 
 cmake_minimum_required(VERSION 2.8)
 
-if(NOT DEFINED NVTOOLSEXT_INCLUDE_DIR)
-    set(NVTOOLSEXT_INCLUDE_DIR "")
+# Nvidia Visual Tools Extensions
+if(NOT DEFINED USE_NVTOOLSEXT)
+    set(USE_NVTOOLSEXT FALSE)
 endif()
-set(NVTOOLSEXT_INCLUDE_DIR ${${NVTOOLSEXT_INCLUDE_DIR}} CACHE PATH "NvToolsExt includes path")
+set(USE_NVTOOLSEXT ${${SET_NVPROFILE}} CACHE BOOL "True if profiling should be enabled, false for not profiling")
 
-if(NOT DEFINED NVTOOLSEXT_LIB)
-    set(NVTOOLSEXT_LIB "")
+if (USE_NVTOOLSEXT)
+    add_definitions(-DBDPROF)
+
+    if(NOT DEFINED NVTOOLSEXT_INCLUDE_DIR)
+        set(NVTOOLSEXT_INCLUDE_DIR "")
+    endif()
+    set(NVTOOLSEXT_INCLUDE_DIR ${${NVTOOLSEXT_INCLUDE_DIR}} CACHE PATH "NvToolsExt includes path")
+
+    if(NOT DEFINED NVTOOLSEXT_LIB)
+        set(NVTOOLSEXT_LIB "")
+    endif()
+    set(NVTOOLSEXT_LIB ${${NVTOOLSEXT_LIB}} CACHE FILEPATH "NvToolsExt library")
+
+endif(USE_NVTOOLSEXT) 
+
+# Nvidia Perfmon Api (access cpu counter information)
+if(NOT DEFINED USE_NVPMAPI)
+    set(USE_NVPMAPI FALSE)
 endif()
-set(NVTOOLSEXT_LIB ${${NVTOOLSEXT_LIB}} CACHE FILEPATH "NvToolsExt library")
+set(USE_NVPMAPI ${${SET_NVPROFILE}} CACHE BOOL "True if nvidia's perfmon should be used.")
 
+if (USE_NVPMAPI)
+    add_definitions(-DBDPROF)
+    if(NOT DEFINED NVPMAPI_INCLUDE_DIR)
+        set(NVPMAPI_INCLUDE_DIR "")
+    endif()
+    set(NVPMAPI_INCLUDE_DIR ${${NVPMAPI_INCLUDE_DIR}} CACHE PATH "NvPmApi includes path")
+
+    # if(NOT DEFINED NVPMAPI_LIB)
+    #     set(NVPMAPI_LIB "")
+    # endif()
+    # set(NVPMAPI_LIB ${${NVTOOLSEXT_LIB}} CACHE FILEPATH "NvPmApi library file")
+endif(USE_NVPMAPI) 
 
 project(simple_blocks)
 
@@ -43,6 +72,7 @@ target_link_libraries(
     ${OPENGL_LIBRARIES}
     ${GLFW_LIBRARIES}
     ${GLEW_LIBRARIES}
+    ${NVTOOLSEXT_LIB}
     shared
 )
 

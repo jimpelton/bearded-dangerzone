@@ -28,11 +28,38 @@
 #include <memory>
 
 #include <fstream>
-
 #include <iostream>
 
-#ifdef _WIN32
-#include <nvToolsExt.h>
+#ifdef BDPROF
+//#include <nvToolsExt.h>
+//#define nvpushA(x) nvtxRangePushA((x))
+//#define nvpop() nvtxRangePop()
+
+#define NVPM_INITGUID
+#include "NvPmApi.Manager.h"
+// Simple singleton implementation for grabbing the NvPmApi
+static NvPmApiManager S_NVPMManager;
+
+
+///////////////////////////////////////////////////////////////////////////////
+extern NvPmApiManager *GetNvPmApiManager()
+{
+    return &S_NVPMManager;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+const NvPmApi *GetNvPmApi()
+{
+    return S_NVPMManager.Api();
+}
+
+
+
+
+#else
+#define nvpushA(x)
+#define nvpopA(x)
 #endif
 
 
@@ -278,15 +305,21 @@ void drawNonEmptyBlocks_Forward(const glm::mat4 &mvp)
         switch (g_selectedSliceSet) {
         
         case SliceSet::XY:
+			nvpushA("XY");
             gl_check(glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, 0));
+			nvpop();
             break;
         case SliceSet::XZ:
+			nvpushA("XZ");
             gl_check(glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT,
                 (GLvoid *)(4 * sizeof(unsigned short))));
+			nvpop();
             break;
         case SliceSet::YZ:
-            gl_check(glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT,
+			nvpushA("YZ");
+			gl_check(glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT,
                 (GLvoid *)(8 * sizeof(unsigned short))));
+			nvpop();
             break;
         case SliceSet::AllOfEm:
             gl_check(glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, 0));
