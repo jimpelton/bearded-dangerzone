@@ -1,9 +1,7 @@
 #include <bd/graphics/quad.h>
-
-#include <glm/glm.hpp>
+#include <bd/log/gl_log.h>
 
 #include <array>
-#include <bd/log/gl_log.h>
 #include <GL/glew.h>
 
 namespace bd {
@@ -30,6 +28,30 @@ const std::array<glm::vec4, 4> Quad::verts_xz
     glm::vec4( 0.5f, 0.0f, -0.5f, 1.0f), // 1 lr
     glm::vec4( 0.5f, 0.0f,  0.5f, 1.0f), // 2 ur
     glm::vec4(-0.5f, 0.0f,  0.5f, 1.0f)  // 3 ul
+};
+
+const std::array<glm::vec3, 4> Quad::texcoords_xy{
+    // x-y quad
+    glm::vec3(0.0f, 0.0f, 0.0f), // 0 ll
+    glm::vec3(1.0, 0.0f, 0.0f), // 1 lr
+    glm::vec3(1.0f, 1.0f, 0.0f), // 2 ur
+    glm::vec3(0.0f, 1.0f, 0.0f),  // 3 ul
+};
+
+const std::array<glm::vec3, 4> Quad::texcoords_xz{
+    // x-z quad
+    glm::vec3(0.0f, 0.0f, 0.0f), // 0 ll
+    glm::vec3(1.0f, 0.0f, 0.0f), // 1 lr
+    glm::vec3(1.0f, 0.0f, 1.0f), // 2 ur
+    glm::vec3(0.0f, 0.0f, 1.0f),  // 3 ul
+};
+
+const std::array<glm::vec3, 4> Quad::texcoords_yz{
+    // y-z quad
+    glm::vec3(0.0f, 0.0f, 0.0f), // 0 ll
+    glm::vec3(0.0f, 1.0f, 0.0f), // 1 lr
+    glm::vec3(0.0f, 1.0f, 1.0f), // 2 ur
+    glm::vec3(0.0f, 0.0f, 1.0f)  // 3 ul
 };
 
 const std::array<unsigned short, 4> Quad::elements

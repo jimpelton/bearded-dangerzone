@@ -33,7 +33,6 @@ struct CommandLineOptions
     float tmin;
 };
 
-
 ///////////////////////////////////////////////////////////////////////////////
 /// \brief Parses command line args and populates \c opts.
 ///
@@ -45,7 +44,6 @@ struct CommandLineOptions
 ///////////////////////////////////////////////////////////////////////////////
 int parseThem(int argc, const char *argv [], CommandLineOptions &opts);
 
-
 void printThem(CommandLineOptions &);
-
+    
 #endif // cmdline_h__

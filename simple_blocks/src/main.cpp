@@ -1,5 +1,6 @@
 #include "block.h"
 #include "cmdline.h"
+#include "create_vao.h"
 
 #include <bd/log/gl_log.h>
 
@@ -32,43 +33,39 @@
 
 #ifdef BDPROF
 //#include <nvToolsExt.h>
+
 //#define nvpushA(x) nvtxRangePushA((x))
-//#define nvpop() nvtxRangePop()
+//#define nvpopA() nvtxRangePop()
 
-#define NVPM_INITGUID
-#include "NvPmApi.Manager.h"
+//#define NVPM_INITGUID
+//#include "NvPmApi.Manager.h"
 // Simple singleton implementation for grabbing the NvPmApi
-static NvPmApiManager S_NVPMManager;
+//static NvPmApiManager S_NVPMManager;
 
 
 ///////////////////////////////////////////////////////////////////////////////
-extern NvPmApiManager *GetNvPmApiManager()
-{
-    return &S_NVPMManager;
-}
+//extern NvPmApiManager *GetNvPmApiManager()
+//{
+//    return &S_NVPMManager;
+//}
 
 
 ///////////////////////////////////////////////////////////////////////////////
-const NvPmApi *GetNvPmApi()
-{
-    return S_NVPMManager.Api();
-}
-
-
-
+//const NvPmApi *GetNvPmApi()
+//{
+//    return S_NVPMManager.Api();
+//}
 
 #else
 #define nvpushA(x)
-#define nvpopA(x)
+#define nvpopA()
 #endif
-
-
 
 const glm::vec3 X_AXIS{ 1.0f, 0.0f, 0.0f };
 const glm::vec3 Y_AXIS{ 0.0f, 1.0f, 0.0f };
 const glm::vec3 Z_AXIS{ 0.0f, 0.0f, 1.0f };
 
-enum class SliceSet
+enum class SliceSet : unsigned int
 {
     XZ, YZ, XY, NoneOfEm, AllOfEm
 };
@@ -78,20 +75,30 @@ enum class ObjType : unsigned int
     Axis, Quads, Boxes
 };
 
-SliceSet g_selectedSliceSet{ SliceSet::XY };
 
+///////////////////////////////////////////////////////////////////////////////
+// Geometry and VAOs
+///////////////////////////////////////////////////////////////////////////////
+SliceSet g_selectedSliceSet{ SliceSet::XY };
 bd::Axis g_axis;
 bd::Box g_box;
-
-bd::ShaderProgram g_simpleShader;
-bd::ShaderProgram g_volumeShader;
-
-Texture g_tfuncTex;
-
 std::vector<bd::VertexArrayObject *> g_vaoIds;
 std::vector<Block> g_blocks;
 std::vector<Block*> g_nonEmptyBlocks;
 
+
+///////////////////////////////////////////////////////////////////////////////
+// Shaders and Textures
+///////////////////////////////////////////////////////////////////////////////
+bd::ShaderProgram g_simpleShader;
+bd::ShaderProgram g_volumeShader;
+Texture g_tfuncTex;
+float g_scaleValue{ 1.0f };
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Viewing and Controls Data
+///////////////////////////////////////////////////////////////////////////////
 glm::quat g_rotation;
 glm::mat4 g_viewMatrix;
 glm::mat4 g_projectionMatrix;
@@ -108,14 +115,10 @@ float g_fov_deg{ 50.0f };
 bool g_viewDirty{ true };
 bool g_modelDirty{ true };
 bool g_toggleBlockBoxes{ false };
+int g_numSlices{ 1 };
+
 //TODO: bool g_toggleVolumeBox{ false };
 
-float g_scaleValue{ 1.0f };
-
-
-//GLuint loadShader(GLenum type, std::string filepath);
-
-//GLuint compileShader(GLenum type, const char *shader);
 
 void glfw_cursorpos_callback(GLFWwindow *window, double x, double y);
 
@@ -306,20 +309,20 @@ void drawNonEmptyBlocks_Forward(const glm::mat4 &mvp)
         
         case SliceSet::XY:
 			nvpushA("XY");
-            gl_check(glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, 0));
-			nvpop();
+            gl_check(glDrawElements(GL_TRIANGLE_STRIP, 4 * g_numSlices, GL_UNSIGNED_SHORT, 0));
+			nvpopA();
             break;
         case SliceSet::XZ:
 			nvpushA("XZ");
-            gl_check(glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT,
-                (GLvoid *)(4 * sizeof(unsigned short))));
-			nvpop();
+            gl_check(glDrawElements(GL_TRIANGLE_STRIP, 4 * g_numSlices, GL_UNSIGNED_SHORT,
+                (GLvoid *)(4 * g_numSlices * sizeof(unsigned short))));
+			nvpopA();
             break;
         case SliceSet::YZ:
 			nvpushA("YZ");
-			gl_check(glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT,
-                (GLvoid *)(8 * sizeof(unsigned short))));
-			nvpop();
+			gl_check(glDrawElements(GL_TRIANGLE_STRIP, 4 * g_numSlices, GL_UNSIGNED_SHORT,
+                (GLvoid *)(8 * g_numSlices * sizeof(unsigned short))));
+			nvpopA();
             break;
         case SliceSet::AllOfEm:
             gl_check(glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, 0));
@@ -417,69 +420,36 @@ void loop(GLFWwindow *window)
 
 
 ///////////////////////////////////////////////////////////////////////////////
-void genQuadVao(bd::VertexArrayObject &vao)
+void genQuadVao(bd::VertexArrayObject &vao, unsigned int numSlices)
 {
-    // copy 3 sets of quad verts, each aligned with different plane
-    std::array<glm::vec4, 12> vbuf;
-    // x-y quad
-    auto vbufIter =
-        std::copy(bd::Quad::verts_xy.begin(), bd::Quad::verts_xy.end(), vbuf.begin());
+	std::vector<glm::vec4> vbuf;
+	std::vector<glm::vec3> texbuf;
+    std::vector<glm::u16vec4> elebuf;
 
-    // x-z quad
-    vbufIter =
-        std::copy(bd::Quad::verts_xz.begin(), bd::Quad::verts_xz.end(), vbufIter);
-
-    // y-z quad
-    std::copy(bd::Quad::verts_yz.begin(), bd::Quad::verts_yz.end(), vbufIter);
-
-    // copy the bd::Quad vertex colors 3 times
-    //    std::array<glm::vec3, 12> colorBuf;
-    //
-    //    auto colorIter =
-    //        std::copy(bd::Quad::colors.begin(), bd::Quad::colors.end(), colorBuf.begin());
-    //
-    //    colorIter =
-    //        std::copy(bd::Quad::colors.begin(), bd::Quad::colors.end(), colorIter);
-    //
-    //    std::copy(bd::Quad::colors.begin(), bd::Quad::colors.end(), colorIter);
-
-    std::array<glm::vec3, 12> texcoords_3d{
-        // x-y quad
-        glm::vec3(0.0f, 0.0f, 0.0f), // 0 ll
-        glm::vec3(1.0, 0.0f, 0.0f), // 1 lr
-        glm::vec3(1.0f, 1.0f, 0.0f), // 2 ur
-        glm::vec3(0.0f, 1.0f, 0.0f),  // 3 ul
-
-        // x-z quad
-        glm::vec3(0.0f, 0.0f, 0.0f), // 0 ll
-        glm::vec3(1.0f, 0.0f, 0.0f), // 1 lr
-        glm::vec3(1.0f, 0.0f, 1.0f), // 2 ur
-        glm::vec3(0.0f, 0.0f, 1.0f),  // 3 ul
-
-        // y-z quad
-        glm::vec3(0.0f, 0.0f, 0.0f), // 0 ll
-        glm::vec3(0.0f, 1.0f, 0.0f), // 1 lr
-        glm::vec3(0.0f, 1.0f, 1.0f), // 2 ur
-        glm::vec3(0.0f, 0.0f, 1.0f)  // 3 ul
-    };
+    float delta = 1.0f / numSlices;
+	float start = -0.5f;
 
 
-    // Element index buffer
-    std::array<unsigned short, 12> ebuf{
-        0, 1, 3, 2,     // x-y
-        4, 5, 7, 6,     // x-z
-        8, 9, 11, 10    // y-z
-    };
+	/// For each axis, populate vbuf with verts for numSlices quads, adjust  ///
+	/// z coordinate based on slice index.                                   ///
+
+    unsigned eleIdx = 0;
+//    eleIdx = create_xy(numSlices, vbuf, texbuf, elebuf, eleIdx);
+//    eleIdx = create_xz(numSlices, vbuf, texbuf, elebuf, eleIdx);
+//    eleIdx = create_yz(numSlices, vbuf, texbuf, elebuf, eleIdx);
+
+    /// Add buffers to VAO ///
 
     // vertex positions into attribute 0
-    vao.addVbo((float *)vbuf.data(), vbuf.size() * bd::Quad::vert_element_size,
+    vao.addVbo(reinterpret_cast<float *>(vbuf.data()), 
+        vbuf.size() * bd::Quad::vert_element_size,
         bd::Quad::vert_element_size, 0);
 
-    // vertex colors into attribute 1
-    //    vao.addVbo((float *) (colorBuf.data()), colorBuf.size() * 3, 3, 1);
-    vao.addVbo((float *)(texcoords_3d.data()), texcoords_3d.size() * 3, 3, 1);
-
-    vao.setIndexBuffer((unsigned short *)(ebuf.data()), ebuf.size());
+    // vertex texcoords into attribute 1
+    vao.addVbo(reinterpret_cast<float *>(texbuf.data()), texbuf.size() * 3, 3, 1);
+    
+    // element index buffer
+    vao.setIndexBuffer(reinterpret_cast<unsigned short *>(elebuf.data()), elebuf.size());
 }
 
 
@@ -600,7 +570,7 @@ void filterBlocks(float *data, std::vector<Block> &blocks, glm::u64vec3 numBlks,
     image.resize(blkPoints);
 
     for (auto &b : blocks) {
-        glm::u64vec3 bst{ b.ijk() * bsz }; // block start = block index * block size
+        glm::u64vec3 bst{ b.ijk() * bsz };  // block start = block index * block size
         float avg{ 0.0f };
 
         size_t imageIdx = 0;
@@ -782,11 +752,12 @@ int main(int argc, const char *argv [])
 {
     CommandLineOptions clo;
     if (parseThem(argc, argv, clo) == 0) {
-        return 0;
+        std::cout << "No arguments provided.\nPlease use -h for usage info." << std::endl;
+        return 1;
     }
 
     printThem(clo);
-
+    g_numSlices = clo.num_slices;
     bd::gl_log_restart();
 
     GLFWwindow *window;
@@ -824,7 +795,7 @@ int main(int argc, const char *argv [])
     bd::VertexArrayObject boxVbo(bd::VertexArrayObject::Method::ELEMENTS);
     boxVbo.create();
 
-    genQuadVao(quadVbo);
+    genQuadVao(quadVbo, clo.num_slices);
     genAxisVao(axisVbo);
     genBoxVao(boxVbo);
 

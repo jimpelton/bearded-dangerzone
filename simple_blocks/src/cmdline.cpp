@@ -8,13 +8,13 @@
 #include <iostream>
 #include <string>
 
-
-
-
-
 int parseThem(int argc, const char *argv[], CommandLineOptions &opts)
 try
 {
+    if (argc == 1) {
+        return 0;
+    }
+
     TCLAP::CmdLine cmd("Simple Blocks blocking volume render experiment.", ' ');
 
     // volume data file
@@ -34,13 +34,13 @@ try
 
     
     // volume dims
-    TCLAP::ValueArg<size_t> xdimArg("x", "volx", "Volume x dim.", false, 1, "uint");
+    TCLAP::ValueArg<size_t> xdimArg("", "volx", "Volume x dim.", false, 1, "uint");
     cmd.add(xdimArg); 
 
-    TCLAP::ValueArg<size_t> ydimArg("y", "voly", "Volume y dim.", false, 1, "uint");
+    TCLAP::ValueArg<size_t> ydimArg("", "voly", "Volume y dim.", false, 1, "uint");
     cmd.add(ydimArg);
     
-    TCLAP::ValueArg<size_t> zdimArg("z", "volz", "Volume z dim.", false, 1, "uint");
+    TCLAP::ValueArg<size_t> zdimArg("", "volz", "Volume z dim.", false, 1, "uint");
     cmd.add(zdimArg);
 
     // num blocks
@@ -53,6 +53,8 @@ try
     TCLAP::ValueArg<size_t> zBlocksArg("", "nbz", "Num blocks z dim", false, 1, "uint");
     cmd.add(zBlocksArg);
 
+	TCLAP::ValueArg<unsigned int> numSlicesArg("s", "num-slices", "Num slices per block", false, 1, "uint");
+	cmd.add(numSlicesArg);
 
     // threshold min/max
     TCLAP::ValueArg<float> tmin("", "tmin", "Thresh min", false, 0.0, "float");
@@ -65,8 +67,9 @@ try
     // print blocks
     TCLAP::SwitchArg printBlocksArg("", "print-blocks", "Print blocks into to stdout.", cmd, false);
 
-    cmd.parse(argc, argv);
+    
 
+    cmd.parse(argc, argv);
 
     opts.filePath = fileArg.getValue();
     opts.tfuncPath = tfuncArg.getValue();
@@ -78,6 +81,7 @@ try
     opts.numblk_x = xBlocksArg.getValue();
     opts.numblk_y = yBlocksArg.getValue();
     opts.numblk_z = zBlocksArg.getValue();
+    opts.num_slices = numSlicesArg.getValue();
     opts.tmin = tmin.getValue();
     opts.tmax = tmax.getValue();
 
@@ -97,11 +101,11 @@ void printThem(CommandLineOptions &opts)
         "Data Type: " << opts.type     << "\n"
         "Vol dims (w X h X d): "   << opts.w        << " X " << opts.h        << " X " << opts.d        << "\n"
         "Num blocks (x X y X z): " << opts.numblk_x << " X " << opts.numblk_y << " X " << opts.numblk_z << "\n"
+        "Num Slices: " << opts.num_slices << "\n"
         "Threshold (min-max): "    << opts.tmin     << " - " << opts.tmax     << "\n"
         "Print blocks: "           << (opts.printBlocks ? "True" : "False")   << 
     std::endl;
 }
-
 
 //namespace {
 //    boost::program_options::variables_map m_vm;

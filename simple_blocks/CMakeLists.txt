@@ -50,6 +50,7 @@ set(simple_blocks_HEADERS
     src/block.h 
     src/cmdline.h 
     src/texture.h
+    src/create_vao.h
 )
 
 set(simple_blocks_SOURCES 
@@ -57,12 +58,19 @@ set(simple_blocks_SOURCES
     src/block.cpp 
     src/cmdline.cpp 
     src/texture.cpp
+    src/create_vao.cpp
 )
 
 include_directories("${SHARED_DIR}/include")  
 include_directories("${THIRDPARTY_DIR}/tclap/include")
-include_directories("${NVTOOLSEXT_INCLUDE_DIR}")
 
+if (USE_NVTOOLSEXT)
+	include_directories("${NVTOOLSEXT_INCLUDE_DIR}")
+endif(USE_NVTOOLSEXT)
+
+if (USE_NVPMAPI)
+	include_directories("${NVPMAPI_INCLUDE_DIR}")
+endif(USE_NVPMAPI)
 
 add_executable(simple_blocks "${simple_blocks_HEADERS}" "${simple_blocks_SOURCES}")
 
