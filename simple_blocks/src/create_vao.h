@@ -6,7 +6,7 @@
 #include <vector>
 
 
-glm::u16vec4 sliceIndexToElements(unsigned idx);
+glm::u16vec4 sliceIndexToElements(uint16_t idx);
 
 float sliceIndexToWorldPos(unsigned idx, float start, float delta);
 
@@ -17,6 +17,8 @@ float delta(size_t num_slices, float min, float max);
 void create_verts_xy(size_t num_slices, std::vector<glm::vec4> &vbuf); 
 
 void  create_texbuf_xy(size_t num_slices, std::vector<glm::vec4> &texbuf);
+
+void create_elementIndices(size_t numSlices, std::vector<uint16_t> &elebuf);
 
 //    std::vector<glm::vec3> &teccoords, std::vector<glm::u16vec4> &elebuf, 
 //    int eleIdxContinuation);

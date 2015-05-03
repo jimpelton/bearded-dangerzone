@@ -41,7 +41,7 @@ TEST_CASE("sliceIndexToElements() returns triangle strip ordering", "[quad][vboI
     int ebufIdx = 0;
     for (int i = 0; i < 3; ++i) {
         ebuf_actual.push_back(sliceIndexToElements(ebufIdx));
-        ebufIdx += 4;
+        ebufIdx++;
     }
     
     REQUIRE(ebuf_actual == ebuf_expected);
@@ -138,6 +138,7 @@ TEST_CASE("delta returns 0.25 for 5 slices")
 }
 
 
+////////////////////////////////////////////////////////////////////////////////
 TEST_CASE("create_verts_xy creates 4 quads along z-axis.")
 {
     float del = delta(4, -0.5f, 0.5f);
@@ -208,6 +209,8 @@ TEST_CASE("create_verts_xy creates 5 quads along z-axis.")
     REQUIRE(vbuf == expected);
 }
 
+
+////////////////////////////////////////////////////////////////////////////////
 TEST_CASE("create_texbuf_xy creates four slice tex coords z-axis.")
 {
     float del = delta(4, 0.0f, 1.0f);
@@ -273,10 +276,29 @@ TEST_CASE("create_texbuf_xy creates five slice tex coords z-axis.")
         glm::vec4(0.0f, 1.0f, 0.0f + (4 * del), 1.0f)  // 3 ul
     };
 
-    REQUIRE(20 == vbuf.size());
-    REQUIRE(expected == vbuf);
+ //   REQUIRE(20 == vbuf.size());
+    REQUIRE(vbuf == expected);
 }
 
+
+////////////////////////////////////////////////////////////////////////////////
+
+TEST_CASE("create_elementIndices creates Triangle strip ordering.")
+{
+    std::vector<uint16_t> elebuf;
+    create_elementIndices(4, elebuf);
+    std::vector<uint16_t> expected_buf{
+        0, 1, 3, 2,     
+        0xFFFF,
+        4, 5, 7, 6,    
+        0xFFFF,
+        8, 9, 11, 10,
+        0xFFFF,
+        12, 13, 15, 14
+    };
+
+    REQUIRE(elebuf == expected_buf);
+}
 
 
 //

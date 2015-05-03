@@ -85,7 +85,7 @@ bd::Box g_box;
 std::vector<bd::VertexArrayObject *> g_vaoIds;
 std::vector<Block> g_blocks;
 std::vector<Block*> g_nonEmptyBlocks;
-
+size_t g_elementBufferSize{ 0 };
 
 ///////////////////////////////////////////////////////////////////////////////
 // Shaders and Textures
@@ -299,6 +299,12 @@ void drawNonEmptyBoundingBoxes(const glm::mat4 &mvp)
 
 void drawNonEmptyBlocks_Forward(const glm::mat4 &mvp)
 {
+    const int elementsPerQuad = 4;
+
+    const size_t xy_byteOffset{ 0 }; 
+    size_t xz_byteOffset{ elementsPerQuad * g_numSlices * sizeof(uint16_t) };
+    size_t yz_byteOffset{ 2 * elementsPerQuad * g_numSlices * sizeof(uint16_t)};
+
     for (auto *b : g_nonEmptyBlocks) {
         b->texture().bind();
         glm::mat4 mmvp = mvp * b->transform().matrix();
@@ -309,27 +315,29 @@ void drawNonEmptyBlocks_Forward(const glm::mat4 &mvp)
         
         case SliceSet::XY:
 			nvpushA("XY");
-            gl_check(glDrawElements(GL_TRIANGLE_STRIP, 4 * g_numSlices, GL_UNSIGNED_SHORT, 0));
+            gl_check(glDrawElements(GL_TRIANGLE_STRIP, elementsPerQuad * g_numSlices, 
+                GL_UNSIGNED_SHORT, (GLvoid *) xy_byteOffset));
 			nvpopA();
             break;
         case SliceSet::XZ:
 			nvpushA("XZ");
-            gl_check(glDrawElements(GL_TRIANGLE_STRIP, 4 * g_numSlices, GL_UNSIGNED_SHORT,
-                (GLvoid *)(4 * g_numSlices * sizeof(unsigned short))));
+            gl_check(glDrawElements(GL_TRIANGLE_STRIP, elementsPerQuad * g_numSlices, 
+                GL_UNSIGNED_SHORT, (GLvoid *) xz_byteOffset));
 			nvpopA();
             break;
         case SliceSet::YZ:
 			nvpushA("YZ");
-			gl_check(glDrawElements(GL_TRIANGLE_STRIP, 4 * g_numSlices, GL_UNSIGNED_SHORT,
-                (GLvoid *)(8 * g_numSlices * sizeof(unsigned short))));
+			gl_check(glDrawElements(GL_TRIANGLE_STRIP, elementsPerQuad * g_numSlices, 
+                GL_UNSIGNED_SHORT, (GLvoid *) yz_byteOffset));
 			nvpopA();
             break;
         case SliceSet::AllOfEm:
-            gl_check(glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, 0));
-            gl_check(glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT,
-                (GLvoid *)(4 * sizeof(unsigned short))));
-            gl_check(glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT,
-                (GLvoid *)(8 * sizeof(unsigned short))));
+            gl_check(glDrawElements(GL_TRIANGLE_STRIP, elementsPerQuad * g_numSlices, 
+                GL_UNSIGNED_SHORT, (GLvoid *) xy_byteOffset));
+            gl_check(glDrawElements(GL_TRIANGLE_STRIP, elementsPerQuad * g_numSlices, 
+                GL_UNSIGNED_SHORT, (GLvoid *) xz_byteOffset));
+			gl_check(glDrawElements(GL_TRIANGLE_STRIP, elementsPerQuad * g_numSlices, 
+                GL_UNSIGNED_SHORT, (GLvoid *) yz_byteOffset));
             break;
         case SliceSet::NoneOfEm:
         default:
@@ -366,12 +374,23 @@ void drawNonEmptyBlocks(const glm::mat4 &mvp)
 void loop(GLFWwindow *window)
 {
     gl_log("Entered render loop.");
+
+
+    gl_check(glClearColor(0.1f, 0.1f, 0.1f, 0.0f));
+
+    gl_check(glEnable(GL_DEPTH_TEST));
+    gl_check(glDepthFunc(GL_LESS));
+
+    gl_check(glEnable(GL_BLEND));
+    gl_check(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+    gl_check(glEnable(GL_PRIMITIVE_RESTART));
+    gl_check(glPrimitiveRestartIndex(0xFFFF));
+
     glm::mat4 mvp{ 1.0f };
     bd::VertexArrayObject *vao = nullptr;
     
     g_volumeShader.bind();
     g_tfuncTex.bind(); //TODO:  move tfunc bind out of render loop
-
 
     do {
         if (g_viewDirty) {
@@ -422,34 +441,31 @@ void loop(GLFWwindow *window)
 ///////////////////////////////////////////////////////////////////////////////
 void genQuadVao(bd::VertexArrayObject &vao, unsigned int numSlices)
 {
-	std::vector<glm::vec4> vbuf;
-	std::vector<glm::vec3> texbuf;
-    std::vector<glm::u16vec4> elebuf;
-
-    float delta = 1.0f / numSlices;
-	float start = -0.5f;
-
+	std::vector<glm::vec4> vbuf_xy;
+	std::vector<glm::vec4> texbuf_xy;
+    std::vector<uint16_t> elebuf;
 
 	/// For each axis, populate vbuf with verts for numSlices quads, adjust  ///
 	/// z coordinate based on slice index.                                   ///
 
-    unsigned eleIdx = 0;
-//    eleIdx = create_xy(numSlices, vbuf, texbuf, elebuf, eleIdx);
-//    eleIdx = create_xz(numSlices, vbuf, texbuf, elebuf, eleIdx);
-//    eleIdx = create_yz(numSlices, vbuf, texbuf, elebuf, eleIdx);
+    create_verts_xy(numSlices, vbuf_xy);
+    create_texbuf_xy(numSlices, texbuf_xy);
+    create_elementIndices(numSlices, elebuf);
+    g_elementBufferSize = elebuf.size();
 
     /// Add buffers to VAO ///
 
     // vertex positions into attribute 0
-    vao.addVbo(reinterpret_cast<float *>(vbuf.data()), 
-        vbuf.size() * bd::Quad::vert_element_size,
+    vao.addVbo(reinterpret_cast<float *>(vbuf_xy.data()), 
+        vbuf_xy.size() * bd::Quad::vert_element_size,
         bd::Quad::vert_element_size, 0);
 
     // vertex texcoords into attribute 1
-    vao.addVbo(reinterpret_cast<float *>(texbuf.data()), texbuf.size() * 3, 3, 1);
+    vao.addVbo(reinterpret_cast<float *>(texbuf_xy.data()), 
+        texbuf_xy.size() * 4, 4, 1);
     
     // element index buffer
-    vao.setIndexBuffer(reinterpret_cast<unsigned short *>(elebuf.data()), elebuf.size());
+    vao.setIndexBuffer(elebuf.data(), elebuf.size());
 }
 
 
@@ -655,13 +671,6 @@ GLFWwindow* init()
 
     bd::subscribe_debug_callbacks();
 
-    gl_check(glClearColor(0.1f, 0.1f, 0.1f, 0.0f));
-
-    gl_check(glEnable(GL_DEPTH_TEST));
-    gl_check(glDepthFunc(GL_LESS));
-
-    gl_check(glEnable(GL_BLEND));
-    gl_check(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
 
     return window;
 }
