@@ -299,7 +299,7 @@ void drawNonEmptyBoundingBoxes(const glm::mat4 &mvp)
 
 void drawNonEmptyBlocks_Forward(const glm::mat4 &mvp)
 {
-    const int elementsPerQuad = 4;
+    const int elementsPerQuad = 5;
 
     const size_t xy_byteOffset{ 0 }; 
     size_t xz_byteOffset{ elementsPerQuad * g_numSlices * sizeof(uint16_t) };
@@ -383,6 +383,7 @@ void loop(GLFWwindow *window)
 
     gl_check(glEnable(GL_BLEND));
     gl_check(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+
     gl_check(glEnable(GL_PRIMITIVE_RESTART));
     gl_check(glPrimitiveRestartIndex(0xFFFF));
 
@@ -390,7 +391,7 @@ void loop(GLFWwindow *window)
     bd::VertexArrayObject *vao = nullptr;
     
     g_volumeShader.bind();
-    g_tfuncTex.bind(); //TODO:  move tfunc bind out of render loop
+    g_tfuncTex.bind(); 
 
     do {
         if (g_viewDirty) {
