@@ -16,6 +16,10 @@ namespace bd {
 class VertexArrayObject {
 public:
 
+    ///////////////////////////////////////////////////////////////////////////////
+    /// \brief GL render method that should be used with this VAO, 
+    /// i.e., glDrawElements or glDrawArrays. 
+    ///////////////////////////////////////////////////////////////////////////////
     enum class Method
     {
         ELEMENTS, ARRAYS
