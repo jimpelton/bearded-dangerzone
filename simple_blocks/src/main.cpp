@@ -7,7 +7,6 @@
 #include <bd/graphics/shader.h>
 #include <bd/graphics/axis.h>
 #include <bd/graphics/BBox.h>
-
 #include <bd/graphics/vertexarrayobject.h>
 #include <bd/graphics/quad.h>
 
@@ -32,29 +31,30 @@
 #include <iostream>
 
 #ifdef BDPROF
-//#include <nvToolsExt.h>
+#include <nvToolsExt.h>
 
-//#define nvpushA(x) nvtxRangePushA((x))
-//#define nvpopA() nvtxRangePop()
+#define nvpushA(x) nvtxRangePushA((x))
+#define nvpopA() nvtxRangePop()
 
 //#define NVPM_INITGUID
 //#include "NvPmApi.Manager.h"
-// Simple singleton implementation for grabbing the NvPmApi
+//Simple singleton implementation for grabbing the NvPmApi
 //static NvPmApiManager S_NVPMManager;
 
 
-///////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 //extern NvPmApiManager *GetNvPmApiManager()
 //{
 //    return &S_NVPMManager;
 //}
 
 
-///////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 //const NvPmApi *GetNvPmApi()
 //{
 //    return S_NVPMManager.Api();
 //}
+
 
 #else
 #define nvpushA(x)
@@ -297,13 +297,14 @@ void drawNonEmptyBoundingBoxes(const glm::mat4 &mvp)
 }
 
 
+
 void drawNonEmptyBlocks_Forward(const glm::mat4 &mvp)
 {
-    const int elementsPerQuad = 5;
-
-    const size_t xy_byteOffset{ 0 }; 
-    size_t xz_byteOffset{ elementsPerQuad * g_numSlices * sizeof(uint16_t) };
-    size_t yz_byteOffset{ 2 * elementsPerQuad * g_numSlices * sizeof(uint16_t)};
+    static const int elementsPerQuad = 5;
+    static const size_t xy_byteOffset{ 0 };
+    static size_t xz_byteOffset{ elementsPerQuad * g_numSlices * sizeof(uint16_t) };
+    static size_t yz_byteOffset{ 2 * elementsPerQuad * g_numSlices * sizeof(uint16_t) };
+//    std::cout << "forward" << std::endl;
 
     for (auto *b : g_nonEmptyBlocks) {
         b->texture().bind();
@@ -351,6 +352,51 @@ void drawNonEmptyBlocks_Forward(const glm::mat4 &mvp)
 
 void drawNonEmptyBlocks_Reverse(const glm::mat4 &mvp)
 {
+    static const int elementsPerQuad = 5;
+    static const size_t xy_byteOffset{ 0 };
+    static const size_t xz_byteOffset{ elementsPerQuad * g_numSlices * sizeof(uint16_t) };
+    static const size_t yz_byteOffset{ 2 * elementsPerQuad * g_numSlices * sizeof(uint16_t) };
+
+    for (int i = g_nonEmptyBlocks.size() - 1; i >= 0; --i) {
+        Block *b = g_nonEmptyBlocks[i];
+        b->texture().bind();
+        glm::mat4 mmvp = mvp * b->transform().matrix();
+        g_volumeShader.setUniform("mvp", mmvp);
+        g_volumeShader.setUniform("tfScalingVal", g_scaleValue);
+
+        switch (g_selectedSliceSet) {
+        
+        case SliceSet::XY:
+			nvpushA("XY");
+            gl_check(glDrawElements(GL_TRIANGLE_STRIP, elementsPerQuad * g_numSlices, 
+                GL_UNSIGNED_SHORT, (GLvoid *) xy_byteOffset));
+			nvpopA();
+            break;
+        case SliceSet::XZ:
+			nvpushA("XZ");
+            gl_check(glDrawElements(GL_TRIANGLE_STRIP, elementsPerQuad * g_numSlices, 
+                GL_UNSIGNED_SHORT, (GLvoid *) xz_byteOffset));
+			nvpopA();
+            break;
+        case SliceSet::YZ:
+			nvpushA("YZ");
+			gl_check(glDrawElements(GL_TRIANGLE_STRIP, elementsPerQuad * g_numSlices, 
+                GL_UNSIGNED_SHORT, (GLvoid *) yz_byteOffset));
+			nvpopA();
+            break;
+        case SliceSet::AllOfEm:
+            gl_check(glDrawElements(GL_TRIANGLE_STRIP, elementsPerQuad * g_numSlices, 
+                GL_UNSIGNED_SHORT, (GLvoid *) xy_byteOffset));
+            gl_check(glDrawElements(GL_TRIANGLE_STRIP, elementsPerQuad * g_numSlices, 
+                GL_UNSIGNED_SHORT, (GLvoid *) xz_byteOffset));
+			gl_check(glDrawElements(GL_TRIANGLE_STRIP, elementsPerQuad * g_numSlices, 
+                GL_UNSIGNED_SHORT, (GLvoid *) yz_byteOffset));
+            break;
+        case SliceSet::NoneOfEm:
+        default:
+            break;
+        } // switch
+    } // for
     
 }
 
@@ -359,6 +405,33 @@ void drawNonEmptyBlocks_Reverse(const glm::mat4 &mvp)
 void drawNonEmptyBlocks(const glm::mat4 &mvp)
 {
     g_volumeShader.bind();
+//    glm::vec4 viewdir = glm::normalize(g_viewMatrix[2]);
+//    glm::vec4 absViewdir = glm::abs(viewdir);
+
+//    if (absViewdir.x > absViewdir.y && absViewdir.x > absViewdir.z) {
+//        if (viewdir.x > 0) {
+//            drawNonEmptyBlocks_Forward(mvp);
+//        }
+//        else {
+//            drawNonEmptyBlocks_Reverse(mvp);
+//        }
+//    }
+//    else if (absViewdir.y > absViewdir.x && absViewdir.y > absViewdir.z) {
+//        if (viewdir.y > 0) {
+//            drawNonEmptyBlocks_Forward(mvp);
+//        }
+//        else {
+//            drawNonEmptyBlocks_Reverse(mvp);
+//        }
+//    }
+//    else if (absViewdir.z > absViewdir.x && absViewdir.z > absViewdir.y) {
+//        if (viewdir.z > 0) {
+//            drawNonEmptyBlocks_Forward(mvp);
+//        }
+//        else {
+//            drawNonEmptyBlocks_Reverse(mvp);
+//        }
+//    }
 
     //TODO: determine +/- dir of viewing vector.
     if (true){
@@ -367,25 +440,13 @@ void drawNonEmptyBlocks(const glm::mat4 &mvp)
         drawNonEmptyBlocks_Reverse(mvp);
     }
 
-
 }
+
 
 ///////////////////////////////////////////////////////////////////////////////
 void loop(GLFWwindow *window)
 {
     gl_log("Entered render loop.");
-
-
-    gl_check(glClearColor(0.1f, 0.1f, 0.1f, 0.0f));
-
-    gl_check(glEnable(GL_DEPTH_TEST));
-    gl_check(glDepthFunc(GL_LESS));
-
-    gl_check(glEnable(GL_BLEND));
-    gl_check(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
-
-    gl_check(glEnable(GL_PRIMITIVE_RESTART));
-    gl_check(glPrimitiveRestartIndex(0xFFFF));
 
     glm::mat4 mvp{ 1.0f };
     bd::VertexArrayObject *vao = nullptr;
@@ -428,7 +489,6 @@ void loop(GLFWwindow *window)
         drawNonEmptyBlocks(mvp);
         vao->unbind();
 
-
         glfwSwapBuffers(window);
         glfwPollEvents();
 
@@ -442,28 +502,45 @@ void loop(GLFWwindow *window)
 ///////////////////////////////////////////////////////////////////////////////
 void genQuadVao(bd::VertexArrayObject &vao, unsigned int numSlices)
 {
-	std::vector<glm::vec4> vbuf_xy;
-	std::vector<glm::vec4> texbuf_xy;
+	std::vector<glm::vec4> temp;
+    std::vector<glm::vec4> vbuf;
+	std::vector<glm::vec4> texbuf;
     std::vector<uint16_t> elebuf;
 
 	/// For each axis, populate vbuf with verts for numSlices quads, adjust  ///
 	/// z coordinate based on slice index.                                   ///
 
-    create_verts_xy(numSlices, vbuf_xy);
-    create_texbuf_xy(numSlices, texbuf_xy);
-    create_elementIndices(numSlices, elebuf);
+    create_verts_xy(numSlices, temp);
+    std::copy(temp.begin(), temp.end(), std::back_inserter(vbuf));
+
+    create_verts_xz(numSlices, temp);
+    std::copy(temp.begin(), temp.end(), std::back_inserter(vbuf));
+
+    create_verts_yz(numSlices, temp);
+    std::copy(temp.begin(), temp.end(), std::back_inserter(vbuf));
+
+    create_texbuf_xy(numSlices, temp);
+    std::copy(temp.begin(), temp.end(), std::back_inserter(texbuf));
+
+    create_texbuf_xz(numSlices, temp);
+    std::copy(temp.begin(), temp.end(), std::back_inserter(texbuf));
+
+    create_texbuf_yz(numSlices, temp);
+    std::copy(temp.begin(), temp.end(), std::back_inserter(texbuf));
+
+    create_elementIndices(numSlices*3, elebuf);
     g_elementBufferSize = elebuf.size();
 
     /// Add buffers to VAO ///
 
     // vertex positions into attribute 0
-    vao.addVbo(reinterpret_cast<float *>(vbuf_xy.data()), 
-        vbuf_xy.size() * bd::Quad::vert_element_size,
-        bd::Quad::vert_element_size, 0);
+    vao.addVbo(reinterpret_cast<float *>(vbuf.data()), 
+        vbuf.size() * bd::Quad::vert_element_size, bd::Quad::vert_element_size, 0);
 
+    const size_t texbuf_element_size = 4;
     // vertex texcoords into attribute 1
-    vao.addVbo(reinterpret_cast<float *>(texbuf_xy.data()), 
-        texbuf_xy.size() * 4, 4, 1);
+    vao.addVbo(reinterpret_cast<float *>(texbuf.data()), 
+        texbuf.size() * texbuf_element_size, texbuf_element_size, 1);
     
     // element index buffer
     vao.setIndexBuffer(elebuf.data(), elebuf.size());
@@ -628,6 +705,22 @@ void filterBlocks(float *data, std::vector<Block> &blocks, glm::u64vec3 numBlks,
 
 }
 
+void initGraphicsState()
+{
+    gl_check(glClearColor(0.2f, 0.2f, 0.2f, 0.0f));
+
+//    gl_check(glEnable(GL_CULL_FACE));
+//    gl_check(glCullFace(GL_BACK));
+
+    gl_check(glDepthFunc(GL_LESS));
+    gl_check(glEnable(GL_DEPTH_TEST));
+
+    gl_check(glEnable(GL_BLEND));
+    gl_check(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+
+    gl_check(glEnable(GL_PRIMITIVE_RESTART));
+    gl_check(glPrimitiveRestartIndex(0xFFFF));
+}
 
 /////////////////////////////////////////////////////////////////////////////////
 GLFWwindow* init()
@@ -814,21 +907,21 @@ int main(int argc, const char *argv [])
     g_vaoIds[static_cast<unsigned int>(ObjType::Quads)] = &quadVbo;
     g_vaoIds[static_cast<unsigned int>(ObjType::Boxes)] = &boxVbo;
 
-    initBlocks(glm::u64vec3{ clo.numblk_x, clo.numblk_y, clo.numblk_z },
-        glm::u64vec3{ clo.w, clo.h, clo.d }
-    );
+    initBlocks(
+        glm::u64vec3( clo.numblk_x, clo.numblk_y, clo.numblk_z),
+        glm::u64vec3( clo.w, clo.h, clo.d ) );
 
-    std::unique_ptr<float []> data{
+    std::unique_ptr<float []> data
+    {
         std::move(readVolumeData(clo.type, clo.filePath, clo.w, clo.h, clo.d))
     };
 
-    filterBlocks(data.get(), g_blocks, { clo.numblk_x, clo.numblk_y, clo.numblk_z },
-        { clo.w, clo.h, clo.d }, clo.tmin, clo.tmax
-    );
+    filterBlocks( data.get(), g_blocks, 
+        glm::u64vec3( clo.numblk_x, clo.numblk_y, clo.numblk_z ),
+        glm::u64vec3( clo.w, clo.h, clo.d ), 
+        clo.tmin, clo.tmax );
 
-    if (clo.printBlocks) {
-        printBlocks();
-    }
+    if (clo.printBlocks) { printBlocks(); }
 
     unsigned int texid{ loadTransfter_1dtformat(clo.tfuncPath, g_tfuncTex) };
 
@@ -837,11 +930,10 @@ int main(int argc, const char *argv [])
         exit(1);
     }
 
+    initGraphicsState();
     loop(window);
     cleanup();
-
     bd::gl_log_close();
-
     glfwTerminate();
 
     return 0;

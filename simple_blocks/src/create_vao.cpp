@@ -1,5 +1,6 @@
 
 #include "create_vao.h"
+
 #include <bd/graphics/quad.h> 
 
 #include <glm/glm.hpp>
@@ -11,12 +12,14 @@ namespace {
 }
 
 
+///////////////////////////////////////////////////////////////////////////////
 float sliceIndexToWorldPos(unsigned idx, float start, float delta)
 {
     return start + delta*idx;
 }
 
 
+///////////////////////////////////////////////////////////////////////////////
 glm::u16vec4 sliceIndexToElements(uint16_t idx)
 {
     const uint16_t stride = 4;
@@ -24,6 +27,7 @@ glm::u16vec4 sliceIndexToElements(uint16_t idx)
 }
 
 
+///////////////////////////////////////////////////////////////////////////////
 float start(size_t num_slices, float min, float max)
 {
  //   float span = std::abs(max - min);
@@ -33,6 +37,7 @@ float start(size_t num_slices, float min, float max)
 }
 
 
+///////////////////////////////////////////////////////////////////////////////
 float delta(size_t num_slices, float min, float max)
 {
     if (num_slices <= 1) {
@@ -42,7 +47,7 @@ float delta(size_t num_slices, float min, float max)
     return (max - min) / (num_slices-1);
 }
 
-
+///////////////////////////////////////////////////////////////////////////////
 void create_verts_xy(size_t numSlices, std::vector<glm::vec4> &vbuf)
 {
     float st = start(numSlices, VOL_MIN, VOL_MAX);
@@ -62,6 +67,47 @@ void create_verts_xy(size_t numSlices, std::vector<glm::vec4> &vbuf)
 }
 
 
+///////////////////////////////////////////////////////////////////////////////
+void create_verts_xz(size_t numSlices, std::vector<glm::vec4> &vbuf)
+{
+    float st = start(numSlices, VOL_MIN, VOL_MAX);
+    float del = delta(numSlices, VOL_MIN, VOL_MAX);
+    size_t numVerts = numSlices * bd::Quad::vert_element_size;
+
+    vbuf.resize(numVerts);
+
+    std::vector<glm::vec4>::iterator vbufIter{ vbuf.begin() };
+    for (int i = 0; i < numSlices; ++i) {
+        float pos{ sliceIndexToWorldPos(i, st, del) };
+        std::array<glm::vec4, 4> verts(bd::Quad::verts_xz);
+        std::for_each(verts.begin(), verts.end(), [pos](glm::vec4 &vv){ vv.y = pos; });
+        std::copy(verts.begin(), verts.end(), vbufIter);
+        vbufIter += verts.size();
+    }
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+void create_verts_yz(size_t numSlices, std::vector<glm::vec4> &vbuf)
+{
+    float st = start(numSlices, VOL_MIN, VOL_MAX);
+    float del = delta(numSlices, VOL_MIN, VOL_MAX);
+    size_t numVerts = numSlices * bd::Quad::vert_element_size;
+
+    vbuf.resize(numVerts);
+
+    std::vector<glm::vec4>::iterator vbufIter{ vbuf.begin() };
+    for (int i = 0; i < numSlices; ++i) {
+        float pos{ sliceIndexToWorldPos(i, st, del) };
+        std::array<glm::vec4, 4> verts(bd::Quad::verts_yz);
+        std::for_each(verts.begin(), verts.end(), [pos](glm::vec4 &vv){ vv.x = pos; });
+        std::copy(verts.begin(), verts.end(), vbufIter);
+        vbufIter += verts.size();
+    }
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
 void create_texbuf_xy(size_t numSlices, std::vector<glm::vec4> &texbuf)
 {
     create_verts_xy(numSlices, texbuf);
@@ -73,6 +119,31 @@ void create_texbuf_xy(size_t numSlices, std::vector<glm::vec4> &texbuf)
 }
 
 
+///////////////////////////////////////////////////////////////////////////////
+void create_texbuf_xz(size_t numSlices, std::vector<glm::vec4> &texbuf)
+{
+    create_verts_xz(numSlices, texbuf);
+
+    //TODO: float diff = 1-VOL_MAX doesn't work for all negative VOL_MAXes.
+    float diff = 1 - VOL_MAX;
+    std::for_each(texbuf.begin(), texbuf.end(), 
+        [diff](glm::vec4 &v){ v += glm::vec4(diff, diff, diff, 0.0f); });
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+void create_texbuf_yz(size_t numSlices, std::vector<glm::vec4> &texbuf)
+{
+    create_verts_yz(numSlices, texbuf);
+
+    //TODO: float diff = 1-VOL_MAX doesn't work for all negative VOL_MAXes.
+    float diff = 1 - VOL_MAX;
+    std::for_each(texbuf.begin(), texbuf.end(), 
+        [diff](glm::vec4 &v){ v += glm::vec4(diff, diff, diff, 0.0f); });
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
 void create_elementIndices(size_t numSlices, std::vector<uint16_t> &elebuf)
 {
     elebuf.resize(numSlices*5);
