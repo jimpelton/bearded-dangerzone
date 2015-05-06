@@ -21,6 +21,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
+#include <glm/gtc/constants.hpp>
 
 #include <string>
 #include <vector>
@@ -855,16 +856,17 @@ void setupCameraPos(unsigned cameraPos)
 {
     switch (cameraPos) {
     case 2:
-        g_camPosition = { 2.0f, 0.0f, 0.0f };
+        //g_camPosition = { 2.0f, 0.0f, 0.0f  };
+        g_rotation = glm::rotate(g_rotation, glm::quarter_pi<float>(), Y_AXIS);
         g_selectedSliceSet = SliceSet::YZ;
         break;
     case 1:
-        g_camPosition = { 0.0f, 2.0f, 0.0f };
+        //g_camPosition = { 0.0f, 2.0f, 0.0f };
         g_selectedSliceSet = SliceSet::XZ;
         break;
     case 0:
     default:
-        g_camPosition = { 0.0f, 0.0f, 2.0f };
+        //g_camPosition = { 0.0f, 0.0f, 2.0f };
         g_selectedSliceSet = SliceSet::XY;
         break;
     }
