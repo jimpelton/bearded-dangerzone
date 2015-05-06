@@ -63,11 +63,11 @@ try
     TCLAP::ValueArg<float> tmax("", "tmax", "Thresh max", false, 1.0, "float");
     cmd.add(tmax);
 
+    TCLAP::ValueArg<unsigned int> initialCameraPosArg("c", "camera-pos", "Initial camera position (z=0, y=1, x=2)", false, 0, "uint");
+    cmd.add(initialCameraPosArg);
 
     // print blocks
     TCLAP::SwitchArg printBlocksArg("", "print-blocks", "Print blocks into to stdout.", cmd, false);
-
-    
 
     cmd.parse(argc, argv);
 
@@ -84,6 +84,7 @@ try
     opts.num_slices = numSlicesArg.getValue();
     opts.tmin = tmin.getValue();
     opts.tmax = tmax.getValue();
+    opts.cameraPos = initialCameraPosArg.getValue();
 
     return cmd.getArgList().size();
 

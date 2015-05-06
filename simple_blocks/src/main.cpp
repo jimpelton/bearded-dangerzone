@@ -763,6 +763,7 @@ GLFWwindow* init()
         return nullptr;
     }
 
+    glfwSwapInterval(0);
     bd::subscribe_debug_callbacks();
 
 
@@ -850,6 +851,26 @@ unsigned int loadTransfter_1dtformat(const std::string &filename, Texture &trans
 }
 
 
+void setupCameraPos(unsigned cameraPos)
+{
+    switch (cameraPos) {
+    case 2:
+        g_camPosition = { 2.0f, 0.0f, 0.0f };
+        g_selectedSliceSet = SliceSet::YZ;
+        break;
+    case 1:
+        g_camPosition = { 0.0f, 2.0f, 0.0f };
+        g_selectedSliceSet = SliceSet::XZ;
+        break;
+    case 0:
+    default:
+        g_camPosition = { 0.0f, 0.0f, 2.0f };
+        g_selectedSliceSet = SliceSet::XY;
+        break;
+    }
+    g_viewDirty = true;
+}
+
 /////////////////////////////////////////////////////////////////////////////////
 int main(int argc, const char *argv [])
 {
@@ -930,6 +951,7 @@ int main(int argc, const char *argv [])
         exit(1);
     }
 
+    setupCameraPos(clo.cameraPos);
     initGraphicsState();
     loop(window);
     cleanup();

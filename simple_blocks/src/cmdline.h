@@ -31,6 +31,8 @@ struct CommandLineOptions
     float tmax;
     // threshold minimum
     float tmin;
+    // initial camera position
+    unsigned int cameraPos;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
