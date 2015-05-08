@@ -18,6 +18,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
+#define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
@@ -298,7 +299,7 @@ void drawNonEmptyBoundingBoxes(const glm::mat4 &mvp)
 }
 
 
-
+///////////////////////////////////////////////////////////////////////////////
 void drawNonEmptyBlocks_Forward(const glm::mat4 &mvp)
 {
     static const int elementsPerQuad = 5;
@@ -351,6 +352,7 @@ void drawNonEmptyBlocks_Forward(const glm::mat4 &mvp)
 }
 
 
+///////////////////////////////////////////////////////////////////////////////
 void drawNonEmptyBlocks_Reverse(const glm::mat4 &mvp)
 {
     static const int elementsPerQuad = 5;
@@ -477,7 +479,7 @@ void loop(GLFWwindow *window)
         vao->unbind();
 
         if (g_toggleBlockBoxes) {
-            ////////  BBoxes  /////////////////////////////////////////
+        ////////  BBoxes  /////////////////////////////////////////
             vao = g_vaoIds[static_cast<unsigned int>(ObjType::Boxes)];
             vao->bind();
             drawNonEmptyBoundingBoxes(mvp);
@@ -533,7 +535,6 @@ void genQuadVao(bd::VertexArrayObject &vao, unsigned int numSlices)
     g_elementBufferSize = elebuf.size();
 
     /// Add buffers to VAO ///
-
     // vertex positions into attribute 0
     vao.addVbo(reinterpret_cast<float *>(vbuf.data()), 
         vbuf.size() * bd::Quad::vert_element_size, bd::Quad::vert_element_size, 0);
@@ -582,8 +583,8 @@ void genBoxVao(bd::VertexArrayObject &vao)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// bs: number of blocks
-// vol: volume voxel dimensions
+// nb: number of blocks
+// vd: volume voxel dimensions
 void initBlocks(glm::u64vec3 nb, glm::u64vec3 vd)
 {
     // block world dims
@@ -595,7 +596,7 @@ void initBlocks(glm::u64vec3 nb, glm::u64vec3 vd)
         vd.x, vd.y, vd.z,
         blk_dims.x, blk_dims.y, blk_dims.z);
 
-    // Loop through block coordinates and populate block fields.
+    // Loop through all our blockx (identified by <bx,by,bz>)and populate block fields.
     for (auto bz = 0ul; bz < nb.z; ++bz)
     for (auto by = 0ul; by < nb.y; ++by)
     for (auto bx = 0ul; bx < nb.x; ++bx) {
@@ -706,6 +707,8 @@ void filterBlocks(float *data, std::vector<Block> &blocks, glm::u64vec3 numBlks,
 
 }
 
+
+/////////////////////////////////////////////////////////////////////////////////
 void initGraphicsState()
 {
     gl_check(glClearColor(0.2f, 0.2f, 0.2f, 0.0f));
@@ -852,24 +855,28 @@ unsigned int loadTransfter_1dtformat(const std::string &filename, Texture &trans
 }
 
 
+///////////////////////////////////////////////////////////////////////////////
 void setupCameraPos(unsigned cameraPos)
 {
     switch (cameraPos) {
     case 2:
-        //g_camPosition = { 2.0f, 0.0f, 0.0f  };
-        g_rotation = glm::rotate(g_rotation, glm::quarter_pi<float>(), Y_AXIS);
+        //cam position = { 2.0f, 0.0f, 0.0f  };
+        g_rotation = glm::rotate(g_rotation, -1 * glm::half_pi<float>(), Y_AXIS);
         g_selectedSliceSet = SliceSet::YZ;
         break;
     case 1:
-        //g_camPosition = { 0.0f, 2.0f, 0.0f };
+        //cam position = { 0.0f, 2.0f, 0.0f };
+        g_rotation = glm::rotate(g_rotation, glm::half_pi<float>(), X_AXIS);
         g_selectedSliceSet = SliceSet::XZ;
         break;
     case 0:
     default:
-        //g_camPosition = { 0.0f, 0.0f, 2.0f };
+        //cam position = { 0.0f, 0.0f, 2.0f };
+        // no rotation needed, this is default cam location.
         g_selectedSliceSet = SliceSet::XY;
         break;
     }
+
     g_viewDirty = true;
 }
 
