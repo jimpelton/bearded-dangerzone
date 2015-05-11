@@ -31,10 +31,6 @@
 #include <iostream>
 
 #ifdef BDPROF
-//#include <nvToolsExt.h>
-
-//#define nvpushA(x) nvtxRangePushA((x))
-//#define nvpopA() nvtxRangePop()
 
 #define PATH_TO_NVPMAPI_CORE L"D:\\libs\\perfkit\\4.4.0-windows-desktop\\bin\\x64"
 
@@ -42,6 +38,7 @@
 #include "NvPmApi.Manager.h"
 //Simple singleton implementation for grabbing the NvPmApi
 static NvPmApiManager S_NVPMManager;
+NVPMContext g_nvpmContext{ 0 };
 
 
 ///////////////////////////////////////////////////////////////////////////
@@ -56,8 +53,9 @@ const NvPmApi *GetNvPmApi()
 {
     return S_NVPMManager.Api();
 }
-NVPMContext nvpmContext{ 0 };
 
+
+//////////////////////////////////////////////////////////////////////////
 bool initNVPerfThing()
 {
     NVPMRESULT nvResult;
@@ -70,7 +68,8 @@ bool initNVPerfThing()
         return false; // This is an error condition
     }
 
-    if ((nvResult = GetNvPmApi()->CreateContextFromOGLContext(uint64_t(::wglGetCurrentContext()), &nvpmContext)) != NVPM_OK)
+    if ((nvResult = GetNvPmApi()->CreateContextFromOGLContext(
+        uint64_t(::wglGetCurrentContext()), &g_nvpmContext)) != NVPM_OK)
     {
         return false; // This is an error condition
     }
@@ -78,19 +77,25 @@ bool initNVPerfThing()
     return true;
 }
 
-#define nvprofile_begin_experiment(context, nCount) \
-    do { \
-        GetNvPmApi()->BeginExperiment((context), (nCount)); \
-        \
+#define call_draw(_func)                                         \
+    do {                                                         \
+        int _nCount = 6;                                         \
+        GetNvPmApi()->BeginExperiment(g_nvpmContext, &(_nCount));\
+        for (int _i=0; _i < (_nCount); _i++) {                   \
+            GetNvPmApi()->BeginPass(_context, _i);               \
+            GetNvPmApi()->BeginObject(0);                        \
+            _func();                                             \
+            glFlush();                                           \
+            GetNvPmApi()->EndPass(_i);                           \
+        }                                                        \
+        GetNvPmApi()->EndExperiment();                           \
     } while (0)
 
-#define nvprofile_begin_obj(n) GetNvPmApi()->BeginObject((n));
-#define nvprofile_end_obj(n) glFlush(); GetNvPmApi()->EndObject((n));
-
+#define init_nvperf() initNVPerfThing();
 
 #else
-#define nvprofile_begin_obj(n)
-#define nvprofile_end_obj(n)
+#define call_draw(_func) (_func);
+#define init_nvperf() 
 #endif
 
 const glm::vec3 X_AXIS{ 1.0f, 0.0f, 0.0f };
@@ -118,6 +123,7 @@ std::vector<bd::VertexArrayObject *> g_vaoIds;
 std::vector<Block> g_blocks;
 std::vector<Block*> g_nonEmptyBlocks;
 size_t g_elementBufferSize{ 0 };
+const int g_elementsPerQuad{ 5 };
 
 ///////////////////////////////////////////////////////////////////////////////
 // Shaders and Textures
@@ -330,12 +336,36 @@ void drawNonEmptyBoundingBoxes(const glm::mat4 &mvp)
 
 
 ///////////////////////////////////////////////////////////////////////////////
+void drawSlices_XY()
+{
+    static const size_t xy_byteOffset{ 0 };
+    gl_check(glDrawElements(GL_TRIANGLE_STRIP, g_elementsPerQuad * g_numSlices,
+        GL_UNSIGNED_SHORT, (GLvoid *)xy_byteOffset));
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+void drawSlices_XZ()
+{
+    static size_t xz_byteOffset{ g_elementsPerQuad * g_numSlices * sizeof(uint16_t) };
+    gl_check(glDrawElements(GL_TRIANGLE_STRIP, g_elementsPerQuad * g_numSlices,
+        GL_UNSIGNED_SHORT, (GLvoid *)xz_byteOffset));
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+void drawSlices_YZ()
+{
+    static size_t yz_byteOffset{ 2 * g_elementsPerQuad * g_numSlices * sizeof(uint16_t) };
+    gl_check(glDrawElements(GL_TRIANGLE_STRIP, g_elementsPerQuad * g_numSlices,
+        GL_UNSIGNED_SHORT, (GLvoid *)yz_byteOffset));
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
 void drawNonEmptyBlocks_Forward(const glm::mat4 &mvp)
 {
     static const int elementsPerQuad = 5;
-    static const size_t xy_byteOffset{ 0 };
-    static size_t xz_byteOffset{ elementsPerQuad * g_numSlices * sizeof(uint16_t) };
-    static size_t yz_byteOffset{ 2 * elementsPerQuad * g_numSlices * sizeof(uint16_t) };
 //    std::cout << "forward" << std::endl;
 
     for (auto *b : g_nonEmptyBlocks) {
@@ -348,29 +378,23 @@ void drawNonEmptyBlocks_Forward(const glm::mat4 &mvp)
         
         case SliceSet::XY:
 //			nvprofile_begin_obj();
-            gl_check(glDrawElements(GL_TRIANGLE_STRIP, elementsPerQuad * g_numSlices, 
-                GL_UNSIGNED_SHORT, (GLvoid *) xy_byteOffset));
+            drawSlices_XY();
 //			nvprofile_end_obj();
             break;
         case SliceSet::XZ:
 //			nvpushA("XZ");
-            gl_check(glDrawElements(GL_TRIANGLE_STRIP, elementsPerQuad * g_numSlices, 
-                GL_UNSIGNED_SHORT, (GLvoid *) xz_byteOffset));
+            drawSlices_XZ();
 //			nvpopA();
             break;
         case SliceSet::YZ:
 //			nvpushA("YZ");
-			gl_check(glDrawElements(GL_TRIANGLE_STRIP, elementsPerQuad * g_numSlices, 
-                GL_UNSIGNED_SHORT, (GLvoid *) yz_byteOffset));
+            drawSlices_YZ();
 //			nvpopA();
             break;
         case SliceSet::AllOfEm:
-            gl_check(glDrawElements(GL_TRIANGLE_STRIP, elementsPerQuad * g_numSlices, 
-                GL_UNSIGNED_SHORT, (GLvoid *) xy_byteOffset));
-            gl_check(glDrawElements(GL_TRIANGLE_STRIP, elementsPerQuad * g_numSlices, 
-                GL_UNSIGNED_SHORT, (GLvoid *) xz_byteOffset));
-			gl_check(glDrawElements(GL_TRIANGLE_STRIP, elementsPerQuad * g_numSlices, 
-                GL_UNSIGNED_SHORT, (GLvoid *) yz_byteOffset));
+            drawSlices_XY();
+            drawSlices_XZ();
+            drawSlices_YZ();
             break;
         case SliceSet::NoneOfEm:
         default:
@@ -385,11 +409,6 @@ void drawNonEmptyBlocks_Forward(const glm::mat4 &mvp)
 ///////////////////////////////////////////////////////////////////////////////
 void drawNonEmptyBlocks_Reverse(const glm::mat4 &mvp)
 {
-    static const int elementsPerQuad = 5;
-    static const size_t xy_byteOffset{ 0 };
-    static const size_t xz_byteOffset{ elementsPerQuad * g_numSlices * sizeof(uint16_t) };
-    static const size_t yz_byteOffset{ 2 * elementsPerQuad * g_numSlices * sizeof(uint16_t) };
-
     for (size_t i = g_nonEmptyBlocks.size() - 1; i >= 0; --i) {
         Block *b = g_nonEmptyBlocks[i];
         b->texture().bind();
@@ -400,30 +419,24 @@ void drawNonEmptyBlocks_Reverse(const glm::mat4 &mvp)
         switch (g_selectedSliceSet) {
         
         case SliceSet::XY:
-//			nvpushA("XY");
-            gl_check(glDrawElements(GL_TRIANGLE_STRIP, elementsPerQuad * g_numSlices, 
-                GL_UNSIGNED_SHORT, (GLvoid *) xy_byteOffset));
-//			nvpopA();
+//			nvprofile_begin_obj();
+            drawSlices_XY();
+//			nvprofile_end_obj();
             break;
         case SliceSet::XZ:
 //			nvpushA("XZ");
-            gl_check(glDrawElements(GL_TRIANGLE_STRIP, elementsPerQuad * g_numSlices, 
-                GL_UNSIGNED_SHORT, (GLvoid *) xz_byteOffset));
+            drawSlices_XZ();
 //			nvpopA();
             break;
         case SliceSet::YZ:
 //			nvpushA("YZ");
-			gl_check(glDrawElements(GL_TRIANGLE_STRIP, elementsPerQuad * g_numSlices, 
-                GL_UNSIGNED_SHORT, (GLvoid *) yz_byteOffset));
+            drawSlices_YZ();
 //			nvpopA();
             break;
         case SliceSet::AllOfEm:
-            gl_check(glDrawElements(GL_TRIANGLE_STRIP, elementsPerQuad * g_numSlices, 
-                GL_UNSIGNED_SHORT, (GLvoid *) xy_byteOffset));
-            gl_check(glDrawElements(GL_TRIANGLE_STRIP, elementsPerQuad * g_numSlices, 
-                GL_UNSIGNED_SHORT, (GLvoid *) xz_byteOffset));
-			gl_check(glDrawElements(GL_TRIANGLE_STRIP, elementsPerQuad * g_numSlices, 
-                GL_UNSIGNED_SHORT, (GLvoid *) yz_byteOffset));
+            drawSlices_XY();
+            drawSlices_XZ();
+            drawSlices_YZ();
             break;
         case SliceSet::NoneOfEm:
         default:
@@ -536,13 +549,13 @@ void loop(GLFWwindow *window)
 ///////////////////////////////////////////////////////////////////////////////
 void genQuadVao(bd::VertexArrayObject &vao, unsigned int numSlices)
 {
-	std::vector<glm::vec4> temp;
+    std::vector<glm::vec4> temp;
     std::vector<glm::vec4> vbuf;
-	std::vector<glm::vec4> texbuf;
+    std::vector<glm::vec4> texbuf;
     std::vector<uint16_t> elebuf;
 
-	/// For each axis, populate vbuf with verts for numSlices quads, adjust  ///
-	/// z coordinate based on slice index.                                   ///
+    /// For each axis, populate vbuf with verts for numSlices quads, adjust  ///
+    /// z coordinate based on slice index.                                   ///
 
     create_verts_xy(numSlices, temp);
     std::copy(temp.begin(), temp.end(), std::back_inserter(vbuf));
