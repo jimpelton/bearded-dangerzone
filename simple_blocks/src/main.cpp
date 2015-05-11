@@ -1,3 +1,6 @@
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
+
 #include "block.h"
 #include "cmdline.h"
 #include "create_vao.h"
@@ -12,13 +15,8 @@
 
 #include <bd/util/util.h>
 
-#include <bd/file/datareader.h>
-#include <bd/file/datatypes.h>
 
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-
-#define GLM_FORCE_RADIANS
+//#define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
@@ -33,34 +31,66 @@
 #include <iostream>
 
 #ifdef BDPROF
-#include <nvToolsExt.h>
+//#include <nvToolsExt.h>
 
-#define nvpushA(x) nvtxRangePushA((x))
-#define nvpopA() nvtxRangePop()
+//#define nvpushA(x) nvtxRangePushA((x))
+//#define nvpopA() nvtxRangePop()
 
-//#define NVPM_INITGUID
-//#include "NvPmApi.Manager.h"
+#define PATH_TO_NVPMAPI_CORE L"D:\\libs\\perfkit\\4.4.0-windows-desktop\\bin\\x64"
+
+#define NVPM_INITGUID
+#include "NvPmApi.Manager.h"
 //Simple singleton implementation for grabbing the NvPmApi
-//static NvPmApiManager S_NVPMManager;
+static NvPmApiManager S_NVPMManager;
 
 
-/////////////////////////////////////////////////////////////////////////////
-//extern NvPmApiManager *GetNvPmApiManager()
-//{
-//    return &S_NVPMManager;
-//}
+///////////////////////////////////////////////////////////////////////////
+extern NvPmApiManager *GetNvPmApiManager()
+{
+    return &S_NVPMManager;
+}
 
 
-/////////////////////////////////////////////////////////////////////////////
-//const NvPmApi *GetNvPmApi()
-//{
-//    return S_NVPMManager.Api();
-//}
+//////////////////////////////////////////////////////////////////////////
+const NvPmApi *GetNvPmApi()
+{
+    return S_NVPMManager.Api();
+}
+NVPMContext nvpmContext{ 0 };
+
+bool initNVPerfThing()
+{
+    NVPMRESULT nvResult;
+
+    if (GetNvPmApiManager()->Construct(PATH_TO_NVPMAPI_CORE) != S_OK) {
+        return false; // This is an error condition
+    }
+
+    if ((nvResult = GetNvPmApi()->Init()) != NVPM_OK) {
+        return false; // This is an error condition
+    }
+
+    if ((nvResult = GetNvPmApi()->CreateContextFromOGLContext(uint64_t(::wglGetCurrentContext()), &nvpmContext)) != NVPM_OK)
+    {
+        return false; // This is an error condition
+    }
+
+    return true;
+}
+
+#define nvprofile_begin_experiment(context, nCount) \
+    do { \
+        GetNvPmApi()->BeginExperiment((context), (nCount)); \
+        \
+    } while (0)
+
+#define nvprofile_begin_obj(n) GetNvPmApi()->BeginObject((n));
+#define nvprofile_end_obj(n) glFlush(); GetNvPmApi()->EndObject((n));
 
 
 #else
-#define nvpushA(x)
-#define nvpopA()
+#define nvprofile_begin_obj(n)
+#define nvprofile_end_obj(n)
 #endif
 
 const glm::vec3 X_AXIS{ 1.0f, 0.0f, 0.0f };
@@ -310,29 +340,29 @@ void drawNonEmptyBlocks_Forward(const glm::mat4 &mvp)
 
     for (auto *b : g_nonEmptyBlocks) {
         b->texture().bind();
-        glm::mat4 mmvp = mvp * b->transform().matrix();
-        g_volumeShader.setUniform("mvp", mmvp);
+        glm::mat4 wmvp = mvp * b->transform().matrix();
+        g_volumeShader.setUniform("mvp", wmvp);
         g_volumeShader.setUniform("tfScalingVal", g_scaleValue);
 
         switch (g_selectedSliceSet) {
         
         case SliceSet::XY:
-			nvpushA("XY");
+//			nvprofile_begin_obj();
             gl_check(glDrawElements(GL_TRIANGLE_STRIP, elementsPerQuad * g_numSlices, 
                 GL_UNSIGNED_SHORT, (GLvoid *) xy_byteOffset));
-			nvpopA();
+//			nvprofile_end_obj();
             break;
         case SliceSet::XZ:
-			nvpushA("XZ");
+//			nvpushA("XZ");
             gl_check(glDrawElements(GL_TRIANGLE_STRIP, elementsPerQuad * g_numSlices, 
                 GL_UNSIGNED_SHORT, (GLvoid *) xz_byteOffset));
-			nvpopA();
+//			nvpopA();
             break;
         case SliceSet::YZ:
-			nvpushA("YZ");
+//			nvpushA("YZ");
 			gl_check(glDrawElements(GL_TRIANGLE_STRIP, elementsPerQuad * g_numSlices, 
                 GL_UNSIGNED_SHORT, (GLvoid *) yz_byteOffset));
-			nvpopA();
+//			nvpopA();
             break;
         case SliceSet::AllOfEm:
             gl_check(glDrawElements(GL_TRIANGLE_STRIP, elementsPerQuad * g_numSlices, 
@@ -360,32 +390,32 @@ void drawNonEmptyBlocks_Reverse(const glm::mat4 &mvp)
     static const size_t xz_byteOffset{ elementsPerQuad * g_numSlices * sizeof(uint16_t) };
     static const size_t yz_byteOffset{ 2 * elementsPerQuad * g_numSlices * sizeof(uint16_t) };
 
-    for (int i = g_nonEmptyBlocks.size() - 1; i >= 0; --i) {
+    for (size_t i = g_nonEmptyBlocks.size() - 1; i >= 0; --i) {
         Block *b = g_nonEmptyBlocks[i];
         b->texture().bind();
-        glm::mat4 mmvp = mvp * b->transform().matrix();
-        g_volumeShader.setUniform("mvp", mmvp);
+        glm::mat4 wmvp = mvp * b->transform().matrix();
+        g_volumeShader.setUniform("mvp", wmvp);
         g_volumeShader.setUniform("tfScalingVal", g_scaleValue);
 
         switch (g_selectedSliceSet) {
         
         case SliceSet::XY:
-			nvpushA("XY");
+//			nvpushA("XY");
             gl_check(glDrawElements(GL_TRIANGLE_STRIP, elementsPerQuad * g_numSlices, 
                 GL_UNSIGNED_SHORT, (GLvoid *) xy_byteOffset));
-			nvpopA();
+//			nvpopA();
             break;
         case SliceSet::XZ:
-			nvpushA("XZ");
+//			nvpushA("XZ");
             gl_check(glDrawElements(GL_TRIANGLE_STRIP, elementsPerQuad * g_numSlices, 
                 GL_UNSIGNED_SHORT, (GLvoid *) xz_byteOffset));
-			nvpopA();
+//			nvpopA();
             break;
         case SliceSet::YZ:
-			nvpushA("YZ");
+//			nvpushA("YZ");
 			gl_check(glDrawElements(GL_TRIANGLE_STRIP, elementsPerQuad * g_numSlices, 
                 GL_UNSIGNED_SHORT, (GLvoid *) yz_byteOffset));
-			nvpopA();
+//			nvpopA();
             break;
         case SliceSet::AllOfEm:
             gl_check(glDrawElements(GL_TRIANGLE_STRIP, elementsPerQuad * g_numSlices, 
@@ -479,6 +509,7 @@ void loop(GLFWwindow *window)
         vao->unbind();
 
         if (g_toggleBlockBoxes) {
+
         ////////  BBoxes  /////////////////////////////////////////
             vao = g_vaoIds[static_cast<unsigned int>(ObjType::Boxes)];
             vao->bind();
@@ -582,131 +613,6 @@ void genBoxVao(bd::VertexArrayObject &vao)
 
 }
 
-///////////////////////////////////////////////////////////////////////////////
-// nb: number of blocks
-// vd: volume voxel dimensions
-void initBlocks(glm::u64vec3 nb, glm::u64vec3 vd)
-{
-    // block world dims
-    glm::vec3 blk_dims{ 1.0f / glm::vec3(nb) };
-
-    gl_log("Starting block init: Number of blocks: %dx%dx%d, "
-        "Volume dimensions: %dx%dx%d Block dimensions: %.2f,%.2f,%.2f",
-        nb.x, nb.y, nb.z,
-        vd.x, vd.y, vd.z,
-        blk_dims.x, blk_dims.y, blk_dims.z);
-
-    // Loop through all our blockx (identified by <bx,by,bz>)and populate block fields.
-    for (auto bz = 0ul; bz < nb.z; ++bz)
-    for (auto by = 0ul; by < nb.y; ++by)
-    for (auto bx = 0ul; bx < nb.x; ++bx) {
-
-        // i,j,k block identifier
-        glm::u64vec3 blkId{ bx, by, bz };
-        // lower left corner in world coordinates
-        glm::vec3 worldLoc{ (blk_dims * glm::vec3(blkId)) - 0.5f }; // - 0.5f;
-        // origin in world coordiates
-        glm::vec3 blk_origin{ (worldLoc + (worldLoc + blk_dims)) * 0.5f };
-
-        Block blk{ glm::u64vec3(bx, by, bz), blk_dims, blk_origin };
-        g_blocks.push_back(blk);
-    }
-
-    gl_log("Finished block init: total blocks is %d.", g_blocks.size());
-}
-
-
-/////////////////////////////////////////////////////////////////////////////////
-std::unique_ptr<float []> readVolumeData(const std::string &dtype,
-    const std::string &fpath, size_t volx, size_t voly, size_t volz)
-{
-    bd::DataType t = bd::DataTypesMap.at(dtype);
-    float *rawdata = nullptr;
-    switch (t) {
-    case bd::DataType::Float:
-    {
-        bd::DataReader<float, float> reader;
-        reader.loadRaw3d(fpath, volx, voly, volz);
-        rawdata = reader.takeOwnership();
-        break;
-    }
-    case bd::DataType::UnsignedCharacter:
-    {
-        bd::DataReader<unsigned char, float> reader;
-        reader.loadRaw3d(fpath, volx, voly, volz);
-        rawdata = reader.takeOwnership();
-        break;
-    }
-    case bd::DataType::UnsignedShort:
-    {
-        bd::DataReader<unsigned short, float> reader;
-        reader.loadRaw3d(fpath, volx, voly, volz);
-        rawdata = reader.takeOwnership();
-        break;
-    }
-    default:
-        break;
-    }
-
-    return std::unique_ptr<float []>(rawdata);
-}
-
-
-/////////////////////////////////////////////////////////////////////////////////
-/// \brief Marks blocks as empty if average is outside of [tmin..tmax]
-///////////////////////////////////////////////////////////////////////////////
-void filterBlocks(float *data, std::vector<Block> &blocks, glm::u64vec3 numBlks,
-    glm::u64vec3 volsz, float tmin = 0.0f, float tmax = 1.0f)
-{
-    size_t emptyCount{ 0 };
-    glm::u64vec3 bsz{ volsz / numBlks };
-    size_t blkPoints = bd::vecCompMult(bsz);
-
-    std::vector<float> image;
-    image.resize(blkPoints);
-
-    for (auto &b : blocks) {
-        glm::u64vec3 bst{ b.ijk() * bsz };  // block start = block index * block size
-        float avg{ 0.0f };
-
-        size_t imageIdx = 0;
-        for (auto k = bst.z; k < bst.z + bsz.z; ++k)
-        for (auto j = bst.y; j < bst.y + bsz.y; ++j)
-        for (auto i = bst.x; i < bst.x + bsz.x; ++i) {
-            size_t dataIdx{ bd::to1D(i, j, k, volsz.x, volsz.y) };
-            float val = data[dataIdx];
-            image[imageIdx++] = val;
-            avg += val;
-        } // for for for
-
-        avg /= blkPoints;
-        b.avg(avg);
-
-        if (avg < tmin || avg > tmax) {
-            b.empty(true);
-            emptyCount += 1;
-        } else {
-            unsigned int smp = g_volumeShader.getUniformLocation("volume_sampler");
-            b.texture().samplerLocation(smp);
-            b.texture().textureUnit(0);
-            b.texture().genGLTex3d(image.data(),
-                Texture::Format::RED, Texture::Format::RED,
-                bsz.x, bsz.y, bsz.z);
-
-            if (b.texture().id() == 0) {
-                gl_log_err("failed to make a texture, sorry about it.");
-            }
-
-            g_nonEmptyBlocks.push_back(&b);
-        }
-    } // for auto
-
-    // TODO: create list of pointers to non-empty blocks.
-
-    gl_log("%d/%d blocks removed.", emptyCount, bd::vecCompMult(numBlks));
-
-}
-
 
 /////////////////////////////////////////////////////////////////////////////////
 void initGraphicsState()
@@ -725,6 +631,7 @@ void initGraphicsState()
     gl_check(glEnable(GL_PRIMITIVE_RESTART));
     gl_check(glPrimitiveRestartIndex(0xFFFF));
 }
+
 
 /////////////////////////////////////////////////////////////////////////////////
 GLFWwindow* init()
@@ -785,6 +692,7 @@ void cleanup()
     //    }
     //    glDeleteBuffers(NUMBOXES, &bufIds[0]);
     //    glDeleteProgram(g_shaderProgramId);
+    glfwTerminate();
 }
 
 
@@ -893,25 +801,41 @@ int main(int argc, const char *argv [])
     g_numSlices = clo.num_slices;
     bd::gl_log_restart();
 
+    //// GLFW init ////
     GLFWwindow *window;
     if ((window = init()) == nullptr) {
         gl_log("Could not initialize GLFW, exiting.");
         return 1;
     }
 
-    GLuint programId{ g_simpleShader.linkProgram(
-        "shaders/vert_vertexcolor_passthrough.glsl",
-        "shaders/frag_vertcolor.glsl")
-    };
+    //// NV Perf Thing ////
+//    if (initNVPerfThing() == false) {
+//        gl_log_err("Nv perf thing wasn't initialized.");
+//        cleanup();
+//        return 1;
+//    }
 
+    //// Shaders Init ////
+    GLuint programId
+    { 
+        g_simpleShader.linkProgram
+        (
+            "shaders/vert_vertexcolor_passthrough.glsl",
+            "shaders/frag_vertcolor.glsl"
+        )
+    };
     if (programId == 0) {
         gl_log_err("Error building passthrough shader, program id was 0.");
         return 1;
     }
 
-    GLuint volumeProgramId{ g_volumeShader.linkProgram(
-        "shaders/vert_vertexcolor_passthrough.glsl",
-        "shaders/frag_volumesampler_noshading.glsl")
+    GLuint volumeProgramId
+    { 
+        g_volumeShader.linkProgram
+        (
+            "shaders/vert_vertexcolor_passthrough.glsl",
+            "shaders/frag_volumesampler_noshading.glsl"
+        )
     };
 
     if (volumeProgramId == 0) {
@@ -919,6 +843,7 @@ int main(int argc, const char *argv [])
         return 1;
     }
 
+    //// Geometry Init ////
     bd::VertexArrayObject quadVbo(bd::VertexArrayObject::Method::ELEMENTS);
     quadVbo.create();
 
@@ -937,35 +862,56 @@ int main(int argc, const char *argv [])
     g_vaoIds[static_cast<unsigned int>(ObjType::Quads)] = &quadVbo;
     g_vaoIds[static_cast<unsigned int>(ObjType::Boxes)] = &boxVbo;
 
-    initBlocks(
+
+    //// Blocks and Data Init ////
+    Block::initBlocks
+    (
         glm::u64vec3( clo.numblk_x, clo.numblk_y, clo.numblk_z),
-        glm::u64vec3( clo.w, clo.h, clo.d ) );
+        glm::u64vec3( clo.w, clo.h, clo.d ), 
+        g_blocks
+    );
 
     std::unique_ptr<float []> data
     {
-        std::move(readVolumeData(clo.type, clo.filePath, clo.w, clo.h, clo.d))
+        std::move( bd::readVolumeData( clo.type, clo.filePath, clo.w, clo.h, clo.d ) )
     };
+    
+    if (data == nullptr) {
+        gl_log_err("data file was not opened. exiting...");
+        cleanup();
+        return 1;
+    }
 
-    filterBlocks( data.get(), g_blocks, 
-        glm::u64vec3( clo.numblk_x, clo.numblk_y, clo.numblk_z ),
-        glm::u64vec3( clo.w, clo.h, clo.d ), 
-        clo.tmin, clo.tmax );
+    Block::filterBlocks
+    ( 
+        data.get(),                                               // data set
+        g_blocks,                                                 // da blocks
+        g_nonEmptyBlocks,                                         // da non empty blocks
+//        glm::u64vec3( clo.numblk_x, clo.numblk_y, clo.numblk_z ), // number of blocks
+//        glm::u64vec3( clo.w, clo.h, clo.d ),                      
+        g_volumeShader.getUniformLocation("volume_sampler"),
+        clo.tmin, 
+        clo.tmax 
+    );
 
     if (clo.printBlocks) { printBlocks(); }
 
-    unsigned int texid{ loadTransfter_1dtformat(clo.tfuncPath, g_tfuncTex) };
-
-    if (texid == 0) {
+    //// Transfer function texture ////
+    unsigned int tfuncTextureId
+    { 
+        loadTransfter_1dtformat(clo.tfuncPath, g_tfuncTex) 
+    };
+    if (tfuncTextureId == 0) {
         gl_log_err("Exiting because tfunc texture was not bound.");
         exit(1);
     }
 
+    //// Renderage ////
     setupCameraPos(clo.cameraPos);
     initGraphicsState();
     loop(window);
     cleanup();
     bd::gl_log_close();
-    glfwTerminate();
 
     return 0;
 }
