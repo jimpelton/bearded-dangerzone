@@ -86,7 +86,7 @@ try
     opts.tmax = tmax.getValue();
     opts.cameraPos = initialCameraPosArg.getValue();
 
-    return cmd.getArgList().size();
+    return static_cast<int>(cmd.getArgList().size());
 
 } catch (TCLAP::ArgException &e) {
     std::cout << "Error parsing command line args: " << e.error() << " for argument " 
