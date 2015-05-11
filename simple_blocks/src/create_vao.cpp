@@ -47,6 +47,14 @@ float delta(size_t num_slices, float min, float max)
     return (max - min) / (num_slices-1);
 }
 
+//TODO: use texbuf_adjust instead of duplicated code in texbuf vbo create methods.
+void texbuf_adjust(std::vector<glm::vec4> &texbuf)
+{
+    float diff = 1 - VOL_MAX;
+    std::for_each(texbuf.begin(), texbuf.end(),
+        [diff](glm::vec4 &v){ v += glm::vec4(diff, diff, diff, 0.0f); });
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 void create_verts_xy(size_t numSlices, std::vector<glm::vec4> &vbuf)
 {
@@ -156,90 +164,5 @@ void create_elementIndices(size_t numSlices, std::vector<uint16_t> &elebuf)
         *(it+3) = uint16_t(2 + 4*i);
         *(it+4) = uint16_t(0xFFFF);  // Special restart symbol.
     }
-
-
-//    for (int i = 0; i < elebuf.size(); i++) {
-//        elebuf.push_back(uint16_t(0 + 4*i));
-//        elebuf.push_back(uint16_t(1 + 4*i));
-//        elebuf.push_back(uint16_t(3 + 4*i));
-//        elebuf.push_back(uint16_t(2 + 4*i));
-//        elebuf.push_back(uint16_t(0xFFFF));  // Special restart symbol.
-//    }
-     
-
-//    std::generate(elebuf.begin(), elebuf.end(), 
-//        [&i](){ auto rval = sliceIndexToElements(i); ++i; return rval; });
 }
 
-//int create_xy(size_t numSlices, std::vector<glm::vec4> &vbuf,
-//    std::vector<glm::vec3> &texbuf, std::vector<glm::u16vec4> &elebuf, int eleIdxContinuation)
-//{
-//    int eleIdx = eleIdxContinuation;
-//    float st = start(numSlices, -0.5f, 0.5f);
-//    float delt = delta(numSlices, st, -1.0f * st);
-//	for (unsigned int i = 0; i < numSlices; ++i) {
-//		float pos = sliceIndexToWorldPos(i, st, delt);
-//		for (glm::vec4 vert : bd::Quad::verts_xy) {
-//			vert.z = pos;    // adjust along Z-axis
-//			vbuf.push_back(vert);
-//		}
-//        for (glm::vec3 coord : bd::Quad::texcoords_xy) {
-//            coord.z = pos;
-//            texbuf.push_back(coord);
-//        }
-//        elebuf.push_back(sliceIndexToElements(eleIdx));
-//        eleIdx += 4;
-//	}
-//
-//    return eleIdx;
-//}
-//
-//int create_xz(size_t numSlices, std::vector<glm::vec4> &vbuf,
-//    std::vector<glm::vec3> &texbuf, std::vector<glm::u16vec4> &elebuf,
-//    int eleIdxContinuation)
-//{
-//    int eleIdx = eleIdxContinuation;
-//    float st = start(numSlices, -0.5f, 0.5f);
-//    float delt = delta(numSlices, st, -1.0f * st);
-//    for (unsigned int i = 0; i < numSlices; ++i) {
-//        float pos = sliceIndexToWorldPos(i, st, delt);
-//        for (glm::vec4 vert : bd::Quad::verts_xz) {
-//            vert.y = pos;    // adjust along Y-axis
-//            vbuf.push_back(vert);
-//        }
-//        for (glm::vec3 coord : bd::Quad::texcoords_xz) {
-//            coord.y = pos;
-//            texbuf.push_back(coord);
-//        }
-//        elebuf.push_back(sliceIndexToElements(eleIdx));
-//        eleIdx += 4;
-//    }
-//
-//    return eleIdx;
-//}
-//
-//int create_yz(size_t numSlices, std::vector<glm::vec4> &vbuf,
-//    std::vector<glm::vec3> &texbuf, std::vector<glm::u16vec4> &elebuf,
-//    int eleIdxContinuation)
-//{
-//    int eleIdx = eleIdxContinuation;
-//    float st = start(numSlices, -0.5f, 0.5f);
-//    float delt = delta(numSlices, st, -1.0f * st);
-//    for (unsigned int i = 0; i < numSlices; ++i) {
-//        float pos = sliceIndexToWorldPos(i, st, delt);
-//        for (glm::vec4 vert : bd::Quad::verts_yz) {
-//            vert.x = pos;    // adjust along X-axis
-//            vbuf.push_back(vert);
-//        }
-//        for (glm::vec3 coord : bd::Quad::texcoords_yz) {
-//            coord.x = pos;
-//            texbuf.push_back(coord);
-//        }
-//        elebuf.push_back(sliceIndexToElements(eleIdx));
-//        eleIdx += 4;
-//    }
-//
-//    return eleIdx;
-//
-//
-//}

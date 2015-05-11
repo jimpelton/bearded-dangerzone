@@ -18,21 +18,10 @@ void create_verts_xy(size_t num_slices, std::vector<glm::vec4> &vbuf);
 void create_verts_xz(size_t numSlices, std::vector<glm::vec4> &vbuf);
 void create_verts_yz(size_t numSlices, std::vector<glm::vec4> &vbuf);
 
-void  create_texbuf_xy(size_t num_slices, std::vector<glm::vec4> &texbuf);
+void create_texbuf_xy(size_t num_slices, std::vector<glm::vec4> &texbuf);
 void create_texbuf_xz(size_t numSlices, std::vector<glm::vec4> &texbuf);
 void create_texbuf_yz(size_t numSlices, std::vector<glm::vec4> &texbuf);
 
 void create_elementIndices(size_t numSlices, std::vector<uint16_t> &elebuf);
-
-//    std::vector<glm::vec3> &teccoords, std::vector<glm::u16vec4> &elebuf, 
-//    int eleIdxContinuation);
-//
-//int create_xz(size_t num_slices, std::vector<glm::vec4> &slices,
-//    std::vector<glm::vec3> &teccoords, std::vector<glm::u16vec4> &elebuf,
-//    int eleIdxContinuation);
-//
-//int create_yz(size_t num_slices, std::vector<glm::vec4> &slices,
-//    std::vector<glm::vec3> &teccoords, std::vector<glm::u16vec4> &elebuf,
-//    int eleIdxContinuation);
 
 #endif // !create_vao_h__
