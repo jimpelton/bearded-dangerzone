@@ -31,11 +31,14 @@
 #include <iostream>
 
 #ifdef BDPROF
+#define PATH_TO_NVPMAPI_CORE L"D:\\libs\\perfkit\\4.4.0-windows-desktop\\bin\\x64\\NvPmApi.Core.dll"
 
-#define PATH_TO_NVPMAPI_CORE L"D:\\libs\\perfkit\\4.4.0-windows-desktop\\bin\\x64"
-
-#define NVPM_INITGUID
+#ifndef NVPM_INIGUID
+#define NVPM_INITGUID 1
+#endif
+#include "NvPmApi.h"
 #include "NvPmApi.Manager.h"
+
 //Simple singleton implementation for grabbing the NvPmApi
 static NvPmApiManager S_NVPMManager;
 NVPMContext g_nvpmContext{ 0 };
@@ -55,47 +58,131 @@ const NvPmApi *GetNvPmApi()
 }
 
 
+
 //////////////////////////////////////////////////////////////////////////
-bool initNVPerfThing()
+bool initNvPm()
 {
     NVPMRESULT nvResult;
 
-    if (GetNvPmApiManager()->Construct(PATH_TO_NVPMAPI_CORE) != S_OK) {
+    if ((nvResult = GetNvPmApiManager()->Construct(PATH_TO_NVPMAPI_CORE)) != S_OK) {
+        gl_log_err("NvPmApi Manager could not construct. result: %d", nvResult);
         return false; // This is an error condition
     }
 
     if ((nvResult = GetNvPmApi()->Init()) != NVPM_OK) {
+        gl_log_err("NvPmApi could not initialize. result: %d", nvResult);
+        return false; // This is an error condition
+    }
+    
+    nvResult = 
+        GetNvPmApi()->CreateContextFromOGLContext(uint64_t(::wglGetCurrentContext()), 
+            &g_nvpmContext);
+    
+    if (nvResult != NVPM_OK)
+    {
+        gl_log_err("NvPmApi could not create context from ogl context! result: %d", nvResult);
         return false; // This is an error condition
     }
 
-    if ((nvResult = GetNvPmApi()->CreateContextFromOGLContext(
-        uint64_t(::wglGetCurrentContext()), &g_nvpmContext)) != NVPM_OK)
-    {
-        return false; // This is an error condition
-    }
+    gl_log("NvPmApi initialized.");
 
     return true;
 }
 
-#define call_draw(_func)                                         \
-    do {                                                         \
-        int _nCount = 6;                                         \
-        GetNvPmApi()->BeginExperiment(g_nvpmContext, &(_nCount));\
-        for (int _i=0; _i < (_nCount); _i++) {                   \
-            GetNvPmApi()->BeginPass(_context, _i);               \
-            GetNvPmApi()->BeginObject(0);                        \
-            _func();                                             \
-            glFlush();                                           \
-            GetNvPmApi()->EndPass(_i);                           \
-        }                                                        \
-        GetNvPmApi()->EndExperiment();                           \
+bool nvpmShutdown()
+{
+    if (!S_NVPMManager.Api()) {
+        return false;
+    }
+
+    S_NVPMManager.Api()->Shutdown();
+    
+    return true;
+}
+
+struct NvPmGlobals
+{
+    NVPMUINT framestart;
+} g_globals;
+
+struct Mode
+{
+    NVPMContext perfCtx;
+    NVPMUINT  nTotalPasses;
+    NVPMUINT nPass;
+    NVPMUINT nFrame;
+
+    int objectId;
+    bool isCollecting;
+
+    const char** counterNames;
+    int counterCount;
+};
+
+void experimentFrameBegin(Mode *m)
+{
+    if (m->nFrame == g_globals.framestart){
+        glFinish();
+        GetNvPmApi()->BeginExperiment(g_nvpmContext, &m->nTotalPasses);
+        m->isCollecting = true;
+        m->nPass = 0;
+    }
+
+    if (m->isCollecting) {
+        GetNvPmApi()->BeginPass(m->perfCtx, m->nPass);
+    }
+}
+
+void experimentFrameEnd(Mode *mode)
+{
+    if (mode->isCollecting) {
+        GetNvPmApi()->EndPass(mode->perfCtx, mode->nPass);
+        ++mode->nPass;
+        mode->objectId = 0;
+    }
+    if (mode->isCollecting && mode->nPass == mode->nTotalPasses) {
+        mode->isCollecting = false;
+        mode->nPass = 0;
+        mode->nTotalPasses = 0;
+        GetNvPmApi()->EndExperiment(mode->perfCtx);
+
+        //TODO: printcounters(...);
+    }
+    ++mode->nFrame;
+}
+
+
+
+#define call_draw(_func)                                           \
+    do {                                                           \
+        unsigned int _nPasses = 6;                                  \
+        GetNvPmApi()->BeginExperiment(g_nvpmContext, &(_nPasses));  \
+        for (unsigned _i=0; _i < (_nPasses); _i++) {                \
+            GetNvPmApi()->BeginPass(g_nvpmContext, _i);            \
+            GetNvPmApi()->BeginObject(g_nvpmContext, 0);           \
+            _func();                                               \
+            glFlush();                                             \
+            GetNvPmApi()->EndObject(g_nvpmContext, 0);             \
+            GetNvPmApi()->EndPass(g_nvpmContext, _i);              \
+        }                                                          \
+        GetNvPmApi()->EndExperiment(g_nvpmContext);                \
     } while (0)
 
-#define init_nvperf() initNVPerfThing();
+#define init_nvperf_or_exit()                               \
+    do {                                                    \
+        if (! initNVPerfThing()) {                          \
+            gl_log_err("Could not init nvperf api!");       \
+            cleanup();                                      \
+            exit(1);                                        \
+        }                                                   \
+    } while(0)
+
 
 #else
+
 #define call_draw(_func) (_func);
-#define init_nvperf() 
+#define init_nvperf()
+
 #endif
 
 const glm::vec3 X_AXIS{ 1.0f, 0.0f, 0.0f };
@@ -367,7 +454,7 @@ void drawNonEmptyBlocks_Forward(const glm::mat4 &mvp)
 {
     static const int elementsPerQuad = 5;
 //    std::cout << "forward" << std::endl;
-
+    
     for (auto *b : g_nonEmptyBlocks) {
         b->texture().bind();
         glm::mat4 wmvp = mvp * b->transform().matrix();
@@ -378,7 +465,7 @@ void drawNonEmptyBlocks_Forward(const glm::mat4 &mvp)
         
         case SliceSet::XY:
 //			nvprofile_begin_obj();
-            drawSlices_XY();
+            call_draw(drawSlices_XY);
 //			nvprofile_end_obj();
             break;
         case SliceSet::XZ:
@@ -822,11 +909,6 @@ int main(int argc, const char *argv [])
     }
 
     //// NV Perf Thing ////
-//    if (initNVPerfThing() == false) {
-//        gl_log_err("Nv perf thing wasn't initialized.");
-//        cleanup();
-//        return 1;
-//    }
 
     //// Shaders Init ////
     GLuint programId
