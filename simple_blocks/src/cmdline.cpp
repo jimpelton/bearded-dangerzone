@@ -43,6 +43,7 @@ try
     TCLAP::ValueArg<size_t> zdimArg("", "volz", "Volume z dim.", false, 1, "uint");
     cmd.add(zdimArg);
 
+
     // num blocks
     TCLAP::ValueArg<size_t> xBlocksArg("", "nbx", "Num blocks x dim", false, 1, "uint");
     cmd.add(xBlocksArg);
@@ -56,6 +57,7 @@ try
 	TCLAP::ValueArg<unsigned int> numSlicesArg("s", "num-slices", "Num slices per block", false, 1, "uint");
 	cmd.add(numSlicesArg);
 
+
     // threshold min/max
     TCLAP::ValueArg<float> tmin("", "tmin", "Thresh min", false, 0.0, "float");
     cmd.add(tmin);
@@ -66,8 +68,15 @@ try
     TCLAP::ValueArg<unsigned int> initialCameraPosArg("c", "camera-pos", "Initial camera position (z=0, y=1, x=2)", false, 0, "uint");
     cmd.add(initialCameraPosArg);
 
+
+    // perf output file path
+    TCLAP::ValueArg<std::string> perfOutPathArg("", "perf-out-file", "Print performance metrics to file.", false, "", "string");
+    cmd.add(perfOutPathArg);
+
+
     // print blocks
     TCLAP::SwitchArg printBlocksArg("", "print-blocks", "Print blocks into to stdout.", cmd, false);
+
 
     cmd.parse(argc, argv);
 
@@ -85,6 +94,7 @@ try
     opts.tmin = tmin.getValue();
     opts.tmax = tmax.getValue();
     opts.cameraPos = initialCameraPosArg.getValue();
+    opts.perfOutPath = perfOutPathArg.getValue();
 
     return static_cast<int>(cmd.getArgList().size());
 
