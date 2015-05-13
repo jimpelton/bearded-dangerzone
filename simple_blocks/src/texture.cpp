@@ -32,11 +32,18 @@ Texture::~Texture()
 {
 }
 
-void Texture::bind()
+//void Texture::bind()
+//{
+//    glActiveTexture(GL_TEXTURE0+m_unit);
+//    glBindTexture(textype[static_cast<unsigned int>(m_type)], m_id);
+//    glUniform1i(m_samplerUniform,  m_unit);
+//}
+
+void Texture::bind(unsigned int unit)
 {
-    glActiveTexture(GL_TEXTURE0+m_unit);
+    glActiveTexture(unit);
     glBindTexture(textype[static_cast<unsigned int>(m_type)], m_id);
-    glUniform1i(m_samplerUniform,  m_unit);
+    glUniform1i(m_samplerUniform, unit);
 }
 
 unsigned int Texture::genGLTex1d(float *img, Format ity, Format ety, size_t w)

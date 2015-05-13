@@ -666,7 +666,7 @@ void drawNonEmptyBlocks_Forward(const glm::mat4 &mvp)
 //    std::cout << "forward" << std::endl;
     perf_frameBegin();
     for (auto *b : g_nonEmptyBlocks) {
-        b->texture().bind();
+        b->texture().bind(0);
         glm::mat4 wmvp = mvp * b->transform().matrix();
         g_volumeShader.setUniform("mvp", wmvp);
         g_volumeShader.setUniform("tfScalingVal", g_scaleValue);
@@ -690,7 +690,6 @@ void drawNonEmptyBlocks_Forward(const glm::mat4 &mvp)
         default:
             break;
         } // switch
-
     } // for
     perf_frameEnd();
 }
@@ -699,9 +698,10 @@ void drawNonEmptyBlocks_Forward(const glm::mat4 &mvp)
 ///////////////////////////////////////////////////////////////////////////////
 void drawNonEmptyBlocks_Reverse(const glm::mat4 &mvp)
 {
+    perf_frameBegin();
     for (size_t i = g_nonEmptyBlocks.size() - 1; i >= 0; --i) {
         Block *b = g_nonEmptyBlocks[i];
-        b->texture().bind();
+        b->texture().bind(0);
         glm::mat4 wmvp = mvp * b->transform().matrix();
         g_volumeShader.setUniform("mvp", wmvp);
         g_volumeShader.setUniform("tfScalingVal", g_scaleValue);
@@ -727,6 +727,7 @@ void drawNonEmptyBlocks_Reverse(const glm::mat4 &mvp)
             break;
         } // switch
     } // for
+    perf_frameEnd();
     
 }
 
@@ -782,7 +783,7 @@ void loop(GLFWwindow *window)
     bd::VertexArrayObject *vao = nullptr;
     
     g_volumeShader.bind();
-    g_tfuncTex.bind(); 
+    g_tfuncTex.bind(1); 
 
     do {
         if (g_viewDirty) {
@@ -1178,8 +1179,6 @@ int main(int argc, const char *argv [])
         data.get(),                                               // data set
         g_blocks,                                                 // da blocks
         g_nonEmptyBlocks,                                         // da non empty blocks
-//        glm::u64vec3( clo.numblk_x, clo.numblk_y, clo.numblk_z ), // number of blocks
-//        glm::u64vec3( clo.w, clo.h, clo.d ),                      
         g_volumeShader.getUniformLocation("volume_sampler"),
         clo.tmin, 
         clo.tmax 

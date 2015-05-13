@@ -43,7 +43,8 @@ public:
     // Interface 
     ///////////////////////////////////////////////////////////////////////////////
 
-    void bind();
+//    void bind();
+    void bind(unsigned int unit);
 
     unsigned int genGLTex1d(float *img, Format ity, Format ety, size_t w);
     
