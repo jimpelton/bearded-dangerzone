@@ -31,8 +31,8 @@
 #include <iostream>
 
 #ifdef BDPROF
-//#define PATH_TO_NVPMAPI_CORE L"C:\\libs\\perfkit\\4.4.0-windows-desktop\\bin\\x64\\NvPmApi.Core.dll"
-#define PATH_TO_NVPMAPI_CORE L"C:\\libs\\perfkit\\PerfKit-4.4.0\\bin\\x64\\NvPmApi.Core.dll"
+#define PATH_TO_NVPMAPI_CORE L"D:\\libs\\perfkit\\4.4.0-windows-desktop\\bin\\x64\\NvPmApi.Core.dll"
+//#define PATH_TO_NVPMAPI_CORE L"C:\\libs\\perfkit\\PerfKit-4.4.0\\bin\\x64\\NvPmApi.Core.dll"
 
 #ifndef NVPM_INIGUID
 #define NVPM_INITGUID 1
@@ -40,6 +40,11 @@
 #include "NvPmApi.h"
 #include "NvPmApi.Manager.h"
 #include <iomanip>
+
+
+///////////////////////////////////////////////////////////////////////////////
+//   NVPM Experiment Declarations
+///////////////////////////////////////////////////////////////////////////////
 
 
 std::vector<const char *> g_experimentModeCounters
@@ -116,12 +121,14 @@ struct NvPmGlobals
         }                                                   \
     } while(0)
 
-#define perf_initMode() nvpm_initMode(&g_nvpmGlobals.mode, g_nvpmGlobals.mode.perfCtx);
+
+#define perf_initMode() nvpm_initMode(&g_nvpmGlobals.mode, g_nvpmContext);
 #define perf_frameBegin() nvpm_experimentFrameBegin(&g_nvpmGlobals.mode);
 #define perf_frameEnd() nvpm_experimentFrameEnd(&g_nvpmGlobals.mode);
 #define perf_workBegin() nvpm_experimentWorkBegin(&g_nvpmGlobals.mode);
 #define perf_workEnd() nvpm_experimentWorkEnd(&g_nvpmGlobals.mode);
-
+#define perf_shutdown() nvpm_shutdown();
+#define perf_printCounters(_outstream) nvpm_printCounters((_outstream), &g_nvpmGlobals.mode)
 
 ///////////////////////////////////////////////////////////////////////////
 const char* nvpm_resultToString(NVPMRESULT result)
@@ -221,12 +228,16 @@ bool nvpm_shutdown()
 }
 
 
+///////////////////////////////////////////////////////////////////////////////
+//   NVPM Experiment/Work/Frame Begin & End
+///////////////////////////////////////////////////////////////////////////////
+
 //////////////////////////////////////////////////////////////////////////
 void nvpm_experimentFrameBegin(Mode *m)
 {
     if (m->nFrame == g_nvpmGlobals.framestart){
         glFinish();
-        GetNvPmApi()->BeginExperiment(g_nvpmContext, &m->nTotalPasses);
+        GetNvPmApi()->BeginExperiment(m->perfCtx, &m->nTotalPasses);
         m->isCollecting = true;
         m->nPass = 0;
     }
@@ -247,12 +258,11 @@ void nvpm_experimentFrameEnd(Mode *mode)
     }
 
     if (mode->isCollecting && mode->nPass == mode->nTotalPasses) {
+        std::cout << "Profiling completed after " << mode->nTotalPasses << " passes." << std::endl;
         mode->isCollecting = false;
         mode->nPass = 0;
         mode->nTotalPasses = 0;
         GetNvPmApi()->EndExperiment(mode->perfCtx);
-
-        //TODO: printcounters(...);
     }
 
     ++mode->nFrame;
@@ -280,6 +290,11 @@ void nvpm_experimentWorkEnd(Mode *mode)
 }
 
 
+///////////////////////////////////////////////////////////////////////////////
+//   Mode Initialization
+///////////////////////////////////////////////////////////////////////////////
+
+
 //////////////////////////////////////////////////////////////////////////
 void nvpm_resetMode(Mode *mode)
 {
@@ -299,12 +314,11 @@ void nvpm_initMode(Mode *mode, NVPMContext perftext)
     nvpm_resetMode(mode);
     mode->perfCtx = perftext;
     mode->counterNames = g_experimentModeCounters.data();
+    mode->counterCount = g_experimentModeCounters.size();
     
-//    for (size_t i = 0; i < g_experimentModeCounters.size(); ++i) {
+    for (size_t i = 0; i < g_experimentModeCounters.size(); ++i) {
         NVPMRESULT nvpmResult{ NVPM_OK };
-//        const char* counterName = mode->counterNames[i];
-        const char* counterName = "shaded_pixel_count";
-        //nvpmResult = GetNvPmApi()->AddCounterByName(mode->perfCtx, mode->counterNames[i]);
+        const char* counterName = mode->counterNames[i];
         nvpmResult = GetNvPmApi()->AddCounterByName(mode->perfCtx, counterName);
 
         if (nvpmResult != NVPM_OK) {
@@ -312,18 +326,18 @@ void nvpm_initMode(Mode *mode, NVPMContext perftext)
             gl_log_err("AddCounterByName(%s) returned %08x => %s",
                 counterName, nvpmResult, resultStr);
         }
-//    }
+    }
 }
 
 //TODO: nvpm_printCounters called via some macro???
-void nvpm_printCounters(std::ostream &outStream, NVPMContext perfCtx, const char ** const counterNames, int counterCount)
+void nvpm_printCounters(std::ostream &outStream, Mode *mode) // NVPMContext perfCtx, const char ** const counterNames, int counterCount)
 {
-    for (int i = 0; i < counterCount; ++i)
+    for (int i = 0; i < mode->counterCount; ++i)
     {
         NVPMCounterID id = 0;
         NVPMUINT64 type = 0;
 
-        /*NVPMCHECKCONTINUE(*/GetNvPmApi()->GetCounterIDByContext(perfCtx, counterNames[i], &id); //);
+        /*NVPMCHECKCONTINUE(*/GetNvPmApi()->GetCounterIDByContext(mode->perfCtx, mode->counterNames[i], &id); //);
         /*NVPMCHECKCONTINUE(*/GetNvPmApi()->GetCounterAttribute(id, NVPMA_COUNTER_VALUE_TYPE, &type); //);
 
         NVPMUINT64 cycles = 0;
@@ -331,24 +345,34 @@ void nvpm_printCounters(std::ostream &outStream, NVPMContext perfCtx, const char
         if (type == NVPM_VALUE_TYPE_UINT64)
         {
             NVPMUINT64 value = 0;
-            GetNvPmApi()->GetCounterValueUint64(perfCtx, id, 0, &value, &cycles, &overflow);
+            GetNvPmApi()->GetCounterValueUint64(mode->perfCtx, id, 0, &value, &cycles, &overflow);
 
-            outStream << std::setw(40) << counterNames[i] <<
-                " value: " << std::setw(10) << static_cast<unsigned long long>(value) <<
-                " cycles: " << std::setw(10) << static_cast<unsigned long long>(cycles) <<
-                " overflow: " << (overflow ? "true" : "false") << std::endl;
+            outStream << 
+                std::left    << std::setw(40) << mode->counterNames[i] <<
+                "value: "    << std::setw(10) << static_cast<unsigned long long>(value) <<
+                "cycles: "   << std::setw(10) << static_cast<unsigned long long>(cycles) <<
+                "overflow: " << (overflow ? "true" : "false") << std::endl;
         }
         else if (type == NVPM_VALUE_TYPE_FLOAT64)
         {
             NVPMFLOAT64 value = 0;
-            GetNvPmApi()->GetCounterValueFloat64(perfCtx, id, 0, &value, &cycles, &overflow);
+            GetNvPmApi()->GetCounterValueFloat64(mode->perfCtx, id, 0, &value, &cycles, &overflow);
 
-            outStream << std::setw(40) << counterNames[i] <<
-                " value: " << std::setw(10) << static_cast<unsigned long long>(value) <<
-                " cycles: " << std::setw(10) << static_cast<unsigned long long>(cycles) <<
-                " overflow: " << (overflow ? "true" : "false") << std::endl;
+            outStream << 
+                std::left    <<  std::setw(40) << mode->counterNames[i] <<
+                "value: "    <<  std::setw(10) << value <<
+                "cycles: "   <<  std::setw(10) << static_cast<unsigned long long>(cycles) <<
+                "overflow: " << (overflow ? "true" : "false") << std::endl;
         }
     }
+    outStream <<
+        std::left << std::setw(40) << "Total passes: " <<
+        "value: " << std::setw(10) << mode->nTotalPasses << std::endl;
+
+    outStream <<
+        std::left << std::setw(40) << "n frame: " <<
+        "value: " << std::setw(10) << mode->nFrame << std::endl;
+
 }
 
 
@@ -362,6 +386,7 @@ void nvpm_printCounters(std::ostream &outStream, NVPMContext perfCtx, const char
 #define perf_frameEnd()   
 #define perf_workBegin()  
 #define perf_workEnd()    
+
 #endif
 
 const glm::vec3 X_AXIS{ 1.0f, 0.0f, 0.0f };
@@ -616,8 +641,11 @@ void drawSlices_XY()
 void drawSlices_XZ()
 {
     static size_t xz_byteOffset{ g_elementsPerQuad * g_numSlices * sizeof(uint16_t) };
+    perf_workBegin();
     gl_check(glDrawElements(GL_TRIANGLE_STRIP, g_elementsPerQuad * g_numSlices,
         GL_UNSIGNED_SHORT, (GLvoid *)xz_byteOffset));
+    perf_workEnd();
+
 }
 
 
@@ -625,15 +653,16 @@ void drawSlices_XZ()
 void drawSlices_YZ()
 {
     static size_t yz_byteOffset{ 2 * g_elementsPerQuad * g_numSlices * sizeof(uint16_t) };
+    perf_workBegin();
     gl_check(glDrawElements(GL_TRIANGLE_STRIP, g_elementsPerQuad * g_numSlices,
         GL_UNSIGNED_SHORT, (GLvoid *)yz_byteOffset));
+    perf_workEnd();
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 void drawNonEmptyBlocks_Forward(const glm::mat4 &mvp)
 {
-    static const int elementsPerQuad = 5;
 //    std::cout << "forward" << std::endl;
     perf_frameBegin();
     for (auto *b : g_nonEmptyBlocks) {
@@ -644,21 +673,13 @@ void drawNonEmptyBlocks_Forward(const glm::mat4 &mvp)
 
         switch (g_selectedSliceSet) {
         case SliceSet::XY:
-//			nvprofile_begin_obj();
-//            call_draw(drawSlices_XY);
-//			nvprofile_end_obj();
-            
             drawSlices_XY();
             break;
         case SliceSet::XZ:
-//			nvpushA("XZ");
             drawSlices_XZ();
-//			nvpopA();
             break;
         case SliceSet::YZ:
-//			nvpushA("YZ");
             drawSlices_YZ();
-//			nvpopA();
             break;
         case SliceSet::AllOfEm:
             drawSlices_XY();
@@ -688,19 +709,13 @@ void drawNonEmptyBlocks_Reverse(const glm::mat4 &mvp)
         switch (g_selectedSliceSet) {
         
         case SliceSet::XY:
-//			nvprofile_begin_obj();
             drawSlices_XY();
-//			nvprofile_end_obj();
             break;
         case SliceSet::XZ:
-//			nvpushA("XZ");
             drawSlices_XZ();
-//			nvpopA();
             break;
         case SliceSet::YZ:
-//			nvpushA("YZ");
             drawSlices_YZ();
-//			nvpopA();
             break;
         case SliceSet::AllOfEm:
             drawSlices_XY();
@@ -1090,9 +1105,6 @@ int main(int argc, const char *argv [])
         return 1;
     }
 
-    //// NV Perf Thing ////
-    perf_initNvPm();
-    perf_initMode();
 
     //// Shaders Init ////
     GLuint programId
@@ -1188,7 +1200,13 @@ int main(int argc, const char *argv [])
     //// Renderage ////
     setupCameraPos(clo.cameraPos);
     initGraphicsState();
+
+    //// NV Perf Thing ////
+    perf_initNvPm();
+    perf_initMode();
     loop(window);
+    perf_printCounters(std::cout);
+
     cleanup();
     bd::gl_log_close();
 
