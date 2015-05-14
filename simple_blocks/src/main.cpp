@@ -30,87 +30,116 @@
 #include <fstream>
 #include <iostream>
 
+
 #ifdef BDPROF
+
+///////////////////////////////////////////////////////////////////////////////
+//   Profiling (NVPMAPI)
+///////////////////////////////////////////////////////////////////////////////
+
+//TODO: move PATH_TO_NVPMAPI_CORE define as a compiler command line definition.
 #define PATH_TO_NVPMAPI_CORE L"D:\\libs\\perfkit\\4.4.0-windows-desktop\\bin\\x64\\NvPmApi.Core.dll"
 //#define PATH_TO_NVPMAPI_CORE L"C:\\libs\\perfkit\\PerfKit-4.4.0\\bin\\x64\\NvPmApi.Core.dll"
 
 #ifndef NVPM_INIGUID
-#define NVPM_INITGUID 1
+    #define NVPM_INITGUID 1
 #endif
+
 #include "NvPmApi.h"
 #include "NvPmApi.Manager.h"
 #include <iomanip>
 
 
 ///////////////////////////////////////////////////////////////////////////////
-//   NVPM Experiment Declarations
+//   NVPM Experiment Mode Declarations
 ///////////////////////////////////////////////////////////////////////////////
 
-
+/// Counter names as provided by NvPmApiQuery.exe (FOR KEPLER ARCH :) )
 std::vector<const char *> g_experimentModeCounters
 {
     "IA Bottleneck",
     "IA SOL",
-    "L2 Bottleneck",
+    
     "Primitive Setup Bottleneck",
     "Primitive Setup SOL",
+    
     "ROP Bottleneck",
     "ROP SOL",
+    
     "Rasterization Bottleneck",
     "Rasterization SOL",
+    
     "SHD Bottleneck",
     "SHD SOL",
+    
     "TEX Bottleneck",
     "TEX SOL",
+
+    "FB Bottleneck",
+    "FB SOL",
+
+    "L2 Bottleneck",
+
+    "tex_cache_hitrate",
+
+    "l2_read_bytes_mem",
+    "l2_read_bytes_tex",
+    
+    "shd_tex_read_bytes",
+    "shd_tex_requests",
+
     "inst_executed_ps",
     "inst_executed_ps_ratio",
     "inst_executed_vs",
     "inst_executed_vs_ratio",
+    
     "setup_primitive_count",
     "shaded_pixel_count",
+
+    "OGL frame time"
 };
 
 
-//Simple singleton implementation for grabbing the NvPmApi
+/// Simple singleton implementation for grabbing the NvPmApi
 static NvPmApiManager S_NVPMManager;
 NVPMContext g_nvpmContext{ 0 };
 
+/// State information passed around between nvpm_* methods.
 struct Mode
 {
+    /// The nvpm context under which the experiment is performed.
     NVPMContext perfCtx;
+    /// The total number of passes required to complete collection of
+    /// every counter in counterNames the entire experiment.
     NVPMUINT  nTotalPasses;
+    /// Current pass.
     NVPMUINT nPass;
+    /// Frame count since program start.
     NVPMUINT nFrame;
-
+    /// i don't know what this does, but its probably important 
+    // TODO: DON'T DELETE THIS!
     int objectId;
+    /// true if the experiment is started, false otherwise.
     bool isCollecting;
-
+    /// string names of the counters.
     const char** counterNames;
-    int counterCount;
+    /// number of counters in counterNames
+    size_t counterCount;
 };
 
 struct NvPmGlobals
 {
+    /// The frame number to start the experiment on (wait until Mode::nFrame==framestart)
     NVPMUINT framestart;
+    /// Yup, its the mode for this experiment!
     Mode mode;
-    std::string counterOutputFilePath;
 } g_nvpmGlobals;
 
 
-#define call_draw(_func)                                           \
-    do {                                                           \
-        unsigned int _nPasses = 6;                                  \
-        GetNvPmApi()->BeginExperiment(g_nvpmContext, &(_nPasses));  \
-        for (unsigned _i=0; _i < (_nPasses); _i++) {                \
-            GetNvPmApi()->BeginPass(g_nvpmContext, _i);            \
-            GetNvPmApi()->BeginObject(g_nvpmContext, 0);           \
-            _func();                                               \
-            glFlush();                                             \
-            GetNvPmApi()->EndObject(g_nvpmContext, 0);             \
-            GetNvPmApi()->EndPass(g_nvpmContext, _i);              \
-        }                                                          \
-        GetNvPmApi()->EndExperiment(g_nvpmContext);                \
-    } while (0)
+///////////////////////////////////////////////////////////////////////////////
+//   defines
+///////////////////////////////////////////////////////////////////////////////
+
 
 #define perf_initNvPm()                               \
     do {                                                    \
@@ -129,6 +158,11 @@ struct NvPmGlobals
 #define perf_workEnd() nvpm_experimentWorkEnd(&g_nvpmGlobals.mode);
 #define perf_shutdown() nvpm_shutdown();
 #define perf_printCounters(_outstream) nvpm_printCounters((_outstream), &g_nvpmGlobals.mode)
+
+
+///////////////////////////////////////////////////////////////////////////////
+//    nvpm Method definitions
+///////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////
 const char* nvpm_resultToString(NVPMRESULT result)
@@ -270,6 +304,8 @@ void nvpm_experimentFrameEnd(Mode *mode)
 
 
 //////////////////////////////////////////////////////////////////////////
+/// \brief Call before each draw
+//////////////////////////////////////////////////////////////////////////
 void nvpm_experimentWorkBegin(Mode *mode)
 {
     if (mode->isCollecting) {
@@ -279,6 +315,8 @@ void nvpm_experimentWorkBegin(Mode *mode)
 }
 
 
+//////////////////////////////////////////////////////////////////////////
+/// \brief Call after each draw
 //////////////////////////////////////////////////////////////////////////
 void nvpm_experimentWorkEnd(Mode *mode)
 {
@@ -291,7 +329,7 @@ void nvpm_experimentWorkEnd(Mode *mode)
 
 
 ///////////////////////////////////////////////////////////////////////////////
-//   Mode Initialization
+//   struct Mode Initialization
 ///////////////////////////////////////////////////////////////////////////////
 
 
@@ -329,42 +367,10 @@ void nvpm_initMode(Mode *mode, NVPMContext perftext)
     }
 }
 
-//TODO: nvpm_printCounters called via some macro???
+
+//////////////////////////////////////////////////////////////////////////
 void nvpm_printCounters(std::ostream &outStream, Mode *mode) // NVPMContext perfCtx, const char ** const counterNames, int counterCount)
 {
-    for (int i = 0; i < mode->counterCount; ++i)
-    {
-        NVPMCounterID id = 0;
-        NVPMUINT64 type = 0;
-
-        /*NVPMCHECKCONTINUE(*/GetNvPmApi()->GetCounterIDByContext(mode->perfCtx, mode->counterNames[i], &id); //);
-        /*NVPMCHECKCONTINUE(*/GetNvPmApi()->GetCounterAttribute(id, NVPMA_COUNTER_VALUE_TYPE, &type); //);
-
-        NVPMUINT64 cycles = 0;
-        NVPMUINT8  overflow = 0;
-        if (type == NVPM_VALUE_TYPE_UINT64)
-        {
-            NVPMUINT64 value = 0;
-            GetNvPmApi()->GetCounterValueUint64(mode->perfCtx, id, 0, &value, &cycles, &overflow);
-
-            outStream << 
-                std::left    << std::setw(40) << mode->counterNames[i] <<
-                "value: "    << std::setw(10) << static_cast<unsigned long long>(value) <<
-                "cycles: "   << std::setw(10) << static_cast<unsigned long long>(cycles) <<
-                "overflow: " << (overflow ? "true" : "false") << std::endl;
-        }
-        else if (type == NVPM_VALUE_TYPE_FLOAT64)
-        {
-            NVPMFLOAT64 value = 0;
-            GetNvPmApi()->GetCounterValueFloat64(mode->perfCtx, id, 0, &value, &cycles, &overflow);
-
-            outStream << 
-                std::left    <<  std::setw(40) << mode->counterNames[i] <<
-                "value: "    <<  std::setw(10) << value <<
-                "cycles: "   <<  std::setw(10) << static_cast<unsigned long long>(cycles) <<
-                "overflow: " << (overflow ? "true" : "false") << std::endl;
-        }
-    }
     outStream <<
         std::left << std::setw(40) << "Total passes: " <<
         "value: " << std::setw(10) << mode->nTotalPasses << std::endl;
@@ -373,13 +379,48 @@ void nvpm_printCounters(std::ostream &outStream, Mode *mode) // NVPMContext perf
         std::left << std::setw(40) << "n frame: " <<
         "value: " << std::setw(10) << mode->nFrame << std::endl;
 
+    outStream <<
+        std::left << std::setw(40) << "Total objects: " <<
+        "value: " << std::setw(10) << mode->objectId << std::endl;
+
+    for (int i = 0; i < mode->counterCount; ++i) {
+
+        NVPMCounterID id = 0;
+        NVPMUINT64 type = 0;
+
+        /*NVPMCHECKCONTINUE(*/GetNvPmApi()->GetCounterIDByContext(mode->perfCtx, mode->counterNames[i], &id); //);
+        /*NVPMCHECKCONTINUE(*/GetNvPmApi()->GetCounterAttribute(id, NVPMA_COUNTER_VALUE_TYPE, &type); //);
+
+        NVPMUINT64 cycles = 0;
+        NVPMUINT8  overflow = 0;
+        if (type == NVPM_VALUE_TYPE_UINT64) {
+
+            NVPMUINT64 value = 0;
+            GetNvPmApi()->GetCounterValueUint64(mode->perfCtx, id, 0, &value, &cycles, &overflow);
+
+            outStream << 
+                std::left    << std::setw(40) << mode->counterNames[i] <<
+                "value: "    << std::setw(15) << static_cast<unsigned long long>(value) <<
+                "cycles: "   << std::setw(15) << static_cast<unsigned long long>(cycles) <<
+                "overflow: " << (overflow ? "true" : "false") << std::endl;
+        }
+        else if (type == NVPM_VALUE_TYPE_FLOAT64) {
+
+            NVPMFLOAT64 value = 0;
+            GetNvPmApi()->GetCounterValueFloat64(mode->perfCtx, id, 0, &value, &cycles, &overflow);
+
+            outStream << 
+                std::left    <<  std::setw(40) << mode->counterNames[i] <<
+                "value: "    <<  std::setw(15) << value <<
+                "cycles: "   <<  std::setw(15) << static_cast<unsigned long long>(cycles) <<
+                "overflow: " << (overflow ? "true" : "false") << std::endl;
+        }
+    }
 }
 
 
 #else
 
-//#define call_draw(_func) (_func);
-//#define init_nvperf()
 #define perf_initNvPm()
 #define perf_initMode()   
 #define perf_frameBegin() 
@@ -570,7 +611,7 @@ void glfw_scrollwheel_callback(GLFWwindow *window, double xoff, double yoff)
 }
 
 /************************************************************************/
-/*     D R A W I N'                                                     */
+/*     D R A W I N'    S T U F F                                        */
 /************************************************************************/
 
 
@@ -661,6 +702,8 @@ void drawSlices_YZ()
 
 
 ///////////////////////////////////////////////////////////////////////////////
+/// \brief Loop through the blocks and draw each one
+///////////////////////////////////////////////////////////////////////////////
 void drawNonEmptyBlocks_Forward(const glm::mat4 &mvp)
 {
 //    std::cout << "forward" << std::endl;
@@ -696,10 +739,12 @@ void drawNonEmptyBlocks_Forward(const glm::mat4 &mvp)
 
 
 ///////////////////////////////////////////////////////////////////////////////
+/// \brief Loop through the blocks in reverse and draw. 
+///////////////////////////////////////////////////////////////////////////////
 void drawNonEmptyBlocks_Reverse(const glm::mat4 &mvp)
 {
     perf_frameBegin();
-    for (size_t i = g_nonEmptyBlocks.size() - 1; i >= 0; --i) {
+    for (size_t i = g_nonEmptyBlocks.size(); i-- > 0;) {
         Block *b = g_nonEmptyBlocks[i];
         b->texture().bind(0);
         glm::mat4 wmvp = mvp * b->transform().matrix();
@@ -732,6 +777,8 @@ void drawNonEmptyBlocks_Reverse(const glm::mat4 &mvp)
 }
 
 
+///////////////////////////////////////////////////////////////////////////////
+/// \brief Determine the viewing direction and draw the blocks in proper order.
 ///////////////////////////////////////////////////////////////////////////////
 void drawNonEmptyBlocks(const glm::mat4 &mvp)
 {
@@ -832,8 +879,14 @@ void loop(GLFWwindow *window)
 
 
 ///////////////////////////////////////////////////////////////////////////////
+//  G E O M E T R Y   C R E A T I O N
+///////////////////////////////////////////////////////////////////////////////
+
+
+///////////////////////////////////////////////////////////////////////////////
 void genQuadVao(bd::VertexArrayObject &vao, unsigned int numSlices)
 {
+    gl_log("Generating quad slice vertex buffers for %d slices.", numSlices);
     std::vector<glm::vec4> temp;
     std::vector<glm::vec4> vbuf;
     std::vector<glm::vec4> texbuf;
@@ -881,6 +934,7 @@ void genQuadVao(bd::VertexArrayObject &vao, unsigned int numSlices)
 ///////////////////////////////////////////////////////////////////////////////
 void genAxisVao(bd::VertexArrayObject &vao)
 {
+    gl_log("Generating axis vertex buffers.");
     // vertex positions into attribute 0
     vao.addVbo((float *)(bd::Axis::verts.data()),
         bd::Axis::verts.size() * bd::Axis::vert_element_size,
@@ -896,6 +950,7 @@ void genAxisVao(bd::VertexArrayObject &vao)
 ///////////////////////////////////////////////////////////////////////////////
 void genBoxVao(bd::VertexArrayObject &vao)
 {
+    gl_log("Generating bounding box vertex buffers.");
     // vertex positions into attribute 0
     vao.addVbo((float *)(bd::Box::vertices.data()),
         bd::Box::vertices.size() * bd::Box::vert_element_size,
@@ -912,9 +967,15 @@ void genBoxVao(bd::VertexArrayObject &vao)
 }
 
 
+///////////////////////////////////////////////////////////////////////////////
+//   I N I T I A L I Z A T I O N
+///////////////////////////////////////////////////////////////////////////////
+
+
 /////////////////////////////////////////////////////////////////////////////////
 void initGraphicsState()
 {
+    gl_log("Initializing gl state.");
     gl_check(glClearColor(0.2f, 0.2f, 0.2f, 0.0f));
 
 //    gl_check(glEnable(GL_CULL_FACE));
@@ -934,6 +995,7 @@ void initGraphicsState()
 /////////////////////////////////////////////////////////////////////////////////
 GLFWwindow* init()
 {
+    gl_log("Initializing GLFW.");
     GLFWwindow *window = nullptr;
     if (!glfwInit()) {
         gl_log("could not start GLFW3");
@@ -999,11 +1061,15 @@ void printBlocks()
 {
     std::ofstream block_file("blocks.txt", std::ofstream::trunc);
     if (block_file.is_open()) {
+        gl_log("Writing blocks to blocks.txt in the current working directory.");
         for (auto &b : g_blocks) {
             block_file << b << "\n";
         }
         block_file.flush();
         block_file.close();
+    } 
+    else {
+        gl_log_err("Could not print blocks because blocks.txt coulnt'd be created in the current working directory.");
     }
 }
 
@@ -1011,11 +1077,11 @@ void printBlocks()
 /////////////////////////////////////////////////////////////////////////////////
 unsigned int loadTransfter_1dtformat(const std::string &filename, Texture &transferTex)
 {
-    gl_log("Reading transfer function file in .1dt format");
+    gl_log("Reading 1dt formatted transfer function file and generating texture.");
 
     std::ifstream file(filename.c_str(), std::ifstream::in);
     if (!file.is_open()) {
-        gl_log_err("Caint open tfunc file: %s", filename.c_str());
+        gl_log_err("C'aint open tfunc file: %s", filename.c_str());
         return 0;
     }
 
@@ -1062,22 +1128,24 @@ unsigned int loadTransfter_1dtformat(const std::string &filename, Texture &trans
 
 
 ///////////////////////////////////////////////////////////////////////////////
+/// \brief Set an initial camera location/orientation (-c command line option)
+///////////////////////////////////////////////////////////////////////////////
 void setupCameraPos(unsigned cameraPos)
 {
     switch (cameraPos) {
     case 2:
-        //cam position = { 2.0f, 0.0f, 0.0f  };
+        //cam position = { 2.0f, 0.0f, 0.0f  }
         g_rotation = glm::rotate(g_rotation, -1 * glm::half_pi<float>(), Y_AXIS);
         g_selectedSliceSet = SliceSet::YZ;
         break;
     case 1:
-        //cam position = { 0.0f, 2.0f, 0.0f };
+        //cam position = { 0.0f, 2.0f, 0.0f }
         g_rotation = glm::rotate(g_rotation, glm::half_pi<float>(), X_AXIS);
         g_selectedSliceSet = SliceSet::XZ;
         break;
     case 0:
     default:
-        //cam position = { 0.0f, 0.0f, 2.0f };
+        //cam position = { 0.0f, 0.0f, 2.0f }
         // no rotation needed, this is default cam location.
         g_selectedSliceSet = SliceSet::XY;
         break;
@@ -1098,6 +1166,7 @@ int main(int argc, const char *argv [])
     printThem(clo);
     g_numSlices = clo.num_slices;
     bd::gl_log_restart();
+
 
     //// GLFW init ////
     GLFWwindow *window;
@@ -1177,8 +1246,8 @@ int main(int argc, const char *argv [])
     Block::filterBlocks
     ( 
         data.get(),                                               // data set
-        g_blocks,                                                 // da blocks
-        g_nonEmptyBlocks,                                         // da non empty blocks
+        g_blocks,                                                 // all blocks
+        g_nonEmptyBlocks,                                         // non empty blocks
         g_volumeShader.getUniformLocation("volume_sampler"),
         clo.tmin, 
         clo.tmax 
@@ -1196,7 +1265,7 @@ int main(int argc, const char *argv [])
         exit(1);
     }
 
-    //// Renderage ////
+    //// Render Init and Loop ////
     setupCameraPos(clo.cameraPos);
     initGraphicsState();
 
@@ -1204,7 +1273,20 @@ int main(int argc, const char *argv [])
     perf_initNvPm();
     perf_initMode();
     loop(window);
-    perf_printCounters(std::cout);
+
+    if (clo.perfOutPath.empty()) {
+        perf_printCounters(std::cout);
+    }
+    else{
+        std::ofstream outStream(clo.perfOutPath.c_str());
+        if (outStream.is_open()) {
+            perf_printCounters(outStream);
+        } else {
+            gl_log_err("Could not open %s for performance counter output. Using stdout instead.", 
+                clo.perfOutPath.c_str());
+            perf_printCounters(std::cout);
+        }
+    }
 
     cleanup();
     bd::gl_log_close();
