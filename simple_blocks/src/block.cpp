@@ -102,20 +102,11 @@ void Block::fillBlockData(glm::u64vec3 ijk, const float *in_data, float *out_blo
 
 
 ///////////////////////////////////////////////////////////////////////////////
-void Block::filterBlocks
-(
-    float *data, 
-    std::vector<Block> &blocks, 
-    std::vector<Block*> &nonempty_blocks,
-//    glm::u64vec3 numBlks,
-//    glm::u64vec3 volsz, 
-    unsigned int sampler,
-    float tmin, 
-    float tmax
-)
+void Block::filterBlocks (float *data, 
+    std::vector<Block> &blocks, std::vector<Block*> &nonempty_blocks, 
+    unsigned int sampler, float tmin, float tmax)
 {
-    size_t emptyCount{ 0 };
-//    glm::u64vec3 bsz{ m_volDims / m_numBlocks };
+    gl_log("Filtering blocks for empty space and creating GL textures.");
     size_t blkPoints = bd::vecCompMult(m_blockDims);
 
     float *image = new float[blkPoints];
@@ -133,10 +124,9 @@ void Block::filterBlocks
 
         if (avg < tmin || avg > tmax) {
             b.empty(true);
-            emptyCount += 1;
         } else {
             b.texture().samplerLocation(sampler);
-            b.texture().textureUnit(0);
+//            b.texture().textureUnit(0);
             b.texture().genGLTex3d(image, Texture::Format::RED, Texture::Format::RED,
                 m_blockDims.x, m_blockDims.y, m_blockDims.z);
 
@@ -151,7 +141,7 @@ void Block::filterBlocks
 
     // TODO: create list of pointers to non-empty blocks.
     delete [] image;
-    gl_log("%d/%d blocks removed.", emptyCount, bd::vecCompMult(m_numBlocks));
+    gl_log("%d/%d blocks marked empty.", blocks.size()-nonempty_blocks.size(), blocks.size());
 
 }
 

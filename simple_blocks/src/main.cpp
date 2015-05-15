@@ -157,8 +157,8 @@ struct NvPmGlobals
 #define perf_workBegin() nvpm_experimentWorkBegin(&g_nvpmGlobals.mode);
 #define perf_workEnd() nvpm_experimentWorkEnd(&g_nvpmGlobals.mode);
 #define perf_shutdown() nvpm_shutdown();
-#define perf_printCounters(_outstream) nvpm_printCounters((_outstream), &g_nvpmGlobals.mode)
-
+#define perf_printCounters(_outstream) nvpm_printCounters((_outstream), &g_nvpmGlobals.mode);
+#define perf_isDone() nvpm_isdone(&g_nvpmGlobals.mode);
 
 ///////////////////////////////////////////////////////////////////////////////
 //    nvpm Method definitions
@@ -291,12 +291,13 @@ void nvpm_experimentFrameEnd(Mode *mode)
         mode->objectId = 0;
     }
 
-    if (mode->isCollecting && mode->nPass == mode->nTotalPasses) {
+    if (mode->isCollecting && mode->nPass >= mode->nTotalPasses) {
         std::cout << "Profiling completed after " << mode->nTotalPasses << " passes." << std::endl;
         mode->isCollecting = false;
         mode->nPass = 0;
         mode->nTotalPasses = 0;
         GetNvPmApi()->EndExperiment(mode->perfCtx);
+        glfwSetWindowShouldClose(glfwGetCurrentContext(), GL_TRUE);
     }
 
     ++mode->nFrame;
@@ -367,6 +368,10 @@ void nvpm_initMode(Mode *mode, NVPMContext perftext)
     }
 }
 
+bool nvpm_isdone(Mode *mode)
+{
+    return mode->isCollecting && mode->nPass >= mode->nTotalPasses;
+}
 
 //////////////////////////////////////////////////////////////////////////
 void nvpm_printCounters(std::ostream &outStream, Mode *mode) // NVPMContext perfCtx, const char ** const counterNames, int counterCount)
@@ -422,14 +427,24 @@ void nvpm_printCounters(std::ostream &outStream, Mode *mode) // NVPMContext perf
 #else
 
 #define perf_initNvPm()
-#define perf_initMode()   
-#define perf_frameBegin() 
-#define perf_frameEnd()   
-#define perf_workBegin()  
-#define perf_workEnd()    
+#define perf_initMode()
+#define perf_frameBegin()
+#define perf_frameEnd()
+#define perf_workBegin()
+#define perf_workEnd()
+#define perf_shouldQuit()
+#define perf_isDone()
+#define perf_printCounters()
 
 #endif
+///////////////////////////////////////////////////////////////////////////////
+//     End Nvpm Stuff
+///////////////////////////////////////////////////////////////////////////////
 
+
+///////////////////////////////////////////////////////////////////////////////
+// Geometry and VAOs
+///////////////////////////////////////////////////////////////////////////////
 const glm::vec3 X_AXIS{ 1.0f, 0.0f, 0.0f };
 const glm::vec3 Y_AXIS{ 0.0f, 1.0f, 0.0f };
 const glm::vec3 Z_AXIS{ 0.0f, 0.0f, 1.0f };
@@ -445,9 +460,6 @@ enum class ObjType : unsigned int
 };
 
 
-///////////////////////////////////////////////////////////////////////////////
-// Geometry and VAOs
-///////////////////////////////////////////////////////////////////////////////
 SliceSet g_selectedSliceSet{ SliceSet::XY };
 bd::Axis g_axis;
 bd::Box g_box;
@@ -456,6 +468,7 @@ std::vector<Block> g_blocks;
 std::vector<Block*> g_nonEmptyBlocks;
 size_t g_elementBufferSize{ 0 };
 const int g_elementsPerQuad{ 5 };
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Shaders and Textures

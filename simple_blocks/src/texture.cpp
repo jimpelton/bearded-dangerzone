@@ -41,14 +41,13 @@ Texture::~Texture()
 
 void Texture::bind(unsigned int unit)
 {
-    glActiveTexture(unit);
+    glActiveTexture(GL_TEXTURE0+unit);
     glBindTexture(textype[static_cast<unsigned int>(m_type)], m_id);
     glUniform1i(m_samplerUniform, unit);
 }
 
 unsigned int Texture::genGLTex1d(float *img, Format ity, Format ety, size_t w)
 {
-
     GLuint texId;
     gl_check(glGenTextures(1, &texId));
     gl_check(glBindTexture(GL_TEXTURE_1D, texId));
