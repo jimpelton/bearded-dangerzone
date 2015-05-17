@@ -13,6 +13,17 @@ namespace {
 
 
 ///////////////////////////////////////////////////////////////////////////////
+/// \brief create verts for the canonical block
+/// \param numSlices[in] 
+/// \param vbuf[out] Vector to put the vertices in.
+/// \param axis[in] The axis along which slices should be adjusted (0=x, 1=y, 2=z)
+/// \param vertsProto[in] Verts..something somethign soemthing....
+///////////////////////////////////////////////////////////////////////////////
+void create_verts_helper(size_t numSlices, std::vector<glm::vec4> &vbuf,
+    int axis, const std::array<glm::vec4, 4> &vertsProto);
+
+
+///////////////////////////////////////////////////////////////////////////////
 float sliceIndexToWorldPos(unsigned idx, float start, float delta)
 {
     return start + delta*idx;
@@ -30,9 +41,9 @@ glm::u16vec4 sliceIndexToElements(uint16_t idx)
 ///////////////////////////////////////////////////////////////////////////////
 float start(size_t num_slices, float min, float max)
 {
- //   float span = std::abs(max - min);
- //   float s = -1.0f * delta(num_slices, min, max) * (num_slices / 2);
-
+//    float span = std::abs(max - min);
+    //float s = -1.0f * delta(num_slices, min, max) * (num_slices / 2);
+    //return s;
     return num_slices > 1 ? min : 0.0f;
 }
 
@@ -44,7 +55,7 @@ float delta(size_t num_slices, float min, float max)
         return 0.0f;
     }
 
-    return (max - min) / (num_slices-1);
+    return (max - min) / float(num_slices-1);
 }
 
 //TODO: use texbuf_adjust instead of duplicated code in texbuf vbo create methods.
@@ -58,60 +69,26 @@ void texbuf_adjust(std::vector<glm::vec4> &texbuf)
 ///////////////////////////////////////////////////////////////////////////////
 void create_verts_xy(size_t numSlices, std::vector<glm::vec4> &vbuf)
 {
-    float st = start(numSlices, VOL_MIN, VOL_MAX);
-    float del = delta(numSlices, VOL_MIN, VOL_MAX);
-    size_t numVerts = numSlices * bd::Quad::vert_element_size;
-
-    vbuf.resize(numVerts);
-
-    std::vector<glm::vec4>::iterator vbufIter{ vbuf.begin() };
-    for (int i = 0; i < numSlices; ++i) {
-        float pos{ sliceIndexToWorldPos(i, st, del) };
-        std::array<glm::vec4, 4> verts(bd::Quad::verts_xy);
-        std::for_each(verts.begin(), verts.end(), [pos](glm::vec4 &vv){ vv.z = pos; });
-        std::copy(verts.begin(), verts.end(), vbufIter);
-        vbufIter += verts.size();
-    }
+    const int z_axis_idx = 2;
+    create_verts_helper(numSlices, vbuf, z_axis_idx, bd::Quad::verts_xy);
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 void create_verts_xz(size_t numSlices, std::vector<glm::vec4> &vbuf)
 {
-    float st = start(numSlices, VOL_MIN, VOL_MAX);
-    float del = delta(numSlices, VOL_MIN, VOL_MAX);
-    size_t numVerts = numSlices * bd::Quad::vert_element_size;
+    const int y_axis_idx = 1;
+    create_verts_helper(numSlices, vbuf, y_axis_idx, bd::Quad::verts_xz);
 
-    vbuf.resize(numVerts);
-
-    std::vector<glm::vec4>::iterator vbufIter{ vbuf.begin() };
-    for (int i = 0; i < numSlices; ++i) {
-        float pos{ sliceIndexToWorldPos(i, st, del) };
-        std::array<glm::vec4, 4> verts(bd::Quad::verts_xz);
-        std::for_each(verts.begin(), verts.end(), [pos](glm::vec4 &vv){ vv.y = pos; });
-        std::copy(verts.begin(), verts.end(), vbufIter);
-        vbufIter += verts.size();
-    }
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 void create_verts_yz(size_t numSlices, std::vector<glm::vec4> &vbuf)
 {
-    float st = start(numSlices, VOL_MIN, VOL_MAX);
-    float del = delta(numSlices, VOL_MIN, VOL_MAX);
-    size_t numVerts = numSlices * bd::Quad::vert_element_size;
+    const int x_axis_idx = 0;
+    create_verts_helper(numSlices, vbuf, x_axis_idx, bd::Quad::verts_yz);
 
-    vbuf.resize(numVerts);
-
-    std::vector<glm::vec4>::iterator vbufIter{ vbuf.begin() };
-    for (int i = 0; i < numSlices; ++i) {
-        float pos{ sliceIndexToWorldPos(i, st, del) };
-        std::array<glm::vec4, 4> verts(bd::Quad::verts_yz);
-        std::for_each(verts.begin(), verts.end(), [pos](glm::vec4 &vv){ vv.x = pos; });
-        std::copy(verts.begin(), verts.end(), vbufIter);
-        vbufIter += verts.size();
-    }
 }
 
 
@@ -166,3 +143,22 @@ void create_elementIndices(size_t numSlices, std::vector<uint16_t> &elebuf)
     }
 }
 
+
+void create_verts_helper(size_t numSlices, std::vector<glm::vec4> &vbuf, 
+    int axis, const std::array<glm::vec4, 4> &vertsProto)
+{
+    float st = start(numSlices, VOL_MIN, VOL_MAX);
+    float del = delta(numSlices, VOL_MIN, VOL_MAX);
+    size_t numVerts = numSlices * bd::Quad::vert_element_size;
+
+    vbuf.resize(numVerts);
+
+    std::vector<glm::vec4>::iterator vbufIter{ vbuf.begin() };
+    for (int i = 0; i < numSlices; ++i) {
+        float pos{ sliceIndexToWorldPos(i, st, del) };
+        std::array<glm::vec4, 4> verts(vertsProto);
+        std::for_each(verts.begin(), verts.end(), [pos,axis](glm::vec4 &vv){ vv[axis] = pos; });
+        std::copy(verts.begin(), verts.end(), vbufIter);
+        vbufIter += verts.size();
+    }
+}

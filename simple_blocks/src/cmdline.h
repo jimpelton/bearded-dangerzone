@@ -35,6 +35,8 @@ struct CommandLineOptions
     unsigned int cameraPos;
     // path to output file for performance counter values
     std::string perfOutPath;
+    // quit program when perf tests are completed.
+    bool perfMode;
 };
 
 ///////////////////////////////////////////////////////////////////////////////

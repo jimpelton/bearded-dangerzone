@@ -125,6 +125,8 @@ struct Mode
     const char** counterNames;
     /// number of counters in counterNames
     size_t counterCount;
+    /// true if the window should close on profile completion.
+    bool exitOnDone;
 };
 
 struct NvPmGlobals
@@ -151,7 +153,7 @@ struct NvPmGlobals
     } while(0)
 
 
-#define perf_initMode() nvpm_initMode(&g_nvpmGlobals.mode, g_nvpmContext);
+#define perf_initMode(_bool_perfMode) nvpm_initMode(&g_nvpmGlobals.mode, g_nvpmContext, (_bool_perfMode));
 #define perf_frameBegin() nvpm_experimentFrameBegin(&g_nvpmGlobals.mode);
 #define perf_frameEnd() nvpm_experimentFrameEnd(&g_nvpmGlobals.mode);
 #define perf_workBegin() nvpm_experimentWorkBegin(&g_nvpmGlobals.mode);
@@ -297,7 +299,8 @@ void nvpm_experimentFrameEnd(Mode *mode)
         mode->nPass = 0;
         mode->nTotalPasses = 0;
         GetNvPmApi()->EndExperiment(mode->perfCtx);
-        glfwSetWindowShouldClose(glfwGetCurrentContext(), GL_TRUE);
+        if (mode->exitOnDone)
+            glfwSetWindowShouldClose(glfwGetCurrentContext(), GL_TRUE);
     }
 
     ++mode->nFrame;
@@ -342,18 +345,20 @@ void nvpm_resetMode(Mode *mode)
     mode->nTotalPasses = 0;
     mode->objectId = 0;
     mode->counterNames = nullptr;
-    mode->counterCount = 1;
+    mode->counterCount = 0;
     mode->isCollecting = false;
+    mode->exitOnDone = false;
 }
 
 
 //////////////////////////////////////////////////////////////////////////
-void nvpm_initMode(Mode *mode, NVPMContext perftext)
+void nvpm_initMode(Mode *mode, NVPMContext perftext, bool perfMode=false)
 {
     nvpm_resetMode(mode);
     mode->perfCtx = perftext;
     mode->counterNames = g_experimentModeCounters.data();
     mode->counterCount = g_experimentModeCounters.size();
+    mode->exitOnDone = perfMode;
     
     for (size_t i = 0; i < g_experimentModeCounters.size(); ++i) {
         NVPMRESULT nvpmResult{ NVPM_OK };
@@ -669,7 +674,6 @@ void drawNonEmptyBoundingBoxes(const glm::mat4 &mvp)
 
         glm::mat4 mmvp = mvp * b->transform().matrix();
         g_simpleShader.setUniform("mvp", mmvp);
-
         gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, 0));
         gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT,
             (GLvoid *)(4 * sizeof(GLushort))));
@@ -857,7 +861,6 @@ void loop(GLFWwindow *window)
 
         gl_check(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
-
         ////////  Axis    /////////////////////////////////////////
         vao = g_vaoIds[static_cast<unsigned int>(ObjType::Axis)];
         vao->bind();
@@ -896,6 +899,8 @@ void loop(GLFWwindow *window)
 ///////////////////////////////////////////////////////////////////////////////
 
 
+///////////////////////////////////////////////////////////////////////////////
+/// \brief Create slices inside the cononical block for each axis.
 ///////////////////////////////////////////////////////////////////////////////
 void genQuadVao(bd::VertexArrayObject &vao, unsigned int numSlices)
 {
@@ -991,14 +996,15 @@ void initGraphicsState()
     gl_log("Initializing gl state.");
     gl_check(glClearColor(0.2f, 0.2f, 0.2f, 0.0f));
 
-//    gl_check(glEnable(GL_CULL_FACE));
-//    gl_check(glCullFace(GL_BACK));
+    gl_check(glEnable(GL_CULL_FACE));
+    gl_check(glCullFace(GL_BACK));
 
-    gl_check(glDepthFunc(GL_LESS));
     gl_check(glEnable(GL_DEPTH_TEST));
+    gl_check(glDepthFunc(GL_LESS));
 
     gl_check(glEnable(GL_BLEND));
     gl_check(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+//    gl_check(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_DST_ALPHA));
 
     gl_check(glEnable(GL_PRIMITIVE_RESTART));
     gl_check(glPrimitiveRestartIndex(0xFFFF));
@@ -1281,10 +1287,9 @@ int main(int argc, const char *argv [])
     //// Render Init and Loop ////
     setupCameraPos(clo.cameraPos);
     initGraphicsState();
-
     //// NV Perf Thing ////
     perf_initNvPm();
-    perf_initMode();
+    perf_initMode(clo.perfMode);
     loop(window);
 
     if (clo.perfOutPath.empty()) {

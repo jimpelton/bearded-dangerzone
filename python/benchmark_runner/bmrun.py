@@ -29,7 +29,8 @@ class TestParams():
         self.cl_args['tmax'] = 1.0
         self.cl_args['tmin'] = 0.0
         self.cl_args['perf-out-file'] = 'counters.txt'
-        self.cl_args['perf-dll-path'] = 'virus.dll'
+        self.cl_args['perf-mode'] = ''
+        # self.cl_args['perf-dll-path'] = 'virus.dll'
 
         # misc vals
         self.exe_path = "I don't exist.exe"
@@ -106,9 +107,9 @@ class TestParams():
         self.exe_path = os.path.normpath(exepath)
         return
 
-    def set_perf_dll_path(self, dllpath):
-        self.cl_args['perf-dll-path'] = os.path.normpath(dllpath)
-        return
+    # def set_perf_dll_path(self, dllpath):
+    #     self.cl_args['perf-dll-path'] = os.path.normpath(dllpath)
+    #     return
 
     def get_perf_file_string(self):
         return "{gpu}_{wat}_{vx}-{vy}-{vz}_{nx}-{ny}-{nz}_s{ns}_c{cp}.txt" \
@@ -214,11 +215,11 @@ def main(argv):
     params.set_tfunc_filepath(argv[3])
     # params.set_tfunc_filepath("D:/volumes/big_sphere_1k/default.1dt")
     params.set_output_directory_path(argv[4])
-    params.set_perf_dll_path(argv[5])
+    # params.set_perf_dll_path(argv[5])
     # params.set_perf_out_file_name(os.path.join("D:/perfout/", params.get_output_file_string()))
     params.wat = 'sphere'
     params.set_type('float')
-    params.set_vol_dims(32, 32, 32)
+    params.set_vol_dims(1000, 1000, 1000)
     params.set_num_slices(64)
 
     # Check that exe, raw and transfer function files exist.

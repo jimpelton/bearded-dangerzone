@@ -73,6 +73,8 @@ try
     TCLAP::ValueArg<std::string> perfOutPathArg("", "perf-out-file", "Print performance metrics to file.", false, "", "string");
     cmd.add(perfOutPathArg);
 
+    // perf mode (exit on when done with performance test)
+    TCLAP::SwitchArg perfMode("p", "perf-mode", "Exit as soon as performance test is done.", cmd, false);
 
     // print blocks
     TCLAP::SwitchArg printBlocksArg("", "print-blocks", "Print blocks into to stdout.", cmd, false);
@@ -95,6 +97,7 @@ try
     opts.tmax = tmax.getValue();
     opts.cameraPos = initialCameraPosArg.getValue();
     opts.perfOutPath = perfOutPathArg.getValue();
+    opts.perfMode = perfMode.getValue();
 
     return static_cast<int>(cmd.getArgList().size());
 

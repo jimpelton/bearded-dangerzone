@@ -6,12 +6,20 @@
 #include <vector>
 
 
+
+///////////////////////////////////////////////////////////////////////////////
+/// \brief Returns the 4 element array indices for the vertex of slice \c idx. 
+///////////////////////////////////////////////////////////////////////////////
 glm::u16vec4 sliceIndexToElements(uint16_t idx);
 
 float sliceIndexToWorldPos(unsigned idx, float start, float delta);
 
 float start(size_t num_slices, float min, float max);
 
+///////////////////////////////////////////////////////////////////////////////
+/// \brief Returns the spacing between \c num_slices things that fit evenly
+///  between min,max 
+///////////////////////////////////////////////////////////////////////////////
 float delta(size_t num_slices, float min, float max);
 
 void create_verts_xy(size_t num_slices, std::vector<glm::vec4> &vbuf); 
