@@ -150,7 +150,8 @@ unsigned int Texture::genGLTex3d(float* img, Format ity,
 std::string Texture::to_string() const
 {
     std::stringstream ss;
-    GLenum tt = textype.at(ordinal<Target>(m_type));
+    GLenum tt;
+    tt = textype[ordinal<Target>(m_type)];
 
     std::array<GLenum, 8> thingies2{
         GL_TEXTURE_WIDTH,
@@ -163,12 +164,14 @@ std::string Texture::to_string() const
         GL_TEXTURE_COMPRESSED_IMAGE_SIZE
     };
 
-    ss << "{ Id: " << m_id << ", Type: " << bd::gl_to_string(tt) << "\nGL values:";
-
-    GLint val{ 0 };
-    for (size_t i = 0; i < thingies2.size(); ++i) {
-        glGetTextureLevelParameteriv(m_id, 0, thingies2[i], &val);
-        ss << "\n\t" << bd::gl_to_string(thingies2[i]) << ": " << val;
+    ss << "{ Id: " << m_id << ", Type: " << bd::gl_to_string(tt); 
+    if (m_id != 0) {
+        ss << "\nGL values:";
+        GLint val{ 0 };
+        for (size_t i = 0; i < thingies2.size(); ++i) {
+            glGetTextureLevelParameteriv(m_id, 0, thingies2[i], &val);
+            ss << "\n\t" << bd::gl_to_string(thingies2[i]) << ": " << val;
+        }
     }
     ss << " }";
     return ss.str();

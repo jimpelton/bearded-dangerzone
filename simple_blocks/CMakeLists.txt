@@ -51,6 +51,7 @@ set(simple_blocks_HEADERS
     src/cmdline.h 
     src/texture.h
     src/create_vao.h
+    src/nvpm.h
 )
 
 set(simple_blocks_SOURCES 
