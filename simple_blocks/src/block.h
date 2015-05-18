@@ -35,7 +35,7 @@ public:
     /////////////////////////////////////////////////////////////////////////////////
     /// \brief Marks blocks as empty and uploads GL textures if average is outside of [tmin..tmax].
     /// \param data[in] Volume data set
-    /// \param blocks[in] Set of blocks to filter
+    /// \param blocks[in][out] Set of blocks to filter
     /// \param nonempty_blocks[out] Pointers to the non-empty blocks arye pushed onto this here vector.
     /// \param numBlks[in] Number of blocks in \c blocks parameter in x,y,z dirs.
     /// \param volsz[in] Dimensions of volume data set in \c data parameter.
@@ -45,13 +45,8 @@ public:
     ///////////////////////////////////////////////////////////////////////////////
     //TODO: filterblocks takes Functor.
     static void filterBlocks(float *data, 
-        std::vector<Block> &blocks, 
-        std::vector<Block*> &nonempty_blocks,
-//        glm::u64vec3 numBlks, 
-//        glm::u64vec3 volsz, 
-        unsigned int sampler,
-        float tmin = 0.0f, float tmax = 1.0f
-    );
+        std::vector<Block> &blocks, std::vector<Block*> &nonempty_blocks,
+        unsigned int sampler, float tmin = 0.0f, float tmax = 1.0f);
 
 
 public:

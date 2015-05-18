@@ -64,6 +64,7 @@ public:
 
     Target target() const { return m_type; }
 
+    std::string Texture::to_string() const;
 
 private:
     ///////////////////////////////////////////////////////////////////////////////
@@ -76,6 +77,7 @@ private:
 //    Sampler m_sampler; ///
 };
 
+std::ostream& operator<<(std::ostream &os, const Texture &t);
 
 
 #endif

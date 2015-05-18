@@ -220,10 +220,11 @@ Texture& Block::texture()
 std::string Block::to_string() const
 {
     std::stringstream ss;
-    ss <<  "ijk: (" << m_ijk.x << ',' << m_ijk.y << ',' << m_ijk.z << ")\n"
+    ss <<  "{ ijk: (" << m_ijk.x << ',' << m_ijk.y << ',' << m_ijk.z << ")\n"
         "Origin: " << m_transform.origin().x << ',' << m_transform.origin().y << ',' <<
         m_transform.origin().z <<
-        "Empty: " << (m_empty ? "True\n" : "False\n");
+        "Empty: " << (m_empty ? "True\n" : "False\n") << "\n"
+        "Texture: " << m_tex << " }";
 
     return ss.str();
 }

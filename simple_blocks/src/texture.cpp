@@ -5,11 +5,17 @@
 #include <bd/log/gl_log.h>
 
 #include <array>
+#include <sstream>
+#include <bd/util/gl_strings.h>
 
 namespace {
 
 static const std::array<GLenum, 4> texfmt = { GL_RED, GL_RG, GL_RGB, GL_RGBA };
 static const std::array<GLenum, 3> textype = { GL_TEXTURE_1D, GL_TEXTURE_2D, GL_TEXTURE_3D };
+
+
+
+
 
 template <typename T>
 unsigned int ordinal(T t)
@@ -128,9 +134,9 @@ unsigned int Texture::genGLTex3d(float* img, Format ity,
      
     gl_check(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
     gl_check(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-    gl_check(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP));
-    gl_check(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP));
-    gl_check(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP));
+    gl_check(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+    gl_check(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+    gl_check(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE));
 
     gl_check(glBindTexture(GL_TEXTURE_3D, 0));
 
@@ -139,5 +145,37 @@ unsigned int Texture::genGLTex3d(float* img, Format ity,
     m_id = texId;
 
     return texId;
+}
+
+std::string Texture::to_string() const
+{
+    std::stringstream ss;
+    GLenum tt = textype.at(ordinal<Target>(m_type));
+
+    std::array<GLenum, 8> thingies2{
+        GL_TEXTURE_WIDTH,
+        GL_TEXTURE_HEIGHT,
+        GL_TEXTURE_RED_SIZE,
+        GL_TEXTURE_BLUE_SIZE,
+        GL_TEXTURE_GREEN_SIZE,
+        GL_TEXTURE_ALPHA_SIZE,
+        GL_TEXTURE_COMPRESSED,
+        GL_TEXTURE_COMPRESSED_IMAGE_SIZE
+    };
+
+    ss << "{ Id: " << m_id << ", Type: " << bd::gl_to_string(tt) << "\nGL values:";
+
+    GLint val{ 0 };
+    for (size_t i = 0; i < thingies2.size(); ++i) {
+        glGetTextureLevelParameteriv(m_id, 0, thingies2[i], &val);
+        ss << "\n\t" << bd::gl_to_string(thingies2[i]) << ": " << val;
+    }
+    ss << " }";
+    return ss.str();
+}
+
+std::ostream& operator<<(std::ostream &os, const Texture &t)
+{
+    return os << t.to_string();
 }
 
