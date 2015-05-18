@@ -44,7 +44,8 @@ float start(size_t num_slices, float min, float max)
 //    float span = std::abs(max - min);
     //float s = -1.0f * delta(num_slices, min, max) * (num_slices / 2);
     //return s;
-    return num_slices > 1 ? min : 0.0f;
+//    return num_slices > 1 ? min : 0.0f;
+    return -1.0f * delta(num_slices, min, max);
 }
 
 
@@ -55,7 +56,8 @@ float delta(size_t num_slices, float min, float max)
         return 0.0f;
     }
 
-    return (max - min) / float(num_slices-1);
+    //return (max - min) / float(num_slices-1);
+    return (max - min) / float(num_slices);
 }
 
 //TODO: use texbuf_adjust instead of duplicated code in texbuf vbo create methods.
