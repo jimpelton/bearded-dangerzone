@@ -114,6 +114,35 @@ void loop(GLFWwindow *window);
 
 void cleanup();
 
+// two query buffers: front and back
+#define QUERY_BUFFERS 2
+// the number of required queries
+// in this example there is only one query per frame
+#define QUERY_COUNT 1
+// the array to store the two sets of queries.
+unsigned int queryID[QUERY_BUFFERS][QUERY_COUNT];
+unsigned int queryBackBuffer = 0;
+unsigned int queryFrontBuffer = 1;
+
+// call this function when initializating the OpenGL settings
+void genQueries()
+{
+    gl_check(glGenQueries(QUERY_COUNT, queryID[queryBackBuffer]));
+    gl_check(glGenQueries(QUERY_COUNT, queryID[queryFrontBuffer]));
+    // dummy query to prevent OpenGL errors from popping out
+    gl_check(glQueryCounter(queryID[queryFrontBuffer][0], GL_TIMESTAMP));
+}
+
+void swapQueryBuffers()
+{
+    if (queryBackBuffer) {
+        queryBackBuffer = 0;
+        queryFrontBuffer = 1;
+    } else {
+        queryBackBuffer = 1;
+        queryFrontBuffer = 0;
+    }
+}
 
 /************************************************************************/
 /* G L F W     C A L L B A C K S                                        */
@@ -468,9 +497,16 @@ void loop(GLFWwindow *window)
         //////// Quad Geo /////////////////////////////////////////
         vao = g_vaoIds[static_cast<unsigned int>(ObjType::Quads)];
         vao->bind();
+        gl_check(glBeginQuery(GL_TIME_ELAPSED, queryID[queryBackBuffer][0]));
         drawNonEmptyBlocks(mvp);
+        gl_check(glEndQuery(GL_TIME_ELAPSED));
         vao->unbind();
 
+        GLuint64 timer2;
+        gl_check(glGetQueryObjectui64v(queryID[queryFrontBuffer][0], GL_QUERY_RESULT, &timer2));
+        std::cout << timer2 << std::endl;
+        
+        swapQueryBuffers();
         glfwSwapBuffers(window);
         glfwPollEvents();
 
@@ -577,6 +613,7 @@ void genBoxVao(bd::VertexArrayObject &vao)
 ///////////////////////////////////////////////////////////////////////////////
 
 
+
 /////////////////////////////////////////////////////////////////////////////////
 void initGraphicsState()
 {
@@ -642,6 +679,7 @@ GLFWwindow* init()
     glfwSwapInterval(0);
     bd::subscribe_debug_callbacks();
 
+    genQueries();
 
     return window;
 }
@@ -759,6 +797,10 @@ void setupCameraPos(unsigned cameraPos)
     g_viewDirty = true;
 }
 
+
+
+
+
 /////////////////////////////////////////////////////////////////////////////////
 int main(int argc, const char *argv [])
 {
@@ -824,7 +866,7 @@ int main(int argc, const char *argv [])
     genBoxVao(boxVbo);
 
     g_vaoIds.resize(3);
-    g_vaoIds[static_cast<unsigned int>(ObjType::Axis)] = &axisVbo;
+    g_vaoIds[static_cast<unsigned int>(ObjType::Axis)]  = &axisVbo;
     g_vaoIds[static_cast<unsigned int>(ObjType::Quads)] = &quadVbo;
     g_vaoIds[static_cast<unsigned int>(ObjType::Boxes)] = &boxVbo;
 

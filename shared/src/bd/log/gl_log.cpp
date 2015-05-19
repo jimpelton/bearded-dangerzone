@@ -134,6 +134,7 @@ namespace {
 
 const char *logFileName = "gl.log";
 const char *glDebugFileName = "gl_debug.log";
+const char *glCallbackLogFileName = "gl_callback.log";
 FILE *file = NULL;
 
 FILE *glDebugFile = NULL;
