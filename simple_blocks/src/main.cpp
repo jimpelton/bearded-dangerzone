@@ -30,9 +30,7 @@
 #include <fstream>
 #include <iostream>
 
-#if WIN32
 #include "nvpm.h"
-#endif // WIN32
 
 ///////////////////////////////////////////////////////////////////////////////
 // Geometry and VAOs

@@ -5,6 +5,7 @@
 
 #include <glm/glm.hpp>
 
+#include <algorithm>
 
 namespace {
     const float VOL_MIN = -0.5f;

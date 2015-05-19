@@ -1,4 +1,6 @@
-#ifdef BDPROF
+
+#ifndef nvpm_h__
+#define nvpm_h__
 
 #include <bd/log/gl_log.h>
 
@@ -6,8 +8,7 @@
 #include <iostream>
 #include <vector>
 
-#ifndef nvpm_h__
-#define nvpm_h__
+#ifdef BDPROF
 
 //TODO: move PATH_TO_NVPMAPI_CORE define as a compiler command line definition.
 #define PATH_TO_NVPMAPI_CORE L"D:\\libs\\perfkit\\4.4.0-windows-desktop\\bin\\x64\\NvPmApi.Core.dll"
@@ -441,15 +442,15 @@ void nvpm_printCounters(std::ostream &outStream, Mode *mode) // NVPMContext perf
 #else // BDPROF
 
 #define perf_initNvPm()
-#define perf_initMode()
+#define perf_initMode(_dummy)
 #define perf_frameBegin()
 #define perf_frameEnd()
 #define perf_workBegin()
 #define perf_workEnd()
 #define perf_shouldQuit()
 #define perf_isDone()
-#define perf_printCounters()
+#define perf_printCounters(_dummy)
 
-#endif // !nvpm_h__
 #endif // BDPROF
+#endif // !nvpm_h__
 

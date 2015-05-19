@@ -64,7 +64,7 @@ public:
 
     Target target() const { return m_type; }
 
-    std::string Texture::to_string() const;
+    std::string to_string() const;
 
 private:
     ///////////////////////////////////////////////////////////////////////////////
