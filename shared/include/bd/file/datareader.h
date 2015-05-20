@@ -6,8 +6,11 @@
 #include <limits>
 #include <fstream>
 #include <cstdint>
+#include <memory>
 
 namespace bd {
+
+
 
 /**
  * \brief Read data and convert from ExternTy to InternTy.
@@ -30,7 +33,6 @@ public:
             delete [] m_data;
     }
 
-public:
     /**
     * \brief Load the raw file at path \c imagepath. The external representation
     * in the file is expected to be ExternTy. The data is converted to InternTy.

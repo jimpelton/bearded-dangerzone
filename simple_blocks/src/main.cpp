@@ -1,3 +1,6 @@
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
+
 #include "block.h"
 #include "cmdline.h"
 #include "create_vao.h"
@@ -12,13 +15,8 @@
 
 #include <bd/util/util.h>
 
-#include <bd/file/datareader.h>
-#include <bd/file/datatypes.h>
 
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-
-#define GLM_FORCE_RADIANS
+//#define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
@@ -32,37 +30,11 @@
 #include <fstream>
 #include <iostream>
 
-#ifdef BDPROF
-#include <nvToolsExt.h>
+#include "nvpm.h"
 
-#define nvpushA(x) nvtxRangePushA((x))
-#define nvpopA() nvtxRangePop()
-
-//#define NVPM_INITGUID
-//#include "NvPmApi.Manager.h"
-//Simple singleton implementation for grabbing the NvPmApi
-//static NvPmApiManager S_NVPMManager;
-
-
-/////////////////////////////////////////////////////////////////////////////
-//extern NvPmApiManager *GetNvPmApiManager()
-//{
-//    return &S_NVPMManager;
-//}
-
-
-/////////////////////////////////////////////////////////////////////////////
-//const NvPmApi *GetNvPmApi()
-//{
-//    return S_NVPMManager.Api();
-//}
-
-
-#else
-#define nvpushA(x)
-#define nvpopA()
-#endif
-
+///////////////////////////////////////////////////////////////////////////////
+// Geometry and VAOs
+///////////////////////////////////////////////////////////////////////////////
 const glm::vec3 X_AXIS{ 1.0f, 0.0f, 0.0f };
 const glm::vec3 Y_AXIS{ 0.0f, 1.0f, 0.0f };
 const glm::vec3 Z_AXIS{ 0.0f, 0.0f, 1.0f };
@@ -78,9 +50,6 @@ enum class ObjType : unsigned int
 };
 
 
-///////////////////////////////////////////////////////////////////////////////
-// Geometry and VAOs
-///////////////////////////////////////////////////////////////////////////////
 SliceSet g_selectedSliceSet{ SliceSet::XY };
 bd::Axis g_axis;
 bd::Box g_box;
@@ -88,6 +57,8 @@ std::vector<bd::VertexArrayObject *> g_vaoIds;
 std::vector<Block> g_blocks;
 std::vector<Block*> g_nonEmptyBlocks;
 size_t g_elementBufferSize{ 0 };
+const int g_elementsPerQuad{ 5 };
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Shaders and Textures
@@ -122,6 +93,13 @@ int g_numSlices{ 1 };
 //TODO: bool g_toggleVolumeBox{ false };
 
 
+///////////////////////////////////////////////////////////////////////////////
+//  Other really cool data that needs to be kept track of globally.
+///////////////////////////////////////////////////////////////////////////////
+unsigned long long g_totalGPUTime_nonEmptyBlocks{ 0 };
+unsigned long long g_totalFramesRendered{ 0 };
+double g_totalElapsedCPUFrameTime{ 0 };
+
 void glfw_cursorpos_callback(GLFWwindow *window, double x, double y);
 
 void glfw_keyboard_callback(GLFWwindow *window, int key, int scancode, int action,
@@ -141,6 +119,35 @@ void loop(GLFWwindow *window);
 
 void cleanup();
 
+// two query buffers: front and back
+#define QUERY_BUFFERS 2
+// the number of required queries
+// in this example there is only one query per frame
+#define QUERY_COUNT 1
+// the array to store the two sets of queries.
+unsigned int queryID[QUERY_BUFFERS][QUERY_COUNT];
+unsigned int queryBackBuffer = 0;
+unsigned int queryFrontBuffer = 1;
+
+// call this function when initializating the OpenGL settings
+void genQueries()
+{
+    gl_check(glGenQueries(QUERY_COUNT, queryID[queryBackBuffer]));
+    gl_check(glGenQueries(QUERY_COUNT, queryID[queryFrontBuffer]));
+    // dummy query to prevent OpenGL errors from popping out
+    //gl_check(glQueryCounter(queryID[queryFrontBuffer][0], GL_TIMESTAMP));
+}
+
+void swapQueryBuffers()
+{
+    if (queryBackBuffer) {
+        queryBackBuffer = 0;
+        queryFrontBuffer = 1;
+    } else {
+        queryBackBuffer = 1;
+        queryFrontBuffer = 0;
+    }
+}
 
 /************************************************************************/
 /* G L F W     C A L L B A C K S                                        */
@@ -243,7 +250,7 @@ void glfw_scrollwheel_callback(GLFWwindow *window, double xoff, double yoff)
 }
 
 /************************************************************************/
-/*     D R A W I N'                                                     */
+/*     D R A W I N'    S T U F F                                        */
 /************************************************************************/
 
 
@@ -288,7 +295,6 @@ void drawNonEmptyBoundingBoxes(const glm::mat4 &mvp)
 
         glm::mat4 mmvp = mvp * b->transform().matrix();
         g_simpleShader.setUniform("mvp", mmvp);
-
         gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, 0));
         gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT,
             (GLvoid *)(4 * sizeof(GLushort))));
@@ -300,110 +306,117 @@ void drawNonEmptyBoundingBoxes(const glm::mat4 &mvp)
 
 
 ///////////////////////////////////////////////////////////////////////////////
-void drawNonEmptyBlocks_Forward(const glm::mat4 &mvp)
+void drawSlices_XY()
 {
-    static const int elementsPerQuad = 5;
     static const size_t xy_byteOffset{ 0 };
-    static size_t xz_byteOffset{ elementsPerQuad * g_numSlices * sizeof(uint16_t) };
-    static size_t yz_byteOffset{ 2 * elementsPerQuad * g_numSlices * sizeof(uint16_t) };
-//    std::cout << "forward" << std::endl;
+    perf_workBegin();
+    gl_check(glDrawElements(GL_TRIANGLE_STRIP, g_elementsPerQuad * g_numSlices,
+        GL_UNSIGNED_SHORT, (GLvoid *)xy_byteOffset));
+    perf_workEnd();
+}
 
-    for (auto *b : g_nonEmptyBlocks) {
-        b->texture().bind();
-        glm::mat4 mmvp = mvp * b->transform().matrix();
-        g_volumeShader.setUniform("mvp", mmvp);
-        g_volumeShader.setUniform("tfScalingVal", g_scaleValue);
 
-        switch (g_selectedSliceSet) {
-        
-        case SliceSet::XY:
-			nvpushA("XY");
-            gl_check(glDrawElements(GL_TRIANGLE_STRIP, elementsPerQuad * g_numSlices, 
-                GL_UNSIGNED_SHORT, (GLvoid *) xy_byteOffset));
-			nvpopA();
-            break;
-        case SliceSet::XZ:
-			nvpushA("XZ");
-            gl_check(glDrawElements(GL_TRIANGLE_STRIP, elementsPerQuad * g_numSlices, 
-                GL_UNSIGNED_SHORT, (GLvoid *) xz_byteOffset));
-			nvpopA();
-            break;
-        case SliceSet::YZ:
-			nvpushA("YZ");
-			gl_check(glDrawElements(GL_TRIANGLE_STRIP, elementsPerQuad * g_numSlices, 
-                GL_UNSIGNED_SHORT, (GLvoid *) yz_byteOffset));
-			nvpopA();
-            break;
-        case SliceSet::AllOfEm:
-            gl_check(glDrawElements(GL_TRIANGLE_STRIP, elementsPerQuad * g_numSlices, 
-                GL_UNSIGNED_SHORT, (GLvoid *) xy_byteOffset));
-            gl_check(glDrawElements(GL_TRIANGLE_STRIP, elementsPerQuad * g_numSlices, 
-                GL_UNSIGNED_SHORT, (GLvoid *) xz_byteOffset));
-			gl_check(glDrawElements(GL_TRIANGLE_STRIP, elementsPerQuad * g_numSlices, 
-                GL_UNSIGNED_SHORT, (GLvoid *) yz_byteOffset));
-            break;
-        case SliceSet::NoneOfEm:
-        default:
-            break;
-        } // switch
-
-    } // for
+///////////////////////////////////////////////////////////////////////////////
+void drawSlices_XZ()
+{
+    static size_t xz_byteOffset{ g_elementsPerQuad * g_numSlices * sizeof(uint16_t) };
+    perf_workBegin();
+    gl_check(glDrawElements(GL_TRIANGLE_STRIP, g_elementsPerQuad * g_numSlices,
+        GL_UNSIGNED_SHORT, (GLvoid *)xz_byteOffset));
+    perf_workEnd();
 
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
-void drawNonEmptyBlocks_Reverse(const glm::mat4 &mvp)
+void drawSlices_YZ()
 {
-    static const int elementsPerQuad = 5;
-    static const size_t xy_byteOffset{ 0 };
-    static const size_t xz_byteOffset{ elementsPerQuad * g_numSlices * sizeof(uint16_t) };
-    static const size_t yz_byteOffset{ 2 * elementsPerQuad * g_numSlices * sizeof(uint16_t) };
+    static size_t yz_byteOffset{ 2 * g_elementsPerQuad * g_numSlices * sizeof(uint16_t) };
+    perf_workBegin();
+    gl_check(glDrawElements(GL_TRIANGLE_STRIP, g_elementsPerQuad * g_numSlices,
+        GL_UNSIGNED_SHORT, (GLvoid *)yz_byteOffset));
+    perf_workEnd();
+}
 
-    for (int i = g_nonEmptyBlocks.size() - 1; i >= 0; --i) {
-        Block *b = g_nonEmptyBlocks[i];
-        b->texture().bind();
-        glm::mat4 mmvp = mvp * b->transform().matrix();
-        g_volumeShader.setUniform("mvp", mmvp);
+
+///////////////////////////////////////////////////////////////////////////////
+/// \brief Loop through the blocks and draw each one
+///////////////////////////////////////////////////////////////////////////////
+void drawNonEmptyBlocks_Forward(const glm::mat4 &mvp)
+{
+//    std::cout << "forward" << std::endl;
+    perf_frameBegin();
+    for (auto *b : g_nonEmptyBlocks) {
+        b->texture().bind(0);
+        glm::mat4 wmvp = mvp * b->transform().matrix();
+        g_volumeShader.setUniform("mvp", wmvp);
         g_volumeShader.setUniform("tfScalingVal", g_scaleValue);
 
         switch (g_selectedSliceSet) {
-        
         case SliceSet::XY:
-			nvpushA("XY");
-            gl_check(glDrawElements(GL_TRIANGLE_STRIP, elementsPerQuad * g_numSlices, 
-                GL_UNSIGNED_SHORT, (GLvoid *) xy_byteOffset));
-			nvpopA();
+            drawSlices_XY();
             break;
         case SliceSet::XZ:
-			nvpushA("XZ");
-            gl_check(glDrawElements(GL_TRIANGLE_STRIP, elementsPerQuad * g_numSlices, 
-                GL_UNSIGNED_SHORT, (GLvoid *) xz_byteOffset));
-			nvpopA();
+            drawSlices_XZ();
             break;
         case SliceSet::YZ:
-			nvpushA("YZ");
-			gl_check(glDrawElements(GL_TRIANGLE_STRIP, elementsPerQuad * g_numSlices, 
-                GL_UNSIGNED_SHORT, (GLvoid *) yz_byteOffset));
-			nvpopA();
+            drawSlices_YZ();
             break;
         case SliceSet::AllOfEm:
-            gl_check(glDrawElements(GL_TRIANGLE_STRIP, elementsPerQuad * g_numSlices, 
-                GL_UNSIGNED_SHORT, (GLvoid *) xy_byteOffset));
-            gl_check(glDrawElements(GL_TRIANGLE_STRIP, elementsPerQuad * g_numSlices, 
-                GL_UNSIGNED_SHORT, (GLvoid *) xz_byteOffset));
-			gl_check(glDrawElements(GL_TRIANGLE_STRIP, elementsPerQuad * g_numSlices, 
-                GL_UNSIGNED_SHORT, (GLvoid *) yz_byteOffset));
+            drawSlices_XY();
+            drawSlices_XZ();
+            drawSlices_YZ();
             break;
         case SliceSet::NoneOfEm:
         default:
             break;
         } // switch
     } // for
+    perf_frameEnd();
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+/// \brief Loop through the blocks in reverse and draw. 
+///////////////////////////////////////////////////////////////////////////////
+void drawNonEmptyBlocks_Reverse(const glm::mat4 &mvp)
+{
+    perf_frameBegin();
+    for (size_t i = g_nonEmptyBlocks.size(); i-- > 0;) {
+        Block *b = g_nonEmptyBlocks[i];
+        b->texture().bind(0);
+        glm::mat4 wmvp = mvp * b->transform().matrix();
+        g_volumeShader.setUniform("mvp", wmvp);
+        g_volumeShader.setUniform("tfScalingVal", g_scaleValue);
+
+        switch (g_selectedSliceSet) {
+        
+        case SliceSet::XY:
+            drawSlices_XY();
+            break;
+        case SliceSet::XZ:
+            drawSlices_XZ();
+            break;
+        case SliceSet::YZ:
+            drawSlices_YZ();
+            break;
+        case SliceSet::AllOfEm:
+            drawSlices_XY();
+            drawSlices_XZ();
+            drawSlices_YZ();
+            break;
+        case SliceSet::NoneOfEm:
+        default:
+            break;
+        } // switch
+    } // for
+    perf_frameEnd();
     
 }
 
 
+///////////////////////////////////////////////////////////////////////////////
+/// \brief Determine the viewing direction and draw the blocks in proper order.
 ///////////////////////////////////////////////////////////////////////////////
 void drawNonEmptyBlocks(const glm::mat4 &mvp)
 {
@@ -450,12 +463,28 @@ void drawNonEmptyBlocks(const glm::mat4 &mvp)
 void loop(GLFWwindow *window)
 {
     gl_log("Entered render loop.");
+    unsigned long long frame_gpuTime_nonEmptyBlocks{0};
+    double frame_lastTime{ 0 };
+    double frame_thisTime{ 0 };
 
     glm::mat4 mvp{ 1.0f };
     bd::VertexArrayObject *vao = nullptr;
+
+//#ifdef _WIN32
+    LARGE_INTEGER win_frequency;
+    QueryPerformanceFrequency(&win_frequency);
+    LARGE_INTEGER now;
+    QueryPerformanceCounter(&now);
+    frame_lastTime = ((1e9 * now.QuadPart) / win_frequency.QuadPart);
+//#else
+//    timespec ts;
+//    clock_gettime(CLOCK_REALTIME, &ts);
+//    frame_lastTime = ts.tv_nsec;
+//#endif
+
     
     g_volumeShader.bind();
-    g_tfuncTex.bind(); 
+    g_tfuncTex.bind(1); 
 
     do {
         if (g_viewDirty) {
@@ -467,8 +496,8 @@ void loop(GLFWwindow *window)
             g_modelDirty = false;
         }
 
+        gl_check(glBeginQuery(GL_TIME_ELAPSED, queryID[queryBackBuffer][0]));
         gl_check(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
-
 
         ////////  Axis    /////////////////////////////////////////
         vao = g_vaoIds[static_cast<unsigned int>(ObjType::Axis)];
@@ -479,6 +508,7 @@ void loop(GLFWwindow *window)
         vao->unbind();
 
         if (g_toggleBlockBoxes) {
+
         ////////  BBoxes  /////////////////////////////////////////
             vao = g_vaoIds[static_cast<unsigned int>(ObjType::Boxes)];
             vao->bind();
@@ -486,32 +516,61 @@ void loop(GLFWwindow *window)
             vao->unbind();
         }
 
-        //////// Quad Geo /////////////////////////////////////////
+        //////// Quad Geo (drawNonEmptyBlocks)  /////////////////////
         vao = g_vaoIds[static_cast<unsigned int>(ObjType::Quads)];
         vao->bind();
         drawNonEmptyBlocks(mvp);
         vao->unbind();
 
         glfwSwapBuffers(window);
+        gl_check(glEndQuery(GL_TIME_ELAPSED));
+
+
+//#ifdef _WIN32
+        QueryPerformanceCounter(&now);
+        frame_thisTime = ((1e9 * now.QuadPart) / win_frequency.QuadPart);
+//#else
+//        clock_gettime(CLOCK_REALTIME, &ts);
+//        frame_thisTime = (1e9 * ts.tv_sec) + ts.tv_nsec;
+//#endif
+
+        gl_check(glGetQueryObjectui64v(queryID[queryFrontBuffer][0], GL_QUERY_RESULT, &frame_gpuTime_nonEmptyBlocks));
+
+        g_totalElapsedCPUFrameTime += frame_thisTime - frame_lastTime;
+        frame_lastTime = frame_thisTime;
+        g_totalGPUTime_nonEmptyBlocks += frame_gpuTime_nonEmptyBlocks;
+        g_totalFramesRendered++;
+
+        swapQueryBuffers();
+
         glfwPollEvents();
 
     } while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
         glfwWindowShouldClose(window) == 0);
+
 
     gl_log("Render loop exited.");
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
+//  G E O M E T R Y   C R E A T I O N
+///////////////////////////////////////////////////////////////////////////////
+
+
+///////////////////////////////////////////////////////////////////////////////
+/// \brief Create slices inside the cononical block for each axis.
+///////////////////////////////////////////////////////////////////////////////
 void genQuadVao(bd::VertexArrayObject &vao, unsigned int numSlices)
 {
-	std::vector<glm::vec4> temp;
+    gl_log("Generating quad slice vertex buffers for %d slices.", numSlices);
+    std::vector<glm::vec4> temp;
     std::vector<glm::vec4> vbuf;
-	std::vector<glm::vec4> texbuf;
+    std::vector<glm::vec4> texbuf;
     std::vector<uint16_t> elebuf;
 
-	/// For each axis, populate vbuf with verts for numSlices quads, adjust  ///
-	/// z coordinate based on slice index.                                   ///
+    /// For each axis, populate vbuf with verts for numSlices quads, adjust  ///
+    /// z coordinate based on slice index.                                   ///
 
     create_verts_xy(numSlices, temp);
     std::copy(temp.begin(), temp.end(), std::back_inserter(vbuf));
@@ -552,6 +611,7 @@ void genQuadVao(bd::VertexArrayObject &vao, unsigned int numSlices)
 ///////////////////////////////////////////////////////////////////////////////
 void genAxisVao(bd::VertexArrayObject &vao)
 {
+    gl_log("Generating axis vertex buffers.");
     // vertex positions into attribute 0
     vao.addVbo((float *)(bd::Axis::verts.data()),
         bd::Axis::verts.size() * bd::Axis::vert_element_size,
@@ -567,6 +627,7 @@ void genAxisVao(bd::VertexArrayObject &vao)
 ///////////////////////////////////////////////////////////////////////////////
 void genBoxVao(bd::VertexArrayObject &vao)
 {
+    gl_log("Generating bounding box vertex buffers.");
     // vertex positions into attribute 0
     vao.addVbo((float *)(bd::Box::vertices.data()),
         bd::Box::vertices.size() * bd::Box::vert_element_size,
@@ -582,142 +643,24 @@ void genBoxVao(bd::VertexArrayObject &vao)
 
 }
 
+
 ///////////////////////////////////////////////////////////////////////////////
-// nb: number of blocks
-// vd: volume voxel dimensions
-void initBlocks(glm::u64vec3 nb, glm::u64vec3 vd)
-{
-    // block world dims
-    glm::vec3 blk_dims{ 1.0f / glm::vec3(nb) };
-
-    gl_log("Starting block init: Number of blocks: %dx%dx%d, "
-        "Volume dimensions: %dx%dx%d Block dimensions: %.2f,%.2f,%.2f",
-        nb.x, nb.y, nb.z,
-        vd.x, vd.y, vd.z,
-        blk_dims.x, blk_dims.y, blk_dims.z);
-
-    // Loop through all our blockx (identified by <bx,by,bz>)and populate block fields.
-    for (auto bz = 0ul; bz < nb.z; ++bz)
-    for (auto by = 0ul; by < nb.y; ++by)
-    for (auto bx = 0ul; bx < nb.x; ++bx) {
-
-        // i,j,k block identifier
-        glm::u64vec3 blkId{ bx, by, bz };
-        // lower left corner in world coordinates
-        glm::vec3 worldLoc{ (blk_dims * glm::vec3(blkId)) - 0.5f }; // - 0.5f;
-        // origin in world coordiates
-        glm::vec3 blk_origin{ (worldLoc + (worldLoc + blk_dims)) * 0.5f };
-
-        Block blk{ glm::u64vec3(bx, by, bz), blk_dims, blk_origin };
-        g_blocks.push_back(blk);
-    }
-
-    gl_log("Finished block init: total blocks is %d.", g_blocks.size());
-}
-
-
-/////////////////////////////////////////////////////////////////////////////////
-std::unique_ptr<float []> readVolumeData(const std::string &dtype,
-    const std::string &fpath, size_t volx, size_t voly, size_t volz)
-{
-    bd::DataType t = bd::DataTypesMap.at(dtype);
-    float *rawdata = nullptr;
-    switch (t) {
-    case bd::DataType::Float:
-    {
-        bd::DataReader<float, float> reader;
-        reader.loadRaw3d(fpath, volx, voly, volz);
-        rawdata = reader.takeOwnership();
-        break;
-    }
-    case bd::DataType::UnsignedCharacter:
-    {
-        bd::DataReader<unsigned char, float> reader;
-        reader.loadRaw3d(fpath, volx, voly, volz);
-        rawdata = reader.takeOwnership();
-        break;
-    }
-    case bd::DataType::UnsignedShort:
-    {
-        bd::DataReader<unsigned short, float> reader;
-        reader.loadRaw3d(fpath, volx, voly, volz);
-        rawdata = reader.takeOwnership();
-        break;
-    }
-    default:
-        break;
-    }
-
-    return std::unique_ptr<float []>(rawdata);
-}
-
-
-/////////////////////////////////////////////////////////////////////////////////
-/// \brief Marks blocks as empty if average is outside of [tmin..tmax]
+//   I N I T I A L I Z A T I O N
 ///////////////////////////////////////////////////////////////////////////////
-void filterBlocks(float *data, std::vector<Block> &blocks, glm::u64vec3 numBlks,
-    glm::u64vec3 volsz, float tmin = 0.0f, float tmax = 1.0f)
-{
-    size_t emptyCount{ 0 };
-    glm::u64vec3 bsz{ volsz / numBlks };
-    size_t blkPoints = bd::vecCompMult(bsz);
 
-    std::vector<float> image;
-    image.resize(blkPoints);
-
-    for (auto &b : blocks) {
-        glm::u64vec3 bst{ b.ijk() * bsz };  // block start = block index * block size
-        float avg{ 0.0f };
-
-        size_t imageIdx = 0;
-        for (auto k = bst.z; k < bst.z + bsz.z; ++k)
-        for (auto j = bst.y; j < bst.y + bsz.y; ++j)
-        for (auto i = bst.x; i < bst.x + bsz.x; ++i) {
-            size_t dataIdx{ bd::to1D(i, j, k, volsz.x, volsz.y) };
-            float val = data[dataIdx];
-            image[imageIdx++] = val;
-            avg += val;
-        } // for for for
-
-        avg /= blkPoints;
-        b.avg(avg);
-
-        if (avg < tmin || avg > tmax) {
-            b.empty(true);
-            emptyCount += 1;
-        } else {
-            unsigned int smp = g_volumeShader.getUniformLocation("volume_sampler");
-            b.texture().samplerLocation(smp);
-            b.texture().textureUnit(0);
-            b.texture().genGLTex3d(image.data(),
-                Texture::Format::RED, Texture::Format::RED,
-                bsz.x, bsz.y, bsz.z);
-
-            if (b.texture().id() == 0) {
-                gl_log_err("failed to make a texture, sorry about it.");
-            }
-
-            g_nonEmptyBlocks.push_back(&b);
-        }
-    } // for auto
-
-    // TODO: create list of pointers to non-empty blocks.
-
-    gl_log("%d/%d blocks removed.", emptyCount, bd::vecCompMult(numBlks));
-
-}
 
 
 /////////////////////////////////////////////////////////////////////////////////
 void initGraphicsState()
 {
+    gl_log("Initializing gl state.");
     gl_check(glClearColor(0.2f, 0.2f, 0.2f, 0.0f));
 
 //    gl_check(glEnable(GL_CULL_FACE));
 //    gl_check(glCullFace(GL_BACK));
 
-    gl_check(glDepthFunc(GL_LESS));
     gl_check(glEnable(GL_DEPTH_TEST));
+    gl_check(glDepthFunc(GL_LESS));
 
     gl_check(glEnable(GL_BLEND));
     gl_check(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
@@ -726,9 +669,11 @@ void initGraphicsState()
     gl_check(glPrimitiveRestartIndex(0xFFFF));
 }
 
+
 /////////////////////////////////////////////////////////////////////////////////
 GLFWwindow* init()
 {
+    gl_log("Initializing GLFW.");
     GLFWwindow *window = nullptr;
     if (!glfwInit()) {
         gl_log("could not start GLFW3");
@@ -770,6 +715,7 @@ GLFWwindow* init()
     glfwSwapInterval(0);
     bd::subscribe_debug_callbacks();
 
+    genQueries();
 
     return window;
 }
@@ -785,6 +731,7 @@ void cleanup()
     //    }
     //    glDeleteBuffers(NUMBOXES, &bufIds[0]);
     //    glDeleteProgram(g_shaderProgramId);
+    glfwTerminate();
 }
 
 
@@ -793,11 +740,15 @@ void printBlocks()
 {
     std::ofstream block_file("blocks.txt", std::ofstream::trunc);
     if (block_file.is_open()) {
+        gl_log("Writing blocks to blocks.txt in the current working directory.");
         for (auto &b : g_blocks) {
             block_file << b << "\n";
         }
         block_file.flush();
         block_file.close();
+    } 
+    else {
+        gl_log_err("Could not print blocks because blocks.txt coulnt'd be created in the current working directory.");
     }
 }
 
@@ -805,11 +756,11 @@ void printBlocks()
 /////////////////////////////////////////////////////////////////////////////////
 unsigned int loadTransfter_1dtformat(const std::string &filename, Texture &transferTex)
 {
-    gl_log("Reading transfer function file in .1dt format");
+    gl_log("Reading 1dt formatted transfer function file and generating texture.");
 
     std::ifstream file(filename.c_str(), std::ifstream::in);
     if (!file.is_open()) {
-        gl_log_err("Caint open tfunc file: %s", filename.c_str());
+        gl_log_err("C'aint open tfunc file: %s", filename.c_str());
         return 0;
     }
 
@@ -856,22 +807,24 @@ unsigned int loadTransfter_1dtformat(const std::string &filename, Texture &trans
 
 
 ///////////////////////////////////////////////////////////////////////////////
+/// \brief Set an initial camera location/orientation (-c command line option)
+///////////////////////////////////////////////////////////////////////////////
 void setupCameraPos(unsigned cameraPos)
 {
     switch (cameraPos) {
     case 2:
-        //cam position = { 2.0f, 0.0f, 0.0f  };
+        //cam position = { 2.0f, 0.0f, 0.0f  }
         g_rotation = glm::rotate(g_rotation, -1 * glm::half_pi<float>(), Y_AXIS);
         g_selectedSliceSet = SliceSet::YZ;
         break;
     case 1:
-        //cam position = { 0.0f, 2.0f, 0.0f };
+        //cam position = { 0.0f, 2.0f, 0.0f }
         g_rotation = glm::rotate(g_rotation, glm::half_pi<float>(), X_AXIS);
         g_selectedSliceSet = SliceSet::XZ;
         break;
     case 0:
     default:
-        //cam position = { 0.0f, 0.0f, 2.0f };
+        //cam position = { 0.0f, 0.0f, 2.0f }
         // no rotation needed, this is default cam location.
         g_selectedSliceSet = SliceSet::XY;
         break;
@@ -879,6 +832,10 @@ void setupCameraPos(unsigned cameraPos)
 
     g_viewDirty = true;
 }
+
+
+
+
 
 /////////////////////////////////////////////////////////////////////////////////
 int main(int argc, const char *argv [])
@@ -893,25 +850,36 @@ int main(int argc, const char *argv [])
     g_numSlices = clo.num_slices;
     bd::gl_log_restart();
 
+
+    //// GLFW init ////
     GLFWwindow *window;
     if ((window = init()) == nullptr) {
         gl_log("Could not initialize GLFW, exiting.");
         return 1;
     }
 
-    GLuint programId{ g_simpleShader.linkProgram(
-        "shaders/vert_vertexcolor_passthrough.glsl",
-        "shaders/frag_vertcolor.glsl")
-    };
 
+    //// Shaders Init ////
+    GLuint programId
+    { 
+        g_simpleShader.linkProgram
+        (
+            "shaders/vert_vertexcolor_passthrough.glsl",
+            "shaders/frag_vertcolor.glsl"
+        )
+    };
     if (programId == 0) {
         gl_log_err("Error building passthrough shader, program id was 0.");
         return 1;
     }
 
-    GLuint volumeProgramId{ g_volumeShader.linkProgram(
-        "shaders/vert_vertexcolor_passthrough.glsl",
-        "shaders/frag_volumesampler_noshading.glsl")
+    GLuint volumeProgramId
+    { 
+        g_volumeShader.linkProgram
+        (
+            "shaders/vert_vertexcolor_passthrough.glsl",
+            "shaders/frag_volumesampler_noshading.glsl"
+        )
     };
 
     if (volumeProgramId == 0) {
@@ -919,6 +887,7 @@ int main(int argc, const char *argv [])
         return 1;
     }
 
+    //// Geometry Init ////
     bd::VertexArrayObject quadVbo(bd::VertexArrayObject::Method::ELEMENTS);
     quadVbo.create();
 
@@ -933,39 +902,85 @@ int main(int argc, const char *argv [])
     genBoxVao(boxVbo);
 
     g_vaoIds.resize(3);
-    g_vaoIds[static_cast<unsigned int>(ObjType::Axis)] = &axisVbo;
+    g_vaoIds[static_cast<unsigned int>(ObjType::Axis)]  = &axisVbo;
     g_vaoIds[static_cast<unsigned int>(ObjType::Quads)] = &quadVbo;
     g_vaoIds[static_cast<unsigned int>(ObjType::Boxes)] = &boxVbo;
 
-    initBlocks(
+
+    //// Blocks and Data Init ////
+    Block::initBlocks
+    (
         glm::u64vec3( clo.numblk_x, clo.numblk_y, clo.numblk_z),
-        glm::u64vec3( clo.w, clo.h, clo.d ) );
+        glm::u64vec3( clo.w, clo.h, clo.d ), 
+        g_blocks
+    );
 
     std::unique_ptr<float []> data
     {
-        std::move(readVolumeData(clo.type, clo.filePath, clo.w, clo.h, clo.d))
+        std::move( bd::readVolumeData( clo.type, clo.filePath, clo.w, clo.h, clo.d ) )
     };
+    
+    if (data == nullptr) {
+        gl_log_err("data file was not opened. exiting...");
+        cleanup();
+        return 1;
+    }
 
-    filterBlocks( data.get(), g_blocks, 
-        glm::u64vec3( clo.numblk_x, clo.numblk_y, clo.numblk_z ),
-        glm::u64vec3( clo.w, clo.h, clo.d ), 
-        clo.tmin, clo.tmax );
+    Block::filterBlocks
+    ( 
+        data.get(),                                               // data set
+        g_blocks,                                                 // all blocks
+        g_nonEmptyBlocks,                                         // non empty blocks
+        g_volumeShader.getUniformLocation("volume_sampler"),
+        clo.tmin, 
+        clo.tmax 
+    );
 
     if (clo.printBlocks) { printBlocks(); }
 
-    unsigned int texid{ loadTransfter_1dtformat(clo.tfuncPath, g_tfuncTex) };
-
-    if (texid == 0) {
+    //// Transfer function texture ////
+    unsigned int tfuncTextureId
+    { 
+        loadTransfter_1dtformat(clo.tfuncPath, g_tfuncTex) 
+    };
+    if (tfuncTextureId == 0) {
         gl_log_err("Exiting because tfunc texture was not bound.");
         exit(1);
     }
 
+    //// Render Init and Loop ////
     setupCameraPos(clo.cameraPos);
     initGraphicsState();
+    //// NV Perf Thing ////
+    perf_initNvPm();
+    perf_initMode(clo.perfMode);
     loop(window);
+
+    if (clo.perfOutPath.empty()) {
+        perf_printCounters(std::cout);
+    }
+    else{
+        std::ofstream outStream(clo.perfOutPath.c_str());
+        if (outStream.is_open()) {
+            perf_printCounters(outStream);
+        } else {
+            gl_log_err("Could not open %s for performance counter output. Using stdout instead.", 
+                clo.perfOutPath.c_str());
+            perf_printCounters(std::cout);
+        }
+    }
+
+    gl_log("Total frames: %ull", g_totalFramesRendered);
+    float gputime_ms = g_totalGPUTime_nonEmptyBlocks * 1.0e-6f;
+    gl_log("Total gpu frame time for non-empty blocks (ms): %f", gputime_ms);
+    gl_log("Average gpu frame time for non-empty blocks (ms): %f", gputime_ms / float(g_totalFramesRendered));
+
+    float cputime_ms = g_totalElapsedCPUFrameTime / 1.0e6f;
+    gl_log("Total cpu elapsed frame time: %f", cputime_ms);
+    gl_log("Average cpu elapsed frame time: %f", cputime_ms / float(g_totalFramesRendered));
+
     cleanup();
     bd::gl_log_close();
-    glfwTerminate();
 
     return 0;
 }

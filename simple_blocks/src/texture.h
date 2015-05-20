@@ -43,7 +43,8 @@ public:
     // Interface 
     ///////////////////////////////////////////////////////////////////////////////
 
-    void bind();
+//    void bind();
+    void bind(unsigned int unit);
 
     unsigned int genGLTex1d(float *img, Format ity, Format ety, size_t w);
     
@@ -63,6 +64,7 @@ public:
 
     Target target() const { return m_type; }
 
+    std::string to_string() const;
 
 private:
     ///////////////////////////////////////////////////////////////////////////////
@@ -75,6 +77,7 @@ private:
 //    Sampler m_sampler; ///
 };
 
+std::ostream& operator<<(std::ostream &os, const Texture &t);
 
 
 #endif

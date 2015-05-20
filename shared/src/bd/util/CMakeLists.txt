@@ -23,6 +23,7 @@ set(util_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/context.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/glfwcontext.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/util.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/gl_strings.cpp"
     PARENT_SCOPE
     )
 

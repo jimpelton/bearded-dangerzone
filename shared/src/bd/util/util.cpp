@@ -1,4 +1,6 @@
 #include <bd/util/util.h>
+#include <bd/file/datareader.h>
+#include <bd/file/datatypes.h>
 
 namespace bd {
 
@@ -84,5 +86,40 @@ unsigned long long vecCompMult(glm::u64vec3 v)
 {
     return v.x * v.y * v.z;
 }
+
+std::unique_ptr<float []> readVolumeData(const std::string &dtype,
+    const std::string &fpath, size_t volx, size_t voly, size_t volz)
+{
+    bd::DataType t = bd::DataTypesMap.at(dtype);
+    float *rawdata = nullptr;
+    switch (t) {
+    case bd::DataType::Float:
+    {
+        bd::DataReader<float, float> reader;
+        reader.loadRaw3d(fpath, volx, voly, volz);
+        rawdata = reader.takeOwnership();
+        break;
+    }
+    case bd::DataType::UnsignedCharacter:
+    {
+        bd::DataReader<unsigned char, float> reader;
+        reader.loadRaw3d(fpath, volx, voly, volz);
+        rawdata = reader.takeOwnership();
+        break;
+    }
+    case bd::DataType::UnsignedShort:
+    {
+        DataReader<unsigned short, float> reader;
+        reader.loadRaw3d(fpath, volx, voly, volz);
+        rawdata = reader.takeOwnership();
+        break;
+    }
+    default:
+        break;
+    }
+
+    return std::unique_ptr<float []>(rawdata);
+}
+
 } // namespace bd
 
