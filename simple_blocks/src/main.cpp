@@ -93,6 +93,13 @@ int g_numSlices{ 1 };
 //TODO: bool g_toggleVolumeBox{ false };
 
 
+///////////////////////////////////////////////////////////////////////////////
+//  Other really cool data that needs to be kept track of globally.
+///////////////////////////////////////////////////////////////////////////////
+unsigned long long g_totalGPUTime_nonEmptyBlocks{ 0 };
+unsigned long long g_totalFramesRendered{ 0 };
+double g_totalElapsedCPUFrameTime{ 0 };
+
 void glfw_cursorpos_callback(GLFWwindow *window, double x, double y);
 
 void glfw_keyboard_callback(GLFWwindow *window, int key, int scancode, int action,
@@ -128,7 +135,7 @@ void genQueries()
     gl_check(glGenQueries(QUERY_COUNT, queryID[queryBackBuffer]));
     gl_check(glGenQueries(QUERY_COUNT, queryID[queryFrontBuffer]));
     // dummy query to prevent OpenGL errors from popping out
-    gl_check(glQueryCounter(queryID[queryFrontBuffer][0], GL_TIMESTAMP));
+    //gl_check(glQueryCounter(queryID[queryFrontBuffer][0], GL_TIMESTAMP));
 }
 
 void swapQueryBuffers()
@@ -456,9 +463,25 @@ void drawNonEmptyBlocks(const glm::mat4 &mvp)
 void loop(GLFWwindow *window)
 {
     gl_log("Entered render loop.");
+    unsigned long long frame_gpuTime_nonEmptyBlocks{0};
+    double frame_lastTime{ 0 };
+    double frame_thisTime{ 0 };
 
     glm::mat4 mvp{ 1.0f };
     bd::VertexArrayObject *vao = nullptr;
+
+//#ifdef _WIN32
+    LARGE_INTEGER win_frequency;
+    QueryPerformanceFrequency(&win_frequency);
+    LARGE_INTEGER now;
+    QueryPerformanceCounter(&now);
+    frame_lastTime = ((1e9 * now.QuadPart) / win_frequency.QuadPart);
+//#else
+//    timespec ts;
+//    clock_gettime(CLOCK_REALTIME, &ts);
+//    frame_lastTime = ts.tv_nsec;
+//#endif
+
     
     g_volumeShader.bind();
     g_tfuncTex.bind(1); 
@@ -473,6 +496,7 @@ void loop(GLFWwindow *window)
             g_modelDirty = false;
         }
 
+        gl_check(glBeginQuery(GL_TIME_ELAPSED, queryID[queryBackBuffer][0]));
         gl_check(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
         ////////  Axis    /////////////////////////////////////////
@@ -492,24 +516,38 @@ void loop(GLFWwindow *window)
             vao->unbind();
         }
 
-        //////// Quad Geo /////////////////////////////////////////
+        //////// Quad Geo (drawNonEmptyBlocks)  /////////////////////
         vao = g_vaoIds[static_cast<unsigned int>(ObjType::Quads)];
         vao->bind();
-        gl_check(glBeginQuery(GL_TIME_ELAPSED, queryID[queryBackBuffer][0]));
         drawNonEmptyBlocks(mvp);
-        gl_check(glEndQuery(GL_TIME_ELAPSED));
         vao->unbind();
 
-        GLuint64 timer2;
-        gl_check(glGetQueryObjectui64v(queryID[queryFrontBuffer][0], GL_QUERY_RESULT, &timer2));
-        std::cout << timer2 << std::endl;
-        
-        swapQueryBuffers();
         glfwSwapBuffers(window);
+        gl_check(glEndQuery(GL_TIME_ELAPSED));
+
+
+//#ifdef _WIN32
+        QueryPerformanceCounter(&now);
+        frame_thisTime = ((1e9 * now.QuadPart) / win_frequency.QuadPart);
+//#else
+//        clock_gettime(CLOCK_REALTIME, &ts);
+//        frame_thisTime = (1e9 * ts.tv_sec) + ts.tv_nsec;
+//#endif
+
+        gl_check(glGetQueryObjectui64v(queryID[queryFrontBuffer][0], GL_QUERY_RESULT, &frame_gpuTime_nonEmptyBlocks));
+
+        g_totalElapsedCPUFrameTime += frame_thisTime - frame_lastTime;
+        frame_lastTime = frame_thisTime;
+        g_totalGPUTime_nonEmptyBlocks += frame_gpuTime_nonEmptyBlocks;
+        g_totalFramesRendered++;
+
+        swapQueryBuffers();
+
         glfwPollEvents();
 
     } while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
         glfwWindowShouldClose(window) == 0);
+
 
     gl_log("Render loop exited.");
 }
@@ -931,6 +969,15 @@ int main(int argc, const char *argv [])
             perf_printCounters(std::cout);
         }
     }
+
+    gl_log("Total frames: %ull", g_totalFramesRendered);
+    float gputime_ms = g_totalGPUTime_nonEmptyBlocks * 1.0e-6f;
+    gl_log("Total gpu frame time for non-empty blocks (ms): %f", gputime_ms);
+    gl_log("Average gpu frame time for non-empty blocks (ms): %f", gputime_ms / float(g_totalFramesRendered));
+
+    float cputime_ms = g_totalElapsedCPUFrameTime / 1.0e6f;
+    gl_log("Total cpu elapsed frame time: %f", cputime_ms);
+    gl_log("Average cpu elapsed frame time: %f", cputime_ms / float(g_totalFramesRendered));
 
     cleanup();
     bd::gl_log_close();
