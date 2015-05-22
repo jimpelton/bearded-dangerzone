@@ -97,12 +97,12 @@ private:
     ///////////////////////////////////////////////////////////////////////////////
     static void fillBlockData(glm::u64vec3 ijk, const float *in_data, float *out_blockData);
 
-    static glm::u64vec3 m_blockDims;
-    static glm::u64vec3 m_volDims;
-    static glm::u64vec3 m_numBlocks;
+    static glm::u64vec3 m_blockDims; ///< Dimensions of a block in something.
+    static glm::u64vec3 m_volDims;   ///< Volume dimensions (# data points).
+    static glm::u64vec3 m_numBlocks; ///< Number of blocks volume is divided into.
 
 
-    glm::u64vec3 m_ijk;  ///< Block's location in block coordinates
+    glm::u64vec3 m_ijk;  ///< Block's location in block coordinates.
     bool m_empty;        ///< True if this block was determined empty.
     float m_avg;         ///< Avg. val. of this block.
     Texture m_tex;       ///< Texture data assoc'd with this block.
