@@ -858,31 +858,22 @@ void printNvPmApiCounters(const char *perfOutPath = "")
 {
     if (strlen(perfOutPath) == 0) {
         perf_printCounters(std::cout);
+        printTimes(std::cout);
     }
     else{
         std::ofstream outStream(perfOutPath);
         if (outStream.is_open()) {
             perf_printCounters(outStream);
+            printTimes(outStream);
         } else {
             gl_log_err("Could not open %s for performance counter output. Using stdout instead.", 
                 perfOutPath);
             perf_printCounters(std::cout);
+            printTimes(std::cout);
         }
     }
 }
 
-
-void printCpuTimers()
-{
-    gl_log("Total frames: %ull", g_totalFramesRendered);
-    float gputime_ms = g_totalGPUTime_nonEmptyBlocks * 1.0e-6f;
-    gl_log("Total gpu frame time for non-empty blocks (ms): %f", gputime_ms);
-    gl_log("Average gpu frame time for non-empty blocks (ms): %f", gputime_ms / float(g_totalFramesRendered));
-
-    float cputime_ms = g_totalElapsedCPUFrameTime / 1.0e6f;
-    gl_log("Total cpu elapsed frame time: %f", cputime_ms);
-    gl_log("Average cpu elapsed frame time: %f", cputime_ms / float(g_totalFramesRendered));
-}
 
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -1004,22 +995,24 @@ int main(int argc, const char *argv [])
     perf_initMode(clo.perfMode);
     loop(window);
 
-    if (clo.perfOutPath.empty()) {
-        perf_printCounters(std::cout);
-        printTimes(std::cout);
-    }
-    else{
-        std::ofstream outStream(clo.perfOutPath.c_str());
-        if (outStream.is_open()) {
-            perf_printCounters(outStream);
-            printTimes(outStream);
-        } else {
-            gl_log_err("Could not open %s for performance counter output. Using stdout instead.", 
-                clo.perfOutPath.c_str());
-            perf_printCounters(std::cout);
-            printTimes(std::cout);
-        }
-    }
+    printNvPmApiCounters(clo.perfOutPath.c_str());
+//    if (clo.perfOutPath.empty()) {
+//        perf_printCounters(std::cout);
+//        printTimes(std::cout);
+//    }
+//    else{
+//        std::ofstream outStream(clo.perfOutPath.c_str());
+//        if (outStream.is_open()) {
+//            perf_printCounters(outStream);
+//            printTimes(outStream);
+//        } else {
+//            gl_log_err("Could not open %s for performance counter output. Using stdout instead.", 
+//                clo.perfOutPath.c_str());
+//            perf_printCounters(std::cout);
+//            printTimes(std::cout);
+//        }
+//    }
+
 
     cleanup();
     bd::gl_log_close();
