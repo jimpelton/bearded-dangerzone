@@ -85,10 +85,10 @@ public:
       * 
       * If \c param has not been added prior to calling setUniform, chaos ensues.
       */
-    void setUniform(const std::string &param, glm::mat4 &val);
-    void setUniform(const std::string &param, glm::vec4 &val);
-    void setUniform(const std::string &param, glm::vec3 &val);
-    void setUniform(const std::string &param, float val);
+    void setUniform(const char *param, glm::mat4 &val);
+    void setUniform(const char *param, glm::vec4 &val);
+    void setUniform(const char *param, glm::vec3 &val);
+    void setUniform(const char *param, float val);
 
 //    void setUniform(const std::string &param, const Texture &tex);
 
@@ -96,7 +96,7 @@ public:
       * \brief Get the id of the spec'd param.
       * \return The non-zero gl identifier, or 0 if param has never been set.
       */
-    unsigned int getUniformLocation(const std::string &param);
+    unsigned int getUniformLocation(const char *param);
 
     void bind();
     void unbind();
@@ -110,7 +110,7 @@ private:
     ///////////////////////////////////////////////////////////////////////////////
     
     /** \brief Map uniform name to location. */
-    using ParamTable = std::map< std::string, unsigned int >;
+    using ParamTable = std::map<const char*, unsigned int >;
     
     /** \brief Maps sampler location, Texture */
 //    using TextureTable = std::map<unsigned int, const Texture* >;
