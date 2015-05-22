@@ -147,6 +147,7 @@ void create_elementIndices(size_t numSlices, std::vector<uint16_t> &elebuf)
 }
 
 
+///////////////////////////////////////////////////////////////////////////////
 void create_verts_helper(size_t numSlices, std::vector<glm::vec4> &vbuf, 
     int axis, const std::array<glm::vec4, 4> &vertsProto)
 {
@@ -165,3 +166,7 @@ void create_verts_helper(size_t numSlices, std::vector<glm::vec4> &vbuf,
         vbufIter += verts.size();
     }
 }
+
+
+
+

@@ -850,8 +850,39 @@ void setupCameraPos(unsigned cameraPos)
     g_viewDirty = true;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+/// \brief print counters from NvPmApi to file \c perfOutPath, or to \c stdout
+///  if no path is provided.
+///////////////////////////////////////////////////////////////////////////////
+void printNvPmApiCounters(const char *perfOutPath = "")
+{
+    if (strlen(perfOutPath) == 0) {
+        perf_printCounters(std::cout);
+    }
+    else{
+        std::ofstream outStream(perfOutPath);
+        if (outStream.is_open()) {
+            perf_printCounters(outStream);
+        } else {
+            gl_log_err("Could not open %s for performance counter output. Using stdout instead.", 
+                perfOutPath);
+            perf_printCounters(std::cout);
+        }
+    }
+}
 
 
+void printCpuTimers()
+{
+    gl_log("Total frames: %ull", g_totalFramesRendered);
+    float gputime_ms = g_totalGPUTime_nonEmptyBlocks * 1.0e-6f;
+    gl_log("Total gpu frame time for non-empty blocks (ms): %f", gputime_ms);
+    gl_log("Average gpu frame time for non-empty blocks (ms): %f", gputime_ms / float(g_totalFramesRendered));
+
+    float cputime_ms = g_totalElapsedCPUFrameTime / 1.0e6f;
+    gl_log("Total cpu elapsed frame time: %f", cputime_ms);
+    gl_log("Average cpu elapsed frame time: %f", cputime_ms / float(g_totalFramesRendered));
+}
 
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -989,7 +1020,6 @@ int main(int argc, const char *argv [])
             printTimes(std::cout);
         }
     }
-
 
     cleanup();
     bd::gl_log_close();
