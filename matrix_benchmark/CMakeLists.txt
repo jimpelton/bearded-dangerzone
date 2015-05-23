@@ -30,14 +30,15 @@ set(matrix_benchmark_HEADERS
 ) 
 
 set(matrix_benchmark_SOURCES
-        src/main.cpp
-    "${simple_blocks_sources}"
+        src/main.cpp   
+        "${simple_blocks_sources}"
 )
 
+include_directories("${simple_blocks_SOURCE_DIR}/src")
 include_directories("${SHARED_DIR}/include")  
 include_directories("${THIRDPARTY_DIR}/tclap/include")
 
-add_executable(matrix_benchmark "${simple_blocks_HEADERS}" "${simple_blocks_SOURCES}")
+add_executable(matrix_benchmark "${matrix_benchmark_HEADERS}" "${matrix_benchmark_SOURCES}")
 
 
 target_link_libraries(

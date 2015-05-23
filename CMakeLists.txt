@@ -42,7 +42,7 @@ include_directories("${GLFW_INCLUDE_DIRS}")
 
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/shared")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/simple_blocks")
-
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/matrix_benchmark")
 
 # Projects temporaily not (or ever) being used.
 #add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/template")
