@@ -124,12 +124,8 @@ void loop(GLFWwindow *window);
 
 void cleanup();
 
-// two query buffers: front and back
 #define QUERY_BUFFERS 2
-// the number of required queries
-// in this example there is only one query per frame
 #define QUERY_COUNT 1
-// the array to store the two sets of queries.
 GLuint queryID[QUERY_BUFFERS][QUERY_COUNT];
 unsigned int queryBackBuffer = 0;
 unsigned int queryFrontBuffer = 1;
@@ -475,23 +471,12 @@ void loop(GLFWwindow *window)
     glm::mat4 mvp{ 1.0f };
     bd::VertexArrayObject *vao = nullptr;
 
-//#ifdef _WIN32
-//    LARGE_INTEGER win_frequency;
-//    QueryPerformanceFrequency(&win_frequency);
-//    LARGE_INTEGER now;
-//    QueryPerformanceCounter(&now);
-//    frame_lastTime = ((1e9 * now.QuadPart) / win_frequency.QuadPart);
-//#else
-//    timespec ts;
-//    clock_gettime(CLOCK_REALTIME, &ts);
-//    frame_lastTime = (1.0e9f * ts.tv_sec) + ts.tv_nsec;
-//#endif
-
     g_volumeShader.bind();
     g_tfuncTex.bind(1); 
 
     do {
-        auto frame_startTime = std::chrono::high_resolution_clock::now();
+        using namespace std::chrono;
+        auto frame_startTime = high_resolution_clock::now();
 
         if (g_viewDirty) {
             updateViewMatrix();
@@ -531,16 +516,6 @@ void loop(GLFWwindow *window)
         glfwSwapBuffers(window);
         gl_check(glEndQuery(GL_TIME_ELAPSED));
 
-
-//#ifdef _WIN32
-//        QueryPerformanceCounter(&now);
-//        frame_thisTime = ((1e9 * now.QuadPart) / win_frequency.QuadPart);
-//#else
-//        clock_gettime(CLOCK_REALTIME, &ts);
-//        frame_thisTime = (1.0e9f * ts.tv_sec) + ts.tv_nsec;
-//#endif
-
-
         gl_check(glGetQueryObjectui64v(queryID[queryFrontBuffer][0], GL_QUERY_RESULT,
             &frame_gpuTime_nonEmptyBlocks));
         g_totalGPUTime_nonEmptyBlocks += frame_gpuTime_nonEmptyBlocks;
@@ -548,9 +523,9 @@ void loop(GLFWwindow *window)
 
         glfwPollEvents();
 
-        auto frame_endTime = std::chrono::high_resolution_clock::now();
+        auto frame_endTime = high_resolution_clock::now();
         g_totalElapsedCPUFrameTime +=
-            std::chrono::duration_cast<std::chrono::microseconds>(frame_endTime - frame_startTime).count();
+            duration_cast<microseconds>(frame_endTime - frame_startTime).count();
 
         g_totalFramesRendered++;
 
