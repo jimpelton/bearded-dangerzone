@@ -25,11 +25,15 @@
 #include <string>
 #include <vector>
 #include <array>
-#include <memory>
 
 #include <fstream>
 #include <iostream>
 #include <ostream>
+
+#include <memory>
+#include <chrono>
+
+#include <cstring>
 
 #include "nvpm.h"
 
@@ -126,7 +130,7 @@ void cleanup();
 // in this example there is only one query per frame
 #define QUERY_COUNT 1
 // the array to store the two sets of queries.
-unsigned int queryID[QUERY_BUFFERS][QUERY_COUNT];
+GLuint queryID[QUERY_BUFFERS][QUERY_COUNT];
 unsigned int queryBackBuffer = 0;
 unsigned int queryFrontBuffer = 1;
 
@@ -464,30 +468,31 @@ void drawNonEmptyBlocks(const glm::mat4 &mvp)
 void loop(GLFWwindow *window)
 {
     gl_log("Entered render loop.");
-    unsigned long long frame_gpuTime_nonEmptyBlocks{0};
-    double frame_lastTime{ 0 };
-    double frame_thisTime{ 0 };
+    GLuint64 frame_gpuTime_nonEmptyBlocks{0};
+//    double frame_lastTime{ 0 };
+//    double frame_thisTime{ 0 };
 
     glm::mat4 mvp{ 1.0f };
     bd::VertexArrayObject *vao = nullptr;
 
 //#ifdef _WIN32
-    LARGE_INTEGER win_frequency;
-    QueryPerformanceFrequency(&win_frequency);
-    LARGE_INTEGER now;
-    QueryPerformanceCounter(&now);
-    frame_lastTime = ((1e9 * now.QuadPart) / win_frequency.QuadPart);
+//    LARGE_INTEGER win_frequency;
+//    QueryPerformanceFrequency(&win_frequency);
+//    LARGE_INTEGER now;
+//    QueryPerformanceCounter(&now);
+//    frame_lastTime = ((1e9 * now.QuadPart) / win_frequency.QuadPart);
 //#else
 //    timespec ts;
 //    clock_gettime(CLOCK_REALTIME, &ts);
-//    frame_lastTime = ts.tv_nsec;
+//    frame_lastTime = (1.0e9f * ts.tv_sec) + ts.tv_nsec;
 //#endif
 
-    
     g_volumeShader.bind();
     g_tfuncTex.bind(1); 
 
     do {
+        auto frame_startTime = std::chrono::high_resolution_clock::now();
+
         if (g_viewDirty) {
             updateViewMatrix();
         }
@@ -528,23 +533,26 @@ void loop(GLFWwindow *window)
 
 
 //#ifdef _WIN32
-        QueryPerformanceCounter(&now);
-        frame_thisTime = ((1e9 * now.QuadPart) / win_frequency.QuadPart);
+//        QueryPerformanceCounter(&now);
+//        frame_thisTime = ((1e9 * now.QuadPart) / win_frequency.QuadPart);
 //#else
 //        clock_gettime(CLOCK_REALTIME, &ts);
-//        frame_thisTime = (1e9 * ts.tv_sec) + ts.tv_nsec;
+//        frame_thisTime = (1.0e9f * ts.tv_sec) + ts.tv_nsec;
 //#endif
 
-        gl_check(glGetQueryObjectui64v(queryID[queryFrontBuffer][0], GL_QUERY_RESULT, &frame_gpuTime_nonEmptyBlocks));
 
-        g_totalElapsedCPUFrameTime += frame_thisTime - frame_lastTime;
-        frame_lastTime = frame_thisTime;
+        gl_check(glGetQueryObjectui64v(queryID[queryFrontBuffer][0], GL_QUERY_RESULT,
+            &frame_gpuTime_nonEmptyBlocks));
         g_totalGPUTime_nonEmptyBlocks += frame_gpuTime_nonEmptyBlocks;
-        g_totalFramesRendered++;
-
         swapQueryBuffers();
 
         glfwPollEvents();
+
+        auto frame_endTime = std::chrono::high_resolution_clock::now();
+        g_totalElapsedCPUFrameTime +=
+            std::chrono::duration_cast<std::chrono::microseconds>(frame_endTime - frame_startTime).count();
+
+        g_totalFramesRendered++;
 
     } while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
         glfwWindowShouldClose(window) == 0);
@@ -758,14 +766,14 @@ void printTimes(std::ostream &str)
 {
     
     float gputime_ms = g_totalGPUTime_nonEmptyBlocks * 1.0e-6f;
-    float cputime_ms = g_totalElapsedCPUFrameTime / 1.0e6f;
+    float cputime_ms = g_totalElapsedCPUFrameTime * 1.0e-3f;
 
     str << 
-        "frames_rendered: "       << g_totalFramesRendered << "\n"
-        "gpu_ft_total_nonempty: " << gputime_ms << "\n"
-        "gpu_ft_avg_nonempty: "   << (gputime_ms / float(g_totalFramesRendered)) << "\n"
-        "cpu_ft_total: "          << cputime_ms << "\n"
-        "cpu_ft_avg: "            << (cputime_ms / float(g_totalFramesRendered)) 
+        "frames_rendered: "       << g_totalFramesRendered << "ms\n"
+        "gpu_ft_total_nonempty: " << gputime_ms << "ms\n"
+        "gpu_ft_avg_nonempty: "   << (gputime_ms / float(g_totalFramesRendered)) << "ms\n"
+        "cpu_ft_total: "          << cputime_ms << "ms\n"
+        "cpu_ft_avg: "            << (cputime_ms / float(g_totalFramesRendered)) << "ms"
     << std::endl;
 }
 
@@ -856,7 +864,7 @@ void setupCameraPos(unsigned cameraPos)
 ///////////////////////////////////////////////////////////////////////////////
 void printNvPmApiCounters(const char *perfOutPath = "")
 {
-    if (strlen(perfOutPath) == 0) {
+    if (std::strlen(perfOutPath) == 0) {
         perf_printCounters(std::cout);
         printTimes(std::cout);
     }
@@ -996,22 +1004,6 @@ int main(int argc, const char *argv [])
     loop(window);
 
     printNvPmApiCounters(clo.perfOutPath.c_str());
-//    if (clo.perfOutPath.empty()) {
-//        perf_printCounters(std::cout);
-//        printTimes(std::cout);
-//    }
-//    else{
-//        std::ofstream outStream(clo.perfOutPath.c_str());
-//        if (outStream.is_open()) {
-//            perf_printCounters(outStream);
-//            printTimes(outStream);
-//        } else {
-//            gl_log_err("Could not open %s for performance counter output. Using stdout instead.", 
-//                clo.perfOutPath.c_str());
-//            perf_printCounters(std::cout);
-//            printTimes(std::cout);
-//        }
-//    }
 
 
     cleanup();
