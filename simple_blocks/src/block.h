@@ -16,11 +16,15 @@ class Block : public bd::Transformable
 {
 public:
 
-    static glm::u64vec3 blockDims();
+    /// \brief Set/get this block's dimensions in voxels
     static void blockDims(const glm::u64vec3 &dims);
+    static glm::u64vec3 blockDims();
 
+
+    /// \brief Set/get the volume's dimensions in voxels
     static glm::u64vec3 volDims();
     static void volDims(const glm::u64vec3 &voldims);
+    //TODO: move volDims() out of block class (yeah...probably make a volume abstr).
 
 
     /////////////////////////////////////////////////////////////////////////////////
@@ -65,22 +69,27 @@ public:
 
     virtual ~Block();
 
+
     /// \brief Set/get the ijk location of this block.
     glm::u64vec3 ijk() const;
     void ijk(const glm::u64vec3 &ijk);
 
+
     /// \brief Set/get if this block is marked empty.
-    bool empty() const;
     void empty(bool);
+    bool empty() const;
+
 
     /// \brief Set/get the average value of this here block.
-    float avg() const;
     void avg(float);
+    float avg() const;
     
+
     /// \brief Get the texture assoc'd with this block.
     Texture& texture();
 
 //    void draw();
+
 
     /// \brief String rep. of this blockeroo.
     virtual std::string to_string() const override;

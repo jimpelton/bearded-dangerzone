@@ -1,7 +1,6 @@
 
 
 #include "block.h"
-//#include "texture.h"
 
 #include <bd/log/gl_log.h>
 #include <bd/scene/transformable.h>
@@ -11,6 +10,12 @@
 #include <glm/gtx/string_cast.inl>
 
 #include <sstream>
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+//      Static   Members
+///////////////////////////////////////////////////////////////////////////////
 
 
 glm::u64vec3 Block::m_blockDims{ 0, 0, 0 };
@@ -50,6 +55,7 @@ void Block::volDims(const glm::u64vec3 &voldims)
 ///////////////////////////////////////////////////////////////////////////////
 // nb: number of blocks
 // vd: volume voxel dimensions 
+// blocks: out parameter to be filled with blocks.
 void Block::initBlocks(glm::u64vec3 nb, glm::u64vec3 vd, std::vector<Block> &blocks)
 {
     m_blockDims = vd / nb;
@@ -65,7 +71,7 @@ void Block::initBlocks(glm::u64vec3 nb, glm::u64vec3 vd, std::vector<Block> &blo
         vd.x, vd.y, vd.z,
         wld_dims.x, wld_dims.y, wld_dims.z);
 
-    // Loop through all our blockx (identified by <bx,by,bz>)and populate block fields.
+    // Loop through all our blocks (identified by <bx,by,bz>) and populate block fields.
     for (auto bz = 0ul; bz < nb.z; ++bz)
     for (auto by = 0ul; by < nb.y; ++by)
     for (auto bx = 0ul; bx < nb.x; ++bx) {
@@ -74,7 +80,7 @@ void Block::initBlocks(glm::u64vec3 nb, glm::u64vec3 vd, std::vector<Block> &blo
         glm::u64vec3 blkId{ bx, by, bz };
         // lower left corner in world coordinates
         glm::vec3 worldLoc{ (wld_dims * glm::vec3(blkId)) - 0.5f }; // - 0.5f;
-        // origin in world coordiates
+        // origin (centroid) in world coordiates
         glm::vec3 blk_origin{ (worldLoc + (worldLoc + wld_dims)) * 0.5f };
 
         Block blk{ glm::u64vec3(bx, by, bz), wld_dims, blk_origin };
@@ -122,6 +128,7 @@ void Block::filterBlocks (float *data,
         avg /= blkPoints;
         b.avg(avg);
 
+        //TODO: call filter function.
         if (avg < tmin || avg > tmax) {
             b.empty(true);
         } else {
@@ -139,11 +146,16 @@ void Block::filterBlocks (float *data,
         }
     } // for auto
 
-    // TODO: create list of pointers to non-empty blocks.
     delete [] image;
     gl_log("%d/%d blocks marked empty.", blocks.size()-nonempty_blocks.size(), blocks.size());
 
 }
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+//     Instance  Methods
+///////////////////////////////////////////////////////////////////////////////
 
 
 ///////////////////////////////////////////////////////////////////////////////
