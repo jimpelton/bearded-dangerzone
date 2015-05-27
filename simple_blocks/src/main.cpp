@@ -50,6 +50,17 @@ enum class SliceSet : unsigned int
     XZ, YZ, XY, NoneOfEm, AllOfEm
 };
 
+std::ostream& operator<<(std::ostream &ostr, SliceSet s)
+{
+    switch (s)
+    {
+    case SliceSet::XZ: ostr << "XZ"; return ostr;
+    case SliceSet::YZ: ostr << "YZ"; return ostr;
+    case SliceSet::XY: ostr << "XY"; return ostr;
+    default: ostr << "unknown"; return ostr;
+    }
+}
+
 enum class ObjType : unsigned int
 {
     Axis, Quads, Boxes
@@ -429,40 +440,44 @@ void drawNonEmptyBlocks(const glm::mat4 &mvp)
 {
     g_volumeShader.bind();
     glm::vec4 viewdir = glm::normalize(g_camera.getViewMatrix()[2]);
+//    float longest = 0.0f;
     glm::vec4 absViewdir = glm::abs(viewdir);
+
+    static SliceSet previousSet = g_selectedSliceSet;
 
     if (absViewdir.x > absViewdir.y && absViewdir.x > absViewdir.z) {
         g_selectedSliceSet = SliceSet::YZ;
-        if (viewdir.x > 0) {
-            drawNonEmptyBlocks_Forward(mvp);
-        }
-        else {
-            drawNonEmptyBlocks_Reverse(mvp);
-        }
+//        longest = viewdir.x;
     }
     else if (absViewdir.y > absViewdir.x && absViewdir.y > absViewdir.z) {
         g_selectedSliceSet = SliceSet::XZ;
-        if (viewdir.y > 0) {
-            drawNonEmptyBlocks_Forward(mvp);
-        }
-        else {
-            drawNonEmptyBlocks_Reverse(mvp);
-        }
+//        longest = viewdir.y;
     }
     else if (absViewdir.z > absViewdir.x && absViewdir.z > absViewdir.y) {
         g_selectedSliceSet = SliceSet::XY;
-        if (viewdir.z > 0) {
-            drawNonEmptyBlocks_Forward(mvp);
-        }
-        else {
-            drawNonEmptyBlocks_Reverse(mvp);
-        }
+//        longest = viewdir.z;
     }
-//
-//    //TODO: determine +/- dir of viewing vector.
-//    if (true){
+
+    if (previousSet != g_selectedSliceSet) {
+        std::cout << "Switched slice set: " << 
+           /* (longest < 0 ? '+' : '-') << */ g_selectedSliceSet << '\n';
+        previousSet = g_selectedSliceSet;    
+    }
+
+    glm::vec3 camPos = g_camera.getPosition();
+    std::sort(g_nonEmptyBlocks.begin(), g_nonEmptyBlocks.end(),
+        [&camPos](Block *a, Block *b)
+    {
+        float a_dist = glm::distance(camPos, a->transform().origin());
+        float b_dist = glm::distance(camPos, b->transform().origin());
+        return a_dist > b_dist;
+    });
+
+    drawNonEmptyBlocks_Forward(mvp);
+//    if (longest < 0) {
 //        drawNonEmptyBlocks_Forward(mvp);
-//    } else {
+//    }
+//    else {
 //        drawNonEmptyBlocks_Reverse(mvp);
 //    }
 
@@ -651,7 +666,7 @@ void genBoxVao(bd::VertexArrayObject &vao)
 void initGraphicsState()
 {
     gl_log("Initializing gl state.");
-    gl_check(glClearColor(0.2f, 0.2f, 0.2f, 0.0f));
+    gl_check(glClearColor(1.0f, 1.0f, 1.0f, 0.0f));
 
 //    gl_check(glEnable(GL_CULL_FACE));
 //    gl_check(glCullFace(GL_BACK));
@@ -810,8 +825,8 @@ unsigned int loadTransfter_1dtformat(const std::string &filename, Texture &trans
 
     transferTex.textureUnit(1);
 
-    unsigned int smp{ g_volumeShader.getUniformLocation("tf_sampler") };
-    transferTex.samplerLocation(smp);
+    unsigned int samp{ g_volumeShader.getUniformLocation("tf_sampler") };
+    transferTex.samplerLocation(samp);
 
     delete [] rgba;
 
