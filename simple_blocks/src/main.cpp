@@ -15,6 +15,7 @@
 
 #include <bd/util/util.h>
 
+#include <bd/scene/view.h>
 
 //#define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
@@ -77,21 +78,23 @@ float g_scaleValue{ 1.0f };
 ///////////////////////////////////////////////////////////////////////////////
 // Viewing and Controls Data
 ///////////////////////////////////////////////////////////////////////////////
-glm::quat g_rotation;
-glm::mat4 g_viewMatrix;
-glm::mat4 g_projectionMatrix;
-glm::mat4 g_vpMatrix;
-glm::vec3 g_camPosition{ 0.0f, 0.0f, 2.0f }; // looking down +Z axis.
-glm::vec3 g_camFocus{ 0.0f, 0.0f, 0.0f };
-glm::vec3 g_camUp{ 0.0f, 1.0f, 0.0f };
+//glm::quat g_rotation;
+//glm::mat4 g_viewMatrix;
+//glm::mat4 g_projectionMatrix;
+//glm::mat4 g_vpMatrix;
+//glm::vec3 g_camPosition{ 0.0f, 0.0f, 2.0f }; // looking down +Z axis.
+//glm::vec3 g_camFocus{ 0.0f, 0.0f, 0.0f };
+//glm::vec3 g_camUp{ 0.0f, 1.0f, 0.0f };
 glm::vec2 g_cursorPos;
+
+bd::View g_camera;
 
 float g_mouseSpeed{ 1.0f };
 int g_screenWidth{ 1000 };
 int g_screenHeight{ 1000 };
 float g_fov_deg{ 50.0f };
-bool g_viewDirty{ true };
-bool g_modelDirty{ true };
+//bool g_viewDirty{ true };
+//bool g_modelDirty{ true };
 bool g_toggleBlockBoxes{ false };
 int g_numSlices{ 1 };
 
@@ -218,8 +221,9 @@ void glfw_window_size_callback(GLFWwindow *window, int width, int height)
 {
     g_screenWidth = width;
     g_screenHeight = height;
-    glViewport(0, 0, width, height);
-    g_viewDirty = true;
+//    glViewport(0, 0, width, height);
+    g_camera.setViewport(0, 0, width, height);
+//    g_viewDirty = true;
 }
 
 
@@ -246,8 +250,8 @@ void glfw_scrollwheel_callback(GLFWwindow *window, double xoff, double yoff)
     if (fov < 1 || fov>120) return;
 
     g_fov_deg = fov;
-
-    g_viewDirty = true;
+    g_camera.setProjectionMatrix(glm::radians(fov), g_screenWidth / float(g_screenHeight), 0.1f, 10000.0f);
+//    g_viewDirty = true;
 }
 
 /************************************************************************/
@@ -268,23 +272,25 @@ void setRotation(const glm::vec2 &dr)
         glm::vec3(0, 1, 0)
         );
 
-    g_rotation = (rotX * rotY) * g_rotation;
+    g_camera.rotate(rotX * rotY);
+//    g_rotation = (rotX * rotY) * g_rotation;
 
-    g_modelDirty = true;
+//    g_modelDirty = true;
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 void updateViewMatrix()
 {
-    g_viewMatrix = glm::lookAt(g_camPosition, g_camFocus, g_camUp);
-    g_projectionMatrix = glm::perspective(glm::radians(g_fov_deg),
-        g_screenWidth / static_cast<float>(g_screenHeight), 0.1f, 100.0f);
-    g_vpMatrix = g_projectionMatrix * g_viewMatrix;
-
-    g_viewDirty = false;
+    g_camera.updateViewMatrix();
+//    g_viewMatrix = glm::lookAt(g_camPosition, g_camFocus, g_camUp);
+//    g_projectionMatrix = glm::perspective(glm::radians(g_fov_deg),
+//        g_screenWidth / static_cast<float>(g_screenHeight), 0.1f, 100.0f);
+//    g_vpMatrix = g_projectionMatrix * g_viewMatrix;
+//
+//    g_viewDirty = false;
     // update the mvp in render loop
-    g_modelDirty = true;
+//    g_modelDirty = true;
 
 }
 
@@ -422,41 +428,73 @@ void drawNonEmptyBlocks_Reverse(const glm::mat4 &mvp)
 void drawNonEmptyBlocks(const glm::mat4 &mvp)
 {
     g_volumeShader.bind();
-//    glm::vec4 viewdir = glm::normalize(g_viewMatrix[2]);
-//    glm::vec4 absViewdir = glm::abs(viewdir);
+    glm::vec4 viewdir = glm::normalize(g_camera.getViewMatrix()[2]);
+    glm::vec4 absViewdir = glm::abs(viewdir);
 
-//    if (absViewdir.x > absViewdir.y && absViewdir.x > absViewdir.z) {
-//        if (viewdir.x > 0) {
-//            drawNonEmptyBlocks_Forward(mvp);
-//        }
-//        else {
-//            drawNonEmptyBlocks_Reverse(mvp);
-//        }
-//    }
-//    else if (absViewdir.y > absViewdir.x && absViewdir.y > absViewdir.z) {
-//        if (viewdir.y > 0) {
-//            drawNonEmptyBlocks_Forward(mvp);
-//        }
-//        else {
-//            drawNonEmptyBlocks_Reverse(mvp);
-//        }
-//    }
-//    else if (absViewdir.z > absViewdir.x && absViewdir.z > absViewdir.y) {
-//        if (viewdir.z > 0) {
-//            drawNonEmptyBlocks_Forward(mvp);
-//        }
-//        else {
-//            drawNonEmptyBlocks_Reverse(mvp);
-//        }
+    if (absViewdir.x > absViewdir.y && absViewdir.x > absViewdir.z) {
+        g_selectedSliceSet = SliceSet::YZ;
+        if (viewdir.x > 0) {
+            drawNonEmptyBlocks_Forward(mvp);
+        }
+        else {
+            drawNonEmptyBlocks_Reverse(mvp);
+        }
+    }
+    else if (absViewdir.y > absViewdir.x && absViewdir.y > absViewdir.z) {
+        g_selectedSliceSet = SliceSet::XZ;
+        if (viewdir.y > 0) {
+            drawNonEmptyBlocks_Forward(mvp);
+        }
+        else {
+            drawNonEmptyBlocks_Reverse(mvp);
+        }
+    }
+    else if (absViewdir.z > absViewdir.x && absViewdir.z > absViewdir.y) {
+        g_selectedSliceSet = SliceSet::XY;
+        if (viewdir.z > 0) {
+            drawNonEmptyBlocks_Forward(mvp);
+        }
+        else {
+            drawNonEmptyBlocks_Reverse(mvp);
+        }
+    }
+//
+//    //TODO: determine +/- dir of viewing vector.
+//    if (true){
+//        drawNonEmptyBlocks_Forward(mvp);
+//    } else {
+//        drawNonEmptyBlocks_Reverse(mvp);
 //    }
 
-    //TODO: determine +/- dir of viewing vector.
-    if (true){
-        drawNonEmptyBlocks_Forward(mvp);
-    } else {
-        drawNonEmptyBlocks_Reverse(mvp);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+void draw(glm::mat4 &mvp)
+{
+    bd::VertexArrayObject *vao = nullptr;
+    ////////  Axis    /////////////////////////////////////////
+    vao = g_vaoIds[static_cast<unsigned int>(ObjType::Axis)];
+    vao->bind();
+    g_simpleShader.bind();
+    g_simpleShader.setUniform("mvp", mvp);
+    g_axis.draw();
+    vao->unbind();
+
+    if (g_toggleBlockBoxes) {
+
+        ////////  BBoxes  /////////////////////////////////////////
+        vao = g_vaoIds[static_cast<unsigned int>(ObjType::Boxes)];
+        vao->bind();
+        drawNonEmptyBoundingBoxes(mvp);
+        vao->unbind();
     }
 
+    //////// Quad Geo (drawNonEmptyBlocks)  /////////////////////
+    vao = g_vaoIds[static_cast<unsigned int>(ObjType::Quads)];
+    vao->bind();
+    drawNonEmptyBlocks(mvp);
+    vao->unbind();
 }
 
 
@@ -468,8 +506,7 @@ void loop(GLFWwindow *window)
 //    double frame_lastTime{ 0 };
 //    double frame_thisTime{ 0 };
 
-    glm::mat4 mvp{ 1.0f };
-    bd::VertexArrayObject *vao = nullptr;
+    glm::mat4 viewMat{ 1.0f };
 
     g_volumeShader.bind();
     g_tfuncTex.bind(1); 
@@ -478,42 +515,18 @@ void loop(GLFWwindow *window)
         using namespace std::chrono;
         auto frame_startTime = high_resolution_clock::now();
 
-        if (g_viewDirty) {
-            updateViewMatrix();
-        }
+        g_camera.updateViewMatrix();
 
-        if (g_modelDirty) {
-            mvp = g_vpMatrix * glm::toMat4(g_rotation);
-            g_modelDirty = false;
-        }
+        viewMat = g_camera.getViewMatrix();
 
         gl_check(glBeginQuery(GL_TIME_ELAPSED, queryID[queryBackBuffer][0]));
+
         gl_check(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
-        ////////  Axis    /////////////////////////////////////////
-        vao = g_vaoIds[static_cast<unsigned int>(ObjType::Axis)];
-        vao->bind();
-        g_simpleShader.bind();
-        g_simpleShader.setUniform("mvp", mvp);
-        g_axis.draw();
-        vao->unbind();
-
-        if (g_toggleBlockBoxes) {
-
-        ////////  BBoxes  /////////////////////////////////////////
-            vao = g_vaoIds[static_cast<unsigned int>(ObjType::Boxes)];
-            vao->bind();
-            drawNonEmptyBoundingBoxes(mvp);
-            vao->unbind();
-        }
-
-        //////// Quad Geo (drawNonEmptyBlocks)  /////////////////////
-        vao = g_vaoIds[static_cast<unsigned int>(ObjType::Quads)];
-        vao->bind();
-        drawNonEmptyBlocks(mvp);
-        vao->unbind();
+        draw(viewMat);
 
         glfwSwapBuffers(window);
+
         gl_check(glEndQuery(GL_TIME_ELAPSED));
 
         gl_check(glGetQueryObjectui64v(queryID[queryFrontBuffer][0], GL_QUERY_RESULT,
@@ -811,15 +824,18 @@ unsigned int loadTransfter_1dtformat(const std::string &filename, Texture &trans
 ///////////////////////////////////////////////////////////////////////////////
 void setupCameraPos(unsigned cameraPos)
 {
+    glm::quat r;
     switch (cameraPos) {
     case 2:
         //cam position = { 2.0f, 0.0f, 0.0f  }
-        g_rotation = glm::rotate(g_rotation, -1 * glm::half_pi<float>(), Y_AXIS);
+        r = glm::rotate(r, -1 * glm::half_pi<float>(), Y_AXIS);
+        g_camera.rotate(r);
         g_selectedSliceSet = SliceSet::YZ;
         break;
     case 1:
         //cam position = { 0.0f, 2.0f, 0.0f }
-        g_rotation = glm::rotate(g_rotation, glm::half_pi<float>(), X_AXIS);
+        r = glm::rotate(r , glm::half_pi<float>(), X_AXIS);
+        g_camera.rotate(r);
         g_selectedSliceSet = SliceSet::XZ;
         break;
     case 0:
@@ -830,7 +846,7 @@ void setupCameraPos(unsigned cameraPos)
         break;
     }
 
-    g_viewDirty = true;
+    //g_viewDirty = true;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
