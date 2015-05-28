@@ -19,7 +19,6 @@ public:
     void setViewport(int x, int y, int w, int h);
     
     void setPosition(const glm::vec3& pos);
-
     glm::vec3 getPosition() const;
 
     void translate(const glm::vec3 & delta);
@@ -28,7 +27,7 @@ public:
     glm::quat getRotation() const;
     void rotate(const glm::quat &rot);
 
-    void setProjectionMatrix(float fov, float aspect_rat, float z_near, float z_far);
+    void setProjectionMatrix(float fov_rads, float aspect_rat, float z_near, float z_far);
     glm::mat4 getProjectionMatrix() const;
 
     glm::mat4 getViewMatrix() const;
