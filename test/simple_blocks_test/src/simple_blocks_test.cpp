@@ -40,7 +40,7 @@ TEST_CASE("sliceIndexToElements() returns triangle strip ordering", "[quad][vboI
 
     int ebufIdx = 0;
     for (int i = 0; i < 3; ++i) {
-        ebuf_actual.push_back(sliceIndexToElements(ebufIdx));
+        ebuf_actual.push_back(vert::sliceIndexToElements(ebufIdx));
         ebufIdx++;
     }
     
@@ -51,7 +51,7 @@ TEST_CASE("sliceIndexToElements() returns triangle strip ordering", "[quad][vboI
 TEST_CASE("start returns 0.0 for one slice", "[quad][startCoords]")
 {
     float expected = 0.0f;
-    float actual = start(1, -0.5f, 0.5f);
+    float actual = vert::start(1, -0.5f, 0.5f);
 
     REQUIRE(actual == expected);
 }
@@ -60,7 +60,7 @@ TEST_CASE("start returns 0.0 for one slice", "[quad][startCoords]")
 TEST_CASE("start returns -0.5  for two slices")
 {
     float expected = -0.5f;
-    float actual = start(2, -0.5f, 0.5f);
+    float actual = vert::start(2, -0.5f, 0.5f);
 
     REQUIRE(actual == expected);
 }
@@ -69,7 +69,7 @@ TEST_CASE("start returns -0.5  for two slices")
 TEST_CASE("start returns -0.5  for three slices")
 {
     float expected = -0.5f;
-    float actual = start(3, -0.5f, 0.5f);
+    float actual = vert::start(3, -0.5f, 0.5f);
 
     REQUIRE(actual == expected);
 }
@@ -77,7 +77,7 @@ TEST_CASE("start returns -0.5  for three slices")
 TEST_CASE("start returns -0.5  for four slices")
 {
     float expected = -0.5f;
-    float actual = start(4, -0.5f, 0.5f);
+    float actual = vert::start(4, -0.5f, 0.5f);
 
     REQUIRE(actual == expected);
 }
@@ -86,7 +86,7 @@ TEST_CASE("start returns -0.5  for four slices")
 TEST_CASE("start returns -0.5  for five slices")
 {
     float expected = -0.5f;
-    float actual = start(5, -0.5f, 0.5f);
+    float actual = vert::start(5, -0.5f, 0.5f);
 
     REQUIRE(actual == expected);
 }
@@ -96,7 +96,7 @@ TEST_CASE("start returns -0.5  for five slices")
 TEST_CASE("delta returns 0.0 for 1 slice")
 {
     float expected = 0.0f;
-    float actual = delta(1, -0.5f, 0.5f);
+    float actual = vert::delta(1, -0.5f, 0.5f);
 
     REQUIRE(actual == expected);
 }
@@ -105,7 +105,7 @@ TEST_CASE("delta returns 0.0 for 1 slice")
 TEST_CASE("delta returns 1.0 for 2 slices")
 {
     float expected = 1.0f;
-    float actual = delta(2, -0.5f, 0.5f);
+    float actual = vert::delta(2, -0.5f, 0.5f);
 
     REQUIRE(actual == expected);
 }
@@ -114,7 +114,7 @@ TEST_CASE("delta returns 1.0 for 2 slices")
 TEST_CASE("delta returns 0.5 for 3 slices")
 {
     float expected = 0.5f;
-    float actual = delta(3, -0.5f, 0.5f);
+    float actual = vert::delta(3, -0.5f, 0.5f);
 
     REQUIRE(actual == expected);
 }
@@ -123,7 +123,7 @@ TEST_CASE("delta returns 0.5 for 3 slices")
 TEST_CASE("delta returns 0.33 for 4 slices")
 {
     float expected = 1.0f/3.0f;
-    float actual = delta(4, -0.5f, 0.5f);
+    float actual = vert::delta(4, -0.5f, 0.5f);
 
     REQUIRE(actual == Approx(expected));
 }
@@ -132,7 +132,7 @@ TEST_CASE("delta returns 0.33 for 4 slices")
 TEST_CASE("delta returns 0.25 for 5 slices")
 {
     float expected = 0.25f;
-    float actual = delta(5, -0.5f, 0.5f);
+    float actual = vert::delta(5, -0.5f, 0.5f);
 
     REQUIRE(actual == expected);
 }
@@ -141,9 +141,9 @@ TEST_CASE("delta returns 0.25 for 5 slices")
 ////////////////////////////////////////////////////////////////////////////////
 TEST_CASE("create_verts_xy creates 4 quads along z-axis.")
 {
-    float del = delta(4, -0.5f, 0.5f);
+    float del = vert::delta(4, -0.5f, 0.5f);
     std::vector<glm::vec4> vbuf;
-    create_verts_xy(4, vbuf);
+    vert::create_verts_xy(4, vbuf);
     
     std::vector<glm::vec4> expected{
         glm::vec4(-0.5f, -0.5f, -0.5f, 1.0f), // 0 ll
@@ -173,9 +173,9 @@ TEST_CASE("create_verts_xy creates 4 quads along z-axis.")
 
 TEST_CASE("create_verts_xy creates 5 quads along z-axis.")
 {
-    float del = delta(5, -0.5f, 0.5f);
+    float del = vert::delta(5, -0.5f, 0.5f);
     std::vector<glm::vec4> vbuf;
-    create_verts_xy(5, vbuf);
+    vert::create_verts_xy(5, vbuf);
 
     std::vector<glm::vec4> expected{
         glm::vec4(-0.5f, -0.5f, -0.5f, 1.0f), // 0 ll
@@ -213,9 +213,9 @@ TEST_CASE("create_verts_xy creates 5 quads along z-axis.")
 ////////////////////////////////////////////////////////////////////////////////
 TEST_CASE("create_texbuf_xy creates four slice tex coords z-axis.")
 {
-    float del = delta(4, 0.0f, 1.0f);
+    float del = vert::delta(4, 0.0f, 1.0f);
     std::vector<glm::vec4> vbuf;
-    create_texbuf_xy(4, vbuf);
+    vert::create_texbuf_xy(4, vbuf);
     
     std::vector<glm::vec4> expected{
         glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), // 0 ll
@@ -245,9 +245,9 @@ TEST_CASE("create_texbuf_xy creates four slice tex coords z-axis.")
 
 TEST_CASE("create_texbuf_xy creates five slice tex coords z-axis.")
 {
-    float del = delta(5, 0.0f, 1.0f);
+    float del = vert::delta(5, 0.0f, 1.0f);
     std::vector<glm::vec4> vbuf;
-    create_texbuf_xy(5, vbuf);
+    vert::create_texbuf_xy(5, vbuf);
     
     std::vector<glm::vec4> expected{
         glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), // 0 ll
@@ -286,7 +286,7 @@ TEST_CASE("create_texbuf_xy creates five slice tex coords z-axis.")
 TEST_CASE("create_elementIndices creates Triangle strip ordering.")
 {
     std::vector<uint16_t> elebuf;
-    create_elementIndices(4, elebuf);
+    vert::create_elementIndices(4, elebuf);
     std::vector<uint16_t> expected_buf{
         0, 1, 3, 2,     
         0xFFFF,

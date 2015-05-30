@@ -5,8 +5,8 @@
 
 #include <vector>
 
-
-
+namespace vert
+{
 ///////////////////////////////////////////////////////////////////////////////
 /// \brief Returns the 4 element array indices for the vertex of slice \c idx. 
 ///////////////////////////////////////////////////////////////////////////////
@@ -22,7 +22,7 @@ float start(size_t num_slices, float min, float max);
 ///////////////////////////////////////////////////////////////////////////////
 float delta(size_t num_slices, float min, float max);
 
-void create_verts_xy(size_t num_slices, std::vector<glm::vec4> &vbuf); 
+void create_verts_xy(size_t num_slices, std::vector<glm::vec4> &vbuf);
 void create_verts_xz(size_t numSlices, std::vector<glm::vec4> &vbuf);
 void create_verts_yz(size_t numSlices, std::vector<glm::vec4> &vbuf);
 
@@ -31,5 +31,10 @@ void create_texbuf_xz(size_t numSlices, std::vector<glm::vec4> &texbuf);
 void create_texbuf_yz(size_t numSlices, std::vector<glm::vec4> &texbuf);
 
 void create_elementIndices(size_t numSlices, std::vector<uint16_t> &elebuf);
+
+void create_elementIndicesReversed(size_t numSlices, std::vector<uint16_t>::iterator &start,
+    std::vector<uint16_t>::iterator &end);
+
+} // namepace vert
 
 #endif // !create_vao_h__

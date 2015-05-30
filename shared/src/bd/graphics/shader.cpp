@@ -157,7 +157,7 @@ unsigned int ShaderProgram::linkProgram(const std::string &vertPath,
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void ShaderProgram::setUniform(const char* param, glm::mat4& val)
+void ShaderProgram::setUniform(const char* param, const glm::mat4& val)
 {
     unsigned int loc = getUniformLocation(param);
     gl_check(glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(val)));
@@ -165,7 +165,7 @@ void ShaderProgram::setUniform(const char* param, glm::mat4& val)
 
 
 ///////////////////////////////////////////////////////////////////////////////
-void ShaderProgram::setUniform(const char *param, glm::vec4 &val)
+void ShaderProgram::setUniform(const char *param, const glm::vec4 &val)
 {
     unsigned int loc = getUniformLocation(param);
     gl_check(glUniform4fv(loc, 1, glm::value_ptr(val)));
@@ -173,7 +173,7 @@ void ShaderProgram::setUniform(const char *param, glm::vec4 &val)
 
 
 ///////////////////////////////////////////////////////////////////////////////
-void ShaderProgram::setUniform(const char *param, glm::vec3 &val)
+void ShaderProgram::setUniform(const char *param, const glm::vec3 &val)
 {
     unsigned int loc = getUniformLocation(param);
     gl_check(glUniform3fv(loc, 1, glm::value_ptr(val)));

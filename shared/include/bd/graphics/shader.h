@@ -85,9 +85,9 @@ public:
       * 
       * If \c param has not been added prior to calling setUniform, chaos ensues.
       */
-    void setUniform(const char *param, glm::mat4 &val);
-    void setUniform(const char *param, glm::vec4 &val);
-    void setUniform(const char *param, glm::vec3 &val);
+    void setUniform(const char *param, const glm::mat4 &val);
+    void setUniform(const char *param, const glm::vec4 &val);
+    void setUniform(const char *param, const glm::vec3 &val);
     void setUniform(const char *param, float val);
 
 //    void setUniform(const std::string &param, const Texture &tex);

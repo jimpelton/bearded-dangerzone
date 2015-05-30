@@ -70,7 +70,7 @@ void View::setPosition(const glm::vec3& pos)
 
 
 ///////////////////////////////////////////////////////////////////////////////
-glm::vec3 View::getPosition() const
+const glm::vec3& View::getPosition() const
 {
     return m_position;
 }
@@ -93,7 +93,7 @@ void View::setRotation(const glm::quat &rot)
 
 
 ///////////////////////////////////////////////////////////////////////////////
-glm::quat View::getRotation() const
+const glm::quat& View::getRotation() const
 {
     return m_rotation;
 }
@@ -115,14 +115,14 @@ void View::setProjectionMatrix(float fov, float aspect_rat, float z_near, float 
 
 
 ///////////////////////////////////////////////////////////////////////////////
-glm::mat4 View::getProjectionMatrix() const
+const glm::mat4& View::getProjectionMatrix() const
 {
     return m_proj;
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
-glm::mat4 View::getViewMatrix() const
+const glm::mat4& View::getViewMatrix() const
 {
     return m_view;
 }

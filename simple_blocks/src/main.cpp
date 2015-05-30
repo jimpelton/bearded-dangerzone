@@ -107,6 +107,7 @@ float g_fov_deg{ 50.0f };
 //bool g_viewDirty{ true };
 //bool g_modelDirty{ true };
 bool g_toggleBlockBoxes{ false };
+bool g_toggleWireFrame{ false };
 int g_numSlices{ 1 };
 
 //TODO: bool g_toggleVolumeBox{ false };
@@ -179,24 +180,25 @@ void glfw_keyboard_callback(GLFWwindow *window, int key, int scancode, int actio
 {
     if (action == GLFW_PRESS) {
         switch (key) {
-        case GLFW_KEY_0:
-            g_selectedSliceSet = SliceSet::NoneOfEm;
-            break;
-        case GLFW_KEY_1:
-            g_selectedSliceSet = SliceSet::XY;
-            break;
-        case GLFW_KEY_2:
-            g_selectedSliceSet = SliceSet::XZ;
-            break;
-        case GLFW_KEY_3:
-            g_selectedSliceSet = SliceSet::YZ;
-            break;
-        case GLFW_KEY_4:
-            g_selectedSliceSet = SliceSet::AllOfEm;
-            break;
+//        case GLFW_KEY_0:
+//            g_selectedSliceSet = SliceSet::NoneOfEm;
+//            break;
+//        case GLFW_KEY_1:
+//            g_selectedSliceSet = SliceSet::XY;
+//            break;
+//        case GLFW_KEY_2:
+//            g_selectedSliceSet = SliceSet::XZ;
+//            break;
+//        case GLFW_KEY_3:
+//            g_selectedSliceSet = SliceSet::YZ;
+//            break;
+//        case GLFW_KEY_4:
+//            g_selectedSliceSet = SliceSet::AllOfEm;
+//            break;
+        case GLFW_KEY_W:
+            g_toggleWireFrame = !g_toggleWireFrame; break;
         case GLFW_KEY_B:
-            g_toggleBlockBoxes = !g_toggleBlockBoxes;
-            break;
+            g_toggleBlockBoxes = !g_toggleBlockBoxes; break;
         }
     }
 
@@ -232,9 +234,7 @@ void glfw_window_size_callback(GLFWwindow *window, int width, int height)
 {
     g_screenWidth = width;
     g_screenHeight = height;
-//    glViewport(0, 0, width, height);
     g_camera.setViewport(0, 0, width, height);
-//    g_viewDirty = true;
 }
 
 
@@ -262,7 +262,6 @@ void glfw_scrollwheel_callback(GLFWwindow *window, double xoff, double yoff)
 
     g_fov_deg = fov;
     g_camera.setProjectionMatrix(glm::radians(fov), g_screenWidth / float(g_screenHeight), 0.1f, 10000.0f);
-//    g_viewDirty = true;
 }
 
 /************************************************************************/
@@ -284,9 +283,6 @@ void setRotation(const glm::vec2 &dr)
         );
 
     g_camera.rotate(rotX * rotY);
-//    g_rotation = (rotX * rotY) * g_rotation;
-
-//    g_modelDirty = true;
 }
 
 
@@ -294,15 +290,6 @@ void setRotation(const glm::vec2 &dr)
 void updateViewMatrix()
 {
     g_camera.updateViewMatrix();
-//    g_viewMatrix = glm::lookAt(g_camPosition, g_camFocus, g_camUp);
-//    g_projectionMatrix = glm::perspective(glm::radians(g_fov_deg),
-//        g_screenWidth / static_cast<float>(g_screenHeight), 0.1f, 100.0f);
-//    g_vpMatrix = g_projectionMatrix * g_viewMatrix;
-//
-//    g_viewDirty = false;
-    // update the mvp in render loop
-//    g_modelDirty = true;
-
 }
 
 
@@ -324,35 +311,32 @@ void drawNonEmptyBoundingBoxes(const glm::mat4 &mvp)
 
 
 ///////////////////////////////////////////////////////////////////////////////
-void drawSlices_XY()
+void drawSlices_XY(size_t reverseSlicesOffset)
 {
-    static const size_t xy_byteOffset{ 0 };
     perf_workBegin();
-    gl_check(glDrawElements(GL_TRIANGLE_STRIP, g_elementsPerQuad * g_numSlices,
-        GL_UNSIGNED_SHORT, (GLvoid *)xy_byteOffset));
+    gl_check(glDrawElementsBaseVertex(GL_TRIANGLE_STRIP, g_elementsPerQuad * g_numSlices,
+        GL_UNSIGNED_SHORT, 0, 0));
     perf_workEnd();
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
-void drawSlices_XZ()
+void drawSlices_XZ(size_t reverseSlicesOffset)
 {
-    static size_t xz_byteOffset{ g_elementsPerQuad * g_numSlices * sizeof(uint16_t) };
     perf_workBegin();
-    gl_check(glDrawElements(GL_TRIANGLE_STRIP, g_elementsPerQuad * g_numSlices,
-        GL_UNSIGNED_SHORT, (GLvoid *)xz_byteOffset));
+    gl_check(glDrawElementsBaseVertex(GL_TRIANGLE_STRIP, g_elementsPerQuad * g_numSlices,
+        GL_UNSIGNED_SHORT, 0, bd::Quad::vert_element_size * g_numSlices));
     perf_workEnd();
 
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
-void drawSlices_YZ()
+void drawSlices_YZ(size_t reverseSlicesOffset)
 {
-    static size_t yz_byteOffset{ 2 * g_elementsPerQuad * g_numSlices * sizeof(uint16_t) };
     perf_workBegin();
-    gl_check(glDrawElements(GL_TRIANGLE_STRIP, g_elementsPerQuad * g_numSlices,
-        GL_UNSIGNED_SHORT, (GLvoid *)yz_byteOffset));
+    gl_check(glDrawElementsBaseVertex(GL_TRIANGLE_STRIP, g_elementsPerQuad * g_numSlices,
+        GL_UNSIGNED_SHORT, 0, 2 * bd::Quad::vert_element_size * g_numSlices));
     perf_workEnd();
 }
 
@@ -360,34 +344,30 @@ void drawSlices_YZ()
 ///////////////////////////////////////////////////////////////////////////////
 /// \brief Loop through the blocks and draw each one
 ///////////////////////////////////////////////////////////////////////////////
-void drawNonEmptyBlocks_Forward(const glm::mat4 &mvp)
+void drawNonEmptyBlocks_Forward(const glm::mat4 &vp, bool drawReversed)
 {
 //    std::cout << "forward" << std::endl;
+    size_t offset = 0;
+//    if (drawReversed) {
+//        offset = g_elementBufferSize;
+//    }
+
     perf_frameBegin();
     for (auto *b : g_nonEmptyBlocks) {
         b->texture().bind(0);
-        glm::mat4 wmvp = mvp * b->transform().matrix();
+        glm::mat4 wmvp = vp * b->transform().matrix();
         g_volumeShader.setUniform("mvp", wmvp);
         g_volumeShader.setUniform("tfScalingVal", g_scaleValue);
 
         switch (g_selectedSliceSet) {
         case SliceSet::XY:
-            drawSlices_XY();
-            break;
+            drawSlices_XY(offset); break;
         case SliceSet::XZ:
-            drawSlices_XZ();
-            break;
+            drawSlices_XZ(offset); break;
         case SliceSet::YZ:
-            drawSlices_YZ();
-            break;
-        case SliceSet::AllOfEm:
-            drawSlices_XY();
-            drawSlices_XZ();
-            drawSlices_YZ();
-            break;
+            drawSlices_YZ(offset); break;
         case SliceSet::NoneOfEm:
-        default:
-            break;
+        default: break;
         } // switch
     } // for
     perf_frameEnd();
@@ -397,70 +377,60 @@ void drawNonEmptyBlocks_Forward(const glm::mat4 &mvp)
 ///////////////////////////////////////////////////////////////////////////////
 /// \brief Loop through the blocks in reverse and draw. 
 ///////////////////////////////////////////////////////////////////////////////
-void drawNonEmptyBlocks_Reverse(const glm::mat4 &mvp)
-{
-    perf_frameBegin();
-    for (size_t i = g_nonEmptyBlocks.size(); i-- > 0;) {
-        Block *b = g_nonEmptyBlocks[i];
-        b->texture().bind(0);
-        glm::mat4 wmvp = mvp * b->transform().matrix();
-        g_volumeShader.setUniform("mvp", wmvp);
-        g_volumeShader.setUniform("tfScalingVal", g_scaleValue);
-
-        switch (g_selectedSliceSet) {
-        
-        case SliceSet::XY:
-            drawSlices_XY();
-            break;
-        case SliceSet::XZ:
-            drawSlices_XZ();
-            break;
-        case SliceSet::YZ:
-            drawSlices_YZ();
-            break;
-        case SliceSet::AllOfEm:
-            drawSlices_XY();
-            drawSlices_XZ();
-            drawSlices_YZ();
-            break;
-        case SliceSet::NoneOfEm:
-        default:
-            break;
-        } // switch
-    } // for
-    perf_frameEnd();
-    
-}
+//void drawNonEmptyBlocks_Reverse(const glm::mat4 &vp)
+//{
+//    perf_frameBegin();
+//    for (size_t i = g_nonEmptyBlocks.size(); i-- > 0;) {
+//        Block *b = g_nonEmptyBlocks[i];
+//        b->texture().bind(0);
+//        glm::mat4 wmvp = vp * b->transform().matrix();
+//        g_volumeShader.setUniform("mvp", wmvp);
+//        g_volumeShader.setUniform("tfScalingVal", g_scaleValue);
+//
+//        switch (g_selectedSliceSet) {
+//        
+//        case SliceSet::XY:
+//            drawSlices_XY(); break;
+//        case SliceSet::XZ:
+//            drawSlices_XZ(); break;
+//        case SliceSet::YZ:
+//            drawSlices_YZ(); break;
+//        case SliceSet::NoneOfEm:
+//        default: break;
+//        } // switch
+//    } // for
+//    perf_frameEnd();
+//    
+//}
 
 
 ///////////////////////////////////////////////////////////////////////////////
 /// \brief Determine the viewing direction and draw the blocks in proper order.
 ///////////////////////////////////////////////////////////////////////////////
-void drawNonEmptyBlocks(const glm::mat4 &mvp)
+void drawNonEmptyBlocks(const glm::mat4 &vp)
 {
     g_volumeShader.bind();
     glm::vec4 viewdir = glm::normalize(g_camera.getViewMatrix()[2]);
-//    float longest = 0.0f;
     glm::vec4 absViewdir = glm::abs(viewdir);
-
+    float longest  = 0.0f;
     static SliceSet previousSet = g_selectedSliceSet;
 
     if (absViewdir.x > absViewdir.y && absViewdir.x > absViewdir.z) {
         g_selectedSliceSet = SliceSet::YZ;
-//        longest = viewdir.x;
+        longest = viewdir.x;
     }
     else if (absViewdir.y > absViewdir.x && absViewdir.y > absViewdir.z) {
         g_selectedSliceSet = SliceSet::XZ;
-//        longest = viewdir.y;
+        longest = viewdir.y;
     }
     else if (absViewdir.z > absViewdir.x && absViewdir.z > absViewdir.y) {
         g_selectedSliceSet = SliceSet::XY;
-//        longest = viewdir.z;
+        longest = viewdir.z;
     }
 
     if (previousSet != g_selectedSliceSet) {
         std::cout << "Switched slice set: " << 
-           /* (longest < 0 ? '+' : '-') << */ g_selectedSliceSet << '\n';
+            (longest < 0 ? '+' : '-') <<  g_selectedSliceSet << '\n';
         previousSet = g_selectedSliceSet;    
     }
 
@@ -470,45 +440,47 @@ void drawNonEmptyBlocks(const glm::mat4 &mvp)
     {
         float a_dist = glm::distance(camPos, a->transform().origin());
         float b_dist = glm::distance(camPos, b->transform().origin());
-        return a_dist > b_dist;
+        return a_dist < b_dist;
     });
 
-    drawNonEmptyBlocks_Forward(mvp);
-//    if (longest < 0) {
-//        drawNonEmptyBlocks_Forward(mvp);
-//    }
-//    else {
-//        drawNonEmptyBlocks_Reverse(mvp);
-//    }
+//    drawNonEmptyBlocks_Forward(vp);
+    if (g_toggleWireFrame) {
+        gl_check(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE))
+    }
+
+    drawNonEmptyBlocks_Forward(vp, longest < 0);
+
+    if (g_toggleWireFrame){
+        gl_check(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
+    }
 
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
-void draw(glm::mat4 &mvp)
+void draw(const glm::mat4 &vp)
 {
     bd::VertexArrayObject *vao = nullptr;
     ////////  Axis    /////////////////////////////////////////
     vao = g_vaoIds[static_cast<unsigned int>(ObjType::Axis)];
     vao->bind();
     g_simpleShader.bind();
-    g_simpleShader.setUniform("mvp", mvp);
+    g_simpleShader.setUniform("mvp", vp);
     g_axis.draw();
     vao->unbind();
 
+    ////////  BBoxes  /////////////////////////////////////////
     if (g_toggleBlockBoxes) {
-
-        ////////  BBoxes  /////////////////////////////////////////
         vao = g_vaoIds[static_cast<unsigned int>(ObjType::Boxes)];
         vao->bind();
-        drawNonEmptyBoundingBoxes(mvp);
+        drawNonEmptyBoundingBoxes(vp);
         vao->unbind();
     }
 
     //////// Quad Geo (drawNonEmptyBlocks)  /////////////////////
     vao = g_vaoIds[static_cast<unsigned int>(ObjType::Quads)];
     vao->bind();
-    drawNonEmptyBlocks(mvp);
+    drawNonEmptyBlocks(vp);
     vao->unbind();
 }
 
@@ -521,7 +493,6 @@ void loop(GLFWwindow *window)
 //    double frame_lastTime{ 0 };
 //    double frame_thisTime{ 0 };
 
-    glm::mat4 viewMat{ 1.0f };
 
     g_volumeShader.bind();
     g_tfuncTex.bind(1); 
@@ -532,28 +503,22 @@ void loop(GLFWwindow *window)
 
         g_camera.updateViewMatrix();
 
-        viewMat = g_camera.getViewMatrix();
-
         gl_check(glBeginQuery(GL_TIME_ELAPSED, queryID[queryBackBuffer][0]));
-
         gl_check(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
-        draw(viewMat);
-
+        draw(g_camera.getViewMatrix());
         glfwSwapBuffers(window);
 
         gl_check(glEndQuery(GL_TIME_ELAPSED));
-
-        gl_check(glGetQueryObjectui64v(queryID[queryFrontBuffer][0], GL_QUERY_RESULT,
-            &frame_gpuTime_nonEmptyBlocks));
-        g_totalGPUTime_nonEmptyBlocks += frame_gpuTime_nonEmptyBlocks;
+        gl_check(glGetQueryObjectui64v(queryID[queryFrontBuffer][0], GL_QUERY_RESULT, &frame_gpuTime_nonEmptyBlocks));
         swapQueryBuffers();
+
+        g_totalGPUTime_nonEmptyBlocks += frame_gpuTime_nonEmptyBlocks;
 
         glfwPollEvents();
 
         auto frame_endTime = high_resolution_clock::now();
-        g_totalElapsedCPUFrameTime +=
-            duration_cast<microseconds>(frame_endTime - frame_startTime).count();
+        g_totalElapsedCPUFrameTime += duration_cast<microseconds>(frame_endTime - frame_startTime).count();
 
         g_totalFramesRendered++;
 
@@ -584,25 +549,25 @@ void genQuadVao(bd::VertexArrayObject &vao, unsigned int numSlices)
     /// For each axis, populate vbuf with verts for numSlices quads, adjust  ///
     /// z coordinate based on slice index.                                   ///
 
-    create_verts_xy(numSlices, temp);
+    vert::create_verts_xy(numSlices, temp);
     std::copy(temp.begin(), temp.end(), std::back_inserter(vbuf));
 
-    create_verts_xz(numSlices, temp);
+    vert::create_verts_xz(numSlices, temp);
     std::copy(temp.begin(), temp.end(), std::back_inserter(vbuf));
 
-    create_verts_yz(numSlices, temp);
+    vert::create_verts_yz(numSlices, temp);
     std::copy(temp.begin(), temp.end(), std::back_inserter(vbuf));
 
-    create_texbuf_xy(numSlices, temp);
+    vert::create_texbuf_xy(numSlices, temp);
     std::copy(temp.begin(), temp.end(), std::back_inserter(texbuf));
 
-    create_texbuf_xz(numSlices, temp);
+    vert::create_texbuf_xz(numSlices, temp);
     std::copy(temp.begin(), temp.end(), std::back_inserter(texbuf));
 
-    create_texbuf_yz(numSlices, temp);
+    vert::create_texbuf_yz(numSlices, temp);
     std::copy(temp.begin(), temp.end(), std::back_inserter(texbuf));
 
-    create_elementIndices(numSlices*3, elebuf);
+    vert::create_elementIndices(numSlices, elebuf);
     g_elementBufferSize = elebuf.size();
 
     /// Add buffers to VAO ///
@@ -610,10 +575,10 @@ void genQuadVao(bd::VertexArrayObject &vao, unsigned int numSlices)
     vao.addVbo(reinterpret_cast<float *>(vbuf.data()), 
         vbuf.size() * bd::Quad::vert_element_size, bd::Quad::vert_element_size, 0);
 
-    const size_t texbuf_element_size = 4;
+    const size_t texcoord_element_size = 4;
     // vertex texcoords into attribute 1
     vao.addVbo(reinterpret_cast<float *>(texbuf.data()), 
-        texbuf.size() * texbuf_element_size, texbuf_element_size, 1);
+        texbuf.size() * texcoord_element_size, texcoord_element_size, 1);
     
     // element index buffer
     vao.setIndexBuffer(elebuf.data(), elebuf.size());
@@ -671,8 +636,8 @@ void initGraphicsState()
 //    gl_check(glEnable(GL_CULL_FACE));
 //    gl_check(glCullFace(GL_BACK));
 
-    gl_check(glEnable(GL_DEPTH_TEST));
-    gl_check(glDepthFunc(GL_LESS));
+//    gl_check(glEnable(GL_DEPTH_TEST));
+//    gl_check(glDepthFunc(GL_LESS));
 
     gl_check(glEnable(GL_BLEND));
     gl_check(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
@@ -765,9 +730,9 @@ void printBlocks()
 }
 
 
+/////////////////////////////////////////////////////////////////////////////////
 void printTimes(std::ostream &str)
 {
-    
     float gputime_ms = g_totalGPUTime_nonEmptyBlocks * 1.0e-6f;
     float cputime_ms = g_totalElapsedCPUFrameTime * 1.0e-3f;
 
@@ -879,7 +844,8 @@ void printNvPmApiCounters(const char *perfOutPath = "")
         if (outStream.is_open()) {
             perf_printCounters(outStream);
             printTimes(outStream);
-        } else {
+        } 
+        else {
             gl_log_err("Could not open %s for performance counter output. Using stdout instead.", 
                 perfOutPath);
             perf_printCounters(std::cout);
