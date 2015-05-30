@@ -1,10 +1,13 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
+// local includes
 #include "block.h"
+#include "blockcollection.h"
 #include "cmdline.h"
 #include "create_vao.h"
 
+// BD lib
 #include <bd/log/gl_log.h>
 
 #include <bd/graphics/shader.h>
@@ -17,12 +20,13 @@
 
 #include <bd/scene/view.h>
 
-//#define GLM_FORCE_RADIANS
+// GLM
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
-#include <glm/gtx/quaternion.hpp>
 #include <glm/gtc/constants.hpp>
+#include <glm/gtx/quaternion.hpp>
 
+// STL and STD lib
 #include <string>
 #include <vector>
 #include <array>
@@ -36,19 +40,28 @@
 
 #include <cstring>
 
+// profiling
 #include "nvpm.h"
 
+
 ///////////////////////////////////////////////////////////////////////////////
-// Geometry and VAOs
+//  Const  Data
+///////////////////////////////////////////////////////////////////////////////
+const glm::vec3 X_AXIS{ 1.0f, 0.0f, 0.0f };
+const glm::vec3 Y_AXIS{ 0.0f, 1.0f, 0.0f };
+const glm::vec3 Z_AXIS{ 0.0f, 0.0f, 1.0f };
+
+const int g_elementsPerQuad{ 5 };
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Geometry  /  VAOs
 ///////////////////////////////////////////////////////////////////////////////
 enum class ObjType : unsigned int
 {
     Axis, Quads, Boxes
 };
 
-const glm::vec3 X_AXIS{ 1.0f, 0.0f, 0.0f };
-const glm::vec3 Y_AXIS{ 0.0f, 1.0f, 0.0f };
-const glm::vec3 Z_AXIS{ 0.0f, 0.0f, 1.0f };
 
 enum class SliceSet : unsigned int
 {
@@ -67,20 +80,15 @@ std::ostream& operator<<(std::ostream &ostr, SliceSet s)
 }
 
 
-SliceSet g_selectedSliceSet{ SliceSet::XY };
 bd::Axis g_axis;
 bd::Box g_box;
 
 std::vector<bd::VertexArrayObject *> g_vaoIds;
-std::vector<Block> g_blocks;
-std::vector<Block*> g_nonEmptyBlocks;
-
 size_t g_elementBufferSize{ 0 };
-const int g_elementsPerQuad{ 5 };
 
-bool g_toggleBlockBoxes{ false };
-bool g_toggleWireFrame{ false };
 int g_numSlices{ 1 };
+
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Shaders and Textures
@@ -95,21 +103,30 @@ float g_scaleValue{ 1.0f };
 // Viewing and Controls Data
 ///////////////////////////////////////////////////////////////////////////////
 bd::View g_camera;
-glm::vec2 g_cursorPos;
-float g_mouseSpeed{ 1.0f };
 int g_screenWidth{ 1000 };
 int g_screenHeight{ 1000 };
 float g_fov_deg{ 50.0f };
+
+glm::vec2 g_cursorPos;
+float g_mouseSpeed{ 1.0f };
+
+bool g_toggleBlockBoxes{ false };
+bool g_toggleWireFrame{ false };
+
+SliceSet g_selectedSliceSet{ SliceSet::XY };
 
 //TODO: bool g_toggleVolumeBox{ false };
 
 
 ///////////////////////////////////////////////////////////////////////////////
-//  Other really cool data that needs to be kept track of globally.
+//  Miscellaneous  radness
 ///////////////////////////////////////////////////////////////////////////////
 unsigned long long g_totalGPUTime_nonEmptyBlocks{ 0 };
 unsigned long long g_totalFramesRendered{ 0 };
 double g_totalElapsedCPUFrameTime{ 0 };
+
+BlockCollection g_blocks;
+
 
 void glfw_cursorpos_callback(GLFWwindow *window, double x, double y);
 
@@ -286,24 +303,24 @@ void updateViewMatrix()
 }
 
 
-///////////////////////////////////////////////////////////////////////////////
-void sortBlocksFarthestToNearest()
-{
-    glm::vec3 camPos = g_camera.getPosition();
-    std::sort(g_nonEmptyBlocks.begin(), g_nonEmptyBlocks.end(),
-        [&camPos](Block *a, Block *b)
-    {
-        float a_dist = glm::distance(camPos, a->transform().origin());
-        float b_dist = glm::distance(camPos, b->transform().origin());
-        return a_dist < b_dist;
-    });
-}
+/////////////////////////////////////////////////////////////////////////////////
+//void sortBlocksFarthestToNearest()
+//{
+//    glm::vec3 camPos = g_camera.getPosition();
+//    std::sort(g_blocks.nonEmptyBlocks().begin(), g_blocks.nonEmptyBlocks().end(),
+//        [&camPos](const Block *a, const Block *b)
+//    {
+//        float a_dist = glm::distance(camPos, a->transform().origin());
+//        float b_dist = glm::distance(camPos, b->transform().origin());
+//        return a_dist < b_dist;
+//    });
+//}
 
 
 ///////////////////////////////////////////////////////////////////////////////
 void drawNonEmptyBoundingBoxes(const glm::mat4 &mvp)
 {
-    for (auto *b : g_nonEmptyBlocks) {
+    for (auto *b : g_blocks.nonEmptyBlocks()) {
         glm::mat4 mmvp = mvp * b->transform().matrix();
         g_simpleShader.setUniform("mvp", mmvp);
         gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, 0));
@@ -332,7 +349,7 @@ void drawNonEmptyBlocks_Forward(const glm::mat4 &vp, bool drawReversed)
 {
     size_t baseVertex = 0;
     perf_frameBegin();
-    for (auto *b : g_nonEmptyBlocks) {
+    for (auto *b : g_blocks.nonEmptyBlocks()) {
         b->texture().bind(0);
         glm::mat4 wmvp = vp * b->transform().matrix();
         g_volumeShader.setUniform("mvp", wmvp);
@@ -377,7 +394,7 @@ void drawNonEmptyBlocks(const glm::mat4 &vp)
         longest = viewdir.z;
     }
 
-    sortBlocksFarthestToNearest();
+//    sortBlocksFarthestToNearest();
 
     if (previousSet != g_selectedSliceSet) {
         std::cout << "Switched slice set: " << 
@@ -673,7 +690,7 @@ void printBlocks()
     std::ofstream block_file("blocks.txt", std::ofstream::trunc);
     if (block_file.is_open()) {
         gl_log("Writing blocks to blocks.txt in the current working directory.");
-        for (auto &b : g_blocks) {
+        for (const Block &b : g_blocks.blocks()) {
             block_file << b << "\n";
         }
         block_file.flush();
@@ -708,7 +725,7 @@ unsigned int loadTransfter_1dtformat(const std::string &filename, Texture &trans
 
     std::ifstream file(filename.c_str(), std::ifstream::in);
     if (!file.is_open()) {
-        gl_log_err("C'aint open tfunc file: %s", filename.c_str());
+        gl_log_err("Can't open tfunc file: %s", filename.c_str());
         return 0;
     }
 
@@ -882,11 +899,11 @@ int main(int argc, const char *argv [])
 
 
     //// Blocks and Data Init ////
-    Block::initBlocks
+    g_blocks.initBlocks
     (
         glm::u64vec3( clo.numblk_x, clo.numblk_y, clo.numblk_z),
-        glm::u64vec3( clo.w, clo.h, clo.d ), 
-        g_blocks
+        glm::u64vec3( clo.w, clo.h, clo.d )
+
     );
 
     std::unique_ptr<float []> data
@@ -900,11 +917,9 @@ int main(int argc, const char *argv [])
         return 1;
     }
 
-    Block::filterBlocks
+    g_blocks.filterBlocks
     ( 
         data.get(),                                               // data set
-        g_blocks,                                                 // all blocks
-        g_nonEmptyBlocks,                                         // non empty blocks
         g_volumeShader.getUniformLocation("volume_sampler"),
         clo.tmin, 
         clo.tmax 

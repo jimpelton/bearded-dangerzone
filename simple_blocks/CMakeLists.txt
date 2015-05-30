@@ -53,6 +53,7 @@ set(simple_blocks_HEADERS
     src/create_vao.h
     src/nvpm.h
     src/glfw_callbacks.h
+    src/blockcollection.h
 )
 
 set(simple_blocks_SOURCES 
@@ -62,6 +63,7 @@ set(simple_blocks_SOURCES
     src/texture.cpp
     src/create_vao.cpp
     src/glfw_callbacks.cpp
+    src/blockcollection.cpp
 )
 
 include_directories("${SHARED_DIR}/include")  
