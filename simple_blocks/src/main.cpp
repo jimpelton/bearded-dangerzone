@@ -692,7 +692,7 @@ void printTimes(std::ostream &str)
     float cputime_ms = g_totalElapsedCPUFrameTime * 1.0e-3f;
 
     str << 
-        "frames_rendered: "       << g_totalFramesRendered << "ms\n"
+        "frames_rendered: "       << g_totalFramesRendered << " frames\n"
         "gpu_ft_total_nonempty: " << gputime_ms << "ms\n"
         "gpu_ft_avg_nonempty: "   << (gputime_ms / float(g_totalFramesRendered)) << "ms\n"
         "cpu_ft_total: "          << cputime_ms << "ms\n"
