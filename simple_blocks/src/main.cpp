@@ -41,6 +41,11 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Geometry and VAOs
 ///////////////////////////////////////////////////////////////////////////////
+enum class ObjType : unsigned int
+{
+    Axis, Quads, Boxes
+};
+
 const glm::vec3 X_AXIS{ 1.0f, 0.0f, 0.0f };
 const glm::vec3 Y_AXIS{ 0.0f, 1.0f, 0.0f };
 const glm::vec3 Z_AXIS{ 0.0f, 0.0f, 1.0f };
@@ -61,21 +66,21 @@ std::ostream& operator<<(std::ostream &ostr, SliceSet s)
     }
 }
 
-enum class ObjType : unsigned int
-{
-    Axis, Quads, Boxes
-};
-
 
 SliceSet g_selectedSliceSet{ SliceSet::XY };
 bd::Axis g_axis;
 bd::Box g_box;
+
 std::vector<bd::VertexArrayObject *> g_vaoIds;
 std::vector<Block> g_blocks;
 std::vector<Block*> g_nonEmptyBlocks;
+
 size_t g_elementBufferSize{ 0 };
 const int g_elementsPerQuad{ 5 };
 
+bool g_toggleBlockBoxes{ false };
+bool g_toggleWireFrame{ false };
+int g_numSlices{ 1 };
 
 ///////////////////////////////////////////////////////////////////////////////
 // Shaders and Textures
@@ -89,26 +94,12 @@ float g_scaleValue{ 1.0f };
 ///////////////////////////////////////////////////////////////////////////////
 // Viewing and Controls Data
 ///////////////////////////////////////////////////////////////////////////////
-//glm::quat g_rotation;
-//glm::mat4 g_viewMatrix;
-//glm::mat4 g_projectionMatrix;
-//glm::mat4 g_vpMatrix;
-//glm::vec3 g_camPosition{ 0.0f, 0.0f, 2.0f }; // looking down +Z axis.
-//glm::vec3 g_camFocus{ 0.0f, 0.0f, 0.0f };
-//glm::vec3 g_camUp{ 0.0f, 1.0f, 0.0f };
-glm::vec2 g_cursorPos;
-
 bd::View g_camera;
-
+glm::vec2 g_cursorPos;
 float g_mouseSpeed{ 1.0f };
 int g_screenWidth{ 1000 };
 int g_screenHeight{ 1000 };
 float g_fov_deg{ 50.0f };
-//bool g_viewDirty{ true };
-//bool g_modelDirty{ true };
-bool g_toggleBlockBoxes{ false };
-bool g_toggleWireFrame{ false };
-int g_numSlices{ 1 };
 
 //TODO: bool g_toggleVolumeBox{ false };
 
@@ -261,8 +252,10 @@ void glfw_scrollwheel_callback(GLFWwindow *window, double xoff, double yoff)
     if (fov < 1 || fov>120) return;
 
     g_fov_deg = fov;
-    g_camera.setProjectionMatrix(glm::radians(fov), g_screenWidth / float(g_screenHeight), 0.1f, 10000.0f);
+    g_camera.setProjectionMatrix(glm::radians(fov), g_screenWidth / float(g_screenHeight),
+        0.1f, 10000.0f);
 }
+
 
 /************************************************************************/
 /*     D R A W I N'    S T U F F                                        */
@@ -294,10 +287,23 @@ void updateViewMatrix()
 
 
 ///////////////////////////////////////////////////////////////////////////////
+void sortBlocksFarthestToNearest()
+{
+    glm::vec3 camPos = g_camera.getPosition();
+    std::sort(g_nonEmptyBlocks.begin(), g_nonEmptyBlocks.end(),
+        [&camPos](Block *a, Block *b)
+    {
+        float a_dist = glm::distance(camPos, a->transform().origin());
+        float b_dist = glm::distance(camPos, b->transform().origin());
+        return a_dist < b_dist;
+    });
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
 void drawNonEmptyBoundingBoxes(const glm::mat4 &mvp)
 {
     for (auto *b : g_nonEmptyBlocks) {
-
         glm::mat4 mmvp = mvp * b->transform().matrix();
         g_simpleShader.setUniform("mvp", mmvp);
         gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, 0));
@@ -305,38 +311,16 @@ void drawNonEmptyBoundingBoxes(const glm::mat4 &mvp)
             (GLvoid *)(4 * sizeof(GLushort))));
         gl_check(glDrawElements(GL_LINES, 8, GL_UNSIGNED_SHORT,
             (GLvoid *)(8 * sizeof(GLushort))));
-
     } // for
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
-void drawSlices_XY(size_t reverseSlicesOffset)
+void drawSlices(size_t baseVertex)
 {
     perf_workBegin();
-    gl_check(glDrawElementsBaseVertex(GL_TRIANGLE_STRIP, g_elementsPerQuad * g_numSlices,
-        GL_UNSIGNED_SHORT, 0, 0));
-    perf_workEnd();
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-void drawSlices_XZ(size_t reverseSlicesOffset)
-{
-    perf_workBegin();
-    gl_check(glDrawElementsBaseVertex(GL_TRIANGLE_STRIP, g_elementsPerQuad * g_numSlices,
-        GL_UNSIGNED_SHORT, 0, bd::Quad::vert_element_size * g_numSlices));
-    perf_workEnd();
-
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-void drawSlices_YZ(size_t reverseSlicesOffset)
-{
-    perf_workBegin();
-    gl_check(glDrawElementsBaseVertex(GL_TRIANGLE_STRIP, g_elementsPerQuad * g_numSlices,
-        GL_UNSIGNED_SHORT, 0, 2 * bd::Quad::vert_element_size * g_numSlices));
+    gl_check(glDrawElementsBaseVertex(GL_TRIANGLE_STRIP, g_elementsPerQuad * g_numSlices, 
+        GL_UNSIGNED_SHORT, 0, baseVertex));
     perf_workEnd();
 }
 
@@ -346,12 +330,7 @@ void drawSlices_YZ(size_t reverseSlicesOffset)
 ///////////////////////////////////////////////////////////////////////////////
 void drawNonEmptyBlocks_Forward(const glm::mat4 &vp, bool drawReversed)
 {
-//    std::cout << "forward" << std::endl;
-    size_t offset = 0;
-//    if (drawReversed) {
-//        offset = g_elementBufferSize;
-//    }
-
+    size_t baseVertex = 0;
     perf_frameBegin();
     for (auto *b : g_nonEmptyBlocks) {
         b->texture().bind(0);
@@ -360,56 +339,26 @@ void drawNonEmptyBlocks_Forward(const glm::mat4 &vp, bool drawReversed)
         g_volumeShader.setUniform("tfScalingVal", g_scaleValue);
 
         switch (g_selectedSliceSet) {
-        case SliceSet::XY:
-            drawSlices_XY(offset); break;
+//        case SliceSet::XY:
+//            baseVertex = 0;                                           break;
         case SliceSet::XZ:
-            drawSlices_XZ(offset); break;
+            baseVertex = bd::Quad::vert_element_size * g_numSlices;     break;
         case SliceSet::YZ:
-            drawSlices_YZ(offset); break;
-        case SliceSet::NoneOfEm:
+            baseVertex = 2 * bd::Quad::vert_element_size * g_numSlices; break;
         default: break;
-        } // switch
-    } // for
+        } 
+    }
+
+    drawSlices(baseVertex);
+
     perf_frameEnd();
 }
-
-
-///////////////////////////////////////////////////////////////////////////////
-/// \brief Loop through the blocks in reverse and draw. 
-///////////////////////////////////////////////////////////////////////////////
-//void drawNonEmptyBlocks_Reverse(const glm::mat4 &vp)
-//{
-//    perf_frameBegin();
-//    for (size_t i = g_nonEmptyBlocks.size(); i-- > 0;) {
-//        Block *b = g_nonEmptyBlocks[i];
-//        b->texture().bind(0);
-//        glm::mat4 wmvp = vp * b->transform().matrix();
-//        g_volumeShader.setUniform("mvp", wmvp);
-//        g_volumeShader.setUniform("tfScalingVal", g_scaleValue);
-//
-//        switch (g_selectedSliceSet) {
-//        
-//        case SliceSet::XY:
-//            drawSlices_XY(); break;
-//        case SliceSet::XZ:
-//            drawSlices_XZ(); break;
-//        case SliceSet::YZ:
-//            drawSlices_YZ(); break;
-//        case SliceSet::NoneOfEm:
-//        default: break;
-//        } // switch
-//    } // for
-//    perf_frameEnd();
-//    
-//}
-
 
 ///////////////////////////////////////////////////////////////////////////////
 /// \brief Determine the viewing direction and draw the blocks in proper order.
 ///////////////////////////////////////////////////////////////////////////////
 void drawNonEmptyBlocks(const glm::mat4 &vp)
 {
-    g_volumeShader.bind();
     glm::vec4 viewdir = glm::normalize(g_camera.getViewMatrix()[2]);
     glm::vec4 absViewdir = glm::abs(viewdir);
     float longest  = 0.0f;
@@ -428,26 +377,19 @@ void drawNonEmptyBlocks(const glm::mat4 &vp)
         longest = viewdir.z;
     }
 
+    sortBlocksFarthestToNearest();
+
     if (previousSet != g_selectedSliceSet) {
         std::cout << "Switched slice set: " << 
             (longest < 0 ? '+' : '-') <<  g_selectedSliceSet << '\n';
         previousSet = g_selectedSliceSet;    
     }
 
-    glm::vec3 camPos = g_camera.getPosition();
-    std::sort(g_nonEmptyBlocks.begin(), g_nonEmptyBlocks.end(),
-        [&camPos](Block *a, Block *b)
-    {
-        float a_dist = glm::distance(camPos, a->transform().origin());
-        float b_dist = glm::distance(camPos, b->transform().origin());
-        return a_dist < b_dist;
-    });
-
-//    drawNonEmptyBlocks_Forward(vp);
     if (g_toggleWireFrame) {
         gl_check(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE))
     }
 
+    g_volumeShader.bind();
     drawNonEmptyBlocks_Forward(vp, longest < 0);
 
     if (g_toggleWireFrame){
@@ -486,20 +428,34 @@ void draw(const glm::mat4 &vp)
 
 
 ///////////////////////////////////////////////////////////////////////////////
+std::chrono::system_clock::time_point startTime()
+{
+    using namespace std::chrono;
+    return high_resolution_clock::now();
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+void endTime(std::chrono::system_clock::time_point before)
+{
+    using namespace std::chrono;
+    auto now = high_resolution_clock::now();
+    g_totalElapsedCPUFrameTime += 
+        duration_cast<microseconds>(now - before).count();
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
 void loop(GLFWwindow *window)
 {
     gl_log("Entered render loop.");
     GLuint64 frame_gpuTime_nonEmptyBlocks{0};
-//    double frame_lastTime{ 0 };
-//    double frame_thisTime{ 0 };
-
 
     g_volumeShader.bind();
     g_tfuncTex.bind(1); 
 
     do {
-        using namespace std::chrono;
-        auto frame_startTime = high_resolution_clock::now();
+        auto frame_startTime = startTime();
 
         g_camera.updateViewMatrix();
 
@@ -510,15 +466,14 @@ void loop(GLFWwindow *window)
         glfwSwapBuffers(window);
 
         gl_check(glEndQuery(GL_TIME_ELAPSED));
-        gl_check(glGetQueryObjectui64v(queryID[queryFrontBuffer][0], GL_QUERY_RESULT, &frame_gpuTime_nonEmptyBlocks));
+        gl_check(glGetQueryObjectui64v(queryID[queryFrontBuffer][0], GL_QUERY_RESULT, 
+            &frame_gpuTime_nonEmptyBlocks));
         swapQueryBuffers();
 
         g_totalGPUTime_nonEmptyBlocks += frame_gpuTime_nonEmptyBlocks;
 
         glfwPollEvents();
-
-        auto frame_endTime = high_resolution_clock::now();
-        g_totalElapsedCPUFrameTime += duration_cast<microseconds>(frame_endTime - frame_startTime).count();
+        endTime(frame_startTime);
 
         g_totalFramesRendered++;
 
@@ -575,8 +530,8 @@ void genQuadVao(bd::VertexArrayObject &vao, unsigned int numSlices)
     vao.addVbo(reinterpret_cast<float *>(vbuf.data()), 
         vbuf.size() * bd::Quad::vert_element_size, bd::Quad::vert_element_size, 0);
 
-    const size_t texcoord_element_size = 4;
     // vertex texcoords into attribute 1
+    const size_t texcoord_element_size = 4;
     vao.addVbo(reinterpret_cast<float *>(texbuf.data()), 
         texbuf.size() * texcoord_element_size, texcoord_element_size, 1);
     
@@ -651,7 +606,6 @@ void initGraphicsState()
 GLFWwindow* init()
 {
     gl_log("Initializing GLFW.");
-    GLFWwindow *window = nullptr;
     if (!glfwInit()) {
         gl_log("could not start GLFW3");
         return nullptr;
@@ -667,7 +621,8 @@ GLFWwindow* init()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    window = glfwCreateWindow(g_screenWidth, g_screenHeight, "Blocks", nullptr, nullptr);
+    GLFWwindow *window = glfwCreateWindow(g_screenWidth, g_screenHeight, "Blocks", 
+        nullptr, nullptr);
     if (!window) {
         gl_log("ERROR: could not open window with GLFW3");
         glfwTerminate();
