@@ -43,12 +43,13 @@ include_directories("${GLFW_INCLUDE_DIRS}")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/shared")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/simple_blocks")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/matrix_benchmark")
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/empty_space_removal")
 
 # Projects temporaily not (or ever) being used.
 #add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/template")
 #add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/instancing")
 #add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/simplevr")
-add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/test")
+#add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/test")
 #add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/scene_graph")
 
 
