@@ -1,0 +1,3 @@
+[submodule "cruft"]
+	path = cruft
+	url = https://github.com/jimpelton/cruft.git
