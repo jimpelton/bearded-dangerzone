@@ -8,17 +8,15 @@
 #include "create_vao.h"
 
 // BD lib
-#include <bd/log/gl_log.h>
-
+#include <bd/geo/axis.h>
+#include <bd/geo/BBox.h>
+#include <bd/geo/quad.h>
 #include <bd/graphics/shader.h>
-#include <bd/graphics/axis.h>
-#include <bd/graphics/BBox.h>
 #include <bd/graphics/vertexarrayobject.h>
-#include <bd/graphics/quad.h>
-
+#include <bd/graphics/view.h>
+#include <bd/log/gl_log.h>
 #include <bd/util/util.h>
 
-#include <bd/scene/view.h>
 
 // GLM
 #include <glm/glm.hpp>

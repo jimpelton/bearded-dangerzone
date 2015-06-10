@@ -1,7 +1,7 @@
 #ifndef block_h__
 #define block_h__
 
-#include "texture.h"
+#include <bd/graphics/texture.h>
 
 #include <bd/scene/transformable.h>
 

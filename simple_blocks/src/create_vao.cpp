@@ -1,7 +1,7 @@
 
 #include "create_vao.h"
 
-#include <bd/graphics/quad.h> 
+#include <bd/geo/quad.h> 
 
 #include <glm/glm.hpp>
 

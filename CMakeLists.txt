@@ -26,7 +26,7 @@ find_package(GLEW REQUIRED)
 find_package(GLM REQUIRED)
 
 set(BIN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/bin")
-set(SHARED_DIR "${CMAKE_CURRENT_SOURCE_DIR}/shared/")
+set(CRUFT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/cruft/")
 set(THIRDPARTY_DIR "${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/")
 
 
@@ -38,9 +38,7 @@ include_directories("${GLEW_INCLUDE_DIR}")
 include_directories("${GLM_INCLUDE_DIR}")
 include_directories("${GLFW_INCLUDE_DIRS}")
 
-
-
-add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/shared")
+add_subdirectory("${CRUFT_DIR}")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/simple_blocks")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/matrix_benchmark")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/empty_space_removal")

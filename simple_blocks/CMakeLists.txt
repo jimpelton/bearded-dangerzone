@@ -49,7 +49,7 @@ project(simple_blocks)
 set(simple_blocks_HEADERS 
     src/block.h 
     src/cmdline.h 
-    src/texture.h
+    #    src/texture.h
     src/create_vao.h
     src/nvpm.h
     src/glfw_callbacks.h
@@ -60,13 +60,13 @@ set(simple_blocks_SOURCES
     src/main.cpp 
     src/block.cpp 
     src/cmdline.cpp 
-    src/texture.cpp
+    #    src/texture.cpp
     src/create_vao.cpp
     src/glfw_callbacks.cpp
     src/blockcollection.cpp
 )
 
-include_directories("${SHARED_DIR}/include")  
+include_directories("${CRUFT_DIR}/include")  
 include_directories("${THIRDPARTY_DIR}/tclap/include")
 
 if (USE_NVTOOLSEXT)
@@ -86,7 +86,7 @@ target_link_libraries(
     ${GLFW_LIBRARIES}
     ${GLEW_LIBRARIES}
     ${NVTOOLSEXT_LIB}
-    shared
+    crufterly
 )
 
 add_custom_command(TARGET simple_blocks POST_BUILD
