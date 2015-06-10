@@ -35,7 +35,7 @@ set(matrix_benchmark_SOURCES
 )
 
 include_directories("${simple_blocks_SOURCE_DIR}/src")
-include_directories("${SHARED_DIR}/include")  
+include_directories("${CRUFT_DIR}/include")
 include_directories("${THIRDPARTY_DIR}/tclap/include")
 
 add_executable(matrix_benchmark "${matrix_benchmark_HEADERS}" "${matrix_benchmark_SOURCES}")
@@ -47,7 +47,7 @@ target_link_libraries(
     ${GLFW_LIBRARIES}
     ${GLEW_LIBRARIES}
     ${NVTOOLSEXT_LIB}
-    shared
+    crufterly
 )
 
 install(TARGETS matrix_benchmark RUNTIME DESTINATION ${BIN_DIR})

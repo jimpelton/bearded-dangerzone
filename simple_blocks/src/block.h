@@ -15,6 +15,12 @@
 class ShaderProgram;
 
 
+//////////////////////////////////////////////////////////////////////////
+/// \brief Associates volumetric data with a location in world coordinates.
+/// A blocks transform can be used to position a set of proxy geometry in
+/// 3D world space. The block's texture contains the GL id/name of the 3D
+/// texture that should be sampled by the proxy geometry.
+//////////////////////////////////////////////////////////////////////////
 class Block : public bd::Transformable
 {
 public:
