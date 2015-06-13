@@ -42,5 +42,9 @@ template<typename ValType>
 struct BinVol : public BinVolBase<ValType, typename std::vector<ValType>::const_iterator>
 { };
 
+template<typename ValType>
+struct BinVolFromArray : public BinVolBase < ValType, ValType* > 
+{ };
+
 #endif // !binaryvolume_h__
 

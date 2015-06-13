@@ -8,6 +8,7 @@
 
 // simple_blocks 
 #include <block.h>
+#include <cmdline.h>
 
 // std/stl 
 #include <functional>
@@ -61,10 +62,26 @@ struct TreeNode
 
 };
 
-struct KDTree
+class KDTree
 {
-    TreeNode *parent;
+public:
+    KDTree();
+    virtual ~KDTree();
+
+    TreeNode *root;
+
 };
+
+KDTree::KDTree() 
+    : root{ nullptr }
+{
+    
+}
+
+KDTree::~KDTree()
+{
+    
+}
 
 
 
@@ -72,13 +89,14 @@ template<typename ValType>
 struct IsEmptyFunc
 {
     bool operator()(ValType v);
+
+    ValType tmin;
+    ValType tmax;
 };
 
+
 template<typename ValType>
-bool IsEmptyFunc<ValType>::operator()
-(
-    ValType v
-)
+bool IsEmptyFunc<ValType>::operator() (ValType v)
 {
     if (v == static_cast<ValType>(0)) {
         return true;
@@ -87,15 +105,27 @@ bool IsEmptyFunc<ValType>::operator()
     return false;
 }
 
-int main(int argc, char *argv[])
+
+void usage()
 {
-    std::unique_ptr<float []> data = bd::readVolumeData(argv[2], argv[1], 32, 32, 32);
-    size_t volSize = 32 * 32 * 32;
-    std::vector<float> vecData(data.get(), data.get() + volSize);
+    std::cout << "<file-name> <data-type> <vol-dims (one number)>" << std::endl;
+}
+
+
+int main(int argc, const char *argv[])
+{
+    CommandLineOptions opts;
+    if (parseThem(argc, argv, opts) == 0){ return; }
+
+    size_t dim = atoll(argv[3]);
+    std::unique_ptr<float []> data = bd::readVolumeData(argv[2], argv[1], dim, dim, dim);
+    size_t volSize = dim*dim*dim;
     
     IsEmptyFunc<float> empty;
-    BinVol<float> bv;
-    bv.createBinaryVolume(vecData.begin(), vecData.end(), empty);
+    BinVolFromArray<float> bv;
+    bv.createBinaryVolume(data.get(), data.get() + volSize, empty);
+    
+
 
 	return 0;
 }

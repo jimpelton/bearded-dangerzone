@@ -6,7 +6,6 @@ cmake_minimum_required(VERSION 2.8)
 
 
 
-project(empty_space)
 
 ### Get sources for simple_blocks (matrix_benchmark needs block.h,cpp)
 file(GLOB simple_blocks_sources "${simple_blocks_SOURCE_DIR}/src"
@@ -24,6 +23,7 @@ file(GLOB simple_blocks_headers "${simple_blocks_SOURCE_DIR}/src"
 
 ####################################################################################
 
+project(empty_space)
 
 set(empty_space_HEADERS
     ${simple_blocks_headers}
