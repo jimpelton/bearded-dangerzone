@@ -51,5 +51,3 @@ add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/empty_space_removal")
 #add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/scene_graph")
 
 
-
-
