@@ -80,63 +80,64 @@ public:
     virtual ~KDTree();
 
     TreeNode *root;
-
 };
 
+
+///////////////////////////////////////////////////////////////////////////////
 KDTree::KDTree() 
-    : root{ nullptr }
-{
-    
-}
-
-KDTree::~KDTree()
-{
-    
-}
+    : root{ nullptr } { }
 
 
+///////////////////////////////////////////////////////////////////////////////
+KDTree::~KDTree() { }
 
+
+///////////////////////////////////////////////////////////////////////////////
 template<typename ValType>
-struct IsEmptyFunc
+class IsEmptyFunc
 {
-    bool operator()(ValType v);
+public:
+
+
+    IsEmptyFunc(ValType tmin, ValType tmax)
+    : tmin(tmin)
+    , tmax(tmax)
+    {}
+
+
+    int
+    operator()(ValType v)
+    {
+        return v > tmin && v < tmax;
+    }
+
+
+private:
+
 
     ValType tmin;
     ValType tmax;
 };
 
 
-template<typename ValType>
-bool IsEmptyFunc<ValType>::operator() (ValType v)
-{
-    if (v == static_cast<ValType>(0)) {
-        return true;
-    }
-
-    return false;
-}
-
-
+///////////////////////////////////////////////////////////////////////////////
 void usage()
 {
-    std::cout << "<file-name> <data-type> <vol-dims (one number)>" << std::endl;
+    std::cout << "hmm...TODO!" << std::endl;
 }
 
 
 int main(int argc, const char *argv[])
 {
     CommandLineOptions opts;
-    if (parseThem(argc, argv, opts) == 0){ return; }
+    if (parseThem(argc, argv, opts) == 0){ return 1; }
 
-    size_t dim = atoll(argv[3]);
-    std::unique_ptr<float []> data = bd::readVolumeData(argv[2], argv[1], dim, dim, dim);
-    size_t volSize = dim*dim*dim;
-    
-    IsEmptyFunc<float> empty;
-    BinVolFromArray<float> bv;
-    bv.createBinaryVolume(data.get(), data.get() + volSize, empty);
-    
+    std::unique_ptr<float []> data =
+        bd::readVolumeData(opts.type, opts.filePath, opts.w, opts.h, opts.d);
 
+    IsEmptyFunc<float> empty(opts.tmin, opts.tmax);
+    SummedVolumeTable<float> svt(opts.w, opts.h, opts.d);
+    svt.createSvt(data.get(), empty);
 
     return 0;
 }
