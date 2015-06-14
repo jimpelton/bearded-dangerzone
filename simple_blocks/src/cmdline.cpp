@@ -112,6 +112,10 @@ void printThem(CommandLineOptions &opts)
 {
     std::cout <<
         "File path: " << opts.filePath << "\n"
+        "Transfer function: " << opts.tfuncPath << "\n"
+        "Dat file: " << opts.datFilePath << "\n"
+        "Perf out file: " << opts.perfOutPath << "\n"
+        "Perf mode: " << opts.perfMode << "\n"
         "Data Type: " << opts.type     << "\n"
         "Vol dims (w X h X d): "   << opts.w        << " X " << opts.h        << " X " << opts.d        << "\n"
         "Num blocks (x X y X z): " << opts.numblk_x << " X " << opts.numblk_y << " X " << opts.numblk_z << "\n"

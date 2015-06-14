@@ -9,6 +9,8 @@ struct CommandLineOptions
     std::string filePath;
     // transfer function file path
     std::string tfuncPath;
+    // for .dat descriptor file (currently unimplemented)
+    std::string datFilePath;
     // volume data type
     std::string type;
     // true if block data should be dumped to file
