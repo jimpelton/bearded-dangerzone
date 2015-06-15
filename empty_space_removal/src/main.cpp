@@ -98,7 +98,6 @@ class IsEmptyFunc
 {
 public:
 
-
     IsEmptyFunc(ValType tmin, ValType tmax)
     : tmin(tmin)
     , tmax(tmax)
@@ -113,7 +112,6 @@ public:
 
 
 private:
-
 
     ValType tmin;
     ValType tmax;

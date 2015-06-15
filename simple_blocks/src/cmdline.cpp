@@ -2,9 +2,6 @@
 
 #include <tclap/CmdLine.h>
 
-//#include <boost/program_options.hpp>
-//#include <boost/program_options/variables_map.hpp>
-
 #include <iostream>
 #include <string>
 
@@ -54,8 +51,8 @@ try
     TCLAP::ValueArg<size_t> zBlocksArg("", "nbz", "Num blocks z dim", false, 1, "uint");
     cmd.add(zBlocksArg);
 
-	TCLAP::ValueArg<unsigned int> numSlicesArg("s", "num-slices", "Num slices per block", false, 1, "uint");
-	cmd.add(numSlicesArg);
+    TCLAP::ValueArg<unsigned int> numSlicesArg("s", "num-slices", "Num slices per block", false, 1, "uint");
+    cmd.add(numSlicesArg);
 
 
     // threshold min/max
