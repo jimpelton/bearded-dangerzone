@@ -31,13 +31,12 @@ set(simple_blocks_test_HEADER_FILES
 include_directories(
     "${THIRDPARTY_DIR}/catch"
     "${THIRDPARTY_DIR}/tclap/include"
-    "${shared_SOURCE_DIR}/include"
+    "${cruft_SOURCE_DIR}/include"
     "${simple_blocks_SOURCE_DIR}/src"
     )
 
 
 add_executable(simple_blocks_test
-
     ${simple_blocks_test_HEADER_FILES}
     ${simple_blocks_test_SOURCE_FILES}
     )
@@ -49,7 +48,7 @@ target_link_libraries(simple_blocks_test
     ${GLEW_LIBRARIES}
     ${Boost_PROGRAM_OPTIONS_LIBRARIES}
     ${Boost_LIBRARIES}
-    shared
+    crufterly
     )
 
 

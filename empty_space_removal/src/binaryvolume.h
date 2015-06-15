@@ -15,7 +15,7 @@ template<typename ValType>
 class SummedVolumeTable
 {
 public:
-    using area_type = unsigned long long
+    using area_type = unsigned long long;
 
     SummedVolumeTable ( size_t volx, size_t voly, size_t volz )
         : m_volx{ volx }
@@ -45,6 +45,7 @@ public:
 //        }
 //    } // createBinaryVolume
 
+
     void
     resizeSumTable()
     {
@@ -52,23 +53,25 @@ public:
         m_sumtable.resize(size);
     }
 
+
     void
     createSvt ( ValType *in, std::function<int(ValType)> empty )
     {
         resizeSumTable();
-
-        for(auto dz = 0ul; dz<m_volz; ++dz) {
-            auto z = static_cast<long long>(dz);
-        for(auto dy = 0ul; dy<m_voly; ++dy) {
-            auto y = static_cast<long long>(dy);
-        for(auto dx = 0ul; dx<m_volx; ++dx) {
-            auto x = static_cast<long long>(dx);
+        for(auto dz{ 0ull }; dz<m_volz; ++dz) {
+            auto z{ static_cast<long long>(dz) };
+        for(auto dy{ 0ull }; dy<m_voly; ++dy) {
+            auto y{ static_cast<long long>(dy) };
+        for(auto dx{ 0ull }; dx<m_volx; ++dx) {
+            auto x{ static_cast<long long>(dx) };
             size_t idx{ bd::to1D(dx, dy, dz, m_volx, m_voly) };
             int v1{ empty(in[idx]) };
-            area_type dasVal = v1 + get(x, y, z-1)
+
+            area_type dasVal { v1 + get(x, y, z-1)
                 + ( get(x-1, y,   z) - get(x-1, y,   z-1) )
                 + ( get(x,   y-1, z) - get(x,   y-1, z-1) )
-                - ( get(x-1, y-1, z) - get(x-1, y-1, z-1) );
+                - ( get(x-1, y-1, z) - get(x-1, y-1, z-1) ) };
+
             m_sumtable[idx] = dasVal;
         }}}
     } // createSvt
@@ -79,12 +82,12 @@ private:
     area_type
     get ( int x, int y, int z )
     {
-        size_t idx = bd::to1D(
+        size_t idx { bd::to1D(
             x > 0 ? x : 0,
             y > 0 ? y : 0,
             z > 0 ? z : 0,
             m_volx,
-            m_voly);
+            m_voly) };
 
         return m_sumtable[idx];
     } // get
