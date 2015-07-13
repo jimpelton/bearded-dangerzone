@@ -33,7 +33,7 @@ set(simplevr_test_HEADER_FILES
 
 include_directories(
     "${THIRDPARTY_DIR}/catch"
-    "${shared_SOURCE_DIR}/include"
+    "${cruft_SOURCE_DIR}/include"
     "${simplevr_SOURCE_DIR}/src"
     )
 

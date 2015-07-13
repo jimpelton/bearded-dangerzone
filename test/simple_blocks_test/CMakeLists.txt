@@ -19,7 +19,7 @@ file(GLOB simple_blocks_headers "${simple_blocks_SOURCE_DIR}/src"
 )
 
 set(simple_blocks_test_SOURCE_FILES
-        src/simple_blocks_test.cpp
+    src/simple_blocks_test.cpp
     "${simple_blocks_sources}"
 )
 
@@ -31,7 +31,7 @@ set(simple_blocks_test_HEADER_FILES
 include_directories(
     "${THIRDPARTY_DIR}/catch"
     "${THIRDPARTY_DIR}/tclap/include"
-    "${cruft_SOURCE_DIR}/include"
+    "${CRUFT_DIR}/include"
     "${simple_blocks_SOURCE_DIR}/src"
     )
 

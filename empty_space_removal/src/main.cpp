@@ -1,14 +1,14 @@
 
 #include "binaryvolume.h"
+#include "cmdline.h"
 
 // bd 
 #include <bd/file/datareader.h>
 #include <bd/scene/transformable.h>
 #include <bd/util/util.h>
 
-// simple_blocks 
-#include <block.h>
-#include <cmdline.h>
+#include <bd/volume/block.h>
+
 
 // std/stl 
 #include <functional>
@@ -128,7 +128,7 @@ void usage()
 int main(int argc, const char *argv[])
 {
     CommandLineOptions opts;
-    if (parseThem(argc, argv, opts) == 0){ return 1; }
+    if (parseThem(argc, argv, opts) == 0) { return 1; }
 
     std::unique_ptr<float []> data =
         bd::readVolumeData(opts.type, opts.filePath, opts.w, opts.h, opts.d);

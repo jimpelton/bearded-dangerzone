@@ -29,7 +29,7 @@ endif(USE_NVTOOLSEXT)
 if(NOT DEFINED USE_NVPMAPI)
     set(USE_NVPMAPI FALSE)
 endif()
-set(USE_NVPMAPI ${${SET_NVPROFILE}} CACHE BOOL "True if nvidia's perfmon should be used.")
+set(USE_NVPMAPI ${${USE_NVPROFILE}} CACHE BOOL "True if nvidia's perfmon should be used.")
 
 if (USE_NVPMAPI)
     add_definitions(-DBDPROF)
@@ -47,23 +47,23 @@ endif(USE_NVPMAPI)
 project(simple_blocks)
 
 set(simple_blocks_HEADERS 
-    src/block.h 
+    # src/block.h 
     src/cmdline.h 
     #    src/texture.h
     src/create_vao.h
     src/nvpm.h
     src/glfw_callbacks.h
-    src/blockcollection.h
+    # src/blockcollection.h
 )
 
 set(simple_blocks_SOURCES 
     src/main.cpp 
-    src/block.cpp 
-    src/cmdline.cpp 
+    # src/block.cpp 
+    src/cmdline.cpp
     #    src/texture.cpp
     src/create_vao.cpp
     src/glfw_callbacks.cpp
-    src/blockcollection.cpp
+    # src/blockcollection.cpp
 )
 
 include_directories("${CRUFT_DIR}/include")  

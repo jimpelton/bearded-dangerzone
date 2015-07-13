@@ -58,7 +58,7 @@ public:
     createSvt ( ValType *in, std::function<int(ValType)> empty )
     {
         resizeSumTable();
-        for(auto dz =  0ull ; dz<m_volz; ++dz) {
+        for(auto dz =  0ull; dz<m_volz; ++dz) {
             auto z = static_cast<long long>(dz);
         for(auto dy = 0ull; dy<m_voly; ++dy) {
             auto y = static_cast<long long>(dy);
@@ -70,12 +70,12 @@ public:
                 m_sumtable[idx] = 0;
             } else {
                 long long v1{ empty(in[idx]) };
-                area_type dasVal{ v1 + get(x, y, z - 1)
+                area_type dasValue{ v1 + get(x, y, z - 1)
                     + (get(x - 1, y,     z) - get(x - 1, y, z - 1))
                     + (get(x,     y - 1, z) - get(x, y - 1, z - 1))
                     - (get(x - 1, y - 1, z) - get(x - 1, y - 1, z - 1)) };
 
-                m_sumtable[idx] = dasVal;
+                m_sumtable[idx] = dasValue;
             }
         }}}
     } // createSvt

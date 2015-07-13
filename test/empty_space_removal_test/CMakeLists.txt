@@ -31,7 +31,7 @@ set(empty_space_removal_test_HEADER_FILES
 include_directories(
     "${THIRDPARTY_DIR}/catch"
     "${THIRDPARTY_DIR}/tclap/include"
-    "${cruft_SOURCE_DIR}/include"
+    "${CRUFT_DIR}/include"
     "${empty_space_removal_SOURCE_DIR}/src"
     )
 

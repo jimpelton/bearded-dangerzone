@@ -2,8 +2,8 @@
 #include <GLFW/glfw3.h>
 
 // local includes
-#include "block.h"
-#include "blockcollection.h"
+//#include "block.h"
+//#include "blockcollection.h"
 #include "cmdline.h"
 #include "create_vao.h"
 
@@ -16,6 +16,9 @@
 #include <bd/graphics/view.h>
 #include <bd/log/gl_log.h>
 #include <bd/util/util.h>
+#include <bd/volume/block.h>
+#include <bd/volume/blockcollection.h>
+
 
 
 // GLM
@@ -123,7 +126,7 @@ unsigned long long g_totalGPUTime_nonEmptyBlocks{ 0 };
 unsigned long long g_totalFramesRendered{ 0 };
 double g_totalElapsedCPUFrameTime{ 0 };
 
-BlockCollection g_blocks;
+bd::BlockCollection g_blocks;
 
 
 void glfw_cursorpos_callback(GLFWwindow *window, double x, double y);
@@ -581,11 +584,11 @@ void genBoxVao(bd::VertexArrayObject &vao)
         bd::Box::vert_element_size, 0);
 
     // vertex colors into attribute 1
-    vao.addVbo((float *)(bd::Box::colors.data()),
+    vao.addVbo((float *) bd::Box::colors.data(),
         bd::Box::colors.size() * 3,
         3, 1);
 
-    vao.setIndexBuffer((unsigned short *)(bd::Box::elements.data()),
+    vao.setIndexBuffer((unsigned short *) bd::Box::elements.data(),
         bd::Box::elements.size());
 
 }
@@ -688,7 +691,8 @@ void printBlocks()
     std::ofstream block_file("blocks.txt", std::ofstream::trunc);
     if (block_file.is_open()) {
         gl_log("Writing blocks to blocks.txt in the current working directory.");
-        for (const Block &b : g_blocks.blocks()) {
+//        for (const bd::Block &b : g_blocks.blocks()) {
+        for (auto &b : g_blocks.blocks()) {
             block_file << b << "\n";
         }
         block_file.flush();
