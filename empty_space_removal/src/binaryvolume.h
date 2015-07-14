@@ -53,7 +53,16 @@ public:
         m_sumtable.resize(size);
     }
 
-
+    //////////////////////////////////////////////////////////////////////////
+    /// \brief Create the summed volume table.
+    ///
+    /// The parameter \c empty is a functor that returns 0 or 1 depending on 
+    /// wether or not the value passed in is deemed to represent an empty
+    /// voxel or non-empty voxel, respectively.
+    ///
+    /// \param in Pointer to volume data
+    /// \param empty Determins is value is emptpy.
+    //////////////////////////////////////////////////////////////////////////
     void
     createSvt ( ValType *in, std::function<int(ValType)> empty )
     {
@@ -68,7 +77,8 @@ public:
 
             if (x - 1 < 0 || y - 1 < 0 || z - 1 < 0) {
                 m_sumtable[idx] = 0;
-            } else {
+            } 
+            else {
                 long long v1{ empty(in[idx]) };
                 area_type dasValue{ v1 + get(x, y, z - 1)
                     + (get(x - 1, y,     z) - get(x - 1, y, z - 1))
@@ -80,6 +90,25 @@ public:
         }}}
     } // createSvt
 
+    
+    //////////////////////////////////////////////////////////////////////////
+    /// \brief Create the kd tree after the SVT is created.
+    /// First, \c createTree calls \c createSvt first. Then, \c createTree builds a
+    /// kd-tree of specified depth.
+    ///
+    /// \param 
+    //////////////////////////////////////////////////////////////////////////
+    void 
+    createTree(/*std::function<uint64_t(ValType)> bv*/)
+    {
+        
+    } // createTree
+
+    void
+    bv()
+    {
+        
+    } // bv
     
 
     
