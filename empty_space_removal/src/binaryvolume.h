@@ -14,7 +14,7 @@ class Region
 {
 public:
     Region(T u1, T u2, T v1, T v2, T w1, T w2) 
-        : u1(u1), u2(u2), v1(v1), v2(v2), w1(w1), w2(w2)
+        : u1{u1}, u2{u2}, v1{v1}, v2{v2}, w1{w1}, w2{w2}
     { }
 
     T u1, u2;
@@ -27,9 +27,33 @@ class Plane
 {
 public:
     Plane(Point3<T> ul, Point3<T> lr)
+        : ul{ ul }, lr{ lr }
     { }
 
     Point3<T> ul, lr;
+};
+
+enum class SplittingAxis
+{
+    X, Y, Z
+};
+
+class KDNode
+{
+    union
+    {
+        KDNode *left;
+        KDNode *up;
+        KDNode *front;
+    };
+    union 
+    {
+        KDNode *right;
+        KDNode *down;
+        KDNode *back;
+    };
+
+    SplittingAxis axis;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -75,8 +99,10 @@ public:
     void
     resizeSumTable()
     {
-        size_t size{ m_volx * m_voly * m_volz };
-        m_sumtable.resize(size);
+        size_t size{ static_cast<size_t>(m_volx) * static_cast<size_t>(m_voly) * 
+            static_cast<size_t>(m_volz) };
+
+        m_volumeTable.resize(size);
     }
 
 
@@ -94,16 +120,16 @@ public:
     createSvt ( Data *in, std::function<int(Data)> empty )
     {
         resizeSumTable();
-        for(auto dz =  0ull; dz<m_volz; ++dz) {
-            auto z = static_cast<long long>(dz);
-        for(auto dy = 0ull; dy<m_voly; ++dy) {
-            auto y = static_cast<long long>(dy);
-        for(auto dx = 0ull; dx<m_volx; ++dx) {
-            auto x = static_cast<long long>(dx);
-            size_t idx{ bd::to1D(dx, dy, dz, m_volx, m_voly) };
+        for(auto z = 0ll; z < static_cast<long long>(m_volz); ++z) {
+//            auto z = static_cast<long long>(dz);
+        for(auto y = 0ll; y < static_cast<long long>(m_voly); ++y) {
+//            auto y = static_cast<long long>(dy);
+        for(auto x = 0ll; x < static_cast<long long>(m_volx); ++x) {
+//            auto x = static_cast<long long>(dx);
+            size_t idx{ bd::to1D(x, y, z, m_volx, m_voly) };
 
             if (x - 1 < 0 || y - 1 < 0 || z - 1 < 0) {
-                m_sumtable[idx] = 0;
+                m_volumeTable[idx] = 0;
             } 
             else {
                 long long v1{ empty(in[idx]) };
@@ -114,7 +140,7 @@ public:
                     - (get(x - 1, y - 1, z) - get(x - 1, y - 1, z - 1)) 
                 };
 
-                m_sumtable[idx] = vvvvvv;
+                m_volumeTable[idx] = vvvvvv;
             }
         }}}
     } // createSvt
@@ -128,13 +154,66 @@ public:
     /// \param 
     //////////////////////////////////////////////////////////////////////////
     void 
-    createTree(/*std::function<uint64_t(Data)> bv*/)
+    createTree()
     {
+        createCandidatePlanes();
+        createTreeHelper();
                 
     } // createTree
 
+    
 
 private:
+
+    //////////////////////////////////////////////////////////////////////////
+    void 
+    createTreeHelper()
+    {
+        
+    }
+
+
+    //////////////////////////////////////////////////////////////////////////
+    /// \brief Creates them planes for the splittin'.
+    void
+    createCandidatePlanes(std::vector<Plane<size_t>> &candidates, size_t numPlanes, SplittingAxis a)
+    {
+        candidates.clear();
+        size_t indexDelta{ 0 };
+        Point3<size_t> ul{ 0, 0, 0 };
+        Point3<size_t> lr{ 0, 0, 0 };
+        size_t *ul_val{ nullptr };
+        size_t *lr_val{ nullptr };
+
+        switch (a)
+        {
+        case SplittingAxis::X: 
+            indexDelta = numPlanes / m_volx; 
+            ul_val = ul.x_ptr();
+            lr_val = lr.x_ptr();
+            break;
+        case SplittingAxis::Y: 
+            indexDelta = numPlanes / m_voly; 
+            ul_val = ul.y_ptr();
+            lr_val = lr.y_ptr();
+            break;
+        case SplittingAxis::Z: 
+            indexDelta = numPlanes / m_volz; 
+            ul_val = ul.z_ptr();
+            lr_val = lr.z_ptr();
+            break;
+        //default: break;
+        }
+
+        size_t currIndex{ indexDelta };
+        for (auto &p : candidates) {
+            *ul_val = currIndex;
+            *lr_val = currIndex;
+            p.ul = ul;
+            p.lr = lr;
+            currIndex += indexDelta;
+        }
+    }
 
 
     //////////////////////////////////////////////////////////////////////////
@@ -144,7 +223,7 @@ private:
         if (x < 0 || y < 0 || z < 0)
             return 0;
 
-        return m_sumtable[bd::to1D(x, y, z, m_volx, m_voly)];
+        return m_volumeTable[bd::to1D(x, y, z, m_volx, m_voly)];
 
     } // get
 
@@ -160,11 +239,11 @@ private:
     } // num
 
 
-    size_t m_volx;  ///< Volume dims X
-    size_t m_voly;  ///< Volume dims Y
-    size_t m_volz;  ///< Volume dims Z
+    long long m_volx;  ///< Volume dims X
+    long long m_voly;  ///< Volume dims Y
+    long long m_volz;  ///< Volume dims Z
 
-    std::vector<area_type> m_sumtable; ///< Summed volume table
+    std::vector<area_type> m_volumeTable; ///< Summed volume table
 };
 
 #endif // !binaryvolume_h__

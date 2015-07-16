@@ -91,6 +91,12 @@ public:
 
     T z() const { return m_z; }
 
+    T* x_ptr() { return &m_x; }
+
+    T* y_ptr() { return &m_y; }
+    
+    T* z_ptr() { return &m_z; }
+
 private:
     T m_x, m_y, m_z;  ///< Location of this point.
 };
