@@ -1,22 +1,46 @@
 #ifndef binaryvolume_h__
 #define binaryvolume_h__
 
+#include "point3.h"
+
 #include <bd/volume/block.h>
 #include <bd/util/util.h>
 
 #include <vector>
 #include <functional>
 
+template<typename T>
+class Region
+{
+public:
+    Region(T u1, T u2, T v1, T v2, T w1, T w2) 
+        : u1(u1), u2(u2), v1(v1), v2(v2), w1(w1), w2(w2)
+    { }
 
+    T u1, u2;
+    T v1, v2;
+    T w1, w2;
+};
 
+template<typename T>
+class Plane
+{
+public:
+    Plane(Point3<T> ul, Point3<T> lr)
+    { }
+
+    Point3<T> ul, lr;
+};
 
 ///////////////////////////////////////////////////////////////////////////////
-template<typename ValType>
+template<typename Data>
 class SummedVolumeTable
 {
 public:
     using area_type = long long;
 
+
+    //////////////////////////////////////////////////////////////////////////
     SummedVolumeTable ( size_t volx, size_t voly, size_t volz )
         : m_volx{ volx }
         , m_voly{ voly }
@@ -25,6 +49,7 @@ public:
     }
 
 
+    //////////////////////////////////////////////////////////////////////////
     virtual
     ~SummedVolumeTable()
     {
@@ -32,7 +57,7 @@ public:
 
 
 //    void
-//    createBinaryVolume ( ValType *in, std::function<bool(ValType)> empty )
+//    createBinaryVolume ( Data *in, std::function<bool(Data)> empty )
 //    {
 //        auto end = in + (m_volx * m_voly * m_volz);
 //
@@ -46,12 +71,14 @@ public:
 //    } // createBinaryVolume
 
 
+    //////////////////////////////////////////////////////////////////////////
     void
     resizeSumTable()
     {
         size_t size{ m_volx * m_voly * m_volz };
         m_sumtable.resize(size);
     }
+
 
     //////////////////////////////////////////////////////////////////////////
     /// \brief Create the summed volume table.
@@ -64,7 +91,7 @@ public:
     /// \param empty Determins is value is emptpy.
     //////////////////////////////////////////////////////////////////////////
     void
-    createSvt ( ValType *in, std::function<int(ValType)> empty )
+    createSvt ( Data *in, std::function<int(Data)> empty )
     {
         resizeSumTable();
         for(auto dz =  0ull; dz<m_volz; ++dz) {
@@ -80,12 +107,14 @@ public:
             } 
             else {
                 long long v1{ empty(in[idx]) };
-                area_type dasValue{ v1 + get(x, y, z - 1)
+                area_type vvvvvv{ 
+                    v1 + get(x, y, z - 1)
                     + (get(x - 1, y,     z) - get(x - 1, y, z - 1))
                     + (get(x,     y - 1, z) - get(x, y - 1, z - 1))
-                    - (get(x - 1, y - 1, z) - get(x - 1, y - 1, z - 1)) };
+                    - (get(x - 1, y - 1, z) - get(x - 1, y - 1, z - 1)) 
+                };
 
-                m_sumtable[idx] = dasValue;
+                m_sumtable[idx] = vvvvvv;
             }
         }}}
     } // createSvt
@@ -99,23 +128,16 @@ public:
     /// \param 
     //////////////////////////////////////////////////////////////////////////
     void 
-    createTree(/*std::function<uint64_t(ValType)> bv*/)
+    createTree(/*std::function<uint64_t(Data)> bv*/)
     {
-        
+                
     } // createTree
 
-    void
-    bv()
-    {
-        
-    } // bv
-    
-
-    
-    
 
 private:
 
+
+    //////////////////////////////////////////////////////////////////////////
     area_type
     get ( long long x, long long y, long long z )
     {
@@ -124,20 +146,23 @@ private:
 
         return m_sumtable[bd::to1D(x, y, z, m_volx, m_voly)];
 
-//        size_t idx { bd::to1D(
-//            x > 0 ? x : 0,
-//            y > 0 ? y : 0,
-//            z > 0 ? z : 0,
-//            m_volx,
-//            m_voly) };
-
-//        return m_sumtable[idx];
     } // get
 
 
-    size_t m_volx;
-    size_t m_voly;
-    size_t m_volz;
+    //////////////////////////////////////////////////////////////////////////
+    area_type 
+    num ( Region<long long> r )
+    {
+        return (get(r.u2, r.v2, r.w2) - get(r.u2, r.v2, r.w1))
+            - (get(r.u1, r.v2, r.w2) - get(r.u1, r.v2, r.w1))
+            - (get(r.u2, r.v1, r.w2) - get(r.u2, r.v1, r.w1))
+            + (get(r.u1, r.v1, r.w2) - get(r.u1, r.v1, r.w1));
+    } // num
+
+
+    size_t m_volx;  ///< Volume dims X
+    size_t m_voly;  ///< Volume dims Y
+    size_t m_volz;  ///< Volume dims Z
 
     std::vector<area_type> m_sumtable; ///< Summed volume table
 };
