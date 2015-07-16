@@ -25,6 +25,7 @@ project(empty_space_removal)
 set(empty_space_removal_HEADERS
   src/binaryvolume.h
   src/cmdline.h
+  src/point3.h
   # ${simple_blocks_headers}
 ) 
 
