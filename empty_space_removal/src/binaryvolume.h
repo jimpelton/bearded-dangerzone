@@ -22,6 +22,10 @@ public:
     T w1, w2;
 };
 
+
+///////////////////////////////////////////////////////////////////////////////
+/// \brief A plane represented by 2 3D points, upper-left and lower-right. 
+///////////////////////////////////////////////////////////////////////////////
 template<typename T>
 class Plane
 {
@@ -38,21 +42,26 @@ enum class SplittingAxis
     X, Y, Z
 };
 
+template<typename T>
 class KDNode
 {
+public:
+    KDNode() 
+    { }
     union
     {
-        KDNode *left;
-        KDNode *up;
-        KDNode *front;
+        KDNode<T> *left;
+        KDNode<T> *up;
+        KDNode<T> *front;
     };
     union 
     {
-        KDNode *right;
-        KDNode *down;
-        KDNode *back;
+        KDNode<T> *right;
+        KDNode<T> *down;
+        KDNode<T> *back;
     };
 
+    Region<T> region;
     SplittingAxis axis;
 };
 
