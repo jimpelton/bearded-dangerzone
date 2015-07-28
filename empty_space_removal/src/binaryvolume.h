@@ -121,11 +121,8 @@ public:
     {
         resizeSumTable();
         for(auto z = 0ll; z < static_cast<long long>(m_volz); ++z) {
-//            auto z = static_cast<long long>(dz);
         for(auto y = 0ll; y < static_cast<long long>(m_voly); ++y) {
-//            auto y = static_cast<long long>(dy);
         for(auto x = 0ll; x < static_cast<long long>(m_volx); ++x) {
-//            auto x = static_cast<long long>(dx);
             size_t idx{ bd::to1D(x, y, z, m_volx, m_voly) };
 
             if (x - 1 < 0 || y - 1 < 0 || z - 1 < 0) {
@@ -151,14 +148,13 @@ public:
     /// First, \c createTree calls \c createSvt first. Then, \c createTree builds a
     /// kd-tree of specified depth.
     ///
-    /// \param 
+    /// \param d Depth to make the tree.
     //////////////////////////////////////////////////////////////////////////
     void 
-    createTree()
+    createTree(size_t d)
     {
-        createCandidatePlanes();
         createTreeHelper();
-                
+                        
     } // createTree
 
     
