@@ -154,7 +154,7 @@ GLuint queryID[QUERY_BUFFERS][QUERY_COUNT];
 unsigned int queryBackBuffer = 0;
 unsigned int queryFrontBuffer = 1;
 
-// call this function when initializating the OpenGL settings
+/// \brief Init opengl queries for GPU frame times.
 void genQueries()
 {
     gl_check(glGenQueries(QUERY_COUNT, queryID[queryBackBuffer]));
@@ -324,7 +324,7 @@ void drawNonEmptyBoundingBoxes(const glm::mat4 &mvp)
     for (auto *b : g_blocks.nonEmptyBlocks()) {
         glm::mat4 mmvp = mvp * b->transform().matrix();
         g_simpleShader.setUniform("mvp", mmvp);
-        gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, 0));
+        gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, (GLvoid *)0));
         gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT,
             (GLvoid *)(4 * sizeof(GLushort))));
         gl_check(glDrawElements(GL_LINES, 8, GL_UNSIGNED_SHORT,
@@ -348,7 +348,7 @@ void drawSlices(size_t baseVertex)
 ///////////////////////////////////////////////////////////////////////////////
 void drawNonEmptyBlocks_Forward(const glm::mat4 &vp, bool drawReversed)
 {
-    size_t baseVertex = 0;
+    size_t baseVertex{ 0 };
     perf_frameBegin();
     for (auto *b : g_blocks.nonEmptyBlocks()) {
         b->texture().bind(0);
@@ -372,35 +372,50 @@ void drawNonEmptyBlocks_Forward(const glm::mat4 &vp, bool drawReversed)
     perf_frameEnd();
 }
 
+
 ///////////////////////////////////////////////////////////////////////////////
 /// \brief Determine the viewing direction and draw the blocks in proper order.
 ///////////////////////////////////////////////////////////////////////////////
 void drawNonEmptyBlocks(const glm::mat4 &vp)
 {
-    glm::vec4 viewdir = glm::normalize(g_camera.getViewMatrix()[2]);
-    glm::vec4 absViewdir = glm::abs(viewdir);
-    float longest  = 0.0f;
-    static SliceSet previousSet = g_selectedSliceSet;
+    glm::vec4 viewdir{ glm::normalize(g_camera.getViewMatrix()[2]) };
+    glm::vec4 absViewdir{ glm::abs(viewdir) };
+    SliceSet previousSet{ g_selectedSliceSet };
 
-    if (absViewdir.x > absViewdir.y && absViewdir.x > absViewdir.z) {
-        g_selectedSliceSet = SliceSet::YZ;
-        longest = viewdir.x;
-    }
-    else if (absViewdir.y > absViewdir.x && absViewdir.y > absViewdir.z) {
+    // Select current slice set based on longeset component of viewing vector.
+    g_selectedSliceSet = SliceSet::YZ;
+    float longest{ absViewdir.x };
+    if (absViewdir.y > longest)
+    {
         g_selectedSliceSet = SliceSet::XZ;
         longest = viewdir.y;
     }
-    else if (absViewdir.z > absViewdir.x && absViewdir.z > absViewdir.y) {
+    if (absViewdir.z > longest)
+    {
         g_selectedSliceSet = SliceSet::XY;
-        longest = viewdir.z;
+        longest = absViewdir.z;
     }
+
+
+
+//    if (absViewdir.x > absViewdir.y && absViewdir.x > absViewdir.z) {
+//        g_selectedSliceSet = SliceSet::YZ;
+//        longest = viewdir.x;
+//    }
+//    else if (absViewdir.y > absViewdir.x && absViewdir.y > absViewdir.z) {
+//        g_selectedSliceSet = SliceSet::XZ;
+//        longest = viewdir.y;
+//    }
+//    else if (absViewdir.z > absViewdir.x && absViewdir.z > absViewdir.y) {
+//        g_selectedSliceSet = SliceSet::XY;
+//        longest = viewdir.z;
+//    }
 
 //    sortBlocksFarthestToNearest();
 
     if (previousSet != g_selectedSliceSet) {
         std::cout << "Switched slice set: " << 
-            (longest < 0 ? '+' : '-') <<  g_selectedSliceSet << '\n';
-        previousSet = g_selectedSliceSet;    
+            (longest < 0 ? '-' : '+') <<  g_selectedSliceSet << '\n';
     }
 
     if (g_toggleWireFrame) {
