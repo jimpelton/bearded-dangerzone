@@ -2,8 +2,6 @@
 #include <GLFW/glfw3.h>
 
 // local includes
-//#include "block.h"
-//#include "blockcollection.h"
 #include "cmdline.h"
 #include "create_vao.h"
 
@@ -40,6 +38,7 @@
 #include <chrono>
 
 #include <cstring>
+#include <bd/util/ordinal.h>
 
 // profiling
 #include "nvpm.h"
@@ -52,23 +51,29 @@ const glm::vec3 X_AXIS{ 1.0f, 0.0f, 0.0f };
 const glm::vec3 Y_AXIS{ 0.0f, 1.0f, 0.0f };
 const glm::vec3 Z_AXIS{ 0.0f, 0.0f, 1.0f };
 
+// 5 element indexes per quad: 4 verts followed by the restart symbol
 const int g_elementsPerQuad{ 5 };
 
 
 ///////////////////////////////////////////////////////////////////////////////
 // Geometry  /  VAOs
 ///////////////////////////////////////////////////////////////////////////////
+
+/// \brief Enumerates the types of objects in the scene.
 enum class ObjType : unsigned int
 {
     Axis, Quads, Boxes
 };
 
 
+/// \brief Enumerates the possible sets of slices, each set has quads
+/// aligned with the specified plane.
 enum class SliceSet : unsigned int
 {
     XZ, YZ, XY, NoneOfEm, AllOfEm
 };
 
+/// \brief To string representation of SliceSet.
 std::ostream& operator<<(std::ostream &ostr, SliceSet s)
 {
     switch (s)
@@ -81,7 +86,7 @@ std::ostream& operator<<(std::ostream &ostr, SliceSet s)
 }
 
 
-bd::Axis g_axis;
+bd::Axis g_axis; ///< The coordinate axis lines.
 bd::Box g_box;
 
 std::vector<bd::VertexArrayObject *> g_vaoIds;
@@ -106,7 +111,7 @@ float g_scaleValue{ 1.0f };
 bd::View g_camera;
 int g_screenWidth{ 1000 };
 int g_screenHeight{ 1000 };
-float g_fov_deg{ 50.0f };
+float g_fov_deg{ 50.0f };   ///< Field of view in degrees.
 
 glm::vec2 g_cursorPos;
 float g_mouseSpeed{ 1.0f };
@@ -305,6 +310,7 @@ void updateViewMatrix()
 
 
 /////////////////////////////////////////////////////////////////////////////////
+//TODO: move to BlocksCollection, take eye position as parameter.
 //void sortBlocksFarthestToNearest()
 //{
 //    glm::vec3 camPos = g_camera.getPosition();
@@ -349,14 +355,7 @@ void drawSlices(size_t baseVertex)
 void drawNonEmptyBlocks_Forward(const glm::mat4 &vp, bool drawReversed)
 {
     size_t baseVertex{ 0 };
-    perf_frameBegin();
-    for (auto *b : g_blocks.nonEmptyBlocks()) {
-        b->texture().bind(0);
-        glm::mat4 wmvp = vp * b->transform().matrix();
-        g_volumeShader.setUniform("mvp", wmvp);
-        g_volumeShader.setUniform("tfScalingVal", g_scaleValue);
-
-        switch (g_selectedSliceSet) {
+    switch (g_selectedSliceSet) {
 //        case SliceSet::XY:
 //            baseVertex = 0;                                           break;
         case SliceSet::XZ:
@@ -364,11 +363,16 @@ void drawNonEmptyBlocks_Forward(const glm::mat4 &vp, bool drawReversed)
         case SliceSet::YZ:
             baseVertex = 2 * bd::Quad::vert_element_size * g_numSlices; break;
         default: break;
-        } 
+    } 
+    
+    perf_frameBegin();
+    for (auto *b : g_blocks.nonEmptyBlocks()) {
+        b->texture().bind(0);
+        glm::mat4 wmvp = vp * b->transform().matrix();
+        g_volumeShader.setUniform("mvp", wmvp);
+        g_volumeShader.setUniform("tfScalingVal", g_scaleValue);
+        drawSlices(baseVertex);
     }
-
-    drawSlices(baseVertex);
-
     perf_frameEnd();
 }
 
@@ -385,37 +389,25 @@ void drawNonEmptyBlocks(const glm::mat4 &vp)
     // Select current slice set based on longeset component of viewing vector.
     g_selectedSliceSet = SliceSet::YZ;
     float longest{ absViewdir.x };
+    bool neg{ viewdir.x < 0 };
     if (absViewdir.y > longest)
     {
         g_selectedSliceSet = SliceSet::XZ;
-        longest = viewdir.y;
+        longest = absViewdir.y;
+        neg = viewdir.y < 0;
     }
     if (absViewdir.z > longest)
     {
         g_selectedSliceSet = SliceSet::XY;
         longest = absViewdir.z;
+        neg = viewdir.z < 0;
     }
-
-
-
-//    if (absViewdir.x > absViewdir.y && absViewdir.x > absViewdir.z) {
-//        g_selectedSliceSet = SliceSet::YZ;
-//        longest = viewdir.x;
-//    }
-//    else if (absViewdir.y > absViewdir.x && absViewdir.y > absViewdir.z) {
-//        g_selectedSliceSet = SliceSet::XZ;
-//        longest = viewdir.y;
-//    }
-//    else if (absViewdir.z > absViewdir.x && absViewdir.z > absViewdir.y) {
-//        g_selectedSliceSet = SliceSet::XY;
-//        longest = viewdir.z;
-//    }
 
 //    sortBlocksFarthestToNearest();
 
     if (previousSet != g_selectedSliceSet) {
         std::cout << "Switched slice set: " << 
-            (longest < 0 ? '-' : '+') <<  g_selectedSliceSet << '\n';
+            (neg ? '-' : '+') <<  g_selectedSliceSet << '\n';
     }
 
     if (g_toggleWireFrame) {
@@ -437,7 +429,7 @@ void draw(const glm::mat4 &vp)
 {
     bd::VertexArrayObject *vao = nullptr;
     ////////  Axis    /////////////////////////////////////////
-    vao = g_vaoIds[static_cast<unsigned int>(ObjType::Axis)];
+    vao = g_vaoIds[bd::ordinal(ObjType::Axis)];
     vao->bind();
     g_simpleShader.bind();
     g_simpleShader.setUniform("mvp", vp);
@@ -446,14 +438,14 @@ void draw(const glm::mat4 &vp)
 
     ////////  BBoxes  /////////////////////////////////////////
     if (g_toggleBlockBoxes) {
-        vao = g_vaoIds[static_cast<unsigned int>(ObjType::Boxes)];
+        vao = g_vaoIds[bd::ordinal(ObjType::Boxes)];
         vao->bind();
         drawNonEmptyBoundingBoxes(vp);
         vao->unbind();
     }
 
     //////// Quad Geo (drawNonEmptyBlocks)  /////////////////////
-    vao = g_vaoIds[static_cast<unsigned int>(ObjType::Quads)];
+    vao = g_vaoIds[bd::ordinal(ObjType::Quads)];
     vao->bind();
     drawNonEmptyBlocks(vp);
     vao->unbind();
@@ -621,11 +613,11 @@ void initGraphicsState()
     gl_log("Initializing gl state.");
     gl_check(glClearColor(1.0f, 1.0f, 1.0f, 0.0f));
 
-//    gl_check(glEnable(GL_CULL_FACE));
-//    gl_check(glCullFace(GL_BACK));
+    gl_check(glEnable(GL_CULL_FACE));
+    gl_check(glCullFace(GL_BACK));
 
-//    gl_check(glEnable(GL_DEPTH_TEST));
-//    gl_check(glDepthFunc(GL_LESS));
+    gl_check(glEnable(GL_DEPTH_TEST));
+    gl_check(glDepthFunc(GL_LESS));
 
     gl_check(glEnable(GL_BLEND));
     gl_check(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
@@ -898,21 +890,21 @@ int main(int argc, const char *argv [])
     //// Geometry Init ////
     bd::VertexArrayObject quadVbo(bd::VertexArrayObject::Method::ELEMENTS);
     quadVbo.create();
+    genQuadVao(quadVbo, clo.num_slices);
 
     bd::VertexArrayObject axisVbo(bd::VertexArrayObject::Method::ARRAYS);
     axisVbo.create();
+    genAxisVao(axisVbo);
 
     bd::VertexArrayObject boxVbo(bd::VertexArrayObject::Method::ELEMENTS);
     boxVbo.create();
-
-    genQuadVao(quadVbo, clo.num_slices);
-    genAxisVao(axisVbo);
     genBoxVao(boxVbo);
 
+
     g_vaoIds.resize(3);
-    g_vaoIds[static_cast<unsigned int>(ObjType::Axis)]  = &axisVbo;
-    g_vaoIds[static_cast<unsigned int>(ObjType::Quads)] = &quadVbo;
-    g_vaoIds[static_cast<unsigned int>(ObjType::Boxes)] = &boxVbo;
+    g_vaoIds[bd::ordinal(ObjType::Axis)]  = &axisVbo;
+    g_vaoIds[bd::ordinal(ObjType::Quads)] = &quadVbo;
+    g_vaoIds[bd::ordinal(ObjType::Boxes)] = &boxVbo;
 
 
     //// Blocks and Data Init ////
