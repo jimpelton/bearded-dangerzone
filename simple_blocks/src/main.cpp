@@ -160,7 +160,8 @@ void
 cleanup();
 
 unsigned int
-loadTransfter_1dtformat(const std::string &filename, Texture &transferTex);
+loadTransfer_1dtformat(const std::string &filename, Texture &transferTex,
+    bd::ShaderProgram &volumeShader);
 
 
 #define QUERY_BUFFERS 2
@@ -893,7 +894,7 @@ int main(int argc, const char *argv [])
     //// Transfer function texture ////
     unsigned int tfuncTextureId
     { 
-        loadTransfter_1dtformat(clo.tfuncPath, g_tfuncTex) 
+        loadTransfter_1dtformat(clo.tfuncPath, g_tfuncTex, g_volumeShader) 
     };
     if (tfuncTextureId == 0) {
         gl_log_err("Exiting because tfunc texture was not bound.");

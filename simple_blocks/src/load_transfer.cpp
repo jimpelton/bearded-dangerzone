@@ -1,9 +1,15 @@
+
+#include <bd/graphics/texture.h>
+#include <bd/log/gl_log.h>
+
+#include <glm/vec4.hpp>
+
 #include <fstream>
 #include <string>
-#include <bd/graphics/texture.h>
 
 /////////////////////////////////////////////////////////////////////////////////
-unsigned int loadTransfter_1dtformat(const std::string &filename, Texture &transferTex)
+unsigned int loadTransfer_1dtformat(const std::string &filename, Texture &transferTex, 
+    bd::ShaderProgram &volumeShader)
 {
     gl_log("Reading 1dt formatted transfer function file and generating texture.");
 
@@ -46,7 +52,7 @@ unsigned int loadTransfter_1dtformat(const std::string &filename, Texture &trans
 
     transferTex.textureUnit(1);
 
-    unsigned int samp{ g_volumeShader.getUniformLocation("tf_sampler") };
+    unsigned int samp{ volumeShader.getUniformLocation("tf_sampler") };
     transferTex.samplerLocation(samp);
 
     delete [] rgba;
