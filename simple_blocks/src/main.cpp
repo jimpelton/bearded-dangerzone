@@ -358,12 +358,12 @@ void drawSlices(size_t baseVertex)
 ///////////////////////////////////////////////////////////////////////////////
 /// \brief Loop through the blocks and draw each one
 ///////////////////////////////////////////////////////////////////////////////
-void drawNonEmptyBlocks_Forward(const glm::mat4 &vp, bool drawReversed)
+void drawNonEmptyBlocks_Forward(const glm::mat4 &vp)
 {
     size_t baseVertex{ 0 };
     switch (g_selectedSliceSet) {
-//        case SliceSet::XY:
-//            baseVertex = 0;                                           break;
+        //case SliceSet::XY:
+        //    baseVertex = 0; break;
         case SliceSet::XZ:
             baseVertex = bd::Quad::vert_element_size * g_numSlices;     break;
         case SliceSet::YZ:
@@ -388,24 +388,25 @@ void drawNonEmptyBlocks_Forward(const glm::mat4 &vp, bool drawReversed)
 ///////////////////////////////////////////////////////////////////////////////
 void drawNonEmptyBlocks(const glm::mat4 &vp)
 {
+    SliceSet previousSet{ g_selectedSliceSet };
     glm::vec4 viewdir{ glm::normalize(g_camera.getViewMatrix()[2]) };
     glm::vec4 absViewdir{ glm::abs(viewdir) };
-    SliceSet previousSet{ g_selectedSliceSet };
 
-    // Select current slice set based on longeset component of viewing vector.
-    g_selectedSliceSet = SliceSet::YZ;
+    // Select current slice set based on longeset 
+    // component of viewing vector.
+    bool  neg    { viewdir.x < 0 };
     float longest{ absViewdir.x };
-    bool neg{ viewdir.x < 0 };
+    g_selectedSliceSet = SliceSet::YZ;
+
     if (absViewdir.y > longest)
     {
-        g_selectedSliceSet = SliceSet::XZ;
+        g_selectedSliceSet = SliceSet::XZ;  
         longest = absViewdir.y;
         neg = viewdir.y < 0;
     }
     if (absViewdir.z > longest)
     {
-        g_selectedSliceSet = SliceSet::XY;
-        longest = absViewdir.z;
+        g_selectedSliceSet = SliceSet::XY;  
         neg = viewdir.z < 0;
     }
 
@@ -421,7 +422,7 @@ void drawNonEmptyBlocks(const glm::mat4 &vp)
     }
 
     g_volumeShader.bind();
-    drawNonEmptyBlocks_Forward(vp, longest < 0);
+    drawNonEmptyBlocks_Forward(vp);
 
     if (g_toggleWireFrame){
         gl_check(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
