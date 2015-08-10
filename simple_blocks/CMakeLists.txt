@@ -47,23 +47,19 @@ endif(USE_NVPMAPI)
 project(simple_blocks)
 
 set(simple_blocks_HEADERS 
-    # src/block.h 
     src/cmdline.h 
-    #    src/texture.h
     src/create_vao.h
     src/nvpm.h
     src/glfw_callbacks.h
-    # src/blockcollection.h
+    #    src/parsedat.h
 )
 
 set(simple_blocks_SOURCES 
     src/main.cpp 
-    # src/block.cpp 
     src/cmdline.cpp
-    #    src/texture.cpp
     src/create_vao.cpp
     src/glfw_callbacks.cpp
-    # src/blockcollection.cpp
+    #   src/parsedat.cpp
 )
 
 include_directories("${CRUFT_DIR}/include")  
