@@ -51,7 +51,6 @@ set(simple_blocks_HEADERS
     src/create_vao.h
     src/nvpm.h
     src/glfw_callbacks.h
-    #    src/parsedat.h
 )
 
 set(simple_blocks_SOURCES 
@@ -59,7 +58,7 @@ set(simple_blocks_SOURCES
     src/cmdline.cpp
     src/create_vao.cpp
     src/glfw_callbacks.cpp
-    #   src/parsedat.cpp
+    src/load_transfer.cpp
 )
 
 include_directories("${CRUFT_DIR}/include")  

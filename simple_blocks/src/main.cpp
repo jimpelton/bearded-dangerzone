@@ -16,6 +16,7 @@
 #include <bd/util/util.h>
 #include <bd/volume/block.h>
 #include <bd/volume/blockcollection.h>
+#include <bd/util/ordinal.h>
 
 
 
@@ -38,7 +39,6 @@
 #include <chrono>
 
 #include <cstring>
-#include <bd/util/ordinal.h>
 
 // profiling
 #include "nvpm.h"
@@ -134,24 +134,34 @@ double g_totalElapsedCPUFrameTime{ 0 };
 bd::BlockCollection g_blocks;
 
 
-void glfw_cursorpos_callback(GLFWwindow *window, double x, double y);
+void
+glfw_cursorpos_callback(GLFWwindow *window, double x, double y);
 
-void glfw_keyboard_callback(GLFWwindow *window, int key, int scancode, int action,
-    int mods);
+void
+glfw_keyboard_callback(GLFWwindow *window, int key, int scancode,
+    int action, int mods);
 
-void glfw_error_callback(int error, const char *description);
+void
+glfw_error_callback(int error, const char *description);
 
-void glfw_window_size_callback(GLFWwindow *window, int width, int height);
+void
+glfw_window_size_callback(GLFWwindow *window, int width, int height);
 
-void glfw_scrollwheel_callback(GLFWwindow *window, double xoff, double yoff);
+void
+glfw_scrollwheel_callback(GLFWwindow *window, double xoff, double yoff);
 
-void updateViewMatrix();
+void
+setRotation(const glm::vec2 &dr);
 
-void setRotation(const glm::vec2 &dr);
+void
+loop(GLFWwindow *window);
 
-void loop(GLFWwindow *window);
+void
+cleanup();
 
-void cleanup();
+unsigned int
+loadTransfter_1dtformat(const std::string &filename, Texture &transferTex);
+
 
 #define QUERY_BUFFERS 2
 #define QUERY_COUNT 1
@@ -302,11 +312,6 @@ void setRotation(const glm::vec2 &dr)
 }
 
 
-///////////////////////////////////////////////////////////////////////////////
-void updateViewMatrix()
-{
-    g_camera.updateViewMatrix();
-}
 
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -335,7 +340,7 @@ void drawNonEmptyBoundingBoxes(const glm::mat4 &mvp)
             (GLvoid *)(4 * sizeof(GLushort))));
         gl_check(glDrawElements(GL_LINES, 8, GL_UNSIGNED_SHORT,
             (GLvoid *)(8 * sizeof(GLushort))));
-    } // for
+    }
 }
 
 
@@ -527,7 +532,7 @@ void genQuadVao(bd::VertexArrayObject &vao, unsigned int numSlices)
     std::vector<uint16_t> elebuf;
 
     /// For each axis, populate vbuf with verts for numSlices quads, adjust  ///
-    /// z coordinate based on slice index.                                   ///
+    /// axis coordinate based on slice index.                                ///
 
     vert::create_verts_xy(numSlices, temp);
     std::copy(temp.begin(), temp.end(), std::back_inserter(vbuf));
@@ -706,7 +711,8 @@ void printBlocks()
         block_file.close();
     } 
     else {
-        gl_log_err("Could not print blocks because blocks.txt coulnt'd be created in the current working directory.");
+        gl_log_err("Could not print blocks because blocks.txt coulnt'd be created "
+            "in the current working directory.");
     }
 }
 
@@ -726,58 +732,6 @@ void printTimes(std::ostream &str)
     << std::endl;
 }
 
-
-/////////////////////////////////////////////////////////////////////////////////
-unsigned int loadTransfter_1dtformat(const std::string &filename, Texture &transferTex)
-{
-    gl_log("Reading 1dt formatted transfer function file and generating texture.");
-
-    std::ifstream file(filename.c_str(), std::ifstream::in);
-    if (!file.is_open()) {
-        gl_log_err("Can't open tfunc file: %s", filename.c_str());
-        return 0;
-    }
-
-    size_t lineNum{ 0 };
-    size_t numKnots{ 0 };
-
-    file >> numKnots; // number of entries/lines in the 1dt file.
-    lineNum++;
-    if (numKnots > 8192) {
-        gl_log_err("The 1dt transfer function has %d knots but max allowed is 8192)."
-            "Skipping loading the transfer function file.", numKnots);
-        return 0;
-    }
-
-    glm::vec4 *rgba{ new glm::vec4[numKnots] };
-    // read rest of file consisting of rgba colors    
-    float r, g, b, a;
-    while (lineNum < numKnots && file >> r >> g >> b >> a) { 
-        rgba[lineNum] = { r, g, b, a };
-        lineNum++;
-    }
-
-    file.close();
-
-    unsigned int texId{ 
-        transferTex.genGLTex1d(reinterpret_cast<float*>(rgba), Texture::Format::RGBA,
-            Texture::Format::RGBA, numKnots)
-    };
-
-    if (texId == 0) {
-        gl_log_err("Could not make transfer function texture, returned id was 0.");
-        return texId;
-    }
-
-    transferTex.textureUnit(1);
-
-    unsigned int samp{ g_volumeShader.getUniformLocation("tf_sampler") };
-    transferTex.samplerLocation(samp);
-
-    delete [] rgba;
-
-    return texId;
-}
 
 
 ///////////////////////////////////////////////////////////////////////////////
