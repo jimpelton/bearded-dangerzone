@@ -73,10 +73,11 @@ include_directories("${THIRDPARTY_DIR}/tclap/include")
 
 ################################################################################
 set(simple_blocks_HEADERS
+        src/axis_enum.h
         src/cmdline.h
         src/create_vao.h
-        src/nvpm.h
         src/glfw_callbacks.h
+        src/nvpm.h
 )
 
 set(simple_blocks_SOURCES

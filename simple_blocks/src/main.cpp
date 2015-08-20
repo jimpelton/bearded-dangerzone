@@ -4,6 +4,7 @@
 // local includes
 #include "cmdline.h"
 #include "create_vao.h"
+#include "axis_enum.h"
 
 // BD lib
 #include <bd/geo/axis.h>
@@ -52,7 +53,7 @@ const glm::vec3 Y_AXIS{ 0.0f, 1.0f, 0.0f };
 const glm::vec3 Z_AXIS{ 0.0f, 0.0f, 1.0f };
 
 // 5 element indexes per quad: 4 verts followed by the restart symbol
-const int g_elementsPerQuad{ 5 };
+const int g_elementsPerQuad{ 4 };
 
 
 ///////////////////////////////////////////////////////////////////////////////

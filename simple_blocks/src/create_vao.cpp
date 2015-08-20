@@ -1,5 +1,6 @@
 
 #include "create_vao.h"
+#include "axis_enum.h"
 
 #include <bd/geo/quad.h> 
 
@@ -27,6 +28,25 @@ namespace {
 ///////////////////////////////////////////////////////////////////////////////
 void create_verts_helper(size_t numSlices, std::vector<glm::vec4> &vbuf,
     int axis, const std::array<glm::vec4, 4> &vertsProto);
+
+///////////////////////////////////////////////////////////////////////////////
+/// \brief Create quad proxy geometry along axis \c a.
+/// \note Quads are created in the region R=[min+delta, max-delta].
+/// \param quads[out] Storage for created quads to be returned in.
+/// \param numPlanes[in] Number of quads to create.
+/// \param a[in] Quads created perpendicular to \c a.
+///////////////////////////////////////////////////////////////////////////////
+void createQuads(std::vector<glm::vec4> &quads, size_t numPlanes,
+                 float min, float max, Axis a)
+{
+    quads.clear();
+    quads.reserve(numPlanes);
+    float delta = (max-min) / static_cast<float>(numPlanes);
+
+
+}
+
+
 
 
 ///////////////////////////////////////////////////////////////////////////////
