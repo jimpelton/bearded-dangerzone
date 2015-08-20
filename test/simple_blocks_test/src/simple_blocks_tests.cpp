@@ -1,5 +1,3 @@
-#define CATCH_CONFIG_MAIN
-#include <catch.hpp>
 
 #include <create_vao.h>
 
@@ -9,6 +7,9 @@
 #include <vector>
 #include <array>
 #include <sstream>
+
+#include <catch.hpp>
+
 
 namespace Catch {
     std::string toString(const glm::vec3 &v)

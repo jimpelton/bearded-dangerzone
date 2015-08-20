@@ -19,7 +19,8 @@ file(GLOB simple_blocks_headers "${simple_blocks_SOURCE_DIR}/src"
 )
 
 set(simple_blocks_test_SOURCE_FILES
-    src/simple_blocks_test.cpp
+    src/simple_blocks_test_main.cpp
+    src/simple_blocks_tests.cpp
     "${simple_blocks_sources}"
 )
 
@@ -31,7 +32,7 @@ set(simple_blocks_test_HEADER_FILES
 include_directories(
     "${THIRDPARTY_DIR}/catch"
     "${THIRDPARTY_DIR}/tclap/include"
-    "${CRUFT_DIR}/include"
+    "${CRUFT_INCLUDE_DIR}"
     "${simple_blocks_SOURCE_DIR}/src"
     )
 
@@ -48,7 +49,7 @@ target_link_libraries(simple_blocks_test
     ${GLEW_LIBRARIES}
     ${Boost_PROGRAM_OPTIONS_LIBRARIES}
     ${Boost_LIBRARIES}
-    crufterly
+    ${CRUFT_LIBRARIES}
     )
 
 
