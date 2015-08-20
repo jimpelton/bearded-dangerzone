@@ -8,6 +8,7 @@
 
 #include <vector>
 #include <array>
+#include <sstream>
 
 namespace Catch {
     std::string toString(const glm::vec3 &v)
@@ -25,6 +26,11 @@ namespace Catch {
         return glm::to_string(v);
     }
 
+    template<> struct StringMaker<glm::vec4> {
+        static std::string convert( glm::vec4 const& value ) {
+            return glm::to_string( value );
+        }
+    };
 }
 
 
@@ -46,6 +52,7 @@ TEST_CASE("sliceIndexToElements() returns triangle strip ordering", "[quad][vboI
     
     REQUIRE(ebuf_actual == ebuf_expected);
 }
+
 
 
 TEST_CASE("start returns 0.0 for one slice", "[quad][startCoords]")
@@ -104,25 +111,25 @@ TEST_CASE("delta returns 0.0 for 1 slice")
 
 TEST_CASE("delta returns 1.0 for 2 slices")
 {
-    float expected = 1.0f;
+    float expected = 1.0f/2.0f;
     float actual = vert::delta(2, -0.5f, 0.5f);
 
     REQUIRE(actual == expected);
 }
 
 
-TEST_CASE("delta returns 0.5 for 3 slices")
+TEST_CASE("delta returns 0.33 for 3 slices")
 {
-    float expected = 0.5f;
+    float expected = 1.0f/3.0f;
     float actual = vert::delta(3, -0.5f, 0.5f);
 
-    REQUIRE(actual == expected);
+    REQUIRE(actual == Approx(expected));
 }
 
 
-TEST_CASE("delta returns 0.33 for 4 slices")
+TEST_CASE("delta returns 0.25 for 4 slices")
 {
-    float expected = 1.0f/3.0f;
+    float expected = 1.0f/4.0f;
     float actual = vert::delta(4, -0.5f, 0.5f);
 
     REQUIRE(actual == Approx(expected));
@@ -131,7 +138,7 @@ TEST_CASE("delta returns 0.33 for 4 slices")
 
 TEST_CASE("delta returns 0.25 for 5 slices")
 {
-    float expected = 0.25f;
+    float expected = 1.0f/5.0f;
     float actual = vert::delta(5, -0.5f, 0.5f);
 
     REQUIRE(actual == expected);
@@ -294,7 +301,29 @@ TEST_CASE("create_elementIndices creates Triangle strip ordering.")
         0xFFFF,
         8, 9, 11, 10,
         0xFFFF,
-        12, 13, 15, 14
+        12, 13, 15, 14,
+        0xFFFF
+    };
+
+    REQUIRE(elebuf == expected_buf);
+}
+
+TEST_CASE("create_elementIndicesReversed creates Triangle strip ordering.")
+{
+    std::vector<uint16_t> elebuf;
+    elebuf.resize(5*4);
+    auto b = elebuf.begin();
+    auto e = elebuf.end();
+    vert::create_elementIndicesReversed(4, b, e);
+    std::vector<uint16_t> expected_buf{
+        12, 13, 15, 14,
+        0xFFFF,
+        8, 9, 11, 10,
+        0xFFFF,
+        4, 5, 7, 6,
+        0xFFFF,
+        0, 1, 3, 2,
+        0xFFFF
     };
 
     REQUIRE(elebuf == expected_buf);

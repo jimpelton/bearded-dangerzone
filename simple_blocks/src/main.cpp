@@ -382,7 +382,6 @@ void drawNonEmptyBlocks_Forward(const glm::mat4 &vp)
     perf_frameEnd();
 }
 
-
 ///////////////////////////////////////////////////////////////////////////////
 /// \brief Determine the viewing direction and draw the blocks in proper order.
 ///////////////////////////////////////////////////////////////////////////////
@@ -392,21 +391,22 @@ void drawNonEmptyBlocks(const glm::mat4 &vp)
     glm::vec4 viewdir{ glm::normalize(g_camera.getViewMatrix()[2]) };
     glm::vec4 absViewdir{ glm::abs(viewdir) };
 
-    // Select current slice set based on longeset 
+    // Select current slice set based on longeset
     // component of viewing vector.
     bool  neg    { viewdir.x < 0 };
     float longest{ absViewdir.x };
+
     g_selectedSliceSet = SliceSet::YZ;
 
     if (absViewdir.y > longest)
     {
-        g_selectedSliceSet = SliceSet::XZ;  
+        g_selectedSliceSet = SliceSet::XZ;
         longest = absViewdir.y;
         neg = viewdir.y < 0;
     }
     if (absViewdir.z > longest)
     {
-        g_selectedSliceSet = SliceSet::XY;  
+        g_selectedSliceSet = SliceSet::XY;
         neg = viewdir.z < 0;
     }
 
@@ -557,12 +557,13 @@ void genQuadVao(bd::VertexArrayObject &vao, unsigned int numSlices)
     vert::create_elementIndices(numSlices, elebuf);
     g_elementBufferSize = elebuf.size();
 
+
     /// Add buffers to VAO ///
-    // vertex positions into attribute 0
+    // positions as vertex attribute 0
     vao.addVbo(reinterpret_cast<float *>(vbuf.data()), 
         vbuf.size() * bd::Quad::vert_element_size, bd::Quad::vert_element_size, 0);
 
-    // vertex texcoords into attribute 1
+    // texcoords as vertex attribute 1
     const size_t texcoord_element_size = 4;
     vao.addVbo(reinterpret_cast<float *>(texbuf.data()), 
         texbuf.size() * texcoord_element_size, texcoord_element_size, 1);
@@ -592,12 +593,12 @@ void genAxisVao(bd::VertexArrayObject &vao)
 void genBoxVao(bd::VertexArrayObject &vao)
 {
     gl_log("Generating bounding box vertex buffers.");
-    // vertex positions into attribute 0
+    // positions as vertex attribute 0
     vao.addVbo((float *)(bd::Box::vertices.data()),
         bd::Box::vertices.size() * bd::Box::vert_element_size,
         bd::Box::vert_element_size, 0);
 
-    // vertex colors into attribute 1
+    // colors as vertex attribute 1
     vao.addVbo((float *) bd::Box::colors.data(),
         bd::Box::colors.size() * 3,
         3, 1);

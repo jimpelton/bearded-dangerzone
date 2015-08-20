@@ -2,7 +2,6 @@
 #define CATCH_CONFIG_MAIN
 #include <catch.hpp>
 
-#include <binaryvolume.h>
 
 // [rows][columns][slabs]
 // [4][5][3]
