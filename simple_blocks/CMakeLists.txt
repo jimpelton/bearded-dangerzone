@@ -4,6 +4,7 @@
 
 cmake_minimum_required(VERSION 2.8)
 
+################################################################################
 # Nvidia Visual Tools Extensions
 if(NOT DEFINED USE_NVTOOLSEXT)
     set(USE_NVTOOLSEXT FALSE)
@@ -25,6 +26,7 @@ if (USE_NVTOOLSEXT)
 
 endif(USE_NVTOOLSEXT) 
 
+################################################################################
 # Nvidia Perfmon Api (access cpu counter information)
 if(NOT DEFINED USE_NVPMAPI)
     set(USE_NVPMAPI FALSE)
@@ -42,48 +44,62 @@ if (USE_NVPMAPI)
     #     set(NVPMAPI_LIB "")
     # endif()
     # set(NVPMAPI_LIB ${${NVTOOLSEXT_LIB}} CACHE FILEPATH "NvPmApi library file")
-endif(USE_NVPMAPI) 
+endif(USE_NVPMAPI)
 
+################################################################################
+if(NOT DEFINED CRUFT_INCLUDE_DIR)
+    set(CRUFT_INCLUDE_DIR)
+endif()
+set(CRUFT_INCLUDE_DIR ${${CRUFT_INCLUDE_DIR}} CACHE PATH "Cruft includes directory path")
+
+if(NOT DEFINED CRUFT_LIBRARIES)
+    set(CRUFT_LIBRARIES)
+endif()
+set(CRUFT_LIBRARIES ${${CRUFT_LIBRARIES}} CACHE FILEPATH "Cruft library file (crufterly.a).")
+
+################################################################################
 project(simple_blocks)
 
-set(simple_blocks_HEADERS 
-    src/cmdline.h 
-    src/create_vao.h
-    src/nvpm.h
-    src/glfw_callbacks.h
-)
-
-set(simple_blocks_SOURCES 
-    src/main.cpp 
-    src/cmdline.cpp
-    src/create_vao.cpp
-    src/glfw_callbacks.cpp
-    src/load_transfer.cpp
-)
-
-include_directories("${CRUFT_DIR}/include")  
-include_directories("${THIRDPARTY_DIR}/tclap/include")
-
 if (USE_NVTOOLSEXT)
-	include_directories("${NVTOOLSEXT_INCLUDE_DIR}")
+    include_directories("${NVTOOLSEXT_INCLUDE_DIR}")
 endif(USE_NVTOOLSEXT)
 
 if (USE_NVPMAPI)
-	include_directories("${NVPMAPI_INCLUDE_DIR}")
+    include_directories("${NVPMAPI_INCLUDE_DIR}")
 endif(USE_NVPMAPI)
+
+include_directories("${CRUFT_INCLUDE_DIR}")
+include_directories("${THIRDPARTY_DIR}/tclap/include")
+
+################################################################################
+set(simple_blocks_HEADERS
+        src/cmdline.h
+        src/create_vao.h
+        src/nvpm.h
+        src/glfw_callbacks.h
+)
+
+set(simple_blocks_SOURCES
+        src/main.cpp
+        src/cmdline.cpp
+        src/create_vao.cpp
+        src/glfw_callbacks.cpp
+        src/load_transfer.cpp
+)
 
 add_executable(simple_blocks "${simple_blocks_HEADERS}" "${simple_blocks_SOURCES}")
 
 
-target_link_libraries(
-    simple_blocks
+################################################################################
+target_link_libraries(simple_blocks
     ${OPENGL_LIBRARIES}
     ${GLFW_LIBRARIES}
     ${GLEW_LIBRARIES}
+    ${CRUFT_LIBRARIES}
     ${NVTOOLSEXT_LIB}
-    crufterly
 )
 
+################################################################################
 add_custom_command(TARGET simple_blocks POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_CURRENT_SOURCE_DIR}/shaders $<TARGET_FILE_DIR:simple_blocks>/shaders)
