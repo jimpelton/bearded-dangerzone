@@ -87,7 +87,7 @@ std::ostream& operator<<(std::ostream &ostr, SliceSet s)
 }
 
 
-bd::Axis g_axis; ///< The coordinate axis lines.
+bd::CoordinateAxis g_axis; ///< The coordinate axis lines.
 bd::Box g_box;
 
 std::vector<bd::VertexArrayObject *> g_vaoIds;
@@ -461,15 +461,14 @@ void draw(const glm::mat4 &vp)
 
 
 ///////////////////////////////////////////////////////////////////////////////
-std::chrono::system_clock::time_point startTime()
+std::chrono::high_resolution_clock::time_point startTime()
 {
-    using namespace std::chrono;
-    return high_resolution_clock::now();
+    return std::chrono::high_resolution_clock::now();
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
-void endTime(std::chrono::system_clock::time_point before)
+void endTime(std::chrono::high_resolution_clock::time_point before)
 {
     using namespace std::chrono;
     auto now = high_resolution_clock::now();
@@ -560,14 +559,24 @@ void genQuadVao(bd::VertexArrayObject &vao, unsigned int numSlices)
 
 
     /// Add buffers to VAO ///
-    // positions as vertex attribute 0
-    vao.addVbo(reinterpret_cast<float *>(vbuf.data()), 
-        vbuf.size() * bd::Quad::vert_element_size, bd::Quad::vert_element_size, 0);
+    // add positions as vertex attribute 0
+    vao.addVbo
+    (
+        reinterpret_cast<float *>(vbuf.data()), 
+        vbuf.size() * bd::Quad::vert_element_size, 
+        bd::Quad::vert_element_size, 
+        0  // attribute 0
+    );
 
-    // texcoords as vertex attribute 1
+    // add texcoords as vertex attribute 1
     const size_t texcoord_element_size = 4;
-    vao.addVbo(reinterpret_cast<float *>(texbuf.data()), 
-        texbuf.size() * texcoord_element_size, texcoord_element_size, 1);
+    vao.addVbo
+    (
+        reinterpret_cast<float *>(texbuf.data()), 
+        texbuf.size() * texcoord_element_size, 
+        texcoord_element_size, 
+        1  // attribute 1
+    );
     
     // element index buffer
     vao.setIndexBuffer(elebuf.data(), elebuf.size());
@@ -578,15 +587,26 @@ void genQuadVao(bd::VertexArrayObject &vao, unsigned int numSlices)
 void genAxisVao(bd::VertexArrayObject &vao)
 {
     gl_log("Generating axis vertex buffers.");
+
+    using Axis = bd::CoordinateAxis;
+    
     // vertex positions into attribute 0
-    vao.addVbo((float *)(bd::Axis::verts.data()),
-        bd::Axis::verts.size() * bd::Axis::vert_element_size,
-        bd::Axis::vert_element_size, 0);
+    vao.addVbo
+    (
+        (float *)(Axis::verts.data()),
+        Axis::verts.size() * Axis::vert_element_size,
+        Axis::vert_element_size, 
+        0  // attribute 0
+    );
 
     // vertex colors into attribute 1
-    vao.addVbo((float *)(bd::Axis::colors.data()),
-        bd::Axis::colors.size() * 3,
-        3, 1);
+    vao.addVbo
+    (
+        (float *)(Axis::colors.data()),
+        Axis::colors.size() * 3,
+        3, // 3 floats per color
+        1  // attribute 1
+    );
 }
 
 

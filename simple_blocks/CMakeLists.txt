@@ -26,6 +26,7 @@ if (USE_NVTOOLSEXT)
 
 endif(USE_NVTOOLSEXT) 
 
+
 ################################################################################
 # Nvidia Perfmon Api (access cpu counter information)
 if(NOT DEFINED USE_NVPMAPI)
@@ -46,7 +47,9 @@ if (USE_NVPMAPI)
     # set(NVPMAPI_LIB ${${NVTOOLSEXT_LIB}} CACHE FILEPATH "NvPmApi library file")
 endif(USE_NVPMAPI)
 
+
 ################################################################################
+# Libcrufterly
 if(NOT DEFINED CRUFT_INCLUDE_DIR)
     set(CRUFT_INCLUDE_DIR)
 endif()
@@ -57,7 +60,9 @@ if(NOT DEFINED CRUFT_LIBRARIES)
 endif()
 set(CRUFT_LIBRARIES ${${CRUFT_LIBRARIES}} CACHE FILEPATH "Cruft library file (crufterly.a).")
 
+
 ################################################################################
+# Project definition
 project(simple_blocks)
 
 if (USE_NVTOOLSEXT)
@@ -71,7 +76,9 @@ endif(USE_NVPMAPI)
 include_directories("${CRUFT_INCLUDE_DIR}")
 include_directories("${THIRDPARTY_DIR}/tclap/include")
 
+
 ################################################################################
+# Sources
 set(simple_blocks_HEADERS
         src/axis_enum.h
         src/cmdline.h
@@ -88,10 +95,11 @@ set(simple_blocks_SOURCES
         src/load_transfer.cpp
 )
 
-add_executable(simple_blocks "${simple_blocks_HEADERS}" "${simple_blocks_SOURCES}")
-
 
 ################################################################################
+# Linker
+add_executable(simple_blocks "${simple_blocks_HEADERS}" "${simple_blocks_SOURCES}")
+
 target_link_libraries(simple_blocks
     ${OPENGL_LIBRARIES}
     ${GLFW_LIBRARIES}
@@ -101,6 +109,7 @@ target_link_libraries(simple_blocks
 )
 
 ################################################################################
+# Copy shaders folder to the build directory.
 add_custom_command(TARGET simple_blocks POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_CURRENT_SOURCE_DIR}/shaders $<TARGET_FILE_DIR:simple_blocks>/shaders)
