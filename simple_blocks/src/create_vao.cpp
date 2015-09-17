@@ -29,6 +29,7 @@ namespace {
 void create_verts_helper(size_t numSlices, std::vector<glm::vec4> &vbuf,
     int axis, const std::array<glm::vec4, 4> &vertsProto);
 
+
 ///////////////////////////////////////////////////////////////////////////////
 /// \brief Create quad proxy geometry along axis \c a.
 /// \note Quads are created in the region R=[min+delta, max-delta].

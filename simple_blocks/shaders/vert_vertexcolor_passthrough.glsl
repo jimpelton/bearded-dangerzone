@@ -9,5 +9,5 @@ out vec3 vcol;
 void main () {
   gl_Position = mvp * vec4(v, 1.0);
   vcol = in_col;
-};
+}
 
