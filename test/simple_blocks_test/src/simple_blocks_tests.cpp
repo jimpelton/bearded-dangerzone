@@ -1,4 +1,3 @@
-
 #include <create_vao.h>
 #include <axis_enum.h>
 
@@ -15,103 +14,150 @@
 
 
 namespace Catch {
-    std::string toString(const glm::vec3 &v)
-    {
-        return glm::to_string(v);
-    }
-
-    std::string toString(const glm::vec4 &v)
-    {
-        return glm::to_string(v);
-    }
-
-    std::string toString(const glm::u16vec4 &v)
-    {
-        return glm::to_string(v);
-    }
-
-    template<> struct StringMaker<glm::vec4> {
-        static std::string convert( glm::vec4 const& value ) {
-            return glm::to_string( value );
-        }
-    };
+std::string toString(const glm::vec3 &v) {
+  return glm::to_string(v);
 }
 
-TEST_CASE("createQuads_X", "[vertex][X]")
-{
-    glm::vec3 min{0,0,0};
-    glm::vec3 max{1,1,1};
-    float numSlices{ 4.0f };
+std::string toString(const glm::vec4 &v) {
+  return glm::to_string(v);
+}
 
-    std::vector<glm::vec4> expected{
-            glm::vec4{ 0, 0, 0, 1},
-            glm::vec4{ 0, 1, 0, 1},
-            glm::vec4{ 0, 0, 1, 1},
-            glm::vec4{ 0, 1, 1, 1},
+std::string toString(const glm::u16vec4 &v) {
+  return glm::to_string(v);
+}
 
-            glm::vec4{ 0.25, 0, 0, 1},
-            glm::vec4{ 0.25, 1, 0, 1},
-            glm::vec4{ 0.25, 0, 1, 1},
-            glm::vec4{ 0.25, 1, 1, 1},
+template<>
+struct StringMaker<glm::vec4> {
+  static std::string convert(glm::vec4 const &value) {
+    return glm::to_string(value);
+  }
+};
+}
 
-            glm::vec4{ 0.5, 0, 0, 1},
-            glm::vec4{ 0.5, 1, 0, 1},
-            glm::vec4{ 0.5, 0, 1, 1},
-            glm::vec4{ 0.5, 1, 1, 1},
+TEST_CASE("createQuads_X", "[vertex][X]") {
+  glm::vec3 min{0, 0, 0};
+  glm::vec3 max{1, 1, 1};
+  float numSlices{4.0f};
 
-            glm::vec4{ 0.75, 0, 0, 1},
-            glm::vec4{ 0.75, 1, 0, 1},
-            glm::vec4{ 0.75, 0, 1, 1},
-            glm::vec4{ 0.75, 1, 1, 1},
+  std::vector<glm::vec4> expected{
+      glm::vec4{0, 0, 0, 1},
+      glm::vec4{0, 1, 0, 1},
+      glm::vec4{0, 0, 1, 1},
+      glm::vec4{0, 1, 1, 1},
 
-    };
+      glm::vec4{0.25, 0, 0, 1},
+      glm::vec4{0.25, 1, 0, 1},
+      glm::vec4{0.25, 0, 1, 1},
+      glm::vec4{0.25, 1, 1, 1},
 
-    std::vector<glm::vec4> actual;
-    createQuads(actual, min, max, numSlices, Axis::X);
+      glm::vec4{0.5, 0, 0, 1},
+      glm::vec4{0.5, 1, 0, 1},
+      glm::vec4{0.5, 0, 1, 1},
+      glm::vec4{0.5, 1, 1, 1},
 
-//    REQUIRE(actual.size() == static_cast<size_t>(numSlices)*4);
-    REQUIRE(actual == expected);
+      glm::vec4{0.75, 0, 0, 1},
+      glm::vec4{0.75, 1, 0, 1},
+      glm::vec4{0.75, 0, 1, 1},
+      glm::vec4{0.75, 1, 1, 1},
 
-    for(auto &v : actual) {
-        std::cout << Catch::toString(v) << std::endl;
-    }
+  };
 
+  std::vector<glm::vec4> actual;
+  createQuads(actual, min, max, numSlices, Axis::X);
+
+  REQUIRE(actual == expected);
 
 }
 
-TEST_CASE("createQuads_Y", "[vertex][Y]")
-{
+TEST_CASE("createQuads_Y", "[vertex][Y]") {
 
-    glm::vec3 min{0,0,0};
-    glm::vec3 max{1,1,1};
-    float numSlices{ 4.0f };
+  glm::vec3 min{0, 0, 0};
+  glm::vec3 max{1, 1, 1};
+  float numSlices{4.0f};
 
-    std::vector<glm::vec4> expected{
-            glm::vec4{ 0, 0, 0, 1},
-            glm::vec4{ 0, 1, 0, 1},
-            glm::vec4{ 0, 0, 1, 1},
-            glm::vec4{ 0, 1, 1, 1},
+  std::vector<glm::vec4> expected{
+      glm::vec4{0, 0, 0, 1},
+      glm::vec4{1, 0, 0, 1},
+      glm::vec4{0, 0, 1, 1},
+      glm::vec4{1, 0, 1, 1},
 
-            glm::vec4{ 0.25, 0, 0, 1},
-            glm::vec4{ 0.25, 1, 0, 1},
-            glm::vec4{ 0.25, 0, 1, 1},
-            glm::vec4{ 0.25, 1, 1, 1},
+      glm::vec4{0, 0.25, 0, 1},
+      glm::vec4{1, 0.25, 0, 1},
+      glm::vec4{0, 0.25, 1, 1},
+      glm::vec4{1, 0.25, 1, 1},
 
-            glm::vec4{ 0.5, 0, 0, 1},
-            glm::vec4{ 0.5, 1, 0, 1},
-            glm::vec4{ 0.5, 0, 1, 1},
-            glm::vec4{ 0.5, 1, 1, 1},
+      glm::vec4{0, 0.5, 0, 1},
+      glm::vec4{1, 0.5, 0, 1},
+      glm::vec4{0, 0.5, 1, 1},
+      glm::vec4{1, 0.5, 1, 1},
 
-            glm::vec4{ 0.75, 0, 0, 1},
-            glm::vec4{ 0.75, 1, 0, 1},
-            glm::vec4{ 0.75, 0, 1, 1},
-            glm::vec4{ 0.75, 1, 1, 1},
+      glm::vec4{0, 0.75, 0, 1},
+      glm::vec4{1, 0.75, 0, 1},
+      glm::vec4{0, 0.75, 1, 1},
+      glm::vec4{1, 0.75, 1, 1},
 
-    };
-    std::vector<glm::vec4> actual;
-    createQuads(actual, min, {max.x, min.y, max.z}, numSlices, Axis::Y);
+  };
+
+  std::vector<glm::vec4> actual;
+  createQuads(actual, min, max, numSlices, Axis::Y);
+
+  REQUIRE(actual == expected);
 
 }
+
+TEST_CASE("createQuads_Z", "[vertex][Z]") {
+
+  glm::vec3 min{0, 0, 0};
+  glm::vec3 max{1, 1, 1};
+  float numSlices{4.0f};
+
+  std::vector<glm::vec4> expected{
+      glm::vec4{0, 0, 0, 1},
+      glm::vec4{1, 0, 0, 1},
+      glm::vec4{0, 1, 0, 1},
+      glm::vec4{1, 1, 0, 1},
+
+      glm::vec4{0, 0, 0.25, 1},
+      glm::vec4{1, 0, 0.25, 1},
+      glm::vec4{0, 1, 0.25, 1},
+      glm::vec4{1, 1, 0.25, 1},
+
+      glm::vec4{0, 0, 0.5, 1},
+      glm::vec4{1, 0, 0.5, 1},
+      glm::vec4{0, 1, 0.5, 1},
+      glm::vec4{1, 1, 0.5, 1},
+
+      glm::vec4{0, 0, 0.75, 1},
+      glm::vec4{1, 0, 0.75, 1},
+      glm::vec4{0, 1, 0.75, 1},
+      glm::vec4{1, 1, 0.75, 1},
+
+  };
+
+  std::vector<glm::vec4> actual;
+  createQuads(actual, min, max, numSlices, Axis::Z);
+
+  REQUIRE(actual == expected);
+
+}
+
+TEST_CASE("createElementIdx generates increasing sequence with restart symbol OxFFFF", "[vertex][elements]") {
+
+  size_t numSlices{ 4 };
+  std::vector<unsigned short> expected{
+    0, 1, 2, 3, 0xFFFF,
+    4, 5, 6, 7, 0xFFFF,
+    8, 9, 10, 11, 0xFFFF,
+    12, 13, 14, 15, 0xFFFF
+  };
+
+  std::vector<unsigned short> actual;
+  createElementIdx(actual, numSlices);
+
+  REQUIRE(actual == expected);
+
+}
+
 
 //TEST_CASE("sliceIndexToElements() returns triangle strip ordering", "[quad][vboIndexes]")
 //{

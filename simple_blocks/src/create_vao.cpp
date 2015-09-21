@@ -1,4 +1,3 @@
-
 #include "create_vao.h"
 #include "axis_enum.h"
 
@@ -13,8 +12,25 @@
 //namespace vert
 //{
 
+void createQuads_X(std::vector<glm::vec4> &quads, const glm::vec3 &min,
+                   const glm::vec3 &max, accum_delta<float> &nextDelta);
+
+
+void createQuads_Y(std::vector<glm::vec4> &quads, const glm::vec3 &min,
+                   const glm::vec3 &max, accum_delta<float> &nextDelta);
+
+
+void createQuads_Z(std::vector<glm::vec4> &quads, const glm::vec3 &min,
+                   const glm::vec3 &max, accum_delta<float> &nextDelta);
+
 ////////////////////////////////////////////////////////////////////////////////
-/// \brief Create quads perpendicular to X-axis
+/// \brief Create quads perpendicular to X-axis within the region with diagonal
+///        from min to max.
+///
+/// \note Quad vertices are returned in triangle strip winding order.
+///
+/// \param[in] min Minimum corner of first plane
+/// \param[in] max Maximum corner of first plane.
 ///
 ///  y.min         y.max
 ///  z.max         z.max
@@ -30,7 +46,7 @@
 void createQuads_X(std::vector<glm::vec4> &quads, const glm::vec3 &min,
                    const glm::vec3 &max, accum_delta<float> &nextDelta) {
 
-  while(nextDelta.hasNext()) {
+  while (nextDelta.hasNext()) {
     float offset = nextDelta();
     quads.push_back({offset, min.y, min.z, 1});   // ll
     quads.push_back({offset, max.y, min.z, 1});   // lr
@@ -41,8 +57,13 @@ void createQuads_X(std::vector<glm::vec4> &quads, const glm::vec3 &min,
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-/// \brief Create quads perpendicular to Y-axis
+/// \brief Create quads perpendicular to Y-axis within the region with diagonal
+///        from min to max.
 ///
+/// \note Quad vertices are returned in triangle strip winding order.
+///
+/// \param[in] min Minimum corner of first plane
+/// \param[in] max Maximum corner of first plane.
 ///  x.min         x.max
 ///  z.max         z.max
 ///    +------------+
@@ -57,7 +78,7 @@ void createQuads_X(std::vector<glm::vec4> &quads, const glm::vec3 &min,
 void createQuads_Y(std::vector<glm::vec4> &quads, const glm::vec3 &min,
                    const glm::vec3 &max, accum_delta<float> &nextDelta) {
 
-  while(nextDelta.hasNext()) {
+  while (nextDelta.hasNext()) {
     float offset = nextDelta();
     quads.push_back({min.x, offset, min.z, 1});   // ll
     quads.push_back({max.x, offset, min.z, 1});   // lr
@@ -68,7 +89,13 @@ void createQuads_Y(std::vector<glm::vec4> &quads, const glm::vec3 &min,
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-/// \brief Create quads perpendicular to Z-axis
+/// \brief Create quads perpendicular to Z-axis within the region with diagonal
+///        from min to max.
+///
+/// \note Quad vertices are returned in triangle strip winding order.
+///
+/// \param[in] min Minimum corner of region
+/// \param[in] max Maximum corner of region.
 ///
 ///  x.min         x.max
 ///  y.max         y.max
@@ -84,7 +111,7 @@ void createQuads_Y(std::vector<glm::vec4> &quads, const glm::vec3 &min,
 void createQuads_Z(std::vector<glm::vec4> &quads, const glm::vec3 &min,
                    const glm::vec3 &max, accum_delta<float> &nextDelta) {
 
-  while(nextDelta.hasNext()) {
+  while (nextDelta.hasNext()) {
     float offset = nextDelta();
     quads.push_back({min.x, min.y, offset, 1});   // ll
     quads.push_back({max.x, min.y, offset, 1});   // lr
@@ -98,46 +125,61 @@ void createQuads_Z(std::vector<glm::vec4> &quads, const glm::vec3 &min,
 /// \brief Create quad proxy geometry along axis \c a, within bounding box with
 ///        corners \c min and \c max.
 /// \note Quads are created in the region R=[min+delta, max-delta].
+///
 /// \param quads[out] Storage for created quads to be returned in.
+/// \param min[in] Minimum corner of bounding region
+/// \param max[in] Maximum corner of bounding region.
 /// \param numPlanes[in] Number of quads to create.
 /// \param a[in] Quads created perpendicular to \c a.
 ///////////////////////////////////////////////////////////////////////////////
-void createQuads(std::vector<glm::vec4> &quads, const glm::vec3 &min, 
+void createQuads(std::vector<glm::vec4> &quads, const glm::vec3 &min,
                  const glm::vec3 &max, size_t numPlanes, Axis a) {
 
   quads.clear();
   quads.reserve(numPlanes);
-  float delta{ 0 };
+  float delta{0};
 
-  switch(a) {
-    case Axis::X:
-      {
-        delta = (max.x - min.x) / static_cast<float>(numPlanes);
-        accum_delta<float> ad(min.x, delta, max.x);
-        createQuads_X(quads, min, max, ad);
-        break;
-      }
-    case Axis::Y:
-      {
-        delta = (max.y - min.y) / static_cast<float>(numPlanes);
-        accum_delta<float> ad(min.y, delta, max.y);
-        createQuads_Y(quads, min, max, ad);
-        break;
-      }
-    case Axis::Z:
-      {
-        delta = (max.z - min.z) / static_cast<float>(numPlanes);
-        accum_delta<float> ad(min.z, delta, max.z);
-        createQuads_Z(quads, min, max, ad);
-        break;
-      }
+  switch (a) {
+    case Axis::X: {
+      delta = (max.x - min.x) / static_cast<float>(numPlanes);
+      accum_delta<float> ad(min.x, delta, max.x);
+      createQuads_X(quads, min, max, ad);
+      break;
+    }
+
+    case Axis::Y: {
+      delta = (max.y - min.y) / static_cast<float>(numPlanes);
+      accum_delta<float> ad(min.y, delta, max.y);
+      createQuads_Y(quads, min, max, ad);
+      break;
+    }
+
+    case Axis::Z: {
+      delta = (max.z - min.z) / static_cast<float>(numPlanes);
+      accum_delta<float> ad(min.z, delta, max.z);
+      createQuads_Z(quads, min, max, ad);
+      break;
+    }
       // default: break;
   }
 
 }
 
 
-void createElementIdx(std::vector<unsigned short> &elebuf) {
+void createElementIdx(std::vector<unsigned short> &elebuf, size_t numQuads) {
+
+  size_t totalElems{ numQuads * 5 };  // 4 verts + 1 restart symbol per quad.
+
+  elebuf.clear();
+  elebuf.reserve(totalElems);
+
+  for (size_t i{ 0 }; i<numQuads; ++i) {
+    elebuf.push_back(0+4*i);
+    elebuf.push_back(1+4*i);
+    elebuf.push_back(2+4*i);
+    elebuf.push_back(3+4*i);
+    elebuf.push_back(0xFFFF);
+  }
 
 }
 

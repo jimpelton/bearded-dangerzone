@@ -12,8 +12,8 @@
 //{
 
 ///////////////////////////////////////////////////////////////////////////
-/// \brief Generator that produces Ts spaced by \c delta amount and
-/// starting at \c start. Returns [start .. max), inclusive no both ends.
+/// \brief Generates (max-start)/d Ts.
+///        Returns sequence from [start .. max), non-inclusive on the right.
 ///////////////////////////////////////////////////////////////////////////
 template<typename T,
         typename = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
@@ -43,23 +43,12 @@ private:
     T m_max;    
 };
 
-void createQuads_X(std::vector<glm::vec4> &quads, const glm::vec3 &min,
-                   const glm::vec3 &max, accum_delta<float> &nextDelta);
-
-
-void createQuads_Y(std::vector<glm::vec4> &quads, const glm::vec3 &min,
-                   const glm::vec3 &max, accum_delta<float> &nextDelta);
-
-
-void createQuads_Z(std::vector<glm::vec4> &quads, const glm::vec3 &min,
-                   const glm::vec3 &max, accum_delta<float> &nextDelta);
-
 
 void createQuads(std::vector<glm::vec4> &quads, const glm::vec3 &min,
                  const glm::vec3 &max, size_t numPlanes, Axis a);
 
 
-void createElementIdx(std::vector<unsigned short> &elebuf);
+void createElementIdx(std::vector<unsigned short> &elebuf, size_t numQuads);
 
 
 
