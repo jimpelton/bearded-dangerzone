@@ -6,6 +6,7 @@
 #include <glm/fwd.hpp>
 
 #include <vector>
+#include <type_traits>
 
 //namespace vert
 //{
@@ -19,9 +20,9 @@ template<typename T,
 class accum_delta {
 public:
     accum_delta(T start, T d, T max)
-            : m_delta{ d }
-            , m_next{ start }
-            , m_max{ max }
+        : m_delta{ d }
+        , m_next{ start }
+        , m_max{ max }
     { }
 
     T operator()() {
@@ -37,9 +38,9 @@ public:
     }
 
 private:
-    T m_delta;  // delta
-    T m_next;   // value
-    T m_max;    //max
+    T m_delta;  
+    T m_next;   
+    T m_max;    
 };
 
 void createQuads_X(std::vector<glm::vec4> &quads, const glm::vec3 &min,
@@ -58,7 +59,7 @@ void createQuads(std::vector<glm::vec4> &quads, const glm::vec3 &min,
                  const glm::vec3 &max, size_t numPlanes, Axis a);
 
 
-void createElementIdx(std::vector<unsigned short> &elebuf );
+void createElementIdx(std::vector<unsigned short> &elebuf);
 
 
 

@@ -9,16 +9,9 @@
 #include <algorithm>
 #include <cassert>
 
-#include <type_traits>
 
 //namespace vert
 //{
-
-
-
-
-
-
 
 ////////////////////////////////////////////////////////////////////////////////
 /// \brief Create quads perpendicular to X-axis
@@ -35,15 +28,16 @@
 ///  z.min         z.min
 ////////////////////////////////////////////////////////////////////////////////
 void createQuads_X(std::vector<glm::vec4> &quads, const glm::vec3 &min,
-                   const glm::vec3 &max, accum_delta<float> &nextDelta)
-{
-    while(nextDelta.hasNext()) {
-        float offset = nextDelta();
-        quads.push_back({offset, min.y, min.z, 1});   // ll
-        quads.push_back({offset, max.y, min.z, 1});   // lr
-        quads.push_back({offset, min.y, max.z, 1});   // ul
-        quads.push_back({offset, max.y, max.z, 1});   // ur
-    }
+                   const glm::vec3 &max, accum_delta<float> &nextDelta) {
+
+  while(nextDelta.hasNext()) {
+    float offset = nextDelta();
+    quads.push_back({offset, min.y, min.z, 1});   // ll
+    quads.push_back({offset, max.y, min.z, 1});   // lr
+    quads.push_back({offset, min.y, max.z, 1});   // ul
+    quads.push_back({offset, max.y, max.z, 1});   // ur
+  }
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -61,15 +55,16 @@ void createQuads_X(std::vector<glm::vec4> &quads, const glm::vec3 &min,
 ///  z.min         z.min
 ////////////////////////////////////////////////////////////////////////////////
 void createQuads_Y(std::vector<glm::vec4> &quads, const glm::vec3 &min,
-                   const glm::vec3 &max, accum_delta<float> &nextDelta)
-{
-    while(nextDelta.hasNext()) {
-        float offset = nextDelta();
-        quads.push_back({min.x, offset, min.z, 1});   // ll
-        quads.push_back({max.x, offset, min.z, 1});   // lr
-        quads.push_back({min.x, offset, max.z, 1});   // ul
-        quads.push_back({max.x, offset, max.z, 1});   // ur
-    }
+                   const glm::vec3 &max, accum_delta<float> &nextDelta) {
+
+  while(nextDelta.hasNext()) {
+    float offset = nextDelta();
+    quads.push_back({min.x, offset, min.z, 1});   // ll
+    quads.push_back({max.x, offset, min.z, 1});   // lr
+    quads.push_back({min.x, offset, max.z, 1});   // ul
+    quads.push_back({max.x, offset, max.z, 1});   // ur
+  }
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -87,56 +82,68 @@ void createQuads_Y(std::vector<glm::vec4> &quads, const glm::vec3 &min,
 ///  y.min         y.min
 ////////////////////////////////////////////////////////////////////////////////
 void createQuads_Z(std::vector<glm::vec4> &quads, const glm::vec3 &min,
-                   const glm::vec3 &max, accum_delta<float> &nextDelta)
-{
-    while(nextDelta.hasNext()) {
-        float offset = nextDelta();
-        quads.push_back({min.x, min.y, offset, 1});   // ll
-        quads.push_back({max.x, min.y, offset, 1});   // lr
-        quads.push_back({min.x, max.y, offset, 1});   // ul
-        quads.push_back({max.x, max.y, offset, 1});   // ur
-    }
+                   const glm::vec3 &max, accum_delta<float> &nextDelta) {
+
+  while(nextDelta.hasNext()) {
+    float offset = nextDelta();
+    quads.push_back({min.x, min.y, offset, 1});   // ll
+    quads.push_back({max.x, min.y, offset, 1});   // lr
+    quads.push_back({min.x, max.y, offset, 1});   // ul
+    quads.push_back({max.x, max.y, offset, 1});   // ur
+  }
+
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-/// \brief Create quad proxy geometry along axis \c a, within bounding box bbox.
+/// \brief Create quad proxy geometry along axis \c a, within bounding box with
+///        corners \c min and \c max.
 /// \note Quads are created in the region R=[min+delta, max-delta].
 /// \param quads[out] Storage for created quads to be returned in.
 /// \param numPlanes[in] Number of quads to create.
 /// \param a[in] Quads created perpendicular to \c a.
 ///////////////////////////////////////////////////////////////////////////////
-void createQuads(std::vector<glm::vec4> &quads, const glm::vec3 &min,
-                 const glm::vec3 &max, size_t numPlanes, Axis a)
-{
-    quads.clear();
-    quads.reserve(numPlanes);
-    float delta{ 0 };
-    
-    switch(a) {
-        case Axis::X:
-        {
-            delta = (max.x - min.x) / static_cast<float>(numPlanes);
-            accum_delta<float> ad(min.x, delta, max.x);
-            createQuads_X(quads, min, max, ad);
-            break;
-        }
-        case Axis::Y:
-        {
-            delta = (max.y - min.y) / static_cast<float>(numPlanes);
-            accum_delta<float> ad(min.y, delta, max.y);
-            createQuads_Y(quads, min, max, ad);
-            break;
-        }
-        case Axis::Z:
-        {
-            delta = (max.z - min.z) / static_cast<float>(numPlanes);
-            accum_delta<float> ad(min.z, delta, max.z);
-            createQuads_Z(quads, min, max, ad);
-            break;
-        }
-//        default: break;
-    }
+void createQuads(std::vector<glm::vec4> &quads, const glm::vec3 &min, 
+                 const glm::vec3 &max, size_t numPlanes, Axis a) {
+
+  quads.clear();
+  quads.reserve(numPlanes);
+  float delta{ 0 };
+
+  switch(a) {
+    case Axis::X:
+      {
+        delta = (max.x - min.x) / static_cast<float>(numPlanes);
+        accum_delta<float> ad(min.x, delta, max.x);
+        createQuads_X(quads, min, max, ad);
+        break;
+      }
+    case Axis::Y:
+      {
+        delta = (max.y - min.y) / static_cast<float>(numPlanes);
+        accum_delta<float> ad(min.y, delta, max.y);
+        createQuads_Y(quads, min, max, ad);
+        break;
+      }
+    case Axis::Z:
+      {
+        delta = (max.z - min.z) / static_cast<float>(numPlanes);
+        accum_delta<float> ad(min.z, delta, max.z);
+        createQuads_Z(quads, min, max, ad);
+        break;
+      }
+      // default: break;
+  }
+
 }
+
+
+void createElementIdx(std::vector<unsigned short> &elebuf) {
+
+}
+
+
+
+
 
 //
 /////////////////////////////////////////////////////////////////////////////////
