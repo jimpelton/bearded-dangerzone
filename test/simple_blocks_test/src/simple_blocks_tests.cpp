@@ -1,12 +1,15 @@
 
 #include <create_vao.h>
+#include <axis_enum.h>
 
 #include <glm/glm.hpp>
-#include <glm/gtx/string_cast.inl>
+#include <glm/gtx/string_cast.hpp>
+
+#include <iostream>
+#include <sstream>
 
 #include <vector>
 #include <array>
-#include <sstream>
 
 #include <catch.hpp>
 
@@ -34,301 +37,376 @@ namespace Catch {
     };
 }
 
-
-TEST_CASE("sliceIndexToElements() returns triangle strip ordering", "[quad][vboIndexes]")
+TEST_CASE("createQuads_X", "[vertex][X]")
 {
-    std::vector<glm::u16vec4> ebuf_expected{
-        glm::u16vec4(0, 1, 3, 2),     // x-y
-        glm::u16vec4(4, 5, 7, 6),     // x-z
-        glm::u16vec4(8, 9, 11, 10)    // y-z
+    glm::vec3 min{0,0,0};
+    glm::vec3 max{1,1,1};
+    float numSlices{ 4.0f };
+
+    std::vector<glm::vec4> expected{
+            glm::vec4{ 0, 0, 0, 1},
+            glm::vec4{ 0, 1, 0, 1},
+            glm::vec4{ 0, 0, 1, 1},
+            glm::vec4{ 0, 1, 1, 1},
+
+            glm::vec4{ 0.25, 0, 0, 1},
+            glm::vec4{ 0.25, 1, 0, 1},
+            glm::vec4{ 0.25, 0, 1, 1},
+            glm::vec4{ 0.25, 1, 1, 1},
+
+            glm::vec4{ 0.5, 0, 0, 1},
+            glm::vec4{ 0.5, 1, 0, 1},
+            glm::vec4{ 0.5, 0, 1, 1},
+            glm::vec4{ 0.5, 1, 1, 1},
+
+            glm::vec4{ 0.75, 0, 0, 1},
+            glm::vec4{ 0.75, 1, 0, 1},
+            glm::vec4{ 0.75, 0, 1, 1},
+            glm::vec4{ 0.75, 1, 1, 1},
+
     };
 
-    std::vector<glm::u16vec4> ebuf_actual;
+    std::vector<glm::vec4> actual;
+    createQuads(actual, min, max, numSlices, Axis::X);
 
-    int ebufIdx = 0;
-    for (int i = 0; i < 3; ++i) {
-        ebuf_actual.push_back(vert::sliceIndexToElements(ebufIdx));
-        ebufIdx++;
+//    REQUIRE(actual.size() == static_cast<size_t>(numSlices)*4);
+    REQUIRE(actual == expected);
+
+    for(auto &v : actual) {
+        std::cout << Catch::toString(v) << std::endl;
     }
-    
-    REQUIRE(ebuf_actual == ebuf_expected);
+
+
 }
 
-
-
-TEST_CASE("start returns 0.0 for one slice", "[quad][startCoords]")
+TEST_CASE("createQuads_Y", "[vertex][Y]")
 {
-    float expected = 0.0f;
-    float actual = vert::start(1, -0.5f, 0.5f);
 
-    REQUIRE(actual == expected);
-}
-
-
-TEST_CASE("start returns -0.5  for two slices")
-{
-    float expected = -0.5f;
-    float actual = vert::start(2, -0.5f, 0.5f);
-
-    REQUIRE(actual == expected);
-}
-
-
-TEST_CASE("start returns -0.5  for three slices")
-{
-    float expected = -0.5f;
-    float actual = vert::start(3, -0.5f, 0.5f);
-
-    REQUIRE(actual == expected);
-}
-
-TEST_CASE("start returns -0.5  for four slices")
-{
-    float expected = -0.5f;
-    float actual = vert::start(4, -0.5f, 0.5f);
-
-    REQUIRE(actual == expected);
-}
-
-
-TEST_CASE("start returns -0.5  for five slices")
-{
-    float expected = -0.5f;
-    float actual = vert::start(5, -0.5f, 0.5f);
-
-    REQUIRE(actual == expected);
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-TEST_CASE("delta returns 0.0 for 1 slice")
-{
-    float expected = 0.0f;
-    float actual = vert::delta(1, -0.5f, 0.5f);
-
-    REQUIRE(actual == expected);
-}
-
-
-TEST_CASE("delta returns 1.0 for 2 slices")
-{
-    float expected = 1.0f/2.0f;
-    float actual = vert::delta(2, -0.5f, 0.5f);
-
-    REQUIRE(actual == expected);
-}
-
-
-TEST_CASE("delta returns 0.33 for 3 slices")
-{
-    float expected = 1.0f/3.0f;
-    float actual = vert::delta(3, -0.5f, 0.5f);
-
-    REQUIRE(actual == Approx(expected));
-}
-
-
-TEST_CASE("delta returns 0.25 for 4 slices")
-{
-    float expected = 1.0f/4.0f;
-    float actual = vert::delta(4, -0.5f, 0.5f);
-
-    REQUIRE(actual == Approx(expected));
-}
-
-
-TEST_CASE("delta returns 0.25 for 5 slices")
-{
-    float expected = 1.0f/5.0f;
-    float actual = vert::delta(5, -0.5f, 0.5f);
-
-    REQUIRE(actual == expected);
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-TEST_CASE("create_verts_xy creates 4 quads along z-axis.")
-{
-    float del = vert::delta(4, -0.5f, 0.5f);
-    std::vector<glm::vec4> vbuf;
-    vert::create_verts_xy(4, vbuf);
-    
-    std::vector<glm::vec4> expected{
-        glm::vec4(-0.5f, -0.5f, -0.5f, 1.0f), // 0 ll
-        glm::vec4(0.5f, -0.5f, -0.5f, 1.0f), // 1 lr
-        glm::vec4(0.5f, 0.5f, -0.5f, 1.0f), // 2 ur
-        glm::vec4(-0.5f, 0.5f, -0.5f, 1.0f),  // 3 ul
-
-        glm::vec4(-0.5f, -0.5f, -0.5f + del, 1.0f), // 0 ll
-        glm::vec4(0.5f, -0.5f, -0.5f + del, 1.0f), // 1 lr
-        glm::vec4(0.5f, 0.5f, -0.5f + del, 1.0f), // 2 ur
-        glm::vec4(-0.5f, 0.5f, -0.5f + del, 1.0f),  // 3 ul
-
-        glm::vec4(-0.5f, -0.5f, -0.5f + (2 * del), 1.0f), // 0 ll
-        glm::vec4(0.5f, -0.5f, -0.5f + (2 * del), 1.0f), // 1 lr
-        glm::vec4(0.5f, 0.5f, -0.5f + (2 * del), 1.0f), // 2 ur
-        glm::vec4(-0.5f, 0.5f, -0.5f + (2 * del), 1.0f),  // 3 ul
-
-        glm::vec4(-0.5f, -0.5f, -0.5f + (3 * del), 1.0f), // 0 ll
-        glm::vec4(0.5f, -0.5f, -0.5f + (3 * del), 1.0f), // 1 lr
-        glm::vec4(0.5f, 0.5f, -0.5f + (3 * del), 1.0f), // 2 ur
-        glm::vec4(-0.5f, 0.5f, -0.5f + (3 * del), 1.0f)  // 3 ul
-    };
-
-    REQUIRE(16 == vbuf.size());
-    REQUIRE(vbuf == expected);
-}
-
-TEST_CASE("create_verts_xy creates 5 quads along z-axis.")
-{
-    float del = vert::delta(5, -0.5f, 0.5f);
-    std::vector<glm::vec4> vbuf;
-    vert::create_verts_xy(5, vbuf);
+    glm::vec3 min{0,0,0};
+    glm::vec3 max{1,1,1};
+    float numSlices{ 4.0f };
 
     std::vector<glm::vec4> expected{
-        glm::vec4(-0.5f, -0.5f, -0.5f, 1.0f), // 0 ll
-        glm::vec4(0.5f, -0.5f, -0.5f, 1.0f), // 1 lr
-        glm::vec4(0.5f, 0.5f, -0.5f, 1.0f), // 2 ur
-        glm::vec4(-0.5f, 0.5f, -0.5f, 1.0f),  // 3 ul
+            glm::vec4{ 0, 0, 0, 1},
+            glm::vec4{ 0, 1, 0, 1},
+            glm::vec4{ 0, 0, 1, 1},
+            glm::vec4{ 0, 1, 1, 1},
 
-        glm::vec4(-0.5f, -0.5f, -0.5f + del, 1.0f), // 0 ll
-        glm::vec4(0.5f, -0.5f, -0.5f + del, 1.0f), // 1 lr
-        glm::vec4(0.5f, 0.5f, -0.5f + del, 1.0f), // 2 ur
-        glm::vec4(-0.5f, 0.5f, -0.5f + del, 1.0f),  // 3 ul
+            glm::vec4{ 0.25, 0, 0, 1},
+            glm::vec4{ 0.25, 1, 0, 1},
+            glm::vec4{ 0.25, 0, 1, 1},
+            glm::vec4{ 0.25, 1, 1, 1},
 
-        glm::vec4(-0.5f, -0.5f, -0.5f + (2 * del), 1.0f), // 0 ll
-        glm::vec4(0.5f, -0.5f, -0.5f + (2 * del), 1.0f), // 1 lr
-        glm::vec4(0.5f, 0.5f, -0.5f + (2 * del), 1.0f), // 2 ur
-        glm::vec4(-0.5f, 0.5f, -0.5f + (2 * del), 1.0f),  // 3 ul
+            glm::vec4{ 0.5, 0, 0, 1},
+            glm::vec4{ 0.5, 1, 0, 1},
+            glm::vec4{ 0.5, 0, 1, 1},
+            glm::vec4{ 0.5, 1, 1, 1},
 
-        glm::vec4(-0.5f, -0.5f, -0.5f + (3 * del), 1.0f), // 0 ll
-        glm::vec4(0.5f, -0.5f, -0.5f + (3 * del), 1.0f), // 1 lr
-        glm::vec4(0.5f, 0.5f, -0.5f + (3 * del), 1.0f), // 2 ur
-        glm::vec4(-0.5f, 0.5f, -0.5f + (3 * del), 1.0f),  // 3 ul
-
-        glm::vec4(-0.5f, -0.5f, -0.5f + (4 * del), 1.0f), // 0 ll
-        glm::vec4(0.5f, -0.5f, -0.5f + (4 * del), 1.0f), // 1 lr
-        glm::vec4(0.5f, 0.5f, -0.5f + (4 * del), 1.0f), // 2 ur
-        glm::vec4(-0.5f, 0.5f, -0.5f + (4 * del), 1.0f)  // 3 ul
+            glm::vec4{ 0.75, 0, 0, 1},
+            glm::vec4{ 0.75, 1, 0, 1},
+            glm::vec4{ 0.75, 0, 1, 1},
+            glm::vec4{ 0.75, 1, 1, 1},
 
     };
+    std::vector<glm::vec4> actual;
+    createQuads(actual, min, {max.x, min.y, max.z}, numSlices, Axis::Y);
 
-    REQUIRE(20 == vbuf.size());
-    REQUIRE(vbuf == expected);
 }
 
-
-////////////////////////////////////////////////////////////////////////////////
-TEST_CASE("create_texbuf_xy creates four slice tex coords z-axis.")
-{
-    float del = vert::delta(4, 0.0f, 1.0f);
-    std::vector<glm::vec4> vbuf;
-    vert::create_texbuf_xy(4, vbuf);
-    
-    std::vector<glm::vec4> expected{
-        glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), // 0 ll
-        glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), // 1 lr
-        glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), // 2 ur
-        glm::vec4(0.0f, 1.0f, 0.0f, 1.0f),  // 3 ul
-
-        glm::vec4(0.0f, 0.0f, 0.0f + del, 1.0f), // 0 ll
-        glm::vec4(1.0f, 0.0f, 0.0f + del, 1.0f), // 1 lr
-        glm::vec4(1.0f, 1.0f, 0.0f + del, 1.0f), // 2 ur
-        glm::vec4(0.0f, 1.0f, 0.0f + del, 1.0f),  // 3 ul
-
-        glm::vec4(0.0f, 0.0f, 0.0f + (2 * del), 1.0f), // 0 ll
-        glm::vec4(1.0f, 0.0f, 0.0f + (2 * del), 1.0f), // 1 lr
-        glm::vec4(1.0f, 1.0f, 0.0f + (2 * del), 1.0f), // 2 ur
-        glm::vec4(0.0f, 1.0f, 0.0f + (2 * del), 1.0f),  // 3 ul
-
-        glm::vec4(0.0f, 0.0f, 0.0f + (3 * del), 1.0f), // 0 ll
-        glm::vec4(1.0f, 0.0f, 0.0f + (3 * del), 1.0f), // 1 lr
-        glm::vec4(1.0f, 1.0f, 0.0f + (3 * del), 1.0f), // 2 ur
-        glm::vec4(0.0f, 1.0f, 0.0f + (3 * del), 1.0f)  // 3 ul
-    };
-
-    REQUIRE(16 == vbuf.size());
-    REQUIRE(vbuf == expected);
-}
-
-TEST_CASE("create_texbuf_xy creates five slice tex coords z-axis.")
-{
-    float del = vert::delta(5, 0.0f, 1.0f);
-    std::vector<glm::vec4> vbuf;
-    vert::create_texbuf_xy(5, vbuf);
-    
-    std::vector<glm::vec4> expected{
-        glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), // 0 ll
-        glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), // 1 lr
-        glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), // 2 ur
-        glm::vec4(0.0f, 1.0f, 0.0f, 1.0f),  // 3 ul
-
-        glm::vec4(0.0f, 0.0f, 0.0f + del, 1.0f), // 0 ll
-        glm::vec4(1.0f, 0.0f, 0.0f + del, 1.0f), // 1 lr
-        glm::vec4(1.0f, 1.0f, 0.0f + del, 1.0f), // 2 ur
-        glm::vec4(0.0f, 1.0f, 0.0f + del, 1.0f),  // 3 ul
-
-        glm::vec4(0.0f, 0.0f, 0.0f + (2 * del), 1.0f), // 0 ll
-        glm::vec4(1.0f, 0.0f, 0.0f + (2 * del), 1.0f), // 1 lr
-        glm::vec4(1.0f, 1.0f, 0.0f + (2 * del), 1.0f), // 2 ur
-        glm::vec4(0.0f, 1.0f, 0.0f + (2 * del), 1.0f),  // 3 ul
-
-        glm::vec4(0.0f, 0.0f, 0.0f + (3 * del), 1.0f), // 0 ll
-        glm::vec4(1.0f, 0.0f, 0.0f + (3 * del), 1.0f), // 1 lr
-        glm::vec4(1.0f, 1.0f, 0.0f + (3 * del), 1.0f), // 2 ur
-        glm::vec4(0.0f, 1.0f, 0.0f + (3 * del), 1.0f),  // 3 ul
-
-        glm::vec4(0.0f, 0.0f, 0.0f + (4 * del), 1.0f), // 0 ll
-        glm::vec4(1.0f, 0.0f, 0.0f + (4 * del), 1.0f), // 1 lr
-        glm::vec4(1.0f, 1.0f, 0.0f + (4 * del), 1.0f), // 2 ur
-        glm::vec4(0.0f, 1.0f, 0.0f + (4 * del), 1.0f)  // 3 ul
-    };
-
- //   REQUIRE(20 == vbuf.size());
-    REQUIRE(vbuf == expected);
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-
-TEST_CASE("create_elementIndices creates Triangle strip ordering.")
-{
-    std::vector<uint16_t> elebuf;
-    vert::create_elementIndices(4, elebuf);
-    std::vector<uint16_t> expected_buf{
-        0, 1, 3, 2,     
-        0xFFFF,
-        4, 5, 7, 6,    
-        0xFFFF,
-        8, 9, 11, 10,
-        0xFFFF,
-        12, 13, 15, 14,
-        0xFFFF
-    };
-
-    REQUIRE(elebuf == expected_buf);
-}
-
-TEST_CASE("create_elementIndicesReversed creates Triangle strip ordering.")
-{
-    std::vector<uint16_t> elebuf;
-    elebuf.resize(5*4);
-    auto b = elebuf.begin();
-    auto e = elebuf.end();
-    vert::create_elementIndicesReversed(4, b, e);
-    std::vector<uint16_t> expected_buf{
-        12, 13, 15, 14,
-        0xFFFF,
-        8, 9, 11, 10,
-        0xFFFF,
-        4, 5, 7, 6,
-        0xFFFF,
-        0, 1, 3, 2,
-        0xFFFF
-    };
-
-    REQUIRE(elebuf == expected_buf);
-}
+//TEST_CASE("sliceIndexToElements() returns triangle strip ordering", "[quad][vboIndexes]")
+//{
+//    std::vector<glm::u16vec4> ebuf_expected{
+//        glm::u16vec4(0, 1, 3, 2),     // x-y
+//        glm::u16vec4(4, 5, 7, 6),     // x-z
+//        glm::u16vec4(8, 9, 11, 10)    // y-z
+//    };
+//
+//    std::vector<glm::u16vec4> ebuf_actual;
+//
+//    int ebufIdx = 0;
+//    for (int i = 0; i < 3; ++i) {
+//        ebuf_actual.push_back(vert::sliceIndexToElements(ebufIdx));
+//        ebufIdx++;
+//    }
+//
+//    REQUIRE(ebuf_actual == ebuf_expected);
+//}
+//
+//
+//
+//TEST_CASE("start returns 0.0 for one slice", "[quad][startCoords]")
+//{
+//    float expected = 0.0f;
+//    float actual = vert::start(1, -0.5f, 0.5f);
+//
+//    REQUIRE(actual == expected);
+//}
+//
+//
+//TEST_CASE("start returns -0.5  for two slices")
+//{
+//    float expected = -0.5f;
+//    float actual = vert::start(2, -0.5f, 0.5f);
+//
+//    REQUIRE(actual == expected);
+//}
+//
+//
+//TEST_CASE("start returns -0.5  for three slices")
+//{
+//    float expected = -0.5f;
+//    float actual = vert::start(3, -0.5f, 0.5f);
+//
+//    REQUIRE(actual == expected);
+//}
+//
+//TEST_CASE("start returns -0.5  for four slices")
+//{
+//    float expected = -0.5f;
+//    float actual = vert::start(4, -0.5f, 0.5f);
+//
+//    REQUIRE(actual == expected);
+//}
+//
+//
+//TEST_CASE("start returns -0.5  for five slices")
+//{
+//    float expected = -0.5f;
+//    float actual = vert::start(5, -0.5f, 0.5f);
+//
+//    REQUIRE(actual == expected);
+//}
+//
+//
+//////////////////////////////////////////////////////////////////////////////////
+//TEST_CASE("delta returns 0.0 for 1 slice")
+//{
+//    float expected = 0.0f;
+//    float actual = vert::delta(1, -0.5f, 0.5f);
+//
+//    REQUIRE(actual == expected);
+//}
+//
+//
+//TEST_CASE("delta returns 1.0 for 2 slices")
+//{
+//    float expected = 1.0f/2.0f;
+//    float actual = vert::delta(2, -0.5f, 0.5f);
+//
+//    REQUIRE(actual == expected);
+//}
+//
+//
+//TEST_CASE("delta returns 0.33 for 3 slices")
+//{
+//    float expected = 1.0f/3.0f;
+//    float actual = vert::delta(3, -0.5f, 0.5f);
+//
+//    REQUIRE(actual == Approx(expected));
+//}
+//
+//
+//TEST_CASE("delta returns 0.25 for 4 slices")
+//{
+//    float expected = 1.0f/4.0f;
+//    float actual = vert::delta(4, -0.5f, 0.5f);
+//
+//    REQUIRE(actual == Approx(expected));
+//}
+//
+//
+//TEST_CASE("delta returns 0.25 for 5 slices")
+//{
+//    float expected = 1.0f/5.0f;
+//    float actual = vert::delta(5, -0.5f, 0.5f);
+//
+//    REQUIRE(actual == expected);
+//}
+//
+//
+//////////////////////////////////////////////////////////////////////////////////
+//TEST_CASE("create_verts_xy creates 4 quads along z-axis.")
+//{
+//    float del = vert::delta(4, -0.5f, 0.5f);
+//    std::vector<glm::vec4> vbuf;
+//    vert::create_verts_xy(4, vbuf);
+//
+//    std::vector<glm::vec4> expected{
+//        glm::vec4(-0.5f, -0.5f, -0.5f, 1.0f), // 0 ll
+//        glm::vec4(0.5f, -0.5f, -0.5f, 1.0f), // 1 lr
+//        glm::vec4(0.5f, 0.5f, -0.5f, 1.0f), // 2 ur
+//        glm::vec4(-0.5f, 0.5f, -0.5f, 1.0f),  // 3 ul
+//
+//        glm::vec4(-0.5f, -0.5f, -0.5f + del, 1.0f), // 0 ll
+//        glm::vec4(0.5f, -0.5f, -0.5f + del, 1.0f), // 1 lr
+//        glm::vec4(0.5f, 0.5f, -0.5f + del, 1.0f), // 2 ur
+//        glm::vec4(-0.5f, 0.5f, -0.5f + del, 1.0f),  // 3 ul
+//
+//        glm::vec4(-0.5f, -0.5f, -0.5f + (2 * del), 1.0f), // 0 ll
+//        glm::vec4(0.5f, -0.5f, -0.5f + (2 * del), 1.0f), // 1 lr
+//        glm::vec4(0.5f, 0.5f, -0.5f + (2 * del), 1.0f), // 2 ur
+//        glm::vec4(-0.5f, 0.5f, -0.5f + (2 * del), 1.0f),  // 3 ul
+//
+//        glm::vec4(-0.5f, -0.5f, -0.5f + (3 * del), 1.0f), // 0 ll
+//        glm::vec4(0.5f, -0.5f, -0.5f + (3 * del), 1.0f), // 1 lr
+//        glm::vec4(0.5f, 0.5f, -0.5f + (3 * del), 1.0f), // 2 ur
+//        glm::vec4(-0.5f, 0.5f, -0.5f + (3 * del), 1.0f)  // 3 ul
+//    };
+//
+//    REQUIRE(16 == vbuf.size());
+//    REQUIRE(vbuf == expected);
+//}
+//
+//TEST_CASE("create_verts_xy creates 5 quads along z-axis.")
+//{
+//    float del = vert::delta(5, -0.5f, 0.5f);
+//    std::vector<glm::vec4> vbuf;
+//    vert::create_verts_xy(5, vbuf);
+//
+//    std::vector<glm::vec4> expected{
+//        glm::vec4(-0.5f, -0.5f, -0.5f, 1.0f), // 0 ll
+//        glm::vec4(0.5f, -0.5f, -0.5f, 1.0f), // 1 lr
+//        glm::vec4(0.5f, 0.5f, -0.5f, 1.0f), // 2 ur
+//        glm::vec4(-0.5f, 0.5f, -0.5f, 1.0f),  // 3 ul
+//
+//        glm::vec4(-0.5f, -0.5f, -0.5f + del, 1.0f), // 0 ll
+//        glm::vec4(0.5f, -0.5f, -0.5f + del, 1.0f), // 1 lr
+//        glm::vec4(0.5f, 0.5f, -0.5f + del, 1.0f), // 2 ur
+//        glm::vec4(-0.5f, 0.5f, -0.5f + del, 1.0f),  // 3 ul
+//
+//        glm::vec4(-0.5f, -0.5f, -0.5f + (2 * del), 1.0f), // 0 ll
+//        glm::vec4(0.5f, -0.5f, -0.5f + (2 * del), 1.0f), // 1 lr
+//        glm::vec4(0.5f, 0.5f, -0.5f + (2 * del), 1.0f), // 2 ur
+//        glm::vec4(-0.5f, 0.5f, -0.5f + (2 * del), 1.0f),  // 3 ul
+//
+//        glm::vec4(-0.5f, -0.5f, -0.5f + (3 * del), 1.0f), // 0 ll
+//        glm::vec4(0.5f, -0.5f, -0.5f + (3 * del), 1.0f), // 1 lr
+//        glm::vec4(0.5f, 0.5f, -0.5f + (3 * del), 1.0f), // 2 ur
+//        glm::vec4(-0.5f, 0.5f, -0.5f + (3 * del), 1.0f),  // 3 ul
+//
+//        glm::vec4(-0.5f, -0.5f, -0.5f + (4 * del), 1.0f), // 0 ll
+//        glm::vec4(0.5f, -0.5f, -0.5f + (4 * del), 1.0f), // 1 lr
+//        glm::vec4(0.5f, 0.5f, -0.5f + (4 * del), 1.0f), // 2 ur
+//        glm::vec4(-0.5f, 0.5f, -0.5f + (4 * del), 1.0f)  // 3 ul
+//
+//    };
+//
+//    REQUIRE(20 == vbuf.size());
+//    REQUIRE(vbuf == expected);
+//}
+//
+//
+//////////////////////////////////////////////////////////////////////////////////
+//TEST_CASE("create_texbuf_xy creates four slice tex coords z-axis.")
+//{
+//    float del = vert::delta(4, 0.0f, 1.0f);
+//    std::vector<glm::vec4> vbuf;
+//    vert::create_texbuf_xy(4, vbuf);
+//
+//    std::vector<glm::vec4> expected{
+//        glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), // 0 ll
+//        glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), // 1 lr
+//        glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), // 2 ur
+//        glm::vec4(0.0f, 1.0f, 0.0f, 1.0f),  // 3 ul
+//
+//        glm::vec4(0.0f, 0.0f, 0.0f + del, 1.0f), // 0 ll
+//        glm::vec4(1.0f, 0.0f, 0.0f + del, 1.0f), // 1 lr
+//        glm::vec4(1.0f, 1.0f, 0.0f + del, 1.0f), // 2 ur
+//        glm::vec4(0.0f, 1.0f, 0.0f + del, 1.0f),  // 3 ul
+//
+//        glm::vec4(0.0f, 0.0f, 0.0f + (2 * del), 1.0f), // 0 ll
+//        glm::vec4(1.0f, 0.0f, 0.0f + (2 * del), 1.0f), // 1 lr
+//        glm::vec4(1.0f, 1.0f, 0.0f + (2 * del), 1.0f), // 2 ur
+//        glm::vec4(0.0f, 1.0f, 0.0f + (2 * del), 1.0f),  // 3 ul
+//
+//        glm::vec4(0.0f, 0.0f, 0.0f + (3 * del), 1.0f), // 0 ll
+//        glm::vec4(1.0f, 0.0f, 0.0f + (3 * del), 1.0f), // 1 lr
+//        glm::vec4(1.0f, 1.0f, 0.0f + (3 * del), 1.0f), // 2 ur
+//        glm::vec4(0.0f, 1.0f, 0.0f + (3 * del), 1.0f)  // 3 ul
+//    };
+//
+//    REQUIRE(16 == vbuf.size());
+//    REQUIRE(vbuf == expected);
+//}
+//
+//TEST_CASE("create_texbuf_xy creates five slice tex coords z-axis.")
+//{
+//    float del = vert::delta(5, 0.0f, 1.0f);
+//    std::vector<glm::vec4> vbuf;
+//    vert::create_texbuf_xy(5, vbuf);
+//
+//    std::vector<glm::vec4> expected{
+//        glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), // 0 ll
+//        glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), // 1 lr
+//        glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), // 2 ur
+//        glm::vec4(0.0f, 1.0f, 0.0f, 1.0f),  // 3 ul
+//
+//        glm::vec4(0.0f, 0.0f, 0.0f + del, 1.0f), // 0 ll
+//        glm::vec4(1.0f, 0.0f, 0.0f + del, 1.0f), // 1 lr
+//        glm::vec4(1.0f, 1.0f, 0.0f + del, 1.0f), // 2 ur
+//        glm::vec4(0.0f, 1.0f, 0.0f + del, 1.0f),  // 3 ul
+//
+//        glm::vec4(0.0f, 0.0f, 0.0f + (2 * del), 1.0f), // 0 ll
+//        glm::vec4(1.0f, 0.0f, 0.0f + (2 * del), 1.0f), // 1 lr
+//        glm::vec4(1.0f, 1.0f, 0.0f + (2 * del), 1.0f), // 2 ur
+//        glm::vec4(0.0f, 1.0f, 0.0f + (2 * del), 1.0f),  // 3 ul
+//
+//        glm::vec4(0.0f, 0.0f, 0.0f + (3 * del), 1.0f), // 0 ll
+//        glm::vec4(1.0f, 0.0f, 0.0f + (3 * del), 1.0f), // 1 lr
+//        glm::vec4(1.0f, 1.0f, 0.0f + (3 * del), 1.0f), // 2 ur
+//        glm::vec4(0.0f, 1.0f, 0.0f + (3 * del), 1.0f),  // 3 ul
+//
+//        glm::vec4(0.0f, 0.0f, 0.0f + (4 * del), 1.0f), // 0 ll
+//        glm::vec4(1.0f, 0.0f, 0.0f + (4 * del), 1.0f), // 1 lr
+//        glm::vec4(1.0f, 1.0f, 0.0f + (4 * del), 1.0f), // 2 ur
+//        glm::vec4(0.0f, 1.0f, 0.0f + (4 * del), 1.0f)  // 3 ul
+//    };
+//
+// //   REQUIRE(20 == vbuf.size());
+//    REQUIRE(vbuf == expected);
+//}
+//
+//
+//////////////////////////////////////////////////////////////////////////////////
+//
+//TEST_CASE("create_elementIndices creates Triangle strip ordering.")
+//{
+//    std::vector<uint16_t> elebuf;
+//    vert::create_elementIndices(4, elebuf);
+//    std::vector<uint16_t> expected_buf{
+//        0, 1, 3, 2,
+//        0xFFFF,
+//        4, 5, 7, 6,
+//        0xFFFF,
+//        8, 9, 11, 10,
+//        0xFFFF,
+//        12, 13, 15, 14,
+//        0xFFFF
+//    };
+//
+//    REQUIRE(elebuf == expected_buf);
+//}
+//
+//TEST_CASE("create_elementIndicesReversed creates Triangle strip ordering.")
+//{
+//    std::vector<uint16_t> elebuf;
+//    elebuf.resize(5*4);
+//    auto b = elebuf.begin();
+//    auto e = elebuf.end();
+//    vert::create_elementIndicesReversed(4, b, e);
+//    std::vector<uint16_t> expected_buf{
+//        12, 13, 15, 14,
+//        0xFFFF,
+//        8, 9, 11, 10,
+//        0xFFFF,
+//        4, 5, 7, 6,
+//        0xFFFF,
+//        0, 1, 3, 2,
+//        0xFFFF
+//    };
+//
+//    REQUIRE(elebuf == expected_buf);
+//}
 
 
 //

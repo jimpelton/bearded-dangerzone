@@ -26,6 +26,7 @@
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/constants.hpp>
 #include <glm/gtx/quaternion.hpp>
+#include <glm/gtx/string_cast.hpp>
 
 // STL and STD lib
 #include <string>
@@ -521,63 +522,71 @@ void loop(GLFWwindow *window)
 //  G E O M E T R Y   C R E A T I O N
 ///////////////////////////////////////////////////////////////////////////////
 
+///////////////////////////////////////////////////////////////////////////////
+/// \brief Create slices for each axis with in a region. The min, max of the
+///        region boundingbox is given by min and max vectors.
+///
+///     {min.x, max.y, max.z}
+///           +---------------+ max
+///          /               /|
+///         /               / |
+/// {min.x, max.y, min.z}  /  |
+///       +--------------+` {max.x, max.y, min.z}
+///       |              |    |
+///       |              |    |
+///       |              |    + {max.x, min.y, max.z}
+///       |              |   /
+///       |              |  /
+///       |              | /
+///  min  +--------------+`  {max.x,  min.y, min.z}
+///
+
 
 ///////////////////////////////////////////////////////////////////////////////
-/// \brief Create slices inside the cononical block for each axis.
-///////////////////////////////////////////////////////////////////////////////
-void genQuadVao(bd::VertexArrayObject &vao, unsigned int numSlices)
+void genQuadVao(bd::VertexArrayObject &vao, const glm::vec3 &min, const glm::vec3 &max,
+                const glm::u64vec3 &numSlices)
 {
-    gl_log("Generating quad slice vertex buffers for %d slices.", numSlices);
+    gl_log("Generating proxy geometry vertex buffers for %s slices.",
+           glm::to_string(numSlices).c_str());
+
     std::vector<glm::vec4> temp;
     std::vector<glm::vec4> vbuf;
     std::vector<glm::vec4> texbuf;
     std::vector<uint16_t> elebuf;
 
+
     /// For each axis, populate vbuf with verts for numSlices quads, adjust  ///
     /// axis coordinate based on slice index.                                ///
 
-    vert::create_verts_xy(numSlices, temp);
+    // Vertex buffer
+    createQuads(temp, min, {min.x, max.y, max.z}, numSlices.x, Axis::X);
     std::copy(temp.begin(), temp.end(), std::back_inserter(vbuf));
 
-    vert::create_verts_xz(numSlices, temp);
+    createQuads(temp, min, {max.x, min.y, max.z}, numSlices.y, Axis::Y);
     std::copy(temp.begin(), temp.end(), std::back_inserter(vbuf));
 
-    vert::create_verts_yz(numSlices, temp);
+    createQuads(temp, min, {max.x, max.y, min.z}, numSlices.z, Axis::Z);
     std::copy(temp.begin(), temp.end(), std::back_inserter(vbuf));
 
-    vert::create_texbuf_xy(numSlices, temp);
+    vao.addVbo(vbuf, 0); // vbuf mapped to attribute 0
+
+    // Texture buffer
+    createQuads(temp, {0,0,0}, {0,1,1}, numSlices.x, Axis::X);
     std::copy(temp.begin(), temp.end(), std::back_inserter(texbuf));
 
-    vert::create_texbuf_xz(numSlices, temp);
+    createQuads(temp, {0,0,0}, {1,0,1}, numSlices.y, Axis::Y);
     std::copy(temp.begin(), temp.end(), std::back_inserter(texbuf));
 
-    vert::create_texbuf_yz(numSlices, temp);
+    createQuads(temp, {0,0,0}, {1,1,0}, numSlices.z, Axis::Z);
     std::copy(temp.begin(), temp.end(), std::back_inserter(texbuf));
 
-    vert::create_elementIndices(numSlices, elebuf);
+    vao.addVbo(texbuf, 1); // texbuf mapped to attribute 1
+
+//
+//    vert::create_elementIndices(numSlices, elebuf);
     g_elementBufferSize = elebuf.size();
 
 
-    /// Add buffers to VAO ///
-    // add positions as vertex attribute 0
-    vao.addVbo
-    (
-        reinterpret_cast<float *>(vbuf.data()), 
-        vbuf.size() * bd::Quad::vert_element_size, 
-        bd::Quad::vert_element_size, 
-        0  // attribute 0
-    );
-
-    // add texcoords as vertex attribute 1
-    const size_t texcoord_element_size = 4;
-    vao.addVbo
-    (
-        reinterpret_cast<float *>(texbuf.data()), 
-        texbuf.size() * texcoord_element_size, 
-        texcoord_element_size, 
-        1  // attribute 1
-    );
-    
     // element index buffer
     vao.setIndexBuffer(elebuf.data(), elebuf.size());
 }
@@ -614,18 +623,30 @@ void genAxisVao(bd::VertexArrayObject &vao)
 void genBoxVao(bd::VertexArrayObject &vao)
 {
     gl_log("Generating bounding box vertex buffers.");
+
     // positions as vertex attribute 0
-    vao.addVbo((float *)(bd::Box::vertices.data()),
+    vao.addVbo
+    (
+        (float *)(bd::Box::vertices.data()),
         bd::Box::vertices.size() * bd::Box::vert_element_size,
-        bd::Box::vert_element_size, 0);
+        bd::Box::vert_element_size, 
+        0    // attribute 0
+    );
 
     // colors as vertex attribute 1
-    vao.addVbo((float *) bd::Box::colors.data(),
+    vao.addVbo
+    (
+        (float *) bd::Box::colors.data(),
         bd::Box::colors.size() * 3,
-        3, 1);
+        3, 
+        1   // attribute 1
+    );
 
-    vao.setIndexBuffer((unsigned short *) bd::Box::elements.data(),
-        bd::Box::elements.size());
+    vao.setIndexBuffer
+    (
+        (unsigned short *) bd::Box::elements.data(),
+        bd::Box::elements.size()
+    );
 
 }
 
@@ -633,7 +654,6 @@ void genBoxVao(bd::VertexArrayObject &vao)
 ///////////////////////////////////////////////////////////////////////////////
 //   I N I T I A L I Z A T I O N
 ///////////////////////////////////////////////////////////////////////////////
-
 
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -676,8 +696,8 @@ GLFWwindow* init()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
-    GLFWwindow *window = glfwCreateWindow(g_screenWidth, g_screenHeight, "Blocks", 
-        nullptr, nullptr);
+    GLFWwindow *window = glfwCreateWindow(g_screenWidth, g_screenHeight, 
+            "Blocks", nullptr, nullptr);
     if (!window) {
         gl_log("ERROR: could not open window with GLFW3");
         glfwTerminate();
@@ -869,7 +889,7 @@ int main(int argc, const char *argv [])
     //// Geometry Init ////
     bd::VertexArrayObject quadVbo(bd::VertexArrayObject::Method::ELEMENTS);
     quadVbo.create();
-    genQuadVao(quadVbo, clo.num_slices);
+    //genQuadVao(quadVbo, clo.num_slices);
 
     bd::VertexArrayObject axisVbo(bd::VertexArrayObject::Method::ARRAYS);
     axisVbo.create();
