@@ -1,12 +1,10 @@
 #include "create_vao.h"
 #include "axis_enum.h"
 
-#include <bd/geo/quad.h> 
 
 #include <glm/glm.hpp>
 
-#include <algorithm>
-#include <cassert>
+
 
 
 //namespace vert
@@ -22,6 +20,84 @@ void createQuads_Y(std::vector<glm::vec4> &quads, const glm::vec3 &min,
 
 void createQuads_Z(std::vector<glm::vec4> &quads, const glm::vec3 &min,
                    const glm::vec3 &max, accum_delta<float> &nextDelta);
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+/// \brief Create slices for each axis with in a region. The min, max of the
+///        region boundingbox is given by min and max vectors.
+///
+///     {min.x, max.y, max.z}
+///           +---------------+ max
+///          /               /|
+///         /               / |
+/// {min.x, max.y, min.z}  /  |
+///       +--------------+` {max.x, max.y, min.z}
+///       |              |    |
+///       |              |    |
+///       |              |    + {max.x, min.y, max.z}
+///       |              |   /
+///       |              |  /
+///       |              | /
+///  min  +--------------+`  {max.x,  min.y, min.z}
+///
+
+
+////////////////////////////////////////////////////////////////////////////////
+/// \brief Generate proxy geometry and hand it to the provided VAO.
+///
+/// \param vao[out] VertexArrayObject
+/// \param min[in] Min corner of region
+/// \param max[in] Max corner of region
+/// \param numSlices[in] Number of slices per each axis.
+////////////////////////////////////////////////////////////////////////////////
+void genQuadVao(bd::VertexArrayObject &vao, const glm::vec3 &min, const glm::vec3 &max,
+                const glm::u64vec3 &numSlices) {
+
+//  gl_log("Generating proxy geometry vertex buffers for %dx%dx%d slices.",
+//         numSlices.x, numSlices.y, numSlices.z );
+
+  std::vector<glm::vec4> temp;
+  std::vector<glm::vec4> vbuf;
+  std::vector<glm::vec4> texbuf;
+  std::vector<uint16_t> elebuf;
+
+
+  /// For each axis, populate vbuf with verts for numSlices quads, adjust  ///
+  /// axis coordinate based on slice index.                                ///
+
+  // Vertex buffer
+  createQuads(temp, min, {min.x, max.y, max.z}, numSlices.x, Axis::X);
+  std::copy(temp.begin(), temp.end(), std::back_inserter(vbuf));
+
+  createQuads(temp, min, {max.x, min.y, max.z}, numSlices.y, Axis::Y);
+  std::copy(temp.begin(), temp.end(), std::back_inserter(vbuf));
+
+  createQuads(temp, min, {max.x, max.y, min.z}, numSlices.z, Axis::Z);
+  std::copy(temp.begin(), temp.end(), std::back_inserter(vbuf));
+
+  vao.addVbo(vbuf, 0); // vbuf mapped to attribute 0
+
+  // Texture buffer
+  createQuads(temp, {0, 0, 0}, {0, 1, 1}, numSlices.x, Axis::X);
+  std::copy(temp.begin(), temp.end(), std::back_inserter(texbuf));
+
+  createQuads(temp, {0, 0, 0}, {1, 0, 1}, numSlices.y, Axis::Y);
+  std::copy(temp.begin(), temp.end(), std::back_inserter(texbuf));
+
+  createQuads(temp, {0, 0, 0}, {1, 1, 0}, numSlices.z, Axis::Z);
+  std::copy(temp.begin(), temp.end(), std::back_inserter(texbuf));
+
+  vao.addVbo(texbuf, 1); // texbuf mapped to attribute 1
+
+  createElementIdx(elebuf, numSlices.x * numSlices.y * numSlices.z);
+
+  // element index buffer
+  vao.setIndexBuffer(elebuf.data(), elebuf.size());
+
+}
+
+
 
 ////////////////////////////////////////////////////////////////////////////////
 /// \brief Create quads perpendicular to X-axis within the region with diagonal

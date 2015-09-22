@@ -210,7 +210,7 @@ void glfw_error_callback(int error, const char *description) {
 }
 
 
-/////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 void glfw_keyboard_callback(GLFWwindow *window, int key, int scancode, int action,
                             int mods) {
   if (action == GLFW_PRESS) {
@@ -266,7 +266,7 @@ void glfw_keyboard_callback(GLFWwindow *window, int key, int scancode, int actio
 }
 
 
-/////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 void glfw_window_size_callback(GLFWwindow *window, int width, int height) {
   g_screenWidth = width;
   g_screenHeight = height;
@@ -274,7 +274,7 @@ void glfw_window_size_callback(GLFWwindow *window, int width, int height) {
 }
 
 
-/////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 void glfw_cursorpos_callback(GLFWwindow *window, double x, double y) {
   glm::vec2 cpos(floor(x), floor(y));
   if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
@@ -295,7 +295,8 @@ void glfw_scrollwheel_callback(GLFWwindow *window, double xoff, double yoff) {
   if (fov < 1 || fov > 120) return;
 
   g_fov_deg = fov;
-  g_camera.setProjectionMatrix(glm::radians(fov), g_screenWidth / float(g_screenHeight),
+  g_camera.setProjectionMatrix(glm::radians(fov),
+                               g_screenWidth / float(g_screenHeight),
                                0.1f, 10000.0f);
 }
 
@@ -305,7 +306,7 @@ void glfw_scrollwheel_callback(GLFWwindow *window, double xoff, double yoff) {
 /************************************************************************/
 
 
-/////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 void setRotation(const glm::vec2 &dr) {
   glm::quat rotX = glm::angleAxis<float>(
       glm::radians(-dr.y) * g_mouseSpeed,
@@ -323,7 +324,7 @@ void setRotation(const glm::vec2 &dr) {
 
 
 
-/////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 //TODO: move to BlocksCollection, take eye position as parameter.
 //void sortBlocksFarthestToNearest()
 //{
@@ -344,10 +345,8 @@ void drawNonEmptyBoundingBoxes(const glm::mat4 &mvp) {
     glm::mat4 mmvp = mvp * b->transform().matrix();
     g_simpleShader.setUniform("mvp", mmvp);
     gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, (GLvoid *) 0));
-    gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT,
-                            (GLvoid *) (4 * sizeof(GLushort))));
-    gl_check(glDrawElements(GL_LINES, 8, GL_UNSIGNED_SHORT,
-                            (GLvoid *) (8 * sizeof(GLushort))));
+    gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, (GLvoid *) (4 * sizeof(GLushort))));
+    gl_check(glDrawElements(GL_LINES, 8, GL_UNSIGNED_SHORT, (GLvoid *) (8 * sizeof(GLushort))));
   }
 }
 
@@ -418,12 +417,12 @@ void drawNonEmptyBlocks(const glm::mat4 &vp) {
 //    sortBlocksFarthestToNearest();
 
   if (previousSet != g_selectedSliceSet) {
-    std::cout << "Switched slice set: " <<
-    (neg ? '-' : '+') << g_selectedSliceSet << '\n';
+    std::cout << "Switched slice set: " << (neg ? '-' : '+') <<
+        g_selectedSliceSet << '\n';
   }
 
   if (g_toggleWireFrame) {
-    gl_check(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE))
+    gl_check(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
   }
 
   g_volumeShader.bind();
@@ -521,74 +520,6 @@ void loop(GLFWwindow *window) {
 //  G E O M E T R Y   C R E A T I O N
 ///////////////////////////////////////////////////////////////////////////////
 
-///////////////////////////////////////////////////////////////////////////////
-/// \brief Create slices for each axis with in a region. The min, max of the
-///        region boundingbox is given by min and max vectors.
-///
-///     {min.x, max.y, max.z}
-///           +---------------+ max
-///          /               /|
-///         /               / |
-/// {min.x, max.y, min.z}  /  |
-///       +--------------+` {max.x, max.y, min.z}
-///       |              |    |
-///       |              |    |
-///       |              |    + {max.x, min.y, max.z}
-///       |              |   /
-///       |              |  /
-///       |              | /
-///  min  +--------------+`  {max.x,  min.y, min.z}
-///
-
-
-///////////////////////////////////////////////////////////////////////////////
-void genQuadVao(bd::VertexArrayObject &vao, const glm::vec3 &min, const glm::vec3 &max,
-                const glm::u64vec3 &numSlices) {
-  gl_log("Generating proxy geometry vertex buffers for %s slices.",
-         glm::to_string(numSlices).c_str());
-
-  std::vector<glm::vec4> temp;
-  std::vector<glm::vec4> vbuf;
-  std::vector<glm::vec4> texbuf;
-  std::vector<uint16_t> elebuf;
-
-
-  /// For each axis, populate vbuf with verts for numSlices quads, adjust  ///
-  /// axis coordinate based on slice index.                                ///
-
-  // Vertex buffer
-  createQuads(temp, min, {min.x, max.y, max.z}, numSlices.x, Axis::X);
-  std::copy(temp.begin(), temp.end(), std::back_inserter(vbuf));
-
-  createQuads(temp, min, {max.x, min.y, max.z}, numSlices.y, Axis::Y);
-  std::copy(temp.begin(), temp.end(), std::back_inserter(vbuf));
-
-  createQuads(temp, min, {max.x, max.y, min.z}, numSlices.z, Axis::Z);
-  std::copy(temp.begin(), temp.end(), std::back_inserter(vbuf));
-
-  vao.addVbo(vbuf, 0); // vbuf mapped to attribute 0
-
-  // Texture buffer
-  createQuads(temp, {0, 0, 0}, {0, 1, 1}, numSlices.x, Axis::X);
-  std::copy(temp.begin(), temp.end(), std::back_inserter(texbuf));
-
-  createQuads(temp, {0, 0, 0}, {1, 0, 1}, numSlices.y, Axis::Y);
-  std::copy(temp.begin(), temp.end(), std::back_inserter(texbuf));
-
-  createQuads(temp, {0, 0, 0}, {1, 1, 0}, numSlices.z, Axis::Z);
-  std::copy(temp.begin(), temp.end(), std::back_inserter(texbuf));
-
-  vao.addVbo(texbuf, 1); // texbuf mapped to attribute 1
-
-//
-//    vert::create_elementIndices(numSlices, elebuf);
-  g_elementBufferSize = elebuf.size();
-
-
-  // element index buffer
-  vao.setIndexBuffer(elebuf.data(), elebuf.size());
-}
-
 
 ///////////////////////////////////////////////////////////////////////////////
 void genAxisVao(bd::VertexArrayObject &vao) {
@@ -597,22 +528,16 @@ void genAxisVao(bd::VertexArrayObject &vao) {
   using Axis = bd::CoordinateAxis;
 
   // vertex positions into attribute 0
-  vao.addVbo
-      (
-          (float *) (Axis::verts.data()),
-          Axis::verts.size() * Axis::vert_element_size,
-          Axis::vert_element_size,
-          0  // attribute 0
-      );
+  vao.addVbo((float *) (Axis::verts.data()),
+             Axis::verts.size() * Axis::vert_element_size,
+             Axis::vert_element_size,
+             0); // attr 0
 
   // vertex colors into attribute 1
-  vao.addVbo
-      (
-          (float *) (Axis::colors.data()),
-          Axis::colors.size() * 3,
-          3, // 3 floats per color
-          1  // attribute 1
-      );
+  vao.addVbo((float *) (Axis::colors.data()),
+             Axis::colors.size() * 3,
+             3,   // 3 floats per color
+             1);  // attr 1
 }
 
 
@@ -621,28 +546,17 @@ void genBoxVao(bd::VertexArrayObject &vao) {
   gl_log("Generating bounding box vertex buffers.");
 
   // positions as vertex attribute 0
-  vao.addVbo
-      (
-          (float *) (bd::Box::vertices.data()),
-          bd::Box::vertices.size() * bd::Box::vert_element_size,
-          bd::Box::vert_element_size,
-          0    // attribute 0
-      );
+  vao.addVbo((float *) (bd::Box::vertices.data()),
+             bd::Box::vertices.size() * bd::Box::vert_element_size,
+             bd::Box::vert_element_size, 0);
 
   // colors as vertex attribute 1
-  vao.addVbo
-      (
-          (float *) bd::Box::colors.data(),
-          bd::Box::colors.size() * 3,
-          3,
-          1   // attribute 1
-      );
+  vao.addVbo((float *) bd::Box::colors.data(),
+             bd::Box::colors.size() * 3,
+             3, 1);
 
-  vao.setIndexBuffer
-      (
-          (unsigned short *) bd::Box::elements.data(),
-          bd::Box::elements.size()
-      );
+  vao.setIndexBuffer((unsigned short *) bd::Box::elements.data(),
+                     bd::Box::elements.size());
 
 }
 
@@ -738,16 +652,15 @@ void cleanup() {
 /////////////////////////////////////////////////////////////////////////////////
 void printBlocks() {
   std::ofstream block_file("blocks.txt", std::ofstream::trunc);
+
   if (block_file.is_open()) {
     gl_log("Writing blocks to blocks.txt in the current working directory.");
-//        for (const bd::Block &b : g_blocks.blocks()) {
     for (auto &b : g_blocks.blocks()) {
       block_file << b << "\n";
     }
     block_file.flush();
     block_file.close();
-  }
-  else {
+  } else {
     gl_log_err("Could not print blocks because blocks.txt coulnt'd be created "
                    "in the current working directory.");
   }
@@ -845,27 +758,22 @@ int main(int argc, const char *argv[]) {
 
 
   //// Shaders Init ////
-  GLuint programId
-      {
-          g_simpleShader.linkProgram
-              (
-                  "shaders/vert_vertexcolor_passthrough.glsl",
-                  "shaders/frag_vertcolor.glsl"
-              )
-      };
+  GLuint programId{
+        g_simpleShader.linkProgram (
+                "shaders/vert_vertexcolor_passthrough.glsl",
+                "shaders/frag_vertcolor.glsl"
+            ) };
+
   if (programId == 0) {
     gl_log_err("Error building passthrough shader, program id was 0.");
     return 1;
   }
 
-  GLuint volumeProgramId
-      {
-          g_volumeShader.linkProgram
-              (
-                  "shaders/vert_vertexcolor_passthrough.glsl",
-                  "shaders/frag_volumesampler_noshading.glsl"
-              )
-      };
+  GLuint volumeProgramId{
+        g_volumeShader.linkProgram (
+                "shaders/vert_vertexcolor_passthrough.glsl",
+                "shaders/frag_volumesampler_noshading.glsl"
+            ) };
 
   if (volumeProgramId == 0) {
     gl_log_err("Error building volume sampling shader, program id was 0.");
@@ -873,15 +781,15 @@ int main(int argc, const char *argv[]) {
   }
 
   //// Geometry Init ////
-  bd::VertexArrayObject quadVbo(bd::VertexArrayObject::Method::ELEMENTS);
+  bd::VertexArrayObject quadVbo;
   quadVbo.create();
   //genQuadVao(quadVbo, clo.num_slices);
 
-  bd::VertexArrayObject axisVbo(bd::VertexArrayObject::Method::ARRAYS);
+  bd::VertexArrayObject axisVbo;
   axisVbo.create();
   genAxisVao(axisVbo);
 
-  bd::VertexArrayObject boxVbo(bd::VertexArrayObject::Method::ELEMENTS);
+  bd::VertexArrayObject boxVbo;
   boxVbo.create();
   genBoxVao(boxVbo);
 
@@ -911,37 +819,30 @@ int main(int argc, const char *argv[]) {
     return 1;
   }
 
-  g_blocks.filterBlocks
-      (
-          data.get(),                                               // data set
-          g_volumeShader.getUniformLocation("volume_sampler"),
-          clo.tmin,
-          clo.tmax
-      );
+  g_blocks.filterBlocks(data.get(),
+                        g_volumeShader.getUniformLocation("volume_sampler"),
+                        clo.tmin, clo.tmax);
 
   if (clo.printBlocks) { printBlocks(); }
 
   //// Transfer function texture ////
-  unsigned int tfuncTextureId
-      {
-          loadTransfer_1dtformat(clo.tfuncPath, g_tfuncTex, g_volumeShader)
-      };
+  unsigned int tfuncTextureId { loadTransfer_1dtformat(clo.tfuncPath, g_tfuncTex, g_volumeShader) };
   if (tfuncTextureId == 0) {
     gl_log_err("Exiting because tfunc texture was not bound.");
     exit(1);
   }
 
-  //// Render Init and Loop ////
+  //// Render Init ////
   setupCameraPos(clo.cameraPos);
   initGraphicsState();
+
   //// NV Perf Thing ////
   perf_initNvPm();
   perf_initMode(clo.perfMode);
+
   loop(window);
 
   printNvPmApiCounters(clo.perfOutPath.c_str());
-
-
   cleanup();
   bd::gl_log_close();
 

@@ -3,6 +3,8 @@
 
 #include "axis_enum.h"
 
+#include <bd/graphics/vertexarrayobject.h>
+
 #include <glm/fwd.hpp>
 
 #include <vector>
@@ -13,7 +15,7 @@
 
 ///////////////////////////////////////////////////////////////////////////
 /// \brief Generates (max-start)/d Ts.
-///        Returns sequence from [start .. max), non-inclusive on the right.
+///        Returns values in sequence from [start .. max), non-inclusive on the right.
 ///////////////////////////////////////////////////////////////////////////
 template<typename T,
         typename = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
@@ -44,14 +46,31 @@ private:
 };
 
 
+void genQuadVao(bd::VertexArrayObject &vao, const glm::vec3 &min, const glm::vec3 &max,
+                const glm::u64vec3 &numSlices);
+////////////////////////////////////////////////////////////////////////////////
+/// \brief Returns verts for quads that span region with
+///        diagonal running from \c min to \c max
+///
+/// \param quads[out] std::vector of vec4 that verts are returned in.
+/// \param min[in] Minimum corner of region.
+/// \param max[in] Maximum corner of region.
+/// \param numPlanes[in] Number of planes to pack into region.
+/// \param a[in] Axis perpendicular to the planes.
+////////////////////////////////////////////////////////////////////////////////
 void createQuads(std::vector<glm::vec4> &quads, const glm::vec3 &min,
                  const glm::vec3 &max, size_t numPlanes, Axis a);
 
 
+////////////////////////////////////////////////////////////////////////////////
+/// \brief Create element indexes for the verts returned by \c createQuads()
+///
+/// \note Elements are separated by restart symbol 0xFFFF.
+///
+/// \param elebuf[out] Vector for returning element indexes.
+/// \param numQuads[in] Number of quads to generate elements for.
+////////////////////////////////////////////////////////////////////////////////
 void createElementIdx(std::vector<unsigned short> &elebuf, size_t numQuads);
-
-
-
 
 
 ///////////////////////////////////////////////////////////////////////////////

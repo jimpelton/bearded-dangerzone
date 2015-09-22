@@ -28,7 +28,7 @@ std::string toString(const glm::u16vec4 &v) {
 
 template<>
 struct StringMaker<glm::vec4> {
-  static std::string convert(glm::vec4 const &value) {
+  static std::string convert(const glm::vec4 &value) {
     return glm::to_string(value);
   }
 };
@@ -58,7 +58,7 @@ TEST_CASE("createQuads_X", "[vertex][X]") {
       glm::vec4{0.75, 0, 0, 1},
       glm::vec4{0.75, 1, 0, 1},
       glm::vec4{0.75, 0, 1, 1},
-      glm::vec4{0.75, 1, 1, 1},
+      glm::vec4{0.75, 1, 1, 1}
 
   };
 
@@ -94,7 +94,7 @@ TEST_CASE("createQuads_Y", "[vertex][Y]") {
       glm::vec4{0, 0.75, 0, 1},
       glm::vec4{1, 0.75, 0, 1},
       glm::vec4{0, 0.75, 1, 1},
-      glm::vec4{1, 0.75, 1, 1},
+      glm::vec4{1, 0.75, 1, 1}
 
   };
 
@@ -130,7 +130,7 @@ TEST_CASE("createQuads_Z", "[vertex][Z]") {
       glm::vec4{0, 0, 0.75, 1},
       glm::vec4{1, 0, 0.75, 1},
       glm::vec4{0, 1, 0.75, 1},
-      glm::vec4{1, 1, 0.75, 1},
+      glm::vec4{1, 1, 0.75, 1}
 
   };
 
