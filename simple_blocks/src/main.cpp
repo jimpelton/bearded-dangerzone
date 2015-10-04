@@ -145,33 +145,26 @@ double g_totalElapsedCPUFrameTime{0};
 bd::BlockCollection g_blocks;
 
 
-void
-    glfw_cursorpos_callback(GLFWwindow *window, double x, double y);
+void glfw_cursorpos_callback(GLFWwindow *window, double x, double y);
 
 void glfw_keyboard_callback(GLFWwindow *window, int key, int scancode,
                             int action, int mods);
 
-void
-    glfw_error_callback(int error, const char *description);
+void glfw_error_callback(int error, const char *description);
 
-void
-    glfw_window_size_callback(GLFWwindow *window, int width, int height);
+void glfw_window_size_callback(GLFWwindow *window, int width, int height);
 
-void
-    glfw_scrollwheel_callback(GLFWwindow *window, double xoff, double yoff);
+void glfw_scrollwheel_callback(GLFWwindow *window, double xoff, double yoff);
 
-void
-    setRotation(const glm::vec2 &dr);
+void setRotation(const glm::vec2 &dr);
 
-void
-    loop(GLFWwindow *window);
+void loop(GLFWwindow *window);
 
-void
-    cleanup();
+void cleanup();
 
-unsigned int
-    loadTransfer_1dtformat(const std::string &filename, Texture &transferTex,
-                           bd::ShaderProgram &volumeShader);
+unsigned int loadTransfer_1dtformat(const std::string &filename,
+                                    Texture &transferTex,
+                                    bd::ShaderProgram &volumeShader);
 
 
 #define QUERY_BUFFERS 2
@@ -344,18 +337,33 @@ void drawNonEmptyBoundingBoxes(const glm::mat4 &mvp) {
   for (auto *b : g_blocks.nonEmptyBlocks()) {
     glm::mat4 mmvp = mvp * b->transform().matrix();
     g_simpleShader.setUniform("mvp", mmvp);
-    gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, (GLvoid *) 0));
-    gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, (GLvoid *) (4 * sizeof(GLushort))));
-    gl_check(glDrawElements(GL_LINES, 8, GL_UNSIGNED_SHORT, (GLvoid *) (8 * sizeof(GLushort))));
+
+    gl_check(glDrawElements(GL_LINE_LOOP,
+                            4,
+                            GL_UNSIGNED_SHORT,
+                            (GLvoid *) 0));
+
+    gl_check(glDrawElements(GL_LINE_LOOP,
+                            4,
+                            GL_UNSIGNED_SHORT,
+                            (GLvoid *) (4 * sizeof(GLushort))));
+
+    gl_check(glDrawElements(GL_LINES,
+                            8,
+                            GL_UNSIGNED_SHORT,
+                            (GLvoid *) (8 * sizeof(GLushort))));
   }
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
-void drawSlices(size_t baseVertex) {
+void drawSlices(GLint baseVertex) {
   perf_workBegin();
-  gl_check(glDrawElementsBaseVertex(GL_TRIANGLE_STRIP, g_elementsPerQuad * g_numSlices,
-                                    GL_UNSIGNED_SHORT, 0, baseVertex));
+  gl_check(glDrawElementsBaseVertex(GL_TRIANGLE_STRIP,
+                                    g_elementsPerQuad * g_numSlices,
+                                    GL_UNSIGNED_SHORT,
+                                    0,
+                                    baseVertex));
   perf_workEnd();
 }
 
@@ -364,7 +372,7 @@ void drawSlices(size_t baseVertex) {
 /// \brief Loop through the blocks and draw each one
 ///////////////////////////////////////////////////////////////////////////////
 void drawNonEmptyBlocks_Forward(const glm::mat4 &vp) {
-  size_t baseVertex{0};
+  GLint baseVertex{0};
   switch (g_selectedSliceSet) {
     //case SliceSet::XY:
     //    baseVertex = 0; break;
@@ -437,7 +445,8 @@ void drawNonEmptyBlocks(const glm::mat4 &vp) {
 
 ///////////////////////////////////////////////////////////////////////////////
 void draw(const glm::mat4 &vp) {
-  bd::VertexArrayObject *vao = nullptr;
+  bd::VertexArrayObject *vao{ nullptr };
+
   ////////  Axis    /////////////////////////////////////////
   vao = g_vaoIds[bd::ordinal(ObjType::Axis)];
   vao->bind();
@@ -759,10 +768,9 @@ int main(int argc, const char *argv[]) {
 
   //// Shaders Init ////
   GLuint programId{
-        g_simpleShader.linkProgram (
-                "shaders/vert_vertexcolor_passthrough.glsl",
-                "shaders/frag_vertcolor.glsl"
-            ) };
+      g_simpleShader.linkProgram(
+          "shaders/vert_vertexcolor_passthrough.glsl",
+          "shaders/frag_vertcolor.glsl") };
 
   if (programId == 0) {
     gl_log_err("Error building passthrough shader, program id was 0.");
@@ -770,10 +778,9 @@ int main(int argc, const char *argv[]) {
   }
 
   GLuint volumeProgramId{
-        g_volumeShader.linkProgram (
-                "shaders/vert_vertexcolor_passthrough.glsl",
-                "shaders/frag_volumesampler_noshading.glsl"
-            ) };
+      g_volumeShader.linkProgram(
+          "shaders/vert_vertexcolor_passthrough.glsl",
+          "shaders/frag_volumesampler_noshading.glsl") };
 
   if (volumeProgramId == 0) {
     gl_log_err("Error building volume sampling shader, program id was 0.");
@@ -801,17 +808,11 @@ int main(int argc, const char *argv[]) {
 
 
   //// Blocks and Data Init ////
-  g_blocks.initBlocks
-      (
-          glm::u64vec3(clo.numblk_x, clo.numblk_y, clo.numblk_z),
-          glm::u64vec3(clo.w, clo.h, clo.d)
+  g_blocks.initBlocks(glm::u64vec3(clo.numblk_x, clo.numblk_y, clo.numblk_z),
+                      glm::u64vec3(clo.w, clo.h, clo.d));
 
-      );
-
-  std::unique_ptr<float[]> data
-      {
-          std::move(bd::readVolumeData(clo.type, clo.filePath, clo.w, clo.h, clo.d))
-      };
+  std::unique_ptr<float[]> data{
+      std::move(bd::readVolumeData(clo.type, clo.filePath, clo.w, clo.h, clo.d)) };
 
   if (data == nullptr) {
     gl_log_err("data file was not opened. exiting...");
@@ -826,7 +827,9 @@ int main(int argc, const char *argv[]) {
   if (clo.printBlocks) { printBlocks(); }
 
   //// Transfer function texture ////
-  unsigned int tfuncTextureId { loadTransfer_1dtformat(clo.tfuncPath, g_tfuncTex, g_volumeShader) };
+  unsigned int tfuncTextureId{
+      loadTransfer_1dtformat(clo.tfuncPath, g_tfuncTex, g_volumeShader) };
+
   if (tfuncTextureId == 0) {
     gl_log_err("Exiting because tfunc texture was not bound.");
     exit(1);
