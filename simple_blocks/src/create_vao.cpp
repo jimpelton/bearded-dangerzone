@@ -51,7 +51,8 @@ void createQuads_Z(std::vector<glm::vec4> &quads, const glm::vec3 &min,
 /// \param max[in] Max corner of region
 /// \param numSlices[in] Number of slices per each axis.
 ////////////////////////////////////////////////////////////////////////////////
-void genQuadVao(bd::VertexArrayObject &vao, const glm::vec3 &min, const glm::vec3 &max,
+void genQuadVao(bd::VertexArrayObject &vao, const glm::vec3 &min,
+                const glm::vec3 &max,
                 const glm::u64vec3 &numSlices) {
 
 //  gl_log("Generating proxy geometry vertex buffers for %dx%dx%d slices.",
@@ -63,29 +64,38 @@ void genQuadVao(bd::VertexArrayObject &vao, const glm::vec3 &min, const glm::vec
   std::vector<uint16_t> elebuf;
 
 
-  /// For each axis, populate vbuf with verts for numSlices quads, adjust  ///
-  /// axis coordinate based on slice index.                                ///
-
   // Vertex buffer
-  createQuads(temp, min, {min.x, max.y, max.z}, numSlices.x, Axis::X);
+  temp.clear();
+  //createQuads(temp, min, { min.x, max.y, max.z }, numSlices.x, Axis::X);
+  createQuads(temp, min, max, numSlices.x, Axis::X);
   std::copy(temp.begin(), temp.end(), std::back_inserter(vbuf));
 
-  createQuads(temp, min, {max.x, min.y, max.z}, numSlices.y, Axis::Y);
+  temp.clear();
+//  createQuads(temp, min, { max.x, min.y, max.z }, numSlices.y, Axis::Y);
+  createQuads(temp, min, max, numSlices.y, Axis::Y);
   std::copy(temp.begin(), temp.end(), std::back_inserter(vbuf));
 
-  createQuads(temp, min, {max.x, max.y, min.z}, numSlices.z, Axis::Z);
+  temp.clear();
+//  createQuads(temp, min, { max.x, max.y, min.z }, numSlices.z, Axis::Z);
+  createQuads(temp, min, max, numSlices.z, Axis::Z);
   std::copy(temp.begin(), temp.end(), std::back_inserter(vbuf));
 
   vao.addVbo(vbuf, 0); // vbuf mapped to attribute 0
 
   // Texture buffer
-  createQuads(temp, {0, 0, 0}, {0, 1, 1}, numSlices.x, Axis::X);
+  temp.clear();
+//  createQuads(temp, { 0, 0, 0 }, { 0, 1, 1 }, numSlices.x, Axis::X);
+  createQuads(temp, { 0, 0, 0 }, { 1, 1, 1 }, numSlices.x, Axis::X);
   std::copy(temp.begin(), temp.end(), std::back_inserter(texbuf));
 
-  createQuads(temp, {0, 0, 0}, {1, 0, 1}, numSlices.y, Axis::Y);
+  temp.clear();
+//  createQuads(temp, { 0, 0, 0 }, { 1, 0, 1 }, numSlices.y, Axis::Y);
+  createQuads(temp, { 0, 0, 0 }, { 1, 1, 1 }, numSlices.y, Axis::Y);
   std::copy(temp.begin(), temp.end(), std::back_inserter(texbuf));
 
-  createQuads(temp, {0, 0, 0}, {1, 1, 0}, numSlices.z, Axis::Z);
+  temp.clear();
+//  createQuads(temp, { 0, 0, 0 }, { 1, 1, 0 }, numSlices.z, Axis::Z);
+  createQuads(temp, { 0, 0, 0 }, { 1, 1, 1 }, numSlices.z, Axis::Z);
   std::copy(temp.begin(), temp.end(), std::back_inserter(texbuf));
 
   vao.addVbo(texbuf, 1); // texbuf mapped to attribute 1
@@ -96,7 +106,6 @@ void genQuadVao(bd::VertexArrayObject &vao, const glm::vec3 &min, const glm::vec
   vao.setIndexBuffer(elebuf.data(), elebuf.size());
 
 }
-
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -124,10 +133,10 @@ void createQuads_X(std::vector<glm::vec4> &quads, const glm::vec3 &min,
 
   while (nextDelta.hasNext()) {
     float offset = nextDelta();
-    quads.push_back({offset, min.y, min.z, 1});   // ll
-    quads.push_back({offset, max.y, min.z, 1});   // lr
-    quads.push_back({offset, min.y, max.z, 1});   // ul
-    quads.push_back({offset, max.y, max.z, 1});   // ur
+    quads.push_back({ offset, min.y, min.z, 1 });   // ll
+    quads.push_back({ offset, max.y, min.z, 1 });   // lr
+    quads.push_back({ offset, min.y, max.z, 1 });   // ul
+    quads.push_back({ offset, max.y, max.z, 1 });   // ur
   }
 
 }
@@ -156,10 +165,10 @@ void createQuads_Y(std::vector<glm::vec4> &quads, const glm::vec3 &min,
 
   while (nextDelta.hasNext()) {
     float offset = nextDelta();
-    quads.push_back({min.x, offset, min.z, 1});   // ll
-    quads.push_back({max.x, offset, min.z, 1});   // lr
-    quads.push_back({min.x, offset, max.z, 1});   // ul
-    quads.push_back({max.x, offset, max.z, 1});   // ur
+    quads.push_back({ min.x, offset, min.z, 1 });   // ll
+    quads.push_back({ max.x, offset, min.z, 1 });   // lr
+    quads.push_back({ min.x, offset, max.z, 1 });   // ul
+    quads.push_back({ max.x, offset, max.z, 1 });   // ur
   }
 
 }
@@ -189,10 +198,10 @@ void createQuads_Z(std::vector<glm::vec4> &quads, const glm::vec3 &min,
 
   while (nextDelta.hasNext()) {
     float offset = nextDelta();
-    quads.push_back({min.x, min.y, offset, 1});   // ll
-    quads.push_back({max.x, min.y, offset, 1});   // lr
-    quads.push_back({min.x, max.y, offset, 1});   // ul
-    quads.push_back({max.x, max.y, offset, 1});   // ur
+    quads.push_back({ min.x, min.y, offset, 1 });   // ll
+    quads.push_back({ max.x, min.y, offset, 1 });   // lr
+    quads.push_back({ min.x, max.y, offset, 1 });   // ul
+    quads.push_back({ max.x, max.y, offset, 1 });   // ur
   }
 
 }
@@ -200,6 +209,7 @@ void createQuads_Z(std::vector<glm::vec4> &quads, const glm::vec3 &min,
 ///////////////////////////////////////////////////////////////////////////////
 /// \brief Create quad proxy geometry along axis \c a, within bounding box with
 ///        corners \c min and \c max.
+///
 /// \note Quads are created in the region R=[min+delta, max-delta].
 ///
 /// \param quads[out] Storage for created quads to be returned in.
@@ -211,9 +221,8 @@ void createQuads_Z(std::vector<glm::vec4> &quads, const glm::vec3 &min,
 void createQuads(std::vector<glm::vec4> &quads, const glm::vec3 &min,
                  const glm::vec3 &max, size_t numPlanes, Axis a) {
 
-  quads.clear();
   quads.reserve(numPlanes);
-  float delta{0};
+  float delta{ 0 };
 
   switch (a) {
     case Axis::X: {
@@ -249,11 +258,11 @@ void createElementIdx(std::vector<unsigned short> &elebuf, size_t numQuads) {
   elebuf.clear();
   elebuf.reserve(totalElems);
 
-  for (size_t i{ 0 }; i<numQuads; ++i) {
-    elebuf.push_back(0+4*i);
-    elebuf.push_back(1+4*i);
-    elebuf.push_back(2+4*i);
-    elebuf.push_back(3+4*i);
+  for (size_t i{ 0 }; i < numQuads; ++i) {
+    elebuf.push_back(0 + 4 * i);
+    elebuf.push_back(1 + 4 * i);
+    elebuf.push_back(2 + 4 * i);
+    elebuf.push_back(3 + 4 * i);
     elebuf.push_back(0xFFFF);
   }
 

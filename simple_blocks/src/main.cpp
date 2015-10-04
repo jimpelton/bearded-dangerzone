@@ -47,12 +47,12 @@
 ///////////////////////////////////////////////////////////////////////////////
 //  Const  Data
 ///////////////////////////////////////////////////////////////////////////////
-const glm::vec3 X_AXIS{1.0f, 0.0f, 0.0f};
-const glm::vec3 Y_AXIS{0.0f, 1.0f, 0.0f};
-const glm::vec3 Z_AXIS{0.0f, 0.0f, 1.0f};
+const glm::vec3 X_AXIS{ 1.0f, 0.0f, 0.0f };
+const glm::vec3 Y_AXIS{ 0.0f, 1.0f, 0.0f };
+const glm::vec3 Z_AXIS{ 0.0f, 0.0f, 1.0f };
 
 // 5 element indexes per quad: 4 verts followed by the restart symbol
-const int g_elementsPerQuad{5};
+const int g_elementsPerQuad{ 5 };
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -61,14 +61,14 @@ const int g_elementsPerQuad{5};
 
 /// \brief Enumerates the types of objects in the scene.
 enum class ObjType : unsigned int {
-  Axis, Quads, Boxes
+    Axis, Quads, Boxes
 };
 
 
 /// \brief Enumerates the possible sets of slices, each set has quads
 /// aligned with the specified plane.
 enum class SliceSet : unsigned int {
-  XZ, YZ, XY, NoneOfEm, AllOfEm
+    XZ, YZ, XY, NoneOfEm, AllOfEm
 };
 
 /// \brief To string representation of SliceSet.
@@ -102,9 +102,9 @@ bd::CoordinateAxis g_axis; ///< The coordinate axis lines.
 bd::Box g_box;
 
 std::vector<bd::VertexArrayObject *> g_vaoIds;
-size_t g_elementBufferSize{0};
+size_t g_elementBufferSize{ 0 };
 
-int g_numSlices{1};
+int g_numSlices{ 1 };
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -113,24 +113,24 @@ int g_numSlices{1};
 bd::ShaderProgram g_simpleShader;
 bd::ShaderProgram g_volumeShader;
 Texture g_tfuncTex;
-float g_scaleValue{1.0f};
+float g_scaleValue{ 1.0f };
 
 
 ///////////////////////////////////////////////////////////////////////////////
 // Viewing and Controls Data
 ///////////////////////////////////////////////////////////////////////////////
 bd::View g_camera;
-int g_screenWidth{1000};
-int g_screenHeight{1000};
-float g_fov_deg{50.0f};   ///< Field of view in degrees.
+int g_screenWidth{ 1000 };
+int g_screenHeight{ 1000 };
+float g_fov_deg{ 50.0f };   ///< Field of view in degrees.
 
 glm::vec2 g_cursorPos;
-float g_mouseSpeed{1.0f};
+float g_mouseSpeed{ 1.0f };
 
-bool g_toggleBlockBoxes{false};
-bool g_toggleWireFrame{false};
+bool g_toggleBlockBoxes{ false };
+bool g_toggleWireFrame{ false };
 
-SliceSet g_selectedSliceSet{SliceSet::XY};
+SliceSet g_selectedSliceSet{ SliceSet::XY };
 
 //TODO: bool g_toggleVolumeBox{ false };
 
@@ -138,9 +138,9 @@ SliceSet g_selectedSliceSet{SliceSet::XY};
 ///////////////////////////////////////////////////////////////////////////////
 //  Miscellaneous  radness
 ///////////////////////////////////////////////////////////////////////////////
-unsigned long long g_totalGPUTime_nonEmptyBlocks{0};
-unsigned long long g_totalFramesRendered{0};
-double g_totalElapsedCPUFrameTime{0};
+unsigned long long g_totalGPUTime_nonEmptyBlocks{ 0 };
+unsigned long long g_totalFramesRendered{ 0 };
+double g_totalElapsedCPUFrameTime{ 0 };
 
 bd::BlockCollection g_blocks;
 
@@ -372,7 +372,7 @@ void drawSlices(GLint baseVertex) {
 /// \brief Loop through the blocks and draw each one
 ///////////////////////////////////////////////////////////////////////////////
 void drawNonEmptyBlocks_Forward(const glm::mat4 &vp) {
-  GLint baseVertex{0};
+  GLint baseVertex{ 0 };
   switch (g_selectedSliceSet) {
     //case SliceSet::XY:
     //    baseVertex = 0; break;
@@ -401,14 +401,14 @@ void drawNonEmptyBlocks_Forward(const glm::mat4 &vp) {
 /// \brief Determine the viewing direction and draw the blocks in proper order.
 ///////////////////////////////////////////////////////////////////////////////
 void drawNonEmptyBlocks(const glm::mat4 &vp) {
-  SliceSet previousSet{g_selectedSliceSet};
-  glm::vec4 viewdir{glm::normalize(g_camera.getViewMatrix()[2])};
-  glm::vec4 absViewdir{glm::abs(viewdir)};
+  SliceSet previousSet{ g_selectedSliceSet };
+  glm::vec4 viewdir{ glm::normalize(g_camera.getViewMatrix()[2]) };
+  glm::vec4 absViewdir{ glm::abs(viewdir) };
 
   // Select current slice set based on longeset
   // component of viewing vector.
-  bool neg{viewdir.x < 0};
-  float longest{absViewdir.x};
+  bool neg{ viewdir.x < 0 };
+  float longest{ absViewdir.x };
 
   g_selectedSliceSet = SliceSet::YZ;
 
@@ -426,7 +426,7 @@ void drawNonEmptyBlocks(const glm::mat4 &vp) {
 
   if (previousSet != g_selectedSliceSet) {
     std::cout << "Switched slice set: " << (neg ? '-' : '+') <<
-        g_selectedSliceSet << '\n';
+    g_selectedSliceSet << '\n';
   }
 
   if (g_toggleWireFrame) {
@@ -489,7 +489,7 @@ void endTime(std::chrono::high_resolution_clock::time_point before) {
 ///////////////////////////////////////////////////////////////////////////////
 void loop(GLFWwindow *window) {
   gl_log("Entered render loop.");
-  GLuint64 frame_gpuTime_nonEmptyBlocks{0};
+  GLuint64 frame_gpuTime_nonEmptyBlocks{ 0 };
 
   g_volumeShader.bind();
   g_tfuncTex.bind(1);
@@ -684,7 +684,8 @@ void printTimes(std::ostream &str) {
   str <<
   "frames_rendered: " << g_totalFramesRendered << " frames\n"
       "gpu_ft_total_nonempty: " << gputime_ms << "ms\n"
-      "gpu_ft_avg_nonempty: " << (gputime_ms / float(g_totalFramesRendered)) << "ms\n"
+      "gpu_ft_avg_nonempty: " << (gputime_ms / float(g_totalFramesRendered)) <<
+  "ms\n"
       "cpu_ft_total: " << cputime_ms << "ms\n"
       "cpu_ft_avg: " << (cputime_ms / float(g_totalFramesRendered)) << "ms"
   << std::endl;
@@ -736,8 +737,9 @@ void printNvPmApiCounters(const char *perfOutPath = "") {
       printTimes(outStream);
     }
     else {
-      gl_log_err("Could not open %s for performance counter output. Using stdout instead.",
-                 perfOutPath);
+      gl_log_err(
+          "Could not open %s for performance counter output. Using stdout instead.",
+          perfOutPath);
       perf_printCounters(std::cout);
       printTimes(std::cout);
     }
@@ -749,7 +751,8 @@ void printNvPmApiCounters(const char *perfOutPath = "") {
 int main(int argc, const char *argv[]) {
   CommandLineOptions clo;
   if (parseThem(argc, argv, clo) == 0) {
-    std::cout << "No arguments provided.\nPlease use -h for usage info." << std::endl;
+    std::cout << "No arguments provided.\nPlease use -h for usage info." <<
+    std::endl;
     return 1;
   }
 
@@ -788,23 +791,24 @@ int main(int argc, const char *argv[]) {
   }
 
   //// Geometry Init ////
-  bd::VertexArrayObject quadVbo;
-  quadVbo.create();
-  //genQuadVao(quadVbo, clo.num_slices);
+  bd::VertexArrayObject quadVao;
+  quadVao.create();
+  genQuadVao(quadVao, {-1.0f,-1.0f,-1.0f}, {1.0f, 1.0f, 1.0f},
+             {clo.num_slices, clo.num_slices, clo.num_slices});
 
-  bd::VertexArrayObject axisVbo;
-  axisVbo.create();
-  genAxisVao(axisVbo);
+  bd::VertexArrayObject axisVao;
+  axisVao.create();
+  genAxisVao(axisVao);
 
-  bd::VertexArrayObject boxVbo;
-  boxVbo.create();
-  genBoxVao(boxVbo);
+  bd::VertexArrayObject boxVao;
+  boxVao.create();
+  genBoxVao(boxVao);
 
 
   g_vaoIds.resize(3);
-  g_vaoIds[bd::ordinal(ObjType::Axis)] = &axisVbo;
-  g_vaoIds[bd::ordinal(ObjType::Quads)] = &quadVbo;
-  g_vaoIds[bd::ordinal(ObjType::Boxes)] = &boxVbo;
+  g_vaoIds[bd::ordinal(ObjType::Axis)] = &axisVao;
+  g_vaoIds[bd::ordinal(ObjType::Quads)] = &quadVao;
+  g_vaoIds[bd::ordinal(ObjType::Boxes)] = &boxVao;
 
 
   //// Blocks and Data Init ////
@@ -812,7 +816,8 @@ int main(int argc, const char *argv[]) {
                       glm::u64vec3(clo.w, clo.h, clo.d));
 
   std::unique_ptr<float[]> data{
-      std::move(bd::readVolumeData(clo.type, clo.filePath, clo.w, clo.h, clo.d)) };
+      std::move(bd::readVolumeData(clo.type, clo.filePath, clo.w, clo.h,
+                                   clo.d)) };
 
   if (data == nullptr) {
     gl_log_err("data file was not opened. exiting...");

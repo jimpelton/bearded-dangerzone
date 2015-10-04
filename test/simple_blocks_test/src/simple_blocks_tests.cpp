@@ -32,7 +32,27 @@ struct StringMaker<glm::vec4> {
     return glm::to_string(value);
   }
 };
+
+} // namespace
+
+TEST_CASE("createQuads_X single slice", "[vertex][X][single]") {
+  glm::vec3 min{ 0, 0, 0 };
+  glm::vec3 max{ 1, 1, 1 };
+  float numSlices{ 1.0f };
+
+  std::vector<glm::vec4> expected{
+      glm::vec4{ 0, 0, 0, 1 },
+      glm::vec4{ 0, 1, 0, 1 },
+      glm::vec4{ 0, 0, 1, 1 },
+      glm::vec4{ 0, 1, 1, 1 },
+  };
+
+      std::vector<glm::vec4> actual;
+      createQuads(actual, min, max, numSlices, Axis::X);
+
+      REQUIRE(actual == expected);
 }
+
 
 TEST_CASE("createQuads_X", "[vertex][X]") {
   glm::vec3 min{0, 0, 0};
