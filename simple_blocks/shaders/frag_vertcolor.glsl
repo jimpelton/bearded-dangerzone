@@ -1,4 +1,4 @@
-#version 400
+#version 400 core
 
 in vec3 vcol;
 out vec4 frag_color;

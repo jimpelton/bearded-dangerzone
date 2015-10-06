@@ -1,7 +1,8 @@
-#version 400
+#version 400 core
 
-in vec3 v;
-in vec3 in_col;
+layout(location = 0) in vec3 v;
+layout(location = 1) in vec3 in_col;
+
 uniform mat4 mvp;
 
 out vec3 vcol;
