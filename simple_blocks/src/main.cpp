@@ -5,6 +5,7 @@
 #include "cmdline.h"
 #include "create_vao.h"
 #include "axis_enum.h"
+#include "timing.h"
 
 // BD lib
 #include <bd/geo/axis.h>
@@ -139,9 +140,6 @@ SliceSet g_selectedSliceSet{ SliceSet::XY };
 ///////////////////////////////////////////////////////////////////////////////
 //  Miscellaneous  radness
 ///////////////////////////////////////////////////////////////////////////////
-unsigned long long g_totalGPUTime_nonEmptyBlocks{ 0 };
-unsigned long long g_totalFramesRendered{ 0 };
-double g_totalElapsedCPUFrameTime{ 0 };
 
 bd::BlockCollection g_blocks;
 
@@ -182,58 +180,6 @@ unsigned int queryFrontBuffer = 1;
 ///////////////////////////////////////////////////////////////////////////////
 /// \brief Init opengl queries for GPU frame times.
 ///////////////////////////////////////////////////////////////////////////////
-void genQueries() {
-
-  gl_check(glGenQueries(QUERY_COUNT, queryID[queryBackBuffer]));
-  gl_check(glGenQueries(QUERY_COUNT, queryID[queryFrontBuffer]));
-  // dummy query to prevent OpenGL errors from popping out
-  //gl_check(glQueryCounter(queryID[queryFrontBuffer][0], GL_TIMESTAMP));
-
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-void swapQueryBuffers() {
-  if (queryBackBuffer) {
-    queryBackBuffer = 0;
-    queryFrontBuffer = 1;
-  } else {
-    queryBackBuffer = 1;
-    queryFrontBuffer = 0;
-  }
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-void startGpuTimerQuery() {
-  gl_check(glBeginQuery(GL_TIME_ELAPSED, queryID[queryBackBuffer][0]));
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-void endGpuTimerQuery(GLuint64 *frameTime) {
-  assert(frameTime != nullptr && "nullptr passed to endGpuTimerQuery");
-  gl_check(glEndQuery(GL_TIME_ELAPSED));
-  gl_check(glGetQueryObjectui64v(queryID[queryFrontBuffer][0], GL_QUERY_RESULT,
-                                 frameTime));
-  swapQueryBuffers();
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-std::chrono::high_resolution_clock::time_point startCpuTime() {
-  return std::chrono::high_resolution_clock::now();
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-void endCpuTime(std::chrono::high_resolution_clock::time_point before) {
-  using namespace std::chrono;
-  auto now = high_resolution_clock::now();
-  g_totalElapsedCPUFrameTime +=
-      duration_cast<microseconds>(now - before).count();
-}
-
 /************************************************************************/
 /* G L F W     C A L L B A C K S                                        */
 /************************************************************************/
@@ -377,12 +323,6 @@ GLint computeBaseVertexFromViewDir(const glm::vec3 &viewdir) {
 //    isNeg = viewdir.z < 0;
     selected = SliceSet::XY;
   }
-  if (selected != g_selectedSliceSet) {
-    std::cout << "Switched slice set: " << /* (isNeg ? '-' : '+') << */
-    g_selectedSliceSet << '\n';
-  }
-
-  g_selectedSliceSet = selected;
 
   // Compute base vertex offset.
   GLint baseVertex{ 0 };
@@ -399,6 +339,13 @@ GLint computeBaseVertexFromViewDir(const glm::vec3 &viewdir) {
     default:
       break;
   }
+
+  if (selected != g_selectedSliceSet) {
+    std::cout << "Switched slice set: " << /* (isNeg ? '-' : '+') << */
+    g_selectedSliceSet << '\n';
+  }
+
+  g_selectedSliceSet = selected;
 
   return baseVertex;
 }
@@ -515,14 +462,13 @@ void draw() {
 void loop(GLFWwindow *window) {
   assert(window != nullptr && "window was passed as nullptr in loop()");
   gl_log("About to enter render loop.");
-  GLuint64 frame_gpuTime_nonEmptyBlocks{ 0 };
 
   // initial bindage of tfunc texture to volume shader.
   g_volumeShader.bind();
   g_tfuncTex.bind(1);
 
   do {
-    auto frame_startTime = startCpuTime();
+    startCpuTime();
     g_camera.updateViewMatrix();
 
     startGpuTimerQuery();
@@ -530,14 +476,11 @@ void loop(GLFWwindow *window) {
     draw();
     glfwSwapBuffers(window);
 
-    endGpuTimerQuery(&frame_gpuTime_nonEmptyBlocks);
+    endGpuTimerQuery();
 
-    g_totalGPUTime_nonEmptyBlocks += frame_gpuTime_nonEmptyBlocks;
     glfwPollEvents();
 
-    endCpuTime(frame_startTime);
-
-    g_totalFramesRendered++;
+    endCpuTime();
 
   } while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
            glfwWindowShouldClose(window) == 0);
@@ -703,15 +646,15 @@ void printBlocks() {
 
 /////////////////////////////////////////////////////////////////////////////////
 void printTimes(std::ostream &str) {
-  double gputime_ms = g_totalGPUTime_nonEmptyBlocks * 1.0e-6;
-  double cputime_ms = g_totalElapsedCPUFrameTime * 1.0e-3;
+  double gputime_ms = getTotalGPUTime_NonEmptyBlocks() * 1.0e-6;
+  double cputime_ms = getTotalElapsedCPUFrameTime() * 1.0e-3;
 
   str <<
-  "frames_rendered: " << g_totalFramesRendered << " frames\n"
+  "frames_rendered: " << getTotalFramesRendered() << " frames\n"
       "gpu_ft_total_nonempty: " << gputime_ms << "ms\n"
-      "gpu_ft_avg_nonempty: " << (gputime_ms / g_totalFramesRendered) << "ms\n"
+      "gpu_ft_avg_nonempty: " << (gputime_ms / getTotalFramesRendered()) << "ms\n"
       "cpu_ft_total: " << cputime_ms << "ms\n"
-      "cpu_ft_avg: " << (cputime_ms / g_totalFramesRendered) << "ms"
+      "cpu_ft_avg: " << (cputime_ms / getTotalFramesRendered()) << "ms"
   << std::endl;
 }
 

@@ -85,6 +85,7 @@ set(simple_blocks_HEADERS
         src/create_vao.h
         src/glfw_callbacks.h
         src/nvpm.h
+        src/timing.h
 )
 
 set(simple_blocks_SOURCES
@@ -93,6 +94,7 @@ set(simple_blocks_SOURCES
         src/create_vao.cpp
         src/glfw_callbacks.cpp
         src/load_transfer.cpp
+        src/timing.cpp
 )
 
 
