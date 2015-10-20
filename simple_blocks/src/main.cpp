@@ -245,6 +245,8 @@ void glfw_error_callback(int error, const char *description) {
 ////////////////////////////////////////////////////////////////////////////////
 void glfw_keyboard_callback(GLFWwindow *window, int key, int scancode, int action,
                             int mods) {
+
+  // on key press
   if (action == GLFW_PRESS) {
     switch (key) {
 //        case GLFW_KEY_0:
@@ -271,6 +273,7 @@ void glfw_keyboard_callback(GLFWwindow *window, int key, int scancode, int actio
     }
   }
 
+  // while holding key down.
   if (action != GLFW_RELEASE) {
     switch (key) {
       case GLFW_KEY_PERIOD:
@@ -510,6 +513,7 @@ void draw() {
 
 ///////////////////////////////////////////////////////////////////////////////
 void loop(GLFWwindow *window) {
+  assert(window != nullptr && "window was passed as nullptr in loop()");
   gl_log("About to enter render loop.");
   GLuint64 frame_gpuTime_nonEmptyBlocks{ 0 };
 
