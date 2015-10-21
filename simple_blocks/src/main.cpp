@@ -376,7 +376,11 @@ void drawNonEmptyBoundingBoxes(const glm::mat4 &mvp) {
 
 
 ///////////////////////////////////////////////////////////////////////////////
+/// \brief Disable GL_DEPTH_TEST and draw transparent slices
+///////////////////////////////////////////////////////////////////////////////
 void drawSlices(GLint baseVertex) {
+  gl_check(glDisable(GL_DEPTH_TEST));
+
   perf_workBegin();
   gl_check(glDrawElementsBaseVertex(GL_TRIANGLE_STRIP,
                                     g_elementsPerQuad * g_numSlices,
@@ -384,6 +388,8 @@ void drawSlices(GLint baseVertex) {
                                     0,
                                     baseVertex));
   perf_workEnd();
+
+  gl_check(glEnable(GL_DEPTH_TEST));
 }
 
 
@@ -515,6 +521,8 @@ void genAxisVao(bd::VertexArrayObject &vao) {
 
 
 ///////////////////////////////////////////////////////////////////////////////
+/// \brief Generate the vertex buffers for bounding box around the blocks
+///////////////////////////////////////////////////////////////////////////////
 void genBoxVao(bd::VertexArrayObject &vao) {
   gl_log("Generating bounding box vertex buffers.");
 
@@ -591,8 +599,7 @@ GLFWwindow *init() {
   glfwSetCursorPosCallback(window, glfw_cursorpos_callback);
   glfwSetWindowSizeCallback(window, glfw_window_size_callback);
   glfwSetKeyCallback(window, glfw_keyboard_callback);
-  glfwSetScrollCallback(window, glfw_scrollwheel_callback);//
-//
+  glfwSetScrollCallback(window, glfw_scrollwheel_callback);
 
   glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
   glfwMakeContextCurrent(window);
@@ -768,15 +775,18 @@ int main(int argc, const char *argv[]) {
   g_tfuncTex.bind(1);
 
   //// Geometry Init ////
+  // 2d slices
   bd::VertexArrayObject quadVao;
   quadVao.create();
   genQuadVao(quadVao, {-0.5f,-0.5f,-0.5f}, {0.5f, 0.5f, 0.5f},
              {clo.num_slices, clo.num_slices, clo.num_slices});
 
+  // coordinate axis
   bd::VertexArrayObject axisVao;
   axisVao.create();
   genAxisVao(axisVao);
 
+  // bounding boxes
   bd::VertexArrayObject boxVao;
   boxVao.create();
   genBoxVao(boxVao);
