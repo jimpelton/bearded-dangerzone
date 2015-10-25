@@ -141,7 +141,7 @@ SliceSet g_selectedSliceSet{ SliceSet::XY };
 //  Miscellaneous  radness
 ///////////////////////////////////////////////////////////////////////////////
 
-bd::BlockCollection g_blocks;
+bd::BlockCollection g_blockCollection;
 
 
 void glfw_cursorpos_callback(GLFWwindow *window, double x, double y);
@@ -170,11 +170,6 @@ unsigned int loadTransfer_1dtformat(const std::string &filename,
 /* Timer Stuff                                                          */
 /************************************************************************/
 
-#define QUERY_BUFFERS 2
-#define QUERY_COUNT 1
-GLuint queryID[QUERY_BUFFERS][QUERY_COUNT];
-unsigned int queryBackBuffer = 0;
-unsigned int queryFrontBuffer = 1;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -353,7 +348,7 @@ GLint computeBaseVertexFromViewDir(const glm::vec3 &viewdir) {
 
 ///////////////////////////////////////////////////////////////////////////////
 void drawNonEmptyBoundingBoxes(const glm::mat4 &mvp) {
-  for (auto *b : g_blocks.nonEmptyBlocks()) {
+  for (auto *b : g_blockCollection.nonEmptyBlocks()) {
     glm::mat4 mmvp = mvp * b->transform().matrix();
     g_simpleShader.setUniform("mvp", mmvp);
 
@@ -424,7 +419,7 @@ void drawNonEmptyBlocks(const glm::mat4 &vp) {
 
   //TODO: sort quads farthest to nearest.
   g_volumeShader.bind();
-  drawNonEmptyBlocks_Forward(g_blocks.nonEmptyBlocks(), vp);
+  drawNonEmptyBlocks_Forward(g_blockCollection.nonEmptyBlocks(), vp);
 
   if (g_toggleWireFrame) {
     gl_check(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
@@ -556,7 +551,7 @@ void initGraphicsState() {
 
 //  gl_check(glEnable(GL_CULL_FACE));
 //  gl_check(glCullFace(GL_FRONT));
-    gl_check(glDisable(GL_CULL_FACE));
+  gl_check(glDisable(GL_CULL_FACE));
 
   gl_check(glEnable(GL_DEPTH_TEST));
   gl_check(glDepthFunc(GL_LESS));
@@ -588,8 +583,13 @@ GLFWwindow *init() {
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
-  GLFWwindow *window = glfwCreateWindow(g_screenWidth, g_screenHeight,
-                                        "Blocks", nullptr, nullptr);
+  GLFWwindow *window =
+      glfwCreateWindow(g_screenWidth,
+                       g_screenHeight,
+                       "Blocks",
+                       nullptr,
+                       nullptr);
+
   if (!window) {
     gl_log("ERROR: could not open window with GLFW3");
     glfwTerminate();
@@ -639,7 +639,7 @@ void printBlocks() {
 
   if (block_file.is_open()) {
     gl_log("Writing blocks to blocks.txt in the current working directory.");
-    for (auto &b : g_blocks.blocks()) {
+    for (auto &b : g_blockCollection.blocks()) {
       block_file << b << "\n";
     }
     block_file.flush();
@@ -733,7 +733,6 @@ int main(int argc, const char *argv[]) {
   g_numSlices = clo.num_slices;
   bd::gl_log_restart();
 
-
   //// GLFW init ////
   GLFWwindow *window;
   if ((window = init()) == nullptr) {
@@ -799,7 +798,7 @@ int main(int argc, const char *argv[]) {
 
 
   //// Blocks and Data Init ////
-  g_blocks.initBlocks(glm::u64vec3(clo.numblk_x, clo.numblk_y, clo.numblk_z),
+  g_blockCollection.initBlocks(glm::u64vec3(clo.numblk_x, clo.numblk_y, clo.numblk_z),
                       glm::u64vec3(clo.w, clo.h, clo.d));
 
   std::unique_ptr<float[]> data{
@@ -811,7 +810,7 @@ int main(int argc, const char *argv[]) {
     return 1;
   }
 
-  g_blocks.filterBlocks(data.get(),
+  g_blockCollection.filterBlocks(data.get(),
                         g_volumeShader.getUniformLocation("volume_sampler"),
                         clo.tmin, clo.tmax);
 

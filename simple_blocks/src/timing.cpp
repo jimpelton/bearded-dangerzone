@@ -7,24 +7,25 @@
 #define QUERY_BUFFERS 2
 #define QUERY_COUNT 1
 
-static GLuint queryID[QUERY_BUFFERS][QUERY_COUNT];
+namespace {
+  GLuint queryID[QUERY_BUFFERS][QUERY_COUNT];
 
-static unsigned int queryBackBuffer{ 0 };
-static unsigned int queryFrontBuffer{ 1 };
+  unsigned int queryBackBuffer{ 0 };
+  unsigned int queryFrontBuffer{ 1 };
 
-static unsigned long long g_totalGPUTime_nonEmptyBlocks{ 0 };
-static unsigned long long g_totalFramesRendered{ 0 };
-static double g_totalElapsedCPUFrameTime{ 0 };
+  unsigned long long g_totalGPUTime_nonEmptyBlocks{ 0 };
+  unsigned long long g_totalFramesRendered{ 0 };
+  double g_totalElapsedCPUFrameTime{ 0 };
 
-static std::chrono::high_resolution_clock::time_point g_cpuFrameStartTime{ };
+  std::chrono::high_resolution_clock::time_point g_cpuFrameStartTime{ };
+
+} // namespace
 
 void genQueries() {
-
   gl_check(glGenQueries(QUERY_COUNT, queryID[queryBackBuffer]));
   gl_check(glGenQueries(QUERY_COUNT, queryID[queryFrontBuffer]));
   // dummy query to prevent OpenGL errors from popping out
   //gl_check(glQueryCounter(queryID[queryFrontBuffer][0], GL_TIMESTAMP));
-
 }
 
 

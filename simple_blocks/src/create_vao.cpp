@@ -5,51 +5,130 @@
 #include <glm/glm.hpp>
 
 
+namespace {
+  ////////////////////////////////////////////////////////////////////////////////
+  /// \brief Create quads perpendicular to X-axis within the region with diagonal
+  ///        from min to max.
+  ///
+  /// \note Quad vertices are returned in triangle strip winding order.
+  ///
+  /// \param[in] min Minimum corner of first plane
+  /// \param[in] max Maximum corner of first plane.
+  ///
+  ///  y.min         y.max
+  ///  z.max         z.max
+  ///    +------------+
+  ///    |            |
+  ///    |            |
+  ///    |            |
+  ///    |            |
+  ///    +------------+
+  ///  y.min         y.max
+  ///  z.min         z.min
+  ////////////////////////////////////////////////////////////////////////////////
+  void createQuads_X(std::vector<glm::vec4> &quads, const glm::vec3 &min,
+                     const glm::vec3 &max, accum_delta<float> &nextDelta);
 
 
-//namespace vert
-//{
-
-void createQuads_X(std::vector<glm::vec4> &quads, const glm::vec3 &min,
-                   const glm::vec3 &max, accum_delta<float> &nextDelta);
-
-
-void createQuads_Y(std::vector<glm::vec4> &quads, const glm::vec3 &min,
-                   const glm::vec3 &max, accum_delta<float> &nextDelta);
-
-
-void createQuads_Z(std::vector<glm::vec4> &quads, const glm::vec3 &min,
-                   const glm::vec3 &max, accum_delta<float> &nextDelta);
-
-
-
-///////////////////////////////////////////////////////////////////////////////
-/// \brief Create slices for each axis with in a region. The min, max of the
-///        region boundingbox is given by min and max vectors.
-///
-///     {min.x, max.y, max.z}
-///           +---------------+ max
-///          /               /|
-///         /               / |
-/// {min.x, max.y, min.z}  /  |
-///       +--------------+` {max.x, max.y, min.z}
-///       |              |    |
-///       |              |    |
-///       |              |    + {max.x, min.y, max.z}
-///       |              |   /
-///       |              |  /
-///       |              | /
-///  min  +--------------+`  {max.x,  min.y, min.z}
-///
+  ////////////////////////////////////////////////////////////////////////////////
+  /// \brief Create quads perpendicular to Y-axis within the region with diagonal
+  ///        from min to max.
+  ///
+  /// \note Quad vertices are returned in triangle strip winding order.
+  ///
+  /// \param[in] min Minimum corner of first plane
+  /// \param[in] max Maximum corner of first plane.
+  ///  x.min         x.max
+  ///  z.max         z.max
+  ///    +------------+
+  ///    |            |
+  ///    |            |
+  ///    |            |
+  ///    |            |
+  ///    +------------+
+  ///  x.min         x.max
+  ///  z.min         z.min
+  ////////////////////////////////////////////////////////////////////////////////
+  void createQuads_Y(std::vector<glm::vec4> &quads, const glm::vec3 &min,
+                     const glm::vec3 &max, accum_delta<float> &nextDelta);
 
 
-////////////////////////////////////////////////////////////////////////////////
-/// \brief Generate proxy geometry and hand it to the provided VAO.
-///
-/// \param vao[out] VertexArrayObject
-/// \param min[in] Min corner of region
-/// \param max[in] Max corner of region
-/// \param numSlices[in] Number of slices per each axis.
+  ////////////////////////////////////////////////////////////////////////////////
+  /// \brief Create quads perpendicular to Z-axis within the region with diagonal
+  ///        from min to max.
+  ///
+  /// \note Quad vertices are returned in triangle strip winding order.
+  ///
+  /// \param[in] min Minimum corner of region
+  /// \param[in] max Maximum corner of region.
+  ///
+  ///  x.min         x.max
+  ///  y.max         y.max
+  ///    +------------+
+  ///    |            |
+  ///    |            |
+  ///    |            |
+  ///    |            |
+  ///    +------------+
+  ///  x.min         x.max
+  ///  y.min         y.min
+  ////////////////////////////////////////////////////////////////////////////////
+  void createQuads_Z(std::vector<glm::vec4> &quads, const glm::vec3 &min,
+                     const glm::vec3 &max, accum_delta<float> &nextDelta);
+
+
+  ////////////////////////////////////////////////////////////////////////////////
+  //   createQuads_* Implementations
+  ////////////////////////////////////////////////////////////////////////////////
+
+
+  ////////////////////////////////////////////////////////////////////////////////
+  void createQuads_X(std::vector<glm::vec4> &quads, const glm::vec3 &min,
+                     const glm::vec3 &max, accum_delta<float> &nextDelta) {
+
+    while (nextDelta.hasNext()) {
+      float offset = nextDelta();
+      quads.push_back({ offset, min.y, min.z, 1 });   // ll
+      quads.push_back({ offset, max.y, min.z, 1 });   // lr
+      quads.push_back({ offset, min.y, max.z, 1 });   // ul
+      quads.push_back({ offset, max.y, max.z, 1 });   // ur
+    }
+
+  }
+
+
+  ////////////////////////////////////////////////////////////////////////////////
+  void createQuads_Y(std::vector<glm::vec4> &quads, const glm::vec3 &min,
+                     const glm::vec3 &max, accum_delta<float> &nextDelta) {
+
+    while (nextDelta.hasNext()) {
+      float offset = nextDelta();
+      quads.push_back({ min.x, offset, min.z, 1 });   // ll
+      quads.push_back({ max.x, offset, min.z, 1 });   // lr
+      quads.push_back({ min.x, offset, max.z, 1 });   // ul
+      quads.push_back({ max.x, offset, max.z, 1 });   // ur
+    }
+
+  }
+
+
+  ////////////////////////////////////////////////////////////////////////////////
+  void createQuads_Z(std::vector<glm::vec4> &quads, const glm::vec3 &min,
+                     const glm::vec3 &max, accum_delta<float> &nextDelta) {
+
+    while (nextDelta.hasNext()) {
+      float offset = nextDelta();
+      quads.push_back({ min.x, min.y, offset, 1 });   // ll
+      quads.push_back({ max.x, min.y, offset, 1 });   // lr
+      quads.push_back({ min.x, max.y, offset, 1 });   // ul
+      quads.push_back({ max.x, max.y, offset, 1 });   // ur
+    }
+
+  }
+
+} // namespace
+
+
 ////////////////////////////////////////////////////////////////////////////////
 void genQuadVao(bd::VertexArrayObject &vao, const glm::vec3 &min,
                 const glm::vec3 &max,
@@ -66,17 +145,14 @@ void genQuadVao(bd::VertexArrayObject &vao, const glm::vec3 &min,
 
   // Vertex buffer
   temp.clear();
-  //createQuads(temp, min, { min.x, max.y, max.z }, numSlices.x, Axis::X);
   createQuads(temp, min, max, numSlices.x, Axis::X);
   std::copy(temp.begin(), temp.end(), std::back_inserter(vbuf));
 
   temp.clear();
-//  createQuads(temp, min, { max.x, min.y, max.z }, numSlices.y, Axis::Y);
   createQuads(temp, min, max, numSlices.y, Axis::Y);
   std::copy(temp.begin(), temp.end(), std::back_inserter(vbuf));
 
   temp.clear();
-//  createQuads(temp, min, { max.x, max.y, min.z }, numSlices.z, Axis::Z);
   createQuads(temp, min, max, numSlices.z, Axis::Z);
   std::copy(temp.begin(), temp.end(), std::back_inserter(vbuf));
 
@@ -84,17 +160,14 @@ void genQuadVao(bd::VertexArrayObject &vao, const glm::vec3 &min,
 
   // Texture buffer
   temp.clear();
-//  createQuads(temp, { 0, 0, 0 }, { 0, 1, 1 }, numSlices.x, Axis::X);
   createQuads(temp, { 0, 0, 0 }, { 1, 1, 1 }, numSlices.x, Axis::X);
   std::copy(temp.begin(), temp.end(), std::back_inserter(texbuf));
 
   temp.clear();
-//  createQuads(temp, { 0, 0, 0 }, { 1, 0, 1 }, numSlices.y, Axis::Y);
   createQuads(temp, { 0, 0, 0 }, { 1, 1, 1 }, numSlices.y, Axis::Y);
   std::copy(temp.begin(), temp.end(), std::back_inserter(texbuf));
 
   temp.clear();
-//  createQuads(temp, { 0, 0, 0 }, { 1, 1, 0 }, numSlices.z, Axis::Z);
   createQuads(temp, { 0, 0, 0 }, { 1, 1, 1 }, numSlices.z, Axis::Z);
   std::copy(temp.begin(), temp.end(), std::back_inserter(texbuf));
 
@@ -109,115 +182,6 @@ void genQuadVao(bd::VertexArrayObject &vao, const glm::vec3 &min,
 
 
 ////////////////////////////////////////////////////////////////////////////////
-/// \brief Create quads perpendicular to X-axis within the region with diagonal
-///        from min to max.
-///
-/// \note Quad vertices are returned in triangle strip winding order.
-///
-/// \param[in] min Minimum corner of first plane
-/// \param[in] max Maximum corner of first plane.
-///
-///  y.min         y.max
-///  z.max         z.max
-///    +------------+
-///    |            |
-///    |            |
-///    |            |
-///    |            |
-///    +------------+
-///  y.min         y.max
-///  z.min         z.min
-////////////////////////////////////////////////////////////////////////////////
-void createQuads_X(std::vector<glm::vec4> &quads, const glm::vec3 &min,
-                   const glm::vec3 &max, accum_delta<float> &nextDelta) {
-
-  while (nextDelta.hasNext()) {
-    float offset = nextDelta();
-    quads.push_back({ offset, min.y, min.z, 1 });   // ll
-    quads.push_back({ offset, max.y, min.z, 1 });   // lr
-    quads.push_back({ offset, min.y, max.z, 1 });   // ul
-    quads.push_back({ offset, max.y, max.z, 1 });   // ur
-  }
-
-}
-
-////////////////////////////////////////////////////////////////////////////////
-/// \brief Create quads perpendicular to Y-axis within the region with diagonal
-///        from min to max.
-///
-/// \note Quad vertices are returned in triangle strip winding order.
-///
-/// \param[in] min Minimum corner of first plane
-/// \param[in] max Maximum corner of first plane.
-///  x.min         x.max
-///  z.max         z.max
-///    +------------+
-///    |            |
-///    |            |
-///    |            |
-///    |            |
-///    +------------+
-///  x.min         x.max
-///  z.min         z.min
-////////////////////////////////////////////////////////////////////////////////
-void createQuads_Y(std::vector<glm::vec4> &quads, const glm::vec3 &min,
-                   const glm::vec3 &max, accum_delta<float> &nextDelta) {
-
-  while (nextDelta.hasNext()) {
-    float offset = nextDelta();
-    quads.push_back({ min.x, offset, min.z, 1 });   // ll
-    quads.push_back({ max.x, offset, min.z, 1 });   // lr
-    quads.push_back({ min.x, offset, max.z, 1 });   // ul
-    quads.push_back({ max.x, offset, max.z, 1 });   // ur
-  }
-
-}
-
-////////////////////////////////////////////////////////////////////////////////
-/// \brief Create quads perpendicular to Z-axis within the region with diagonal
-///        from min to max.
-///
-/// \note Quad vertices are returned in triangle strip winding order.
-///
-/// \param[in] min Minimum corner of region
-/// \param[in] max Maximum corner of region.
-///
-///  x.min         x.max
-///  y.max         y.max
-///    +------------+
-///    |            |
-///    |            |
-///    |            |
-///    |            |
-///    +------------+
-///  x.min         x.max
-///  y.min         y.min
-////////////////////////////////////////////////////////////////////////////////
-void createQuads_Z(std::vector<glm::vec4> &quads, const glm::vec3 &min,
-                   const glm::vec3 &max, accum_delta<float> &nextDelta) {
-
-  while (nextDelta.hasNext()) {
-    float offset = nextDelta();
-    quads.push_back({ min.x, min.y, offset, 1 });   // ll
-    quads.push_back({ max.x, min.y, offset, 1 });   // lr
-    quads.push_back({ min.x, max.y, offset, 1 });   // ul
-    quads.push_back({ max.x, max.y, offset, 1 });   // ur
-  }
-
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/// \brief Create quad proxy geometry along axis \c a, within bounding box with
-///        corners \c min and \c max.
-///
-/// \note Quads are created in the region R=[min+delta, max-delta].
-///
-/// \param quads[out] Storage for created quads to be returned in.
-/// \param min[in] Minimum corner of bounding region
-/// \param max[in] Maximum corner of bounding region.
-/// \param numPlanes[in] Number of quads to create.
-/// \param a[in] Quads created perpendicular to \c a.
-///////////////////////////////////////////////////////////////////////////////
 void createQuads(std::vector<glm::vec4> &quads, const glm::vec3 &min,
                  const glm::vec3 &max, size_t numPlanes, Axis a) {
 
@@ -251,6 +215,7 @@ void createQuads(std::vector<glm::vec4> &quads, const glm::vec3 &min,
 }
 
 
+////////////////////////////////////////////////////////////////////////////////
 void createElementIdx(std::vector<unsigned short> &elebuf, size_t numQuads) {
 
   size_t totalElems{ numQuads * 5 };  // 4 verts + 1 restart symbol per quad.

@@ -86,7 +86,7 @@ set(simple_blocks_HEADERS
         src/glfw_callbacks.h
         src/nvpm.h
         src/timing.h
-)
+        src/volumerenderer.h)
 
 set(simple_blocks_SOURCES
         src/main.cpp
@@ -95,7 +95,7 @@ set(simple_blocks_SOURCES
         src/glfw_callbacks.cpp
         src/load_transfer.cpp
         src/timing.cpp
-)
+        src/volumerenderer.cpp )
 
 
 ################################################################################
