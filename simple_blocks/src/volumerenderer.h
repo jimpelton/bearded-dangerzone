@@ -2,10 +2,15 @@
 // Created by jim on 10/22/15.
 //
 
-#ifndef BZONE_VOLUMERENDERER_H
-#define BZONE_VOLUMERENDERER_H
+#ifndef volumerenderer_h__
+#define volumerenderer_h__
+
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
 
 #include <glm/fwd.hpp>
+
+#include <bd/graphics/view.h>
 
 
 class VolumeRenderer {
@@ -16,11 +21,22 @@ public:
 
   virtual void renderSingleFrame();
 
+  GLFWwindow *init();
+
 
 private:
+  void setRotation(const glm::vec2 &dR);
+  
+  bd::View m_view;
+
+  int m_mouseSpeed;  ///< Scalar mouse sensitivity.
+  int m_fov_deg;     ///< Field of view, degrees.
+
+
+
 
 
 };
 
 
-#endif //BZONE_VOLUMERENDERER_H
+#endif //volumerenderer_h__

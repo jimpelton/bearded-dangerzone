@@ -121,13 +121,13 @@ float g_scaleValue{ 1.0f };
 ///////////////////////////////////////////////////////////////////////////////
 // Viewing and Controls Data
 ///////////////////////////////////////////////////////////////////////////////
-bd::View g_camera;
+//bd::View g_camera;
 int g_screenWidth{ 1000 };
 int g_screenHeight{ 1000 };
-float g_fov_deg{ 50.0f };   ///< Field of view in degrees.
+//float g_fov_deg{ 50.0f };   ///< Field of view in degrees.
 
 glm::vec2 g_cursorPos;
-float g_mouseSpeed{ 1.0f };
+//float g_mouseSpeed{ 1.0f };
 
 bool g_toggleBlockBoxes{ false };
 bool g_toggleWireFrame{ false };
@@ -283,19 +283,19 @@ void glfw_scrollwheel_callback(GLFWwindow *window, double xoff, double yoff) {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void setRotation(const glm::vec2 &dr) {
-  glm::quat rotX = glm::angleAxis<float>(
-      glm::radians(-dr.y) * g_mouseSpeed,
-      glm::vec3(1, 0, 0)
-  );
-
-  glm::quat rotY = glm::angleAxis<float>(
-      glm::radians(dr.x) * g_mouseSpeed,
-      glm::vec3(0, 1, 0)
-  );
-
-  g_camera.rotate(rotX * rotY);
-}
+//void setRotation(const glm::vec2 &dr) {
+//  glm::quat rotX = glm::angleAxis<float>(
+//      glm::radians(-dr.y) * g_mouseSpeed,
+//      glm::vec3(1, 0, 0)
+//  );
+//
+//  glm::quat rotY = glm::angleAxis<float>(
+//      glm::radians(dr.x) * g_mouseSpeed,
+//      glm::vec3(0, 1, 0)
+//  );
+//
+//  g_camera.rotate(rotX * rotY);
+//}
 
 
 ////////////////////////////////////////////////////////////////////////////////
