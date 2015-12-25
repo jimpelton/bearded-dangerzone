@@ -52,7 +52,8 @@ void endGpuTimerQuery() {
   GLuint64 frameTime;
 
   gl_check(glEndQuery(GL_TIME_ELAPSED));
-  gl_check(glGetQueryObjectui64v(queryID[queryFrontBuffer][0], GL_QUERY_RESULT,
+  gl_check(glGetQueryObjectui64v(queryID[queryFrontBuffer][0],
+                                 GL_QUERY_RESULT,
                                  &frameTime));
   
   g_totalGPUTime_nonEmptyBlocks += frameTime;

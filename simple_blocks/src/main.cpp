@@ -43,6 +43,7 @@
 
 // profiling
 #include "nvpm.h"
+#include "volumerenderer.h"
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -52,9 +53,6 @@ const glm::vec3 X_AXIS{ 1.0f, 0.0f, 0.0f };
 const glm::vec3 Y_AXIS{ 0.0f, 1.0f, 0.0f };
 const glm::vec3 Z_AXIS{ 0.0f, 0.0f, 1.0f };
 
-// 5 element indexes per quad: 4 verts followed by the restart symbol
-const int g_elementsPerQuad{ 5 };
-
 
 ///////////////////////////////////////////////////////////////////////////////
 // Geometry  /  VAOs
@@ -62,42 +60,9 @@ const int g_elementsPerQuad{ 5 };
 
 /// \brief Enumerates the types of objects in the scene.
 enum class ObjType : unsigned int {
-    Axis, Quads, Boxes
+    Axis, /*Quads,*/ Boxes
 };
 
-
-/// \brief Enumerates the possible sets of slices, each set has quads
-/// aligned with the specified plane.
-enum class SliceSet : unsigned int {
-    XZ, YZ, XY, NoneOfEm, AllOfEm
-};
-
-/// \brief To string representation of SliceSet.
-std::ostream &operator<<(std::ostream &ostr, SliceSet s);
-
-std::ostream &operator<<(std::ostream &ostr, SliceSet s) {
-
-  switch (s) {
-    case SliceSet::XZ:
-      ostr << "XZ";
-      return ostr;
-    case SliceSet::YZ:
-      ostr << "YZ";
-      return ostr;
-    case SliceSet::XY:
-      ostr << "XY";
-      return ostr;
-    case SliceSet::AllOfEm:
-      ostr << "AllOfEm";
-      return ostr;
-    case SliceSet::NoneOfEm:
-      ostr << "NoneOfEm";
-      return ostr;
-    default: ostr << "unknown";
-      return ostr;
-  }
-
-}
 
 
 bd::CoordinateAxis g_axis; ///< The coordinate axis lines.
@@ -106,33 +71,30 @@ bd::Box g_box;
 std::vector<bd::VertexArrayObject *> g_vaoArray;
 size_t g_elementBufferSize{ 0 };
 
-int g_numSlices{ 1 };
 
 
 ///////////////////////////////////////////////////////////////////////////////
 // Shaders and Textures
 ///////////////////////////////////////////////////////////////////////////////
-bd::ShaderProgram g_simpleShader;
-bd::ShaderProgram g_volumeShader;
-Texture g_tfuncTex;
-float g_scaleValue{ 1.0f };
+bd::ShaderProgram g_simpleShader;   ///< Shader for the wireframe stuff.
+//float g_scaleValue{ 1.0f };
 
 
 ///////////////////////////////////////////////////////////////////////////////
 // Viewing and Controls Data
 ///////////////////////////////////////////////////////////////////////////////
-//bd::View g_camera;
+bd::View g_camera;
 int g_screenWidth{ 1000 };
 int g_screenHeight{ 1000 };
-//float g_fov_deg{ 50.0f };   ///< Field of view in degrees.
+float g_fov_deg{ 50.0f };   ///< Field of view in degrees.
 
 glm::vec2 g_cursorPos;
-//float g_mouseSpeed{ 1.0f };
+float g_mouseSpeed{ 1.0f };
 
 bool g_toggleBlockBoxes{ false };
 bool g_toggleWireFrame{ false };
 
-SliceSet g_selectedSliceSet{ SliceSet::XY };
+//SliceSet g_selectedSliceSet{ SliceSet::XY };
 
 //TODO: bool g_toggleVolumeBox{ false };
 
@@ -141,8 +103,7 @@ SliceSet g_selectedSliceSet{ SliceSet::XY };
 //  Miscellaneous  radness
 ///////////////////////////////////////////////////////////////////////////////
 
-bd::BlockCollection g_blockCollection;
-
+VolumeRenderer volRend;
 
 void glfw_cursorpos_callback(GLFWwindow *window, double x, double y);
 
@@ -283,67 +244,21 @@ void glfw_scrollwheel_callback(GLFWwindow *window, double xoff, double yoff) {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-//void setRotation(const glm::vec2 &dr) {
-//  glm::quat rotX = glm::angleAxis<float>(
-//      glm::radians(-dr.y) * g_mouseSpeed,
-//      glm::vec3(1, 0, 0)
-//  );
-//
-//  glm::quat rotY = glm::angleAxis<float>(
-//      glm::radians(dr.x) * g_mouseSpeed,
-//      glm::vec3(0, 1, 0)
-//  );
-//
-//  g_camera.rotate(rotX * rotY);
-//}
+void setRotation(const glm::vec2 &dr) {
+  glm::quat rotX = glm::angleAxis<float>(
+      glm::radians(-dr.y) * g_mouseSpeed,
+      glm::vec3(1, 0, 0)
+  );
 
+  glm::quat rotY = glm::angleAxis<float>(
+      glm::radians(dr.x) * g_mouseSpeed,
+      glm::vec3(0, 1, 0)
+  );
 
-////////////////////////////////////////////////////////////////////////////////
-/// \brief Compute the base vertex offset for the slices vertex buffer based off
-///        the largest component of \c viewdir.
-///////////////////////////////////////////////////////////////////////////////
-GLint computeBaseVertexFromViewDir(const glm::vec3 &viewdir) {
-  glm::vec3 absViewDir{ glm::abs(viewdir) };
-
-//  bool isNeg{ viewdir.x < 0 };
-  SliceSet selected = SliceSet::YZ;
-  float longest{ absViewDir.x };
-
-  if (absViewDir.y > longest) {
-//    isNeg = viewdir.y < 0;
-    selected = SliceSet::XZ;
-    longest = absViewDir.y;
-  }
-  if (absViewDir.z > longest) {
-//    isNeg = viewdir.z < 0;
-    selected = SliceSet::XY;
-  }
-
-  // Compute base vertex offset.
-  GLint baseVertex{ 0 };
-  switch (selected) {
-//    case SliceSet::XY:
-//      baseVertex = 0;
-//      break;
-    case SliceSet::XZ:
-      baseVertex = bd::Quad::vert_element_size * g_numSlices;
-      break;
-    case SliceSet::YZ:
-      baseVertex = 2 * bd::Quad::vert_element_size * g_numSlices;
-      break;
-    default:
-      break;
-  }
-
-  if (selected != g_selectedSliceSet) {
-    std::cout << "Switched slice set: " << /* (isNeg ? '-' : '+') << */
-    g_selectedSliceSet << '\n';
-  }
-
-  g_selectedSliceSet = selected;
-
-  return baseVertex;
+  g_camera.rotate(rotX * rotY);
 }
+
+
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -373,59 +288,59 @@ void drawNonEmptyBoundingBoxes(const glm::mat4 &mvp) {
 ///////////////////////////////////////////////////////////////////////////////
 /// \brief Disable GL_DEPTH_TEST and draw transparent slices
 ///////////////////////////////////////////////////////////////////////////////
-void drawSlices(GLint baseVertex) {
-  gl_check(glDisable(GL_DEPTH_TEST));
-
-  perf_workBegin();
-  gl_check(glDrawElementsBaseVertex(GL_TRIANGLE_STRIP,
-                                    g_elementsPerQuad * g_numSlices,
-                                    GL_UNSIGNED_SHORT,
-                                    0,
-                                    baseVertex));
-  perf_workEnd();
-
-  gl_check(glEnable(GL_DEPTH_TEST));
-}
+//void drawSlices(GLint baseVertex) {
+//  gl_check(glDisable(GL_DEPTH_TEST));
+//
+//  perf_workBegin();
+//  gl_check(glDrawElementsBaseVertex(GL_TRIANGLE_STRIP,
+//                                    g_elementsPerQuad * g_numSlices,
+//                                    GL_UNSIGNED_SHORT,
+//                                    0,
+//                                    baseVertex));
+//  perf_workEnd();
+//
+//  gl_check(glEnable(GL_DEPTH_TEST));
+//}
 
 
 ///////////////////////////////////////////////////////////////////////////////
 /// \brief Loop through the blocks and draw each one
 ///////////////////////////////////////////////////////////////////////////////
-void drawNonEmptyBlocks_Forward(const std::vector<bd::Block*> &blocks,
-                                const glm::mat4 &vp) {
-  //glm::vec4 viewdir{ glm::normalize(g_camera.getViewMatrix()[2]) };
-//  GLint baseVertex{ computeBaseVertexFromSliceSet(g_selectedSliceSet) };
-  GLint baseVertex{ 0 };
-
-  perf_frameBegin();
-  for (auto *b : blocks) {
-    b->texture().bind(0);
-    glm::mat4 wmvp = vp * b->transform().matrix();
-    g_volumeShader.setUniform("mvp", wmvp);
-    g_volumeShader.setUniform("tfScalingVal", g_scaleValue);
-    drawSlices(baseVertex);
-  }
-  perf_frameEnd();
-}
+//void drawNonEmptyBlocks_Forward(const std::vector<bd::Block*> &blocks,
+//                                const glm::mat4 &vp) {
+//  //glm::vec4 viewdir{ glm::normalize(g_camera.getViewMatrix()[2]) };
+////  GLint baseVertex{ computeBaseVertexFromSliceSet(g_selectedSliceSet) };
+//  GLint baseVertex{ 0 };
+//
+//  perf_frameBegin();
+//  for (auto *b : blocks) {
+//    b->texture().bind(0);
+//    glm::mat4 wmvp = vp * b->transform().matrix();
+//    g_volumeShader.setUniform("mvp", wmvp);
+//    g_volumeShader.setUniform("tfScalingVal", g_scaleValue);
+//    drawSlices(baseVertex);
+//  }
+//  perf_frameEnd();
+//}
 
 ///////////////////////////////////////////////////////////////////////////////
 /// \brief Determine the viewing direction and draw the blocks in proper order.
 ///////////////////////////////////////////////////////////////////////////////
-void drawNonEmptyBlocks(const glm::mat4 &vp) {
-
-  if (g_toggleWireFrame) {
-    gl_check(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
-  }
-
-  //TODO: sort quads farthest to nearest.
-  g_volumeShader.bind();
-  drawNonEmptyBlocks_Forward(g_blockCollection.nonEmptyBlocks(), vp);
-
-  if (g_toggleWireFrame) {
-    gl_check(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
-  }
-
-}
+//void drawNonEmptyBlocks(const glm::mat4 &vp) {
+//
+//  if (g_toggleWireFrame) {
+//    gl_check(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
+//  }
+//
+//  //TODO: sort quads farthest to nearest.
+//  g_volumeShader.bind();
+//  drawNonEmptyBlocks_Forward(g_blockCollection.nonEmptyBlocks(), vp);
+//
+//  if (g_toggleWireFrame) {
+//    gl_check(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
+//  }
+//
+//}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -452,10 +367,10 @@ void draw() {
   }
 
   //////// Quad Geo (drawNonEmptyBlocks)  /////////////////////
-  vao = g_vaoArray[bd::ordinal(ObjType::Quads)];
-  vao->bind();
+//  vao = g_vaoArray[bd::ordinal(ObjType::Quads)];
+//  vao->bind();
   drawNonEmptyBlocks(viewMat);
-  vao->unbind();
+//  vao->unbind();
 }
 
 
@@ -465,8 +380,8 @@ void loop(GLFWwindow *window) {
   gl_log("About to enter render loop.");
 
   // initial bindage of tfunc texture to volume shader.
-  g_volumeShader.bind();
-  g_tfuncTex.bind(1);
+//  g_volumeShader.bind();
+//  g_tfuncTex.bind(1);
 
   do {
     startCpuTime();
@@ -634,12 +549,12 @@ void cleanup() {
 
 
 /////////////////////////////////////////////////////////////////////////////////
-void printBlocks() {
+void printBlocks(const bd::BlockCollection *bcol) {
   std::ofstream block_file("blocks.txt", std::ofstream::trunc);
 
   if (block_file.is_open()) {
     gl_log("Writing blocks to blocks.txt in the current working directory.");
-    for (auto &b : g_blockCollection.blocks()) {
+    for (auto &b : bcol->blocks()) {
       block_file << b << "\n";
     }
     block_file.flush();
@@ -676,19 +591,19 @@ void setupCameraPos(unsigned cameraPos) {
       //cam position = { 2.0f, 0.0f, 0.0f  }
       r = glm::rotate(r, -1 * glm::half_pi<float>(), Y_AXIS);
       g_camera.rotate(r);
-      g_selectedSliceSet = SliceSet::YZ;
+//      g_selectedSliceSet = SliceSet::YZ;
       break;
     case 1:
       //cam position = { 0.0f, 2.0f, 0.0f }
       r = glm::rotate(r, glm::half_pi<float>(), X_AXIS);
       g_camera.rotate(r);
-      g_selectedSliceSet = SliceSet::XZ;
+//      g_selectedSliceSet = SliceSet::XZ;
       break;
     case 0:
     default:
       //cam position = { 0.0f, 0.0f, 2.0f }
       // no rotation needed, this is default cam location.
-      g_selectedSliceSet = SliceSet::XY;
+//      g_selectedSliceSet = SliceSet::XY;
       break;
   }
 
@@ -730,8 +645,9 @@ int main(int argc, const char *argv[]) {
   }
 
   printThem(clo);
-  g_numSlices = clo.num_slices;
+  volRend.setNumSlices(clo.num_slices);
   bd::gl_log_restart();
+
 
   //// GLFW init ////
   GLFWwindow *window;
@@ -752,33 +668,39 @@ int main(int argc, const char *argv[]) {
     return 1;
   }
 
+  bd::ShaderProgram volumeShader;
   GLuint volumeProgramId{
-      g_volumeShader.linkProgram(
-          "shaders/vert_vertexcolor_passthrough.glsl",
-          "shaders/frag_volumesampler_noshading.glsl") };
-
+          volumeShader.linkProgram(
+                  "shaders/vert_vertexcolor_passthrough.glsl",
+                  "shaders/frag_volumesampler_noshading.glsl")
+  };
   if (volumeProgramId == 0) {
     gl_log_err("Error building volume sampling shader, program id was 0.");
     return 1;
   }
 
   //// Transfer function texture ////
+  Texture tfuncTex;
   unsigned int tfuncTextureId{
-      loadTransfer_1dtformat(clo.tfuncPath, g_tfuncTex, g_volumeShader) };
-
+      loadTransfer_1dtformat(clo.tfuncPath, tfuncTex, volumeShader)
+  };
   if (tfuncTextureId == 0) {
     gl_log_err("Exiting because tfunc texture was not bound.");
     exit(1);
   }
-  g_volumeShader.bind();
-  g_tfuncTex.bind(1);
+
+  // Initially bind the transfer function texture to the volume shader, currently
+  // the tfunc texture doesn't change between frames, but the volume data
+  // texture does change per block.
+  volumeShader.bind();
+  tfuncTex.bind(1);
 
   //// Geometry Init ////
   // 2d slices
-  bd::VertexArrayObject quadVao;
-  quadVao.create();
-  genQuadVao(quadVao, {-0.5f,-0.5f,-0.5f}, {0.5f, 0.5f, 0.5f},
-             {clo.num_slices, clo.num_slices, clo.num_slices});
+//  bd::VertexArrayObject quadVao;
+//  quadVao.create();
+//  genQuadVao(quadVao, {-0.5f,-0.5f,-0.5f}, {0.5f, 0.5f, 0.5f},
+//             {clo.num_slices, clo.num_slices, clo.num_slices});
 
   // coordinate axis
   bd::VertexArrayObject axisVao;
@@ -791,27 +713,28 @@ int main(int argc, const char *argv[]) {
   genBoxVao(boxVao);
 
 
-  g_vaoArray.resize(3);
+  g_vaoArray.resize(2);
   g_vaoArray[bd::ordinal(ObjType::Axis)] = &axisVao;
-  g_vaoArray[bd::ordinal(ObjType::Quads)] = &quadVao;
+//  g_vaoArray[bd::ordinal(ObjType::Quads)] = &quadVao;
   g_vaoArray[bd::ordinal(ObjType::Boxes)] = &boxVao;
 
 
   //// Blocks and Data Init ////
-  g_blockCollection.initBlocks(glm::u64vec3(clo.numblk_x, clo.numblk_y, clo.numblk_z),
+  bd::BlockCollection blockCollection;
+  blockCollection.initBlocks(glm::u64vec3(clo.numblk_x, clo.numblk_y, clo.numblk_z),
                       glm::u64vec3(clo.w, clo.h, clo.d));
 
   std::unique_ptr<float[]> data{
-      std::move(bd::readVolumeData(clo.type, clo.filePath, clo.w, clo.h, clo.d)) };
-
+      std::move(bd::readVolumeData(clo.type, clo.filePath, clo.w, clo.h, clo.d))
+  };
   if (data == nullptr) {
     gl_log_err("data file was not opened. exiting...");
     cleanup();
     return 1;
   }
 
-  g_blockCollection.filterBlocks(data.get(),
-                        g_volumeShader.getUniformLocation("volume_sampler"),
+  blockCollection.filterBlocks(data.get(),
+                        volumeShader.getUniformLocation("volume_sampler"),
                         clo.tmin, clo.tmax);
 
   if (clo.printBlocks) { printBlocks(); }

@@ -85,8 +85,9 @@ set(simple_blocks_HEADERS
         src/create_vao.h
         src/glfw_callbacks.h
         src/nvpm.h
+        src/sliceset.h
         src/timing.h
-        src/volumerenderer.h)
+        src/volumerenderer.h )
 
 set(simple_blocks_SOURCES
         src/main.cpp
@@ -94,8 +95,10 @@ set(simple_blocks_SOURCES
         src/create_vao.cpp
         src/glfw_callbacks.cpp
         src/load_transfer.cpp
+        src/sliceset.cpp
         src/timing.cpp
-        src/volumerenderer.cpp )
+        src/volumerenderer.cpp
+        )
 
 
 ################################################################################
