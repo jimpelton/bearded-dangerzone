@@ -549,7 +549,7 @@ void cleanup() {
 
 
 /////////////////////////////////////////////////////////////////////////////////
-void printBlocks(const bd::BlockCollection *bcol) {
+void printBlocks(bd::BlockCollection *bcol) {
   std::ofstream block_file("blocks.txt", std::ofstream::trunc);
 
   if (block_file.is_open()) {
@@ -737,7 +737,7 @@ int main(int argc, const char *argv[]) {
                         volumeShader.getUniformLocation("volume_sampler"),
                         clo.tmin, clo.tmax);
 
-  if (clo.printBlocks) { printBlocks(); }
+  if (clo.printBlocks) { printBlocks(&blockCollection); }
 
   //// Render Init ////
   setupCameraPos(clo.cameraPos);
