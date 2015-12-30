@@ -30,7 +30,7 @@ public:
   VolumeRenderer(std::shared_ptr<bd::ShaderProgram> volumeShader,
             std::shared_ptr<bd::ShaderProgram> wireframeShader,
             std::shared_ptr<bd::BlockCollection> blockCollection,
-            std::shared_ptr<Texture> tfuncTexture,
+            std::shared_ptr<bd::Texture> tfuncTexture,
             std::shared_ptr<bd::VertexArrayObject> blocksVAO);
 
   //////////////////////////////////////////////////////////////////////////////
@@ -101,7 +101,7 @@ private:
   std::shared_ptr<bd::ShaderProgram> m_volumeShader;
   std::shared_ptr<bd::ShaderProgram> m_wireframeShader;
   std::shared_ptr<bd::BlockCollection> m_blockCollection;
-  std::shared_ptr<Texture> m_tfuncTexture;                   ///< Transfer function texture
+  std::shared_ptr<bd::Texture> m_tfuncTexture;                   ///< Transfer function texture
   std::shared_ptr<bd::VertexArrayObject> m_quadsVao;
 
 };

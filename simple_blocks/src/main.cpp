@@ -49,9 +49,9 @@
 ///////////////////////////////////////////////////////////////////////////////
 //  Const  Data
 ///////////////////////////////////////////////////////////////////////////////
-const glm::vec3 X_AXIS{ 1.0f, 0.0f, 0.0f };
-const glm::vec3 Y_AXIS{ 0.0f, 1.0f, 0.0f };
-const glm::vec3 Z_AXIS{ 0.0f, 0.0f, 1.0f };
+const glm::vec3 X_AXIS{1.0f, 0.0f, 0.0f};
+const glm::vec3 Y_AXIS{0.0f, 1.0f, 0.0f};
+const glm::vec3 Z_AXIS{0.0f, 0.0f, 1.0f};
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -59,40 +59,39 @@ const glm::vec3 Z_AXIS{ 0.0f, 0.0f, 1.0f };
 ///////////////////////////////////////////////////////////////////////////////
 
 /// \brief Enumerates the types of objects in the scene.
-enum class ObjType : unsigned int {
-    Axis, /*Quads,*/ Boxes
+enum class ObjType: unsigned int {
+  Axis, /*Quads,*/ Boxes
 };
-
 
 
 bd::CoordinateAxis g_axis; ///< The coordinate axis lines.
 bd::Box g_box;
 
-std::vector<bd::VertexArrayObject *> g_vaoArray;
-size_t g_elementBufferSize{ 0 };
-
+//std::vector<bd::VertexArrayObject *> g_vaoArray;
+size_t g_elementBufferSize{0};
 
 
 ///////////////////////////////////////////////////////////////////////////////
 // Shaders and Textures
 ///////////////////////////////////////////////////////////////////////////////
-bd::ShaderProgram g_simpleShader;   ///< Shader for the wireframe stuff.
-float g_scaleValue{ 1.0f };
+//bd::ShaderProgram g_wireframeShader;   ///< Shader for the wireframe stuff.
+
+float g_scaleValue{1.0f};
 
 
 ///////////////////////////////////////////////////////////////////////////////
 // Viewing and Controls Data
 ///////////////////////////////////////////////////////////////////////////////
 bd::View g_camera;
-int g_screenWidth{ 1000 };
-int g_screenHeight{ 1000 };
-float g_fov_deg{ 50.0f };   ///< Field of view in degrees.
+int g_screenWidth{1000};
+int g_screenHeight{1000};
+float g_fov_deg{50.0f};   ///< Field of view in degrees.
 
 glm::vec2 g_cursorPos;
-float g_mouseSpeed{ 1.0f };
+float g_mouseSpeed{1.0f};
 
-bool g_toggleBlockBoxes{ false };
-bool g_toggleWireFrame{ false };
+bool g_toggleBlockBoxes{false};
+bool g_toggleWireFrame{false};
 
 //SliceSet g_selectedSliceSet{ SliceSet::XY };
 
@@ -103,7 +102,7 @@ bool g_toggleWireFrame{ false };
 //  Miscellaneous  radness
 ///////////////////////////////////////////////////////////////////////////////
 
-std::unique_ptr<VolumeRenderer> g_volRend{ nullptr };
+VolumeRenderer *g_volRend{nullptr};
 
 void glfw_cursorpos_callback(GLFWwindow *window, double x, double y);
 
@@ -123,7 +122,7 @@ void loop(GLFWwindow *window);
 void cleanup();
 
 unsigned int loadTransfer_1dtformat(const std::string &filename,
-                                    Texture &transferTex,
+                                    bd::Texture &transferTex,
                                     bd::ShaderProgram &volumeShader);
 
 
@@ -145,11 +144,14 @@ void glfw_error_callback(int error, const char *description) {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void glfw_keyboard_callback(GLFWwindow *window, int key, int scancode, int action,
+void glfw_keyboard_callback(GLFWwindow *window,
+                            int key,
+                            int scancode,
+                            int action,
                             int mods) {
 
   // on key press
-  if (action == GLFW_PRESS) {
+  if (action==GLFW_PRESS) {
     switch (key) {
 //        case GLFW_KEY_0:
 //            g_selectedSliceSet = SliceSet::NoneOfEm;
@@ -176,7 +178,7 @@ void glfw_keyboard_callback(GLFWwindow *window, int key, int scancode, int actio
   }
 
   // while holding key down.
-  if (action != GLFW_RELEASE) {
+  if (action!=GLFW_RELEASE) {
     switch (key) {
       case GLFW_KEY_PERIOD:
         if (mods & GLFW_MOD_SHIFT)
@@ -214,7 +216,7 @@ void glfw_window_size_callback(GLFWwindow *window, int width, int height) {
 ////////////////////////////////////////////////////////////////////////////////
 void glfw_cursorpos_callback(GLFWwindow *window, double x, double y) {
   glm::vec2 cpos(floor(x), floor(y));
-  if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+  if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT)==GLFW_PRESS) {
     glm::vec2 delta(cpos - g_cursorPos);
     setRotation(delta);
   }
@@ -225,7 +227,7 @@ void glfw_cursorpos_callback(GLFWwindow *window, double x, double y) {
 
 ///////////////////////////////////////////////////////////////////////////////
 void glfw_scrollwheel_callback(GLFWwindow *window, double xoff, double yoff) {
-  float fov = static_cast<float>(g_fov_deg + (yoff * 1.75f));
+  float fov = static_cast<float>(g_fov_deg + (yoff*1.75f));
 
   if (fov < 1 || fov > 120) return;
 
@@ -233,7 +235,7 @@ void glfw_scrollwheel_callback(GLFWwindow *window, double xoff, double yoff) {
 
   g_fov_deg = fov;
   g_camera.setProjectionMatrix(glm::radians(fov),
-                               g_screenWidth / float(g_screenHeight),
+                               g_screenWidth/float(g_screenHeight),
                                0.1f, 10000.0f);
 }
 
@@ -246,16 +248,16 @@ void glfw_scrollwheel_callback(GLFWwindow *window, double xoff, double yoff) {
 ////////////////////////////////////////////////////////////////////////////////
 void setRotation(const glm::vec2 &dr) {
   glm::quat rotX = glm::angleAxis<float>(
-      glm::radians(-dr.y) * g_mouseSpeed,
+      glm::radians(-dr.y)*g_mouseSpeed,
       glm::vec3(1, 0, 0)
   );
 
   glm::quat rotY = glm::angleAxis<float>(
-      glm::radians(dr.x) * g_mouseSpeed,
+      glm::radians(dr.x)*g_mouseSpeed,
       glm::vec3(0, 1, 0)
   );
 
-  g_camera.rotate(rotX * rotY);
+  g_camera.rotate(rotX*rotY);
 }
 
 
@@ -265,7 +267,7 @@ void setRotation(const glm::vec2 &dr) {
 //void drawNonEmptyBoundingBoxes(const glm::mat4 &mvp) {
 //  for (auto *b : g_blockCollection.nonEmptyBlocks()) {
 //    glm::mat4 mmvp = mvp * b->transform().matrix();
-//    g_simpleShader.setUniform("mvp", mmvp);
+//    g_wireframeShader.setUniform("mvp", mmvp);
 //
 //    gl_check(glDrawElements(GL_LINE_LOOP,
 //                            4,
@@ -345,7 +347,7 @@ void setRotation(const glm::vec2 &dr) {
 
 ///////////////////////////////////////////////////////////////////////////////
 void draw() {
-  bd::VertexArrayObject *vao{ nullptr };
+  bd::VertexArrayObject *vao{nullptr};
 
   glm::mat4 viewMat = g_camera.getViewMatrix();
   gl_check(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
@@ -353,8 +355,8 @@ void draw() {
   ////////  Axis    /////////////////////////////////////////
   vao = g_vaoArray[bd::ordinal(ObjType::Axis)];
   vao->bind();
-  g_simpleShader.bind();
-  g_simpleShader.setUniform("mvp", viewMat);
+  g_wireframeShader.bind();
+  g_wireframeShader.setUniform("mvp", viewMat);
   g_axis.draw();
   vao->unbind();
 
@@ -376,7 +378,7 @@ void draw() {
 
 ///////////////////////////////////////////////////////////////////////////////
 void loop(GLFWwindow *window) {
-  assert(window != nullptr && "window was passed as nullptr in loop()");
+  assert(window!=nullptr && "window was passed as nullptr in loop()");
   gl_log("About to enter render loop.");
 
   // initial bindage of tfunc texture to volume shader.
@@ -398,8 +400,8 @@ void loop(GLFWwindow *window) {
 
     endCpuTime();
 
-  } while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
-           glfwWindowShouldClose(window) == 0);
+  } while (glfwGetKey(window, GLFW_KEY_ESCAPE)!=GLFW_PRESS &&
+      glfwWindowShouldClose(window)==0);
 
   gl_log("Render loop exited.");
 }
@@ -418,13 +420,13 @@ void genAxisVao(bd::VertexArrayObject &vao) {
 
   // vertex positions into attribute 0
   vao.addVbo((float *) (Axis::verts.data()),
-             Axis::verts.size() * Axis::vert_element_size,
+             Axis::verts.size()*Axis::vert_element_size,
              Axis::vert_element_size,
              0); // attr 0
 
   // vertex colors into attribute 1
   vao.addVbo((float *) (Axis::colors.data()),
-             Axis::colors.size() * 3,
+             Axis::colors.size()*3,
              3,   // 3 floats per color
              1);  // attr 1
 }
@@ -438,13 +440,13 @@ void genBoxVao(bd::VertexArrayObject &vao) {
 
   // positions as vertex attribute 0
   vao.addVbo((float *) (bd::Box::vertices.data()),
-             bd::Box::vertices.size() * bd::Box::vert_element_size,
+             bd::Box::vertices.size()*bd::Box::vert_element_size,
              bd::Box::vert_element_size,
              0);
 
   // colors as vertex attribute 1
   vao.addVbo((float *) bd::Box::colors.data(),
-             bd::Box::colors.size() * 3,
+             bd::Box::colors.size()*3,
              3,
              1);
 
@@ -568,16 +570,16 @@ void printBlocks(bd::BlockCollection *bcol) {
 
 /////////////////////////////////////////////////////////////////////////////////
 void printTimes(std::ostream &str) {
-  double gputime_ms = getTotalGPUTime_NonEmptyBlocks() * 1.0e-6;
-  double cputime_ms = getTotalElapsedCPUFrameTime() * 1.0e-3;
+  double gputime_ms = getTotalGPUTime_NonEmptyBlocks()*1.0e-6;
+  double cputime_ms = getTotalElapsedCPUFrameTime()*1.0e-3;
 
   str <<
-  "frames_rendered: " << getTotalFramesRendered() << " frames\n"
+      "frames_rendered: " << getTotalFramesRendered() << " frames\n"
       "gpu_ft_total_nonempty: " << gputime_ms << "ms\n"
-      "gpu_ft_avg_nonempty: " << (gputime_ms / getTotalFramesRendered()) << "ms\n"
+      "gpu_ft_avg_nonempty: " << (gputime_ms/getTotalFramesRendered()) << "ms\n"
       "cpu_ft_total: " << cputime_ms << "ms\n"
-      "cpu_ft_avg: " << (cputime_ms / getTotalFramesRendered()) << "ms"
-  << std::endl;
+      "cpu_ft_avg: " << (cputime_ms/getTotalFramesRendered()) << "ms"
+      << std::endl;
 }
 
 
@@ -589,7 +591,7 @@ void setupCameraPos(unsigned cameraPos) {
   switch (cameraPos) {
     case 2:
       //cam position = { 2.0f, 0.0f, 0.0f  }
-      r = glm::rotate(r, -1 * glm::half_pi<float>(), Y_AXIS);
+      r = glm::rotate(r, -1*glm::half_pi<float>(), Y_AXIS);
       g_camera.rotate(r);
 //      g_selectedSliceSet = SliceSet::YZ;
       break;
@@ -615,7 +617,7 @@ void setupCameraPos(unsigned cameraPos) {
 ///  if no path is provided.
 ///////////////////////////////////////////////////////////////////////////////
 void printNvPmApiCounters(const char *perfOutPath = "") {
-  if (std::strlen(perfOutPath) == 0) {
+  if (std::strlen(perfOutPath)==0) {
     perf_printCounters(std::cout);
     printTimes(std::cout);
   }
@@ -639,8 +641,9 @@ void printNvPmApiCounters(const char *perfOutPath = "") {
 /////////////////////////////////////////////////////////////////////////////////
 int main(int argc, const char *argv[]) {
   CommandLineOptions clo;
-  if (parseThem(argc, argv, clo) == 0) {
-    std::cout << "No arguments provided.\nPlease use -h for usage info." << std::endl;
+  if (parseThem(argc, argv, clo)==0) {
+    std::cout << "No arguments provided.\nPlease use -h for usage info."
+        << std::endl;
     return 1;
   }
 
@@ -650,40 +653,41 @@ int main(int argc, const char *argv[]) {
 
   //// GLFW init ////
   GLFWwindow *window;
-  if ((window = init()) == nullptr) {
+  if ((window = init())==nullptr) {
     gl_log("Could not initialize GLFW, exiting.");
     return 1;
   }
 
 
   //// Shaders Init ////
+  std::shared_ptr<bd::ShaderProgram> wireframeShader { std::make_shared<bd::ShaderProgram>() };
   GLuint programId{
-      g_simpleShader.linkProgram(
+      g_wireframeShader.linkProgram(
           "shaders/vert_vertexcolor_passthrough.glsl",
-          "shaders/frag_vertcolor.glsl") };
+          "shaders/frag_vertcolor.glsl")};
 
-  if (programId == 0) {
+  if (programId==0) {
     gl_log_err("Error building passthrough shader, program id was 0.");
     return 1;
   }
 
-  bd::ShaderProgram volumeShader;
+  std::shared_ptr<bd::ShaderProgram> volumeShader{ std::make_shared<bd::ShaderProgram>() };
   GLuint volumeProgramId{
-          volumeShader.linkProgram(
-                  "shaders/vert_vertexcolor_passthrough.glsl",
-                  "shaders/frag_volumesampler_noshading.glsl")
+      volumeShader->linkProgram(
+          "shaders/vert_vertexcolor_passthrough.glsl",
+          "shaders/frag_volumesampler_noshading.glsl")
   };
-  if (volumeProgramId == 0) {
+  if (volumeProgramId==0) {
     gl_log_err("Error building volume sampling shader, program id was 0.");
     return 1;
   }
 
   //// Transfer function texture ////
-  Texture tfuncTex;
+  std::shared_ptr<bd::Texture> tfuncTex{ std::make_shared<bd::ShaderProgram>() };
   unsigned int tfuncTextureId{
-      loadTransfer_1dtformat(clo.tfuncPath, tfuncTex, volumeShader)
+      loadTransfer_1dtformat(clo.tfuncPath, *tfuncTex, *volumeShader)
   };
-  if (tfuncTextureId == 0) {
+  if (tfuncTextureId==0) {
     gl_log_err("Exiting because tfunc texture was not bound.");
     exit(1);
   }
@@ -696,10 +700,10 @@ int main(int argc, const char *argv[]) {
 
   //// Geometry Init ////
   // 2d slices
-  bd::VertexArrayObject quadVao;
-  quadVao.create();
-  genQuadVao(quadVao, {-0.5f,-0.5f,-0.5f}, {0.5f, 0.5f, 0.5f},
-             {clo.num_slices, clo.num_slices, clo.num_slices});
+  std::shared_ptr<bd::VertexArrayObject> quadVao{ std::make_shared<bd::VertexArrayObject>() };
+  quadVao->create();
+  genQuadVao(*quadVao, {-0.5f, -0.5f, -0.5f}, {0.5f, 0.5f, 0.5f},
+             {clo.num_slices, clo.num_slices, clo.num_slices} );
 
   // coordinate axis
   bd::VertexArrayObject axisVao;
@@ -714,38 +718,36 @@ int main(int argc, const char *argv[]) {
 
   g_vaoArray.resize(2);
   g_vaoArray[bd::ordinal(ObjType::Axis)] = &axisVao;
-//  g_vaoArray[bd::ordinal(ObjType::Quads)] = &quadVao;
   g_vaoArray[bd::ordinal(ObjType::Boxes)] = &boxVao;
 
 
   //// Blocks and Data Init ////
   bd::BlockCollection blockCollection;
-  blockCollection.initBlocks(glm::u64vec3(clo.numblk_x, clo.numblk_y, clo.numblk_z),
-                      glm::u64vec3(clo.w, clo.h, clo.d));
+  blockCollection.initBlocks(glm::u64vec3(clo.numblk_x,
+                                          clo.numblk_y,
+                                          clo.numblk_z),
+                             glm::u64vec3(clo.w, clo.h, clo.d));
 
   std::unique_ptr<float[]> data{
       std::move(bd::readVolumeData(clo.type, clo.filePath, clo.w, clo.h, clo.d))
   };
-  if (data == nullptr) {
+  if (data==nullptr) {
     gl_log_err("data file was not opened. exiting...");
     cleanup();
     return 1;
   }
 
   blockCollection.filterBlocks(data.get(),
-                        volumeShader.getUniformLocation("volume_sampler"),
-                        clo.tmin, clo.tmax);
+                               volumeShader->getUniformLocation("volume_sampler"),
+                               clo.tmin,
+                               clo.tmax);
 
   if (clo.printBlocks) { printBlocks(&blockCollection); }
 
   //// Render Init ////
   setupCameraPos(clo.cameraPos);
-  VolumeRenderer volRend{ std::make_shared(volumeShader),
-                          std::make_shared(g_simpleShader), blockCollection,
-    tfuncTex, ) };
+  VolumeRenderer volRend{ volumeShader, wireframeShader, blockCollection, tfuncTex, quadVao };
   g_volRend = &volRend;
-
-
 
   initGraphicsState();
 

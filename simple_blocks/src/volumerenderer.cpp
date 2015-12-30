@@ -36,7 +36,7 @@ VolumeRenderer::VolumeRenderer
   std::shared_ptr<bd::ShaderProgram> volumeShader,
   std::shared_ptr<bd::ShaderProgram> wireframeShader,
   std::shared_ptr<bd::BlockCollection> blockCollection,
-  std::shared_ptr<Texture> tfuncTexture,
+  std::shared_ptr<bd::Texture> tfuncTexture,
   std::shared_ptr<bd::VertexArrayObject> blocksVAO
 )
   : m_volumeShader{ std::move(volumeShader) }
@@ -51,12 +51,6 @@ VolumeRenderer::VolumeRenderer
 VolumeRenderer::~VolumeRenderer() { }
 
 
-////////////////////////////////////////////////////////////////////////////////
-void VolumeRenderer::renderSingleFrame() {
-  m_quadsVao->bind();
-  drawNonEmptyBlocks();
-  m_quadsVao->unbind();
-}
 
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -87,9 +81,9 @@ void VolumeRenderer::setNumSlices(const int n) {
 
 
 ///////////////////////////////////////////////////////////////////////////////
-void VolumeRenderer::drawNonEmptyBoundingBoxes(const glm::mat4 &mvp) {
+void VolumeRenderer::drawNonEmptyBoundingBoxes() {
   for (auto *b : m_blockCollection->nonEmptyBlocks()) {
-    glm::mat4 mmvp = mvp * b->transform().matrix();
+    glm::mat4 mmvp = m_viewMatrix * b->transform().matrix();
     m_wireframeShader->setUniform(WIREFRAME_MVP_UNIFORM_STR, mmvp);
 
     gl_check(glDrawElements(GL_LINE_LOOP,
@@ -154,6 +148,7 @@ void VolumeRenderer::drawNonEmptyBlocks_Forward() {
 void VolumeRenderer::drawNonEmptyBlocks() {
 
   //TODO: sort quads farthest to nearest.
+  m_quadsVao->bind();
   m_volumeShader->bind();
   m_tfuncTexture->bind(TRANSF_SAMPLER_IDX);
   drawNonEmptyBlocks_Forward();
