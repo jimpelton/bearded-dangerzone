@@ -77,7 +77,7 @@ size_t g_elementBufferSize{ 0 };
 // Shaders and Textures
 ///////////////////////////////////////////////////////////////////////////////
 bd::ShaderProgram g_simpleShader;   ///< Shader for the wireframe stuff.
-//float g_scaleValue{ 1.0f };
+float g_scaleValue{ 1.0f };
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -103,7 +103,7 @@ bool g_toggleWireFrame{ false };
 //  Miscellaneous  radness
 ///////////////////////////////////////////////////////////////////////////////
 
-VolumeRenderer volRend;
+std::unique_ptr<VolumeRenderer> g_volRend{ nullptr };
 
 void glfw_cursorpos_callback(GLFWwindow *window, double x, double y);
 
@@ -261,28 +261,28 @@ void setRotation(const glm::vec2 &dr) {
 
 
 
-///////////////////////////////////////////////////////////////////////////////
-void drawNonEmptyBoundingBoxes(const glm::mat4 &mvp) {
-  for (auto *b : g_blockCollection.nonEmptyBlocks()) {
-    glm::mat4 mmvp = mvp * b->transform().matrix();
-    g_simpleShader.setUniform("mvp", mmvp);
-
-    gl_check(glDrawElements(GL_LINE_LOOP,
-                            4,
-                            GL_UNSIGNED_SHORT,
-                            (GLvoid *) 0));
-
-    gl_check(glDrawElements(GL_LINE_LOOP,
-                            4,
-                            GL_UNSIGNED_SHORT,
-                            (GLvoid *) (4 * sizeof(GLushort))));
-
-    gl_check(glDrawElements(GL_LINES,
-                            8,
-                            GL_UNSIGNED_SHORT,
-                            (GLvoid *) (8 * sizeof(GLushort))));
-  }
-}
+/////////////////////////////////////////////////////////////////////////////////
+//void drawNonEmptyBoundingBoxes(const glm::mat4 &mvp) {
+//  for (auto *b : g_blockCollection.nonEmptyBlocks()) {
+//    glm::mat4 mmvp = mvp * b->transform().matrix();
+//    g_simpleShader.setUniform("mvp", mmvp);
+//
+//    gl_check(glDrawElements(GL_LINE_LOOP,
+//                            4,
+//                            GL_UNSIGNED_SHORT,
+//                            (GLvoid *) 0));
+//
+//    gl_check(glDrawElements(GL_LINE_LOOP,
+//                            4,
+//                            GL_UNSIGNED_SHORT,
+//                            (GLvoid *) (4 * sizeof(GLushort))));
+//
+//    gl_check(glDrawElements(GL_LINES,
+//                            8,
+//                            GL_UNSIGNED_SHORT,
+//                            (GLvoid *) (8 * sizeof(GLushort))));
+//  }
+//}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -360,16 +360,16 @@ void draw() {
 
   ////////  BBoxes  /////////////////////////////////////////
   if (g_toggleBlockBoxes) {
-    vao = g_vaoArray[bd::ordinal(ObjType::Boxes)];
-    vao->bind();
-    drawNonEmptyBoundingBoxes(viewMat);
-    vao->unbind();
+//    vao = g_vaoArray[bd::ordinal(ObjType::Boxes)];
+//    vao->bind();
+    g_volRend->drawNonEmptyBoundingBoxes();
+//    vao->unbind();
   }
 
   //////// Quad Geo (drawNonEmptyBlocks)  /////////////////////
 //  vao = g_vaoArray[bd::ordinal(ObjType::Quads)];
 //  vao->bind();
-  drawNonEmptyBlocks(viewMat);
+  g_volRend->drawNonEmptyBlocks();
 //  vao->unbind();
 }
 
@@ -645,7 +645,6 @@ int main(int argc, const char *argv[]) {
   }
 
   printThem(clo);
-  volRend.setNumSlices(clo.num_slices);
   bd::gl_log_restart();
 
 
@@ -692,15 +691,15 @@ int main(int argc, const char *argv[]) {
   // Initially bind the transfer function texture to the volume shader, currently
   // the tfunc texture doesn't change between frames, but the volume data
   // texture does change per block.
-  volumeShader.bind();
-  tfuncTex.bind(1);
+//  volumeShader.bind();
+//  tfuncTex.bind(1);
 
   //// Geometry Init ////
   // 2d slices
-//  bd::VertexArrayObject quadVao;
-//  quadVao.create();
-//  genQuadVao(quadVao, {-0.5f,-0.5f,-0.5f}, {0.5f, 0.5f, 0.5f},
-//             {clo.num_slices, clo.num_slices, clo.num_slices});
+  bd::VertexArrayObject quadVao;
+  quadVao.create();
+  genQuadVao(quadVao, {-0.5f,-0.5f,-0.5f}, {0.5f, 0.5f, 0.5f},
+             {clo.num_slices, clo.num_slices, clo.num_slices});
 
   // coordinate axis
   bd::VertexArrayObject axisVao;
@@ -741,6 +740,13 @@ int main(int argc, const char *argv[]) {
 
   //// Render Init ////
   setupCameraPos(clo.cameraPos);
+  VolumeRenderer volRend{ std::make_shared(volumeShader),
+                          std::make_shared(g_simpleShader), blockCollection,
+    tfuncTex, ) };
+  g_volRend = &volRend;
+
+
+
   initGraphicsState();
 
   //// NV Perf Thing ////

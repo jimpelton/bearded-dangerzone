@@ -5,34 +5,44 @@
 #ifndef volumerenderer_h__
 #define volumerenderer_h__
 
+#include "sliceset.h"
+
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-
-#include <glm/fwd.hpp>
 
 #include <bd/graphics/view.h>
 #include <bd/graphics/shader.h>
 #include <bd/volume/blockcollection.h>
 #include <bd/graphics/vertexarrayobject.h>
-#include "sliceset.h"
+
+#include <glm/fwd.hpp>
+
+#include <memory>
 
 
 class VolumeRenderer {
 
 public:
+  VolumeRenderer();
 
 
   //////////////////////////////////////////////////////////////////////////////
-  VolumeRenderer();
-
+  VolumeRenderer(std::shared_ptr<bd::ShaderProgram> volumeShader,
+            std::shared_ptr<bd::ShaderProgram> wireframeShader,
+            std::shared_ptr<bd::BlockCollection> blockCollection,
+            std::shared_ptr<Texture> tfuncTexture,
+            std::shared_ptr<bd::VertexArrayObject> blocksVAO);
 
   //////////////////////////////////////////////////////////////////////////////
   virtual ~VolumeRenderer();
 
 
   //////////////////////////////////////////////////////////////////////////////
-  virtual void renderSingleFrame();
+  //virtual void renderSingleFrame();
 
+  void drawNonEmptyBlocks();
+
+  void drawNonEmptyBoundingBoxes();
 
   //////////////////////////////////////////////////////////////////////////////
   bool init();
@@ -51,6 +61,10 @@ public:
 
 private:
 
+  //////////////////////////////////////////////////////////////////////////////
+  /// \brief Draw wireframe bounding boxes around the blocks.
+  //////////////////////////////////////////////////////////////////////////////
+
 
   //////////////////////////////////////////////////////////////////////////////
   /// \brief Disable GL_DEPTH_TEST and draw transparent slices
@@ -67,7 +81,6 @@ private:
   //////////////////////////////////////////////////////////////////////////////
   /// \brief Determine the viewing direction and draw the blocks in proper order.
   //////////////////////////////////////////////////////////////////////////////
-  void drawNonEmptyBlocks();
 
 
   //////////////////////////////////////////////////////////////////////////////
@@ -78,19 +91,18 @@ private:
 
 private:
 
-  int m_numSlices;            ///< Number of slices per block
-  float m_tfuncScaleValue;    ///< Transfer function scaling value
+  int m_numSlicesPerBlock;            ///< Number of slices per block
+  float m_tfuncScaleValue;            ///< Transfer function scaling value
 
-  glm::mat4 m_viewMatrix;     ///< View matrix for the camera
+  glm::mat4 m_viewMatrix;             ///< View matrix for the camera
 
   SliceSet m_selectedSliceSet; // { SliceSet::XY };
 
-  bd::ShaderProgram m_volumeShader;
-  bd::BlockCollection m_blockCollection;
-  Texture m_tfuncTexture;                   ///< Transfer function texture
-  bd::VertexArrayObject m_quadsVao;
-
-
+  std::shared_ptr<bd::ShaderProgram> m_volumeShader;
+  std::shared_ptr<bd::ShaderProgram> m_wireframeShader;
+  std::shared_ptr<bd::BlockCollection> m_blockCollection;
+  std::shared_ptr<Texture> m_tfuncTexture;                   ///< Transfer function texture
+  std::shared_ptr<bd::VertexArrayObject> m_quadsVao;
 
 };
 
