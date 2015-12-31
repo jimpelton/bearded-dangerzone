@@ -27,8 +27,7 @@ namespace {
 }
 
 VolumeRenderer::VolumeRenderer()
-  : VolumeRenderer(nullptr, nullptr, nullptr, nullptr, nullptr)
-{ }
+  : VolumeRenderer(nullptr, nullptr, nullptr, nullptr, nullptr) { }
 
 ////////////////////////////////////////////////////////////////////////////////
 VolumeRenderer::VolumeRenderer
@@ -43,8 +42,7 @@ VolumeRenderer::VolumeRenderer
   , m_wireframeShader{ std::move(wireframeShader) }
   , m_blockCollection{ std::move(blockCollection) }
   , m_tfuncTexture{ std::move(tfuncTexture) }
-  , m_quadsVao{ std::move(blocksVAO) }
-{ }
+  , m_quadsVao{ std::move(blocksVAO) } { }
 
 
 ////////////////////////////////////////////////////////////////////////////////
