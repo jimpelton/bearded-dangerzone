@@ -11,23 +11,27 @@
 
 
 namespace {
-  const int ELEMENTS_PER_QUAD{ 5 };
+
+  const int ELEMENTS_PER_QUAD{ 5 }; //< 5 elements = 4 verts + 1 restart symbol
 
   const glm::vec3 X_AXIS{ 1.0f, 0.0f, 0.0f };
   const glm::vec3 Y_AXIS{ 0.0f, 1.0f, 0.0f };
   const glm::vec3 Z_AXIS{ 0.0f, 0.0f, 1.0f };
 
-  const int VOLUME_SAMPLER_IDX = 0;
-  const int TRANSF_SAMPLER_IDX = 1;
+  const int BLOCK_TEXTURE_UNIT = 0;
+  const int TRANSF_TEXTURE_UNIT = 1;
 
-  const char* VOLUME_MVP_UNIFORM_STR = "mvp";
+//  const int BLOCK_TEXTURE_SAMPLER_UNIFORM = 0;
+//  const int TRANSF_TEXTURE_SAMPLER_UNIFORM = 1;
+
+  const char* VOLUME_MVP_MATRIX_UNIFORM_STR = "mvp";
   const char* VOLUME_TRANSF_UNIFORM_STR = "tfScalingVal";
 
-  const char* WIREFRAME_MVP_UNIFORM_STR = "mvp";
+  const char* WIREFRAME_MVP_MATRIX_UNIFORM_STR = "mvp";
 }
 
 BlockRenderer::BlockRenderer()
-  : BlockRenderer(nullptr, nullptr, nullptr, nullptr, nullptr) { }
+  : BlockRenderer(nullptr, nullptr, nullptr, nullptr, nullptr, nullptr) { }
 
 ////////////////////////////////////////////////////////////////////////////////
 BlockRenderer::BlockRenderer
@@ -36,13 +40,17 @@ BlockRenderer::BlockRenderer
   std::shared_ptr<bd::ShaderProgram> wireframeShader,
   std::shared_ptr<bd::BlockCollection> blockCollection,
   std::shared_ptr<bd::Texture> tfuncTexture,
-  std::shared_ptr<bd::VertexArrayObject> blocksVAO
+  std::shared_ptr<bd::VertexArrayObject> blocksVAO,
+  std::shared_ptr<bd::VertexArrayObject> bboxVAO
 )
   : m_volumeShader{ std::move(volumeShader) }
   , m_wireframeShader{ std::move(wireframeShader) }
   , m_blockCollection{ std::move(blockCollection) }
   , m_tfuncTexture{ std::move(tfuncTexture) }
-  , m_quadsVao{ std::move(blocksVAO) } { }
+  , m_quadsVao{ std::move(blocksVAO) }
+  , m_boxesVao{ std::move(bboxVAO) }
+{ }
+
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -56,6 +64,8 @@ bool BlockRenderer::init() {
 //  m_quadsVao.create();
 //  genQuadVao(m_quadsVao, {-0.5f,-0.5f,-0.5f}, {0.5f, 0.5f, 0.5f},
 //             {m_numSlicesPerBlock, m_numSlicesPerBlock, m_numSlicesPerBlock});
+  m_volumeShader->setUniform("volume_sampler", BLOCK_TEXTURE_UNIT);
+  m_volumeShader->setUniform("tf_sampler", TRANSF_TEXTURE_UNIT);
   return false;
 }
 
@@ -82,7 +92,7 @@ void BlockRenderer::setNumSlices(const int n) {
 void BlockRenderer::drawNonEmptyBoundingBoxes() {
   for (auto *b : m_blockCollection->nonEmptyBlocks()) {
     glm::mat4 mmvp = m_viewMatrix * b->transform().matrix();
-    m_wireframeShader->setUniform(WIREFRAME_MVP_UNIFORM_STR, mmvp);
+    m_wireframeShader->setUniform(WIREFRAME_MVP_MATRIX_UNIFORM_STR, mmvp);
 
     gl_check(glDrawElements(GL_LINE_LOOP,
                             4,
@@ -129,9 +139,9 @@ void BlockRenderer::drawNonEmptyBlocks_Forward() {
   perf_frameBegin();
 
   for (auto *b : m_blockCollection->nonEmptyBlocks()) {
-    b->texture().bind(VOLUME_SAMPLER_IDX);
+    b->texture().bind(BLOCK_TEXTURE_UNIT);
     glm::mat4 wmvp = m_viewMatrix * b->transform().matrix();
-    m_volumeShader->setUniform(VOLUME_MVP_UNIFORM_STR, wmvp);
+    m_volumeShader->setUniform(VOLUME_MVP_MATRIX_UNIFORM_STR, wmvp);
     m_volumeShader->setUniform(VOLUME_TRANSF_UNIFORM_STR, m_tfuncScaleValue);
     drawSlices(baseVertex);
   }
@@ -148,7 +158,7 @@ void BlockRenderer::drawNonEmptyBlocks() {
   //TODO: sort quads farthest to nearest.
   m_quadsVao->bind();
   m_volumeShader->bind();
-  m_tfuncTexture->bind(TRANSF_SAMPLER_IDX);
+  m_tfuncTexture->bind(TRANSF_TEXTURE_UNIT);
   drawNonEmptyBlocks_Forward();
 
 }

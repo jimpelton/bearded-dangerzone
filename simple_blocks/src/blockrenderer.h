@@ -12,6 +12,7 @@
 
 #include <bd/graphics/view.h>
 #include <bd/graphics/shader.h>
+#include <bd/graphics/texture.h>
 #include <bd/volume/blockcollection.h>
 #include <bd/graphics/vertexarrayobject.h>
 
@@ -31,7 +32,8 @@ public:
                 std::shared_ptr<bd::ShaderProgram> wireframeShader,
                 std::shared_ptr<bd::BlockCollection> blockCollection,
                 std::shared_ptr<bd::Texture> tfuncTexture,
-                std::shared_ptr<bd::VertexArrayObject> blocksVAO);
+                std::shared_ptr<bd::VertexArrayObject> blocksVAO,
+                std::shared_ptr<bd::VertexArrayObject> bboxVAO);
 
   //////////////////////////////////////////////////////////////////////////////
   virtual ~BlockRenderer();
@@ -40,6 +42,10 @@ public:
   //////////////////////////////////////////////////////////////////////////////
   //virtual void renderSingleFrame();
 
+
+  //////////////////////////////////////////////////////////////////////////////
+  /// \brief Draw each non-empty block.
+  //////////////////////////////////////////////////////////////////////////////
   void drawNonEmptyBlocks();
 
 
@@ -97,13 +103,14 @@ private:
 
   glm::mat4 m_viewMatrix;             ///< View matrix for the camera
 
-  SliceSet m_selectedSliceSet; // { SliceSet::XY };
+  SliceSet m_selectedSliceSet;
 
   std::shared_ptr<bd::ShaderProgram> m_volumeShader;
   std::shared_ptr<bd::ShaderProgram> m_wireframeShader;
   std::shared_ptr<bd::BlockCollection> m_blockCollection;
-  std::shared_ptr<bd::Texture> m_tfuncTexture;                   ///< Transfer function texture
-  std::shared_ptr<bd::VertexArrayObject> m_quadsVao;
+  std::shared_ptr<bd::Texture> m_tfuncTexture;               ///< Transfer function texture
+  std::shared_ptr<bd::VertexArrayObject> m_quadsVao;         ///< Quad geometry verts
+  std::shared_ptr<bd::VertexArrayObject> m_boxesVao;         ///< bounding box wireframe verts
 
 };
 

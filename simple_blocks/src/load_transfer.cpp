@@ -48,10 +48,10 @@ unsigned int loadTransfer_1dtformat(const std::string &filename, bd::Texture &tr
     return texId;
   }
 
-  transferTex.textureUnit(1);
+//  transferTex.textureUnit(1);
 
-  unsigned int samp{volumeShader.getUniformLocation("tf_sampler")};
-  transferTex.samplerLocation(samp);
+//  unsigned int samp{volumeShader.getUniformLocation("tf_sampler")};
+//  transferTex.samplerLocation(samp);
 
   delete[] rgba;
 
