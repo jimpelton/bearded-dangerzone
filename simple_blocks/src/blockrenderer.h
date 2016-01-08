@@ -20,21 +20,21 @@
 #include <memory>
 
 
-class VolumeRenderer {
+class BlockRenderer {
 
 public:
-  VolumeRenderer();
+  BlockRenderer();
 
 
   //////////////////////////////////////////////////////////////////////////////
-  VolumeRenderer(std::shared_ptr<bd::ShaderProgram> volumeShader,
-            std::shared_ptr<bd::ShaderProgram> wireframeShader,
-            std::shared_ptr<bd::BlockCollection> blockCollection,
-            std::shared_ptr<bd::Texture> tfuncTexture,
-            std::shared_ptr<bd::VertexArrayObject> blocksVAO);
+  BlockRenderer(std::shared_ptr<bd::ShaderProgram> volumeShader,
+                std::shared_ptr<bd::ShaderProgram> wireframeShader,
+                std::shared_ptr<bd::BlockCollection> blockCollection,
+                std::shared_ptr<bd::Texture> tfuncTexture,
+                std::shared_ptr<bd::VertexArrayObject> blocksVAO);
 
   //////////////////////////////////////////////////////////////////////////////
-  virtual ~VolumeRenderer();
+  virtual ~BlockRenderer();
 
 
   //////////////////////////////////////////////////////////////////////////////
@@ -42,6 +42,10 @@ public:
 
   void drawNonEmptyBlocks();
 
+
+  //////////////////////////////////////////////////////////////////////////////
+  /// \brief Draw wireframe bounding boxes around the blocks.
+  //////////////////////////////////////////////////////////////////////////////
   void drawNonEmptyBoundingBoxes();
 
   //////////////////////////////////////////////////////////////////////////////
@@ -61,9 +65,6 @@ public:
 
 private:
 
-  //////////////////////////////////////////////////////////////////////////////
-  /// \brief Draw wireframe bounding boxes around the blocks.
-  //////////////////////////////////////////////////////////////////////////////
 
 
   //////////////////////////////////////////////////////////////////////////////

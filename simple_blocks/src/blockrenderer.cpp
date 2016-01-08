@@ -2,7 +2,7 @@
 // Created by jim on 10/22/15.
 //
 
-#include "volumerenderer.h"
+#include "blockrenderer.h"
 #include "nvpm.h"
 
 #include <bd/log/gl_log.h>
@@ -26,11 +26,11 @@ namespace {
   const char* WIREFRAME_MVP_UNIFORM_STR = "mvp";
 }
 
-VolumeRenderer::VolumeRenderer()
-  : VolumeRenderer(nullptr, nullptr, nullptr, nullptr, nullptr) { }
+BlockRenderer::BlockRenderer()
+  : BlockRenderer(nullptr, nullptr, nullptr, nullptr, nullptr) { }
 
 ////////////////////////////////////////////////////////////////////////////////
-VolumeRenderer::VolumeRenderer
+BlockRenderer::BlockRenderer
 (
   std::shared_ptr<bd::ShaderProgram> volumeShader,
   std::shared_ptr<bd::ShaderProgram> wireframeShader,
@@ -46,13 +46,13 @@ VolumeRenderer::VolumeRenderer
 
 
 ////////////////////////////////////////////////////////////////////////////////
-VolumeRenderer::~VolumeRenderer() { }
+BlockRenderer::~BlockRenderer() { }
 
 
 
 
 //////////////////////////////////////////////////////////////////////////////////
-bool VolumeRenderer::init() {
+bool BlockRenderer::init() {
 //  m_quadsVao.create();
 //  genQuadVao(m_quadsVao, {-0.5f,-0.5f,-0.5f}, {0.5f, 0.5f, 0.5f},
 //             {m_numSlicesPerBlock, m_numSlicesPerBlock, m_numSlicesPerBlock});
@@ -61,25 +61,25 @@ bool VolumeRenderer::init() {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void VolumeRenderer::setTfuncScaleValue(float val) {
+void BlockRenderer::setTfuncScaleValue(float val) {
   m_tfuncScaleValue = val;
 }
 
 
  ////////////////////////////////////////////////////////////////////////////////
-void VolumeRenderer::setViewMatrix(const glm::mat4 &viewMatrix) {
+void BlockRenderer::setViewMatrix(const glm::mat4 &viewMatrix) {
   m_viewMatrix = viewMatrix;
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void VolumeRenderer::setNumSlices(const int n) {
+void BlockRenderer::setNumSlices(const int n) {
   m_numSlicesPerBlock = n;
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
-void VolumeRenderer::drawNonEmptyBoundingBoxes() {
+void BlockRenderer::drawNonEmptyBoundingBoxes() {
   for (auto *b : m_blockCollection->nonEmptyBlocks()) {
     glm::mat4 mmvp = m_viewMatrix * b->transform().matrix();
     m_wireframeShader->setUniform(WIREFRAME_MVP_UNIFORM_STR, mmvp);
@@ -103,7 +103,7 @@ void VolumeRenderer::drawNonEmptyBoundingBoxes() {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void VolumeRenderer::drawSlices(int baseVertex) {
+void BlockRenderer::drawSlices(int baseVertex) {
   gl_check(glDisable(GL_DEPTH_TEST));
 
   perf_workBegin();
@@ -119,7 +119,7 @@ void VolumeRenderer::drawSlices(int baseVertex) {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void VolumeRenderer::drawNonEmptyBlocks_Forward() {
+void BlockRenderer::drawNonEmptyBlocks_Forward() {
 
   //glm::vec4 viewdir{ glm::normalize(g_camera.getViewMatrix()[2]) };
   //GLint baseVertex{ computeBaseVertexFromSliceSet(g_selectedSliceSet) };
@@ -143,7 +143,7 @@ void VolumeRenderer::drawNonEmptyBlocks_Forward() {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void VolumeRenderer::drawNonEmptyBlocks() {
+void BlockRenderer::drawNonEmptyBlocks() {
 
   //TODO: sort quads farthest to nearest.
   m_quadsVao->bind();
@@ -155,7 +155,7 @@ void VolumeRenderer::drawNonEmptyBlocks() {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-int VolumeRenderer::computeBaseVertexFromViewDir(const glm::vec3 &viewdir) {
+int BlockRenderer::computeBaseVertexFromViewDir(const glm::vec3 &viewdir) {
   glm::vec3 absViewDir{ glm::abs(viewdir) };
 
 //  bool isNeg{ viewdir.x < 0 };
