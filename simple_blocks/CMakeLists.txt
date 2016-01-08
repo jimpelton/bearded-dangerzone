@@ -87,7 +87,7 @@ set(simple_blocks_HEADERS
         src/nvpm.h
         src/sliceset.h
         src/timing.h
-        src/volumerenderer.h )
+        src/blockrenderer.h)
 
 set(simple_blocks_SOURCES
         src/main.cpp
@@ -97,7 +97,7 @@ set(simple_blocks_SOURCES
         src/load_transfer.cpp
         src/sliceset.cpp
         src/timing.cpp
-        src/volumerenderer.cpp
+        src/blockrenderer.cpp
         )
 
 
