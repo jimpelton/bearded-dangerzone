@@ -17,8 +17,8 @@ unsigned int loadTransfer_1dtformat(const std::string &filename, bd::Texture &tr
     return 0;
   }
 
-  size_t lineNum{0};
-  size_t numKnots{0};
+  size_t lineNum{ 0 };
+  size_t numKnots{ 0 };
 
   file >> numKnots; // number of entries/lines in the 1dt file.
   lineNum++;
@@ -28,7 +28,7 @@ unsigned int loadTransfer_1dtformat(const std::string &filename, bd::Texture &tr
     return 0;
   }
 
-  glm::vec4 *rgba{new glm::vec4[numKnots]};
+  glm::vec4 *rgba{ new glm::vec4[numKnots] };
   // read rest of file consisting of rgba colors
   float r, g, b, a;
   while (lineNum < numKnots && file >> r >> g >> b >> a) {
@@ -39,9 +39,9 @@ unsigned int loadTransfer_1dtformat(const std::string &filename, bd::Texture &tr
   file.close();
 
   unsigned int texId{
-      transferTex.genGLTex1d(reinterpret_cast<float *>(rgba), bd::Texture::Format::RGBA,
-                             bd::Texture::Format::RGBA, numKnots)
-  };
+      transferTex.genGLTex1d(reinterpret_cast<float *>(rgba),
+                             bd::Texture::Format::RGBA,
+                             bd::Texture::Format::RGBA, numKnots) };
 
   if (texId == 0) {
     gl_log_err("Could not make transfer function texture, returned id was 0.");

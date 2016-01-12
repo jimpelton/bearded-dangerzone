@@ -246,15 +246,11 @@ void glfw_scrollwheel_callback(GLFWwindow *window, double xoff, double yoff) {
 
 ////////////////////////////////////////////////////////////////////////////////
 void setRotation(const glm::vec2 &dr) {
-  glm::quat rotX = glm::angleAxis<float>(
-      glm::radians(-dr.y)*g_mouseSpeed,
-      glm::vec3(1, 0, 0)
-  );
+  glm::quat rotX{ glm::angleAxis<float>(glm::radians(-dr.y)*g_mouseSpeed,
+                                        glm::vec3(1, 0, 0)) };
 
-  glm::quat rotY = glm::angleAxis<float>(
-      glm::radians(dr.x)*g_mouseSpeed,
-      glm::vec3(0, 1, 0)
-  );
+  glm::quat rotY{ glm::angleAxis<float>(glm::radians(dr.x)*g_mouseSpeed,
+                                        glm::vec3(0, 1, 0)) };
 
   g_camera.rotate(rotX*rotY);
 }
@@ -262,91 +258,11 @@ void setRotation(const glm::vec2 &dr) {
 
 
 
-/////////////////////////////////////////////////////////////////////////////////
-//void drawNonEmptyBoundingBoxes(const glm::mat4 &mvp) {
-//  for (auto *b : g_blockCollection.nonEmptyBlocks()) {
-//    glm::mat4 mmvp = mvp * b->transform().matrix();
-//    g_wireframeShader.setUniform("mvp", mmvp);
-//
-//    gl_check(glDrawElements(GL_LINE_LOOP,
-//                            4,
-//                            GL_UNSIGNED_SHORT,
-//                            (GLvoid *) 0));
-//
-//    gl_check(glDrawElements(GL_LINE_LOOP,
-//                            4,
-//                            GL_UNSIGNED_SHORT,
-//                            (GLvoid *) (4 * sizeof(GLushort))));
-//
-//    gl_check(glDrawElements(GL_LINES,
-//                            8,
-//                            GL_UNSIGNED_SHORT,
-//                            (GLvoid *) (8 * sizeof(GLushort))));
-//  }
-//}
-
-
-///////////////////////////////////////////////////////////////////////////////
-/// \brief Disable GL_DEPTH_TEST and draw transparent slices
-///////////////////////////////////////////////////////////////////////////////
-//void drawSlices(GLint baseVertex) {
-//  gl_check(glDisable(GL_DEPTH_TEST));
-//
-//  perf_workBegin();
-//  gl_check(glDrawElementsBaseVertex(GL_TRIANGLE_STRIP,
-//                                    g_elementsPerQuad * g_numSlices,
-//                                    GL_UNSIGNED_SHORT,
-//                                    0,
-//                                    baseVertex));
-//  perf_workEnd();
-//
-//  gl_check(glEnable(GL_DEPTH_TEST));
-//}
-
-
-///////////////////////////////////////////////////////////////////////////////
-/// \brief Loop through the blocks and draw each one
-///////////////////////////////////////////////////////////////////////////////
-//void drawNonEmptyBlocks_Forward(const std::vector<bd::Block*> &blocks,
-//                                const glm::mat4 &vp) {
-//  //glm::vec4 viewdir{ glm::normalize(g_camera.getViewMatrix()[2]) };
-////  GLint baseVertex{ computeBaseVertexFromSliceSet(g_selectedSliceSet) };
-//  GLint baseVertex{ 0 };
-//
-//  perf_frameBegin();
-//  for (auto *b : blocks) {
-//    b->texture().bind(0);
-//    glm::mat4 wmvp = vp * b->transform().matrix();
-//    g_volumeShader.setUniform("mvp", wmvp);
-//    g_volumeShader.setUniform("tfScalingVal", g_scaleValue);
-//    drawSlices(baseVertex);
-//  }
-//  perf_frameEnd();
-//}
-
-///////////////////////////////////////////////////////////////////////////////
-/// \brief Determine the viewing direction and draw the blocks in proper order.
-///////////////////////////////////////////////////////////////////////////////
-//void drawNonEmptyBlocks(const glm::mat4 &vp) {
-//
-//  if (g_toggleWireFrame) {
-//    gl_check(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
-//  }
-//
-//  //TODO: sort quads farthest to nearest.
-//  g_volumeShader.bind();
-//  drawNonEmptyBlocks_Forward(g_blockCollection.nonEmptyBlocks(), vp);
-//
-//  if (g_toggleWireFrame) {
-//    gl_check(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
-//  }
-//
-//}
 
 
 ///////////////////////////////////////////////////////////////////////////////
 void draw() {
-  bd::VertexArrayObject *vao{ nullptr };
+//  bd::VertexArrayObject *vao{ nullptr };
 
   glm::mat4 viewMat = g_camera.getViewMatrix();
   gl_check(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
@@ -370,6 +286,7 @@ void draw() {
   //////// Quad Geo (drawNonEmptyBlocks)  /////////////////////
 //  vao = g_vaoArray[bd::ordinal(ObjType::Quads)];
 //  vao->bind();
+  g_volRend->setViewMatrix(viewMat);
   g_volRend->drawNonEmptyBlocks();
 //  vao->unbind();
 }
@@ -495,7 +412,7 @@ GLFWwindow *init() {
   //glfwWindowHint(GLFW_SAMPLES, 4);
 
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
@@ -518,9 +435,9 @@ GLFWwindow *init() {
   glfwMakeContextCurrent(window);
 
   glewExperimental = GL_TRUE;
-  GLenum error = gl_check(glewInit());
+  GLenum error{ glewInit() };
   if (error) {
-    gl_log("could not init glew %s", glewGetErrorString(error));
+    gl_log("Could not init glew %s", glewGetErrorString(error));
     return nullptr;
   }
 

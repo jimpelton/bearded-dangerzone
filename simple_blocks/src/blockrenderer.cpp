@@ -169,22 +169,22 @@ int BlockRenderer::computeBaseVertexFromViewDir(const glm::vec3 &viewdir) {
   glm::vec3 absViewDir{ glm::abs(viewdir) };
 
 //  bool isNeg{ viewdir.x < 0 };
-  SliceSet selected = SliceSet::YZ;
+  SliceSet newSelected = SliceSet::YZ;
   float longest{ absViewDir.x };
 
   if (absViewDir.y > longest) {
 //    isNeg = viewdir.y < 0;
-    selected = SliceSet::XZ;
+    newSelected = SliceSet::XZ;
     longest = absViewDir.y;
   }
   if (absViewDir.z > longest) {
 //    isNeg = viewdir.z < 0;
-    selected = SliceSet::XY;
+    newSelected = SliceSet::XY;
   }
 
   // Compute base vertex VBO offset.
   int baseVertex{ 0 };
-  switch (selected) {
+  switch (newSelected) {
 //  case SliceSet::XY:
 //    baseVertex = 0;
 //    break;
@@ -198,12 +198,12 @@ int BlockRenderer::computeBaseVertexFromViewDir(const glm::vec3 &viewdir) {
       break;
   }
 
-  if (selected != m_selectedSliceSet) {
+  if (newSelected != m_selectedSliceSet) {
     std::cout << "Switched slice set: " << /* (isNeg ? '-' : '+') << */
-    m_selectedSliceSet << '\n';
+        newSelected << '\n';
   }
 
-  m_selectedSliceSet = selected;
+  m_selectedSliceSet = newSelected;
 
   return baseVertex;
 }
