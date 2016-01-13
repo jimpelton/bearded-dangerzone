@@ -33,6 +33,7 @@ namespace {
 BlockRenderer::BlockRenderer()
   : BlockRenderer(nullptr, nullptr, nullptr, nullptr, nullptr, nullptr) { }
 
+
 ////////////////////////////////////////////////////////////////////////////////
 BlockRenderer::BlockRenderer
 (
@@ -42,21 +43,17 @@ BlockRenderer::BlockRenderer
   std::shared_ptr<bd::Texture> tfuncTexture,
   std::shared_ptr<bd::VertexArrayObject> blocksVAO,
   std::shared_ptr<bd::VertexArrayObject> bboxVAO
-)
-  : m_volumeShader{ std::move(volumeShader) }
-  , m_wireframeShader{ std::move(wireframeShader) }
-  , m_blockCollection{ std::move(blockCollection) }
-  , m_tfuncTexture{ std::move(tfuncTexture) }
-  , m_quadsVao{ std::move(blocksVAO) }
-  , m_boxesVao{ std::move(bboxVAO) }
+) : m_volumeShader   { volumeShader }
+  , m_wireframeShader{ wireframeShader }
+  , m_blockCollection{ blockCollection }
+  , m_tfuncTexture   { tfuncTexture }
+  , m_quadsVao       { blocksVAO }
+  , m_boxesVao       { bboxVAO }
 { }
-
 
 
 ////////////////////////////////////////////////////////////////////////////////
 BlockRenderer::~BlockRenderer() { }
-
-
 
 
 //////////////////////////////////////////////////////////////////////////////////
