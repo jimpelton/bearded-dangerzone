@@ -414,11 +414,12 @@ GLFWwindow *init() {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-  glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+//  glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
   GLFWwindow *window{
-      glfwCreateWindow(g_screenWidth, g_screenHeight,
-                       "Blocks", nullptr, nullptr) };
+      glfwCreateWindow(g_screenWidth, g_screenHeight, "Blocks",
+                       nullptr, nullptr)
+  };
 
   if (!window) {
     gl_log("ERROR: could not open window with GLFW3");
@@ -442,7 +443,7 @@ GLFWwindow *init() {
   }
 
   glfwSwapInterval(0);
-  //bd::subscribe_debug_callbacks();
+  bd::subscribe_debug_callbacks();
 
   genQueries();
 
@@ -575,12 +576,15 @@ int main(int argc, const char *argv[]) {
   //// Shaders Init ////
 
   //// Wireframe Shader ////
-  std::shared_ptr<bd::ShaderProgram>
-      wireframeShader{ std::make_shared<bd::ShaderProgram>() };
+  std::shared_ptr<bd::ShaderProgram> wireframeShader{
+      std::make_shared<bd::ShaderProgram>()
+  };
+
   GLuint wireframeProgramId{
       wireframeShader->linkProgram(
           "shaders/vert_vertexcolor_passthrough.glsl",
-          "shaders/frag_vertcolor.glsl") };
+          "shaders/frag_vertcolor.glsl")
+  };
 
   if (wireframeProgramId==0) {
     gl_log_err("Error building passthrough shader, program id was 0.");
@@ -588,11 +592,15 @@ int main(int argc, const char *argv[]) {
   }
 
   //// Volume shader ////
-  std::shared_ptr<bd::ShaderProgram> volumeShader{ std::make_shared<bd::ShaderProgram>() };
+  std::shared_ptr<bd::ShaderProgram> volumeShader{
+      std::make_shared<bd::ShaderProgram>()
+  };
+
   GLuint volumeProgramId{
       volumeShader->linkProgram(
           "shaders/vert_vertexcolor_passthrough.glsl",
-          "shaders/frag_volumesampler_noshading.glsl") };
+          "shaders/frag_volumesampler_noshading.glsl")
+  };
 
   if (volumeProgramId==0) {
     gl_log_err("Error building volume sampling shader, program id was 0.");
@@ -600,9 +608,13 @@ int main(int argc, const char *argv[]) {
   }
 
   //// Transfer function texture ////
-  std::shared_ptr<bd::Texture> tfuncTex{ std::make_shared<bd::Texture>(bd::Texture::Target::Tex1D) };
+  std::shared_ptr<bd::Texture> tfuncTex{
+      std::make_shared<bd::Texture>(bd::Texture::Target::Tex1D)
+  };
+
   unsigned int tfuncTextureId{
-      loadTransfer_1dtformat(clo.tfuncPath, *tfuncTex, *volumeShader) };
+      loadTransfer_1dtformat(clo.tfuncPath, *tfuncTex, *volumeShader)
+  };
 
   if (tfuncTextureId==0) {
     gl_log_err("Exiting because tfunc texture was not bound.");
