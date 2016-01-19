@@ -37,12 +37,12 @@ BlockRenderer::BlockRenderer()
 ////////////////////////////////////////////////////////////////////////////////
 BlockRenderer::BlockRenderer
 (
-  std::shared_ptr<bd::ShaderProgram> volumeShader,
-  std::shared_ptr<bd::ShaderProgram> wireframeShader,
-  std::shared_ptr<bd::BlockCollection> blockCollection,
-  std::shared_ptr<bd::Texture> tfuncTexture,
-  std::shared_ptr<bd::VertexArrayObject> blocksVAO,
-  std::shared_ptr<bd::VertexArrayObject> bboxVAO
+  bd::ShaderProgram *volumeShader,
+  bd::ShaderProgram *wireframeShader,
+  bd::BlockCollection *blockCollection,
+  bd::Texture *tfuncTexture,
+  bd::VertexArrayObject *blocksVAO,
+  bd::VertexArrayObject *bboxVAO
 ) : m_volumeShader   { volumeShader }
   , m_wireframeShader{ wireframeShader }
   , m_blockCollection{ blockCollection }

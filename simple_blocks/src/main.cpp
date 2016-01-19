@@ -276,17 +276,17 @@ void draw() {
 //  vao->unbind();
 
   ////////  BBoxes  /////////////////////////////////////////
-  if (g_toggleBlockBoxes) {
+//  if (g_toggleBlockBoxes) {
 //    vao = g_vaoArray[bd::ordinal(ObjType::Boxes)];
 //    vao->bind();
-    g_volRend->drawNonEmptyBoundingBoxes();
 //    vao->unbind();
-  }
+//  }
 
   //////// Quad Geo (drawNonEmptyBlocks)  /////////////////////
 //  vao = g_vaoArray[bd::ordinal(ObjType::Quads)];
 //  vao->bind();
   g_volRend->setViewMatrix(viewMat);
+//  g_volRend->drawNonEmptyBoundingBoxes();
   g_volRend->drawNonEmptyBlocks();
 //  vao->unbind();
 }
@@ -412,9 +412,9 @@ GLFWwindow *init() {
   //glfwWindowHint(GLFW_SAMPLES, 4);
 
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-//  glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+  glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
   GLFWwindow *window{
       glfwCreateWindow(g_screenWidth, g_screenHeight, "Blocks",
@@ -443,7 +443,7 @@ GLFWwindow *init() {
   }
 
   glfwSwapInterval(0);
-  bd::subscribe_debug_callbacks();
+//  bd::subscribe_debug_callbacks();
 
   genQueries();
 
@@ -576,9 +576,7 @@ int main(int argc, const char *argv[]) {
   //// Shaders Init ////
 
   //// Wireframe Shader ////
-  std::shared_ptr<bd::ShaderProgram> wireframeShader{
-      std::make_shared<bd::ShaderProgram>()
-  };
+  bd::ShaderProgram *wireframeShader{ new bd::ShaderProgram() };
 
   GLuint wireframeProgramId{
       wireframeShader->linkProgram(
@@ -588,13 +586,11 @@ int main(int argc, const char *argv[]) {
 
   if (wireframeProgramId==0) {
     gl_log_err("Error building passthrough shader, program id was 0.");
-    return 1;
+    //return 1;
   }
 
   //// Volume shader ////
-  std::shared_ptr<bd::ShaderProgram> volumeShader{
-      std::make_shared<bd::ShaderProgram>()
-  };
+ bd::ShaderProgram *volumeShader{ new bd::ShaderProgram() };
 
   GLuint volumeProgramId{
       volumeShader->linkProgram(
@@ -608,9 +604,7 @@ int main(int argc, const char *argv[]) {
   }
 
   //// Transfer function texture ////
-  std::shared_ptr<bd::Texture> tfuncTex{
-      std::make_shared<bd::Texture>(bd::Texture::Target::Tex1D)
-  };
+  bd::Texture *tfuncTex{ new bd::Texture(bd::Texture::Target::Tex1D) };
 
   unsigned int tfuncTextureId{
       loadTransfer_1dtformat(clo.tfuncPath, *tfuncTex, *volumeShader)
@@ -629,18 +623,18 @@ int main(int argc, const char *argv[]) {
 
   //// Geometry Init ////
   // 2d slices
-  std::shared_ptr<bd::VertexArrayObject> quadVao{ std::make_shared<bd::VertexArrayObject>() };
+  bd::VertexArrayObject *quadVao{ new bd::VertexArrayObject() };
   quadVao->create();
   genQuadVao(*quadVao, { -0.5f, -0.5f, -0.5f }, { 0.5f, 0.5f, 0.5f },
              { clo.num_slices, clo.num_slices, clo.num_slices });
 
   // coordinate axis
-  std::shared_ptr<bd::VertexArrayObject> axisVao{ std::make_shared<bd::VertexArrayObject>() };
+  bd::VertexArrayObject *axisVao{ new bd::VertexArrayObject() };
   axisVao->create();
   genAxisVao(*axisVao);
 
   // bounding boxes
-  std::shared_ptr<bd::VertexArrayObject> boxVao{ std::make_shared<bd::VertexArrayObject>() };
+  bd::VertexArrayObject *boxVao{ new bd::VertexArrayObject() };
   boxVao->create();
   genBoxVao(*boxVao);
 
@@ -651,7 +645,7 @@ int main(int argc, const char *argv[]) {
 
 
   //// Blocks and Data Init ////
-  std::shared_ptr<bd::BlockCollection> blockCollection{ std::make_shared<bd::BlockCollection>() };
+  bd::BlockCollection  *blockCollection{ new bd::BlockCollection() };
   blockCollection->initBlocks(
       glm::u64vec3(clo.numblk_x, clo.numblk_y, clo.numblk_z),
       glm::u64vec3(clo.w, clo.h, clo.d));
@@ -669,7 +663,7 @@ int main(int argc, const char *argv[]) {
   blockCollection->filterBlocks(data.get(), clo.tmin, clo.tmax);
   data.release();
 
-  if (clo.printBlocks) { printBlocks(blockCollection.get()); }
+  if (clo.printBlocks) { printBlocks(blockCollection); }
 
   //// Render Init ////
   setupCameraPos(clo.cameraPos);

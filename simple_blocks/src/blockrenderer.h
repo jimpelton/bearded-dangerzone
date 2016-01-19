@@ -28,12 +28,18 @@ public:
 
 
   //////////////////////////////////////////////////////////////////////////////
-  BlockRenderer(std::shared_ptr<bd::ShaderProgram> volumeShader,
-                std::shared_ptr<bd::ShaderProgram> wireframeShader,
-                std::shared_ptr<bd::BlockCollection> blockCollection,
-                std::shared_ptr<bd::Texture> tfuncTexture,
-                std::shared_ptr<bd::VertexArrayObject> blocksVAO,
-                std::shared_ptr<bd::VertexArrayObject> bboxVAO);
+//  BlockRenderer(std::shared_ptr<bd::ShaderProgram> volumeShader,
+//                std::shared_ptr<bd::ShaderProgram> wireframeShader,
+//                std::shared_ptr<bd::BlockCollection> blockCollection,
+//                std::shared_ptr<bd::Texture> tfuncTexture,
+//                std::shared_ptr<bd::VertexArrayObject> blocksVAO,
+//                std::shared_ptr<bd::VertexArrayObject> bboxVAO);
+
+  BlockRenderer(bd::ShaderProgram *volumeShader,
+          bd::ShaderProgram *wireframeShader, bd::BlockCollection *blockCollection,
+          bd::Texture *tfuncTexture, bd::VertexArrayObject *blocksVAO,
+          bd::VertexArrayObject *bboxVAO );
+
 
   //////////////////////////////////////////////////////////////////////////////
   virtual ~BlockRenderer();
@@ -105,12 +111,12 @@ private:
 
   SliceSet m_selectedSliceSet;
 
-  std::shared_ptr<bd::ShaderProgram> m_volumeShader;
-  std::shared_ptr<bd::ShaderProgram> m_wireframeShader;
-  std::shared_ptr<bd::BlockCollection> m_blockCollection;
-  std::shared_ptr<bd::Texture> m_tfuncTexture;               ///< Transfer function texture
-  std::shared_ptr<bd::VertexArrayObject> m_quadsVao;         ///< Quad geometry verts
-  std::shared_ptr<bd::VertexArrayObject> m_boxesVao;         ///< bounding box wireframe verts
+  bd::ShaderProgram *m_volumeShader;
+  bd::ShaderProgram *m_wireframeShader;
+  bd::BlockCollection *m_blockCollection;
+  bd::Texture *m_tfuncTexture;               ///< Transfer function texture
+  bd::VertexArrayObject *m_quadsVao;         ///< Quad geometry verts
+  bd::VertexArrayObject *m_boxesVao;         ///< bounding box wireframe verts
 
 };
 
