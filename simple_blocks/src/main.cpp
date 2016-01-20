@@ -578,7 +578,7 @@ int main(int argc, const char *argv[]) {
 
   //// GLFW init ////
   GLFWwindow *window;
-  if ((window = init())==nullptr) {
+  if ((window = init()) == nullptr) {
     gl_log("Could not initialize GLFW, exiting.");
     return 1;
   }
@@ -626,12 +626,6 @@ int main(int argc, const char *argv[]) {
     exit(1);
   }
 
-  // Initially bind the transfer function texture to the volume shader, currently
-  // the tfunc texture doesn't change between frames, but the volume data
-  // texture does change per block.
-//  volumeShader.bind();
-//  tfuncTex.bind(1);
-
   //// Geometry Init ////
   // 2d slices
   bd::VertexArrayObject *quadVao{ new bd::VertexArrayObject() };
@@ -650,9 +644,6 @@ int main(int argc, const char *argv[]) {
   genBoxVao(*boxVao);
 
 
-//  g_vaoArray.resize(2);
-//  g_vaoArray[bd::ordinal(ObjType::Axis)] = &axisVao;
-//  g_vaoArray[bd::ordinal(ObjType::Boxes)] = &boxVao;
 
 
   //// Blocks and Data Init ////
@@ -665,7 +656,7 @@ int main(int argc, const char *argv[]) {
       std::move(bd::readVolumeData(clo.type, clo.filePath, clo.w, clo.h, clo.d))
   };
 
-  if (data==nullptr) {
+  if (data == nullptr) {
     gl_log_err("data file was not opened. exiting...");
     cleanup();
     return 1;
