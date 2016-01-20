@@ -87,7 +87,7 @@ set(simple_blocks_HEADERS
         src/nvpm.h
         src/sliceset.h
         src/timing.h
-        src/blockrenderer.h)
+        src/blockrenderer.h src/constants.h)
 
 set(simple_blocks_SOURCES
         src/main.cpp

@@ -6,6 +6,8 @@
 #include "create_vao.h"
 #include "axis_enum.h"
 #include "timing.h"
+#include "blockrenderer.h"
+#include "constants.h"
 
 // BD lib
 #include <bd/geo/axis.h>
@@ -43,15 +45,30 @@
 
 // profiling
 #include "nvpm.h"
-#include "blockrenderer.h"
 
 
-///////////////////////////////////////////////////////////////////////////////
-//  Const  Data
-///////////////////////////////////////////////////////////////////////////////
+// Constant definitions
+
+const int ELEMENTS_PER_QUAD{ 5 }; //< 5 elements = 4 verts + 1 restart symbol
+
 const glm::vec3 X_AXIS{ 1.0f, 0.0f, 0.0f };
 const glm::vec3 Y_AXIS{ 0.0f, 1.0f, 0.0f };
 const glm::vec3 Z_AXIS{ 0.0f, 0.0f, 1.0f };
+
+const int VERTEX_COORD_ATTR = 0;
+const int VERTEX_COLOR_ATTR = 1;
+
+const int BLOCK_TEXTURE_UNIT = 0;
+const int TRANSF_TEXTURE_UNIT = 1;
+
+//  const int BLOCK_TEXTURE_SAMPLER_UNIFORM = 0;
+//  const int TRANSF_TEXTURE_SAMPLER_UNIFORM = 1;
+
+const char *VOLUME_MVP_MATRIX_UNIFORM_STR = "mvp";
+const char *VOLUME_TRANSF_UNIFORM_STR = "tfScalingVal";
+
+const char *WIREFRAME_MVP_MATRIX_UNIFORM_STR = "mvp";
+
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -71,13 +88,7 @@ bd::Box g_box;
 size_t g_elementBufferSize{ 0 };
 
 
-///////////////////////////////////////////////////////////////////////////////
-// Shaders and Textures
-///////////////////////////////////////////////////////////////////////////////
-//bd::ShaderProgram g_wireframeShader;   ///< Shader for the wireframe stuff.
-
 float g_scaleValue{ 1.0f };
-
 
 ///////////////////////////////////////////////////////////////////////////////
 // Viewing and Controls Data
@@ -338,13 +349,13 @@ void genAxisVao(bd::VertexArrayObject &vao) {
   vao.addVbo((float *) (Axis::verts.data()),
              Axis::verts.size()*Axis::vert_element_size,
              Axis::vert_element_size,
-             0); // attr 0
+             VERTEX_COORD_ATTR); // attr 0
 
   // vertex colors into attribute 1
   vao.addVbo((float *) (Axis::colors.data()),
              Axis::colors.size()*3,
              3,   // 3 floats per color
-             1);  // attr 1
+             VERTEX_COLOR_ATTR);  // attr 1
 }
 
 
@@ -358,13 +369,13 @@ void genBoxVao(bd::VertexArrayObject &vao) {
   vao.addVbo((float *) (bd::Box::vertices.data()),
              bd::Box::vertices.size()*bd::Box::vert_element_size,
              bd::Box::vert_element_size,
-             0);
+             VERTEX_COORD_ATTR);
 
   // colors as vertex attribute 1
   vao.addVbo((float *) bd::Box::colors.data(),
              bd::Box::colors.size()*3,
              3,
-             1);
+             VERTEX_COLOR_ATTR);
 
   vao.setIndexBuffer((unsigned short *) bd::Box::elements.data(),
                      bd::Box::elements.size());
@@ -412,7 +423,7 @@ GLFWwindow *init() {
   //glfwWindowHint(GLFW_SAMPLES, 4);
 
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
@@ -443,7 +454,7 @@ GLFWwindow *init() {
   }
 
   glfwSwapInterval(0);
-//  bd::subscribe_debug_callbacks();
+  bd::subscribe_debug_callbacks();
 
   genQueries();
 
@@ -645,7 +656,7 @@ int main(int argc, const char *argv[]) {
 
 
   //// Blocks and Data Init ////
-  bd::BlockCollection  *blockCollection{ new bd::BlockCollection() };
+  bd::BlockCollection *blockCollection{ new bd::BlockCollection() };
   blockCollection->initBlocks(
       glm::u64vec3(clo.numblk_x, clo.numblk_y, clo.numblk_z),
       glm::u64vec3(clo.w, clo.h, clo.d));
@@ -669,6 +680,7 @@ int main(int argc, const char *argv[]) {
   setupCameraPos(clo.cameraPos);
   BlockRenderer volRend{ volumeShader, wireframeShader, blockCollection,
                           tfuncTex, quadVao, boxVao };
+  volRend.init();
   g_volRend = &volRend;
 
   initGraphicsState();

@@ -3,6 +3,7 @@
 //
 
 #include "blockrenderer.h"
+#include "constants.h"
 #include "nvpm.h"
 
 #include <bd/log/gl_log.h>
@@ -12,22 +13,7 @@
 
 namespace {
 
-  const int ELEMENTS_PER_QUAD{ 5 }; //< 5 elements = 4 verts + 1 restart symbol
 
-  const glm::vec3 X_AXIS{ 1.0f, 0.0f, 0.0f };
-  const glm::vec3 Y_AXIS{ 0.0f, 1.0f, 0.0f };
-  const glm::vec3 Z_AXIS{ 0.0f, 0.0f, 1.0f };
-
-  const int BLOCK_TEXTURE_UNIT = 0;
-  const int TRANSF_TEXTURE_UNIT = 1;
-
-//  const int BLOCK_TEXTURE_SAMPLER_UNIFORM = 0;
-//  const int TRANSF_TEXTURE_SAMPLER_UNIFORM = 1;
-
-  const char* VOLUME_MVP_MATRIX_UNIFORM_STR = "mvp";
-  const char* VOLUME_TRANSF_UNIFORM_STR = "tfScalingVal";
-
-  const char* WIREFRAME_MVP_MATRIX_UNIFORM_STR = "mvp";
 }
 
 BlockRenderer::BlockRenderer()
@@ -61,6 +47,7 @@ bool BlockRenderer::init() {
 //  m_quadsVao.create();
 //  genQuadVao(m_quadsVao, {-0.5f,-0.5f,-0.5f}, {0.5f, 0.5f, 0.5f},
 //             {m_numSlicesPerBlock, m_numSlicesPerBlock, m_numSlicesPerBlock});
+  m_volumeShader->bind();
   m_volumeShader->setUniform("volume_sampler", BLOCK_TEXTURE_UNIT);
   m_volumeShader->setUniform("tf_sampler", TRANSF_TEXTURE_UNIT);
   return false;
