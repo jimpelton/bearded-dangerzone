@@ -84,9 +84,9 @@ enum class ObjType : unsigned int {
 bd::CoordinateAxis g_axis; ///< The coordinate axis lines.
 bd::Box g_box;
 
-//std::vector<bd::VertexArrayObject *> g_vaoArray;
 size_t g_elementBufferSize{ 0 };
-
+bd::VertexArrayObject *g_axisVao;
+bd::ShaderProgram *g_wireframeShader;
 
 float g_scaleValue{ 1.0f };
 
@@ -104,7 +104,6 @@ float g_mouseSpeed{ 1.0f };
 bool g_toggleBlockBoxes{ false };
 bool g_toggleWireFrame{ false };
 
-//SliceSet g_selectedSliceSet{ SliceSet::XY };
 
 //TODO: bool g_toggleVolumeBox{ false };
 
@@ -198,7 +197,7 @@ void glfw_keyboard_callback(GLFWwindow *window,
         else
           g_scaleValue += 0.01f;
 
-        //        cout << "Transfer function scaler: " << g_scaleValue << endl;
+        std::cout << "Transfer function scaler: " << g_scaleValue << std::endl;
         break;
       case GLFW_KEY_COMMA:
         if (mods & GLFW_MOD_SHIFT)
@@ -208,7 +207,7 @@ void glfw_keyboard_callback(GLFWwindow *window,
         else
           g_scaleValue -= 0.01f;
 
-        //        cout << "Transfer function scaler: " << g_scaleValue << endl;
+        std::cout << "Transfer function scaler: " << g_scaleValue << std::endl;
         break;
     }
   }
@@ -280,11 +279,11 @@ void draw() {
 
   ////////  Axis    /////////////////////////////////////////
 //  vao = g_vaoArray[bd::ordinal(ObjType::Axis)];
-//  vao->bind();
-//  g_wireframeShader.bind();
-//  g_wireframeShader.setUniform("mvp", viewMat);
-//  g_axis.draw();
-//  vao->unbind();
+  g_axisVao->bind();
+  g_wireframeShader->bind();
+  g_wireframeShader->setUniform("mvp", viewMat);
+  g_axis.draw();
+  g_axisVao->unbind();
 
   ////////  BBoxes  /////////////////////////////////////////
 //  if (g_toggleBlockBoxes) {
@@ -391,7 +390,7 @@ void genBoxVao(bd::VertexArrayObject &vao) {
 /////////////////////////////////////////////////////////////////////////////////
 void initGraphicsState() {
   gl_log("Initializing gl state.");
-  gl_check(glClearColor(1.0f, 1.0f, 1.0f, 0.0f));
+  gl_check(glClearColor(0.15f, 0.15f, 0.15f, 0.0f));
 
 //  gl_check(glEnable(GL_CULL_FACE));
 //  gl_check(glCullFace(GL_FRONT));
@@ -583,6 +582,7 @@ int main(int argc, const char *argv[]) {
     return 1;
   }
 
+  initGraphicsState();
 
   //// Shaders Init ////
 
@@ -597,8 +597,10 @@ int main(int argc, const char *argv[]) {
 
   if (wireframeProgramId==0) {
     gl_log_err("Error building passthrough shader, program id was 0.");
-    //return 1;
+    return 1;
   }
+
+  g_wireframeShader = wireframeShader;
 
   //// Volume shader ////
  bd::ShaderProgram *volumeShader{ new bd::ShaderProgram() };
@@ -638,6 +640,8 @@ int main(int argc, const char *argv[]) {
   axisVao->create();
   genAxisVao(*axisVao);
 
+  g_axisVao = axisVao;
+
   // bounding boxes
   bd::VertexArrayObject *boxVao{ new bd::VertexArrayObject() };
   boxVao->create();
@@ -674,7 +678,6 @@ int main(int argc, const char *argv[]) {
   volRend.init();
   g_volRend = &volRend;
 
-  initGraphicsState();
 
   //// NV Perf Thing ////
   perf_initNvPm();

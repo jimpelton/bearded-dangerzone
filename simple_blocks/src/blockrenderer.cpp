@@ -50,6 +50,7 @@ bool BlockRenderer::init() {
   m_volumeShader->bind();
   m_volumeShader->setUniform("volume_sampler", BLOCK_TEXTURE_UNIT);
   m_volumeShader->setUniform("tf_sampler", TRANSF_TEXTURE_UNIT);
+  m_volumeShader->setUniform("tfScalingVal", 1.0f);
   return false;
 }
 
@@ -142,9 +143,9 @@ void BlockRenderer::drawNonEmptyBlocks() {
   //TODO: sort quads farthest to nearest.
   m_quadsVao->bind();
   m_volumeShader->bind();
-
   m_tfuncTexture->bind(TRANSF_TEXTURE_UNIT);
   drawNonEmptyBlocks_Forward();
+
 
 }
 
