@@ -35,10 +35,13 @@ public:
 //                std::shared_ptr<bd::VertexArrayObject> blocksVAO,
 //                std::shared_ptr<bd::VertexArrayObject> bboxVAO);
 
-  BlockRenderer(bd::ShaderProgram *volumeShader,
-          bd::ShaderProgram *wireframeShader, bd::BlockCollection *blockCollection,
-          bd::Texture *tfuncTexture, bd::VertexArrayObject *blocksVAO,
-          bd::VertexArrayObject *bboxVAO );
+  BlockRenderer(int numSlices,
+                bd::ShaderProgram *volumeShader,
+                bd::ShaderProgram *wireframeShader,
+                bd::BlockCollection *blockCollection,
+                bd::Texture *tfuncTexture,
+                bd::VertexArrayObject *blocksVAO,
+                bd::VertexArrayObject *bboxVAO );
 
 
   //////////////////////////////////////////////////////////////////////////////

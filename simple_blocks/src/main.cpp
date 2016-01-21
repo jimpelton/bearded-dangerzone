@@ -667,14 +667,15 @@ int main(int argc, const char *argv[]) {
   }
 
   blockCollection->filterBlocks(data.get(), clo.tmin, clo.tmax);
-  data.release();
+//  data.release();
 
   if (clo.printBlocks) { printBlocks(blockCollection); }
 
   //// Render Init ////
   setupCameraPos(clo.cameraPos);
-  BlockRenderer volRend{ volumeShader, wireframeShader, blockCollection,
-                          tfuncTex, quadVao, boxVao };
+  BlockRenderer volRend{ clo.num_slices, volumeShader, wireframeShader,
+                         blockCollection, tfuncTex, quadVao, boxVao };
+
   volRend.init();
   g_volRend = &volRend;
 

@@ -17,19 +17,21 @@ namespace {
 }
 
 BlockRenderer::BlockRenderer()
-  : BlockRenderer(nullptr, nullptr, nullptr, nullptr, nullptr, nullptr) { }
+  : BlockRenderer(0, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr) { }
 
 
 ////////////////////////////////////////////////////////////////////////////////
 BlockRenderer::BlockRenderer
 (
+  int numSlices,
   bd::ShaderProgram *volumeShader,
   bd::ShaderProgram *wireframeShader,
   bd::BlockCollection *blockCollection,
   bd::Texture *tfuncTexture,
   bd::VertexArrayObject *blocksVAO,
   bd::VertexArrayObject *bboxVAO
-) : m_volumeShader   { volumeShader }
+) : m_numSlicesPerBlock{ numSlices }
+  , m_volumeShader   { volumeShader }
   , m_wireframeShader{ wireframeShader }
   , m_blockCollection{ blockCollection }
   , m_tfuncTexture   { tfuncTexture }
