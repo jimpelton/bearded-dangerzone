@@ -278,11 +278,11 @@ void draw() {
   gl_check(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
   ////////  Axis    /////////////////////////////////////////
-//  vao = g_vaoArray[bd::ordinal(ObjType::Axis)];
   g_axisVao->bind();
   g_wireframeShader->bind();
   g_wireframeShader->setUniform("mvp", viewMat);
   g_axis.draw();
+  g_wireframeShader->unbind();
   g_axisVao->unbind();
 
   ////////  BBoxes  /////////////////////////////////////////
@@ -293,12 +293,9 @@ void draw() {
 //  }
 
   //////// Quad Geo (drawNonEmptyBlocks)  /////////////////////
-//  vao = g_vaoArray[bd::ordinal(ObjType::Quads)];
-//  vao->bind();
   g_volRend->setViewMatrix(viewMat);
-//  g_volRend->drawNonEmptyBoundingBoxes();
   g_volRend->drawNonEmptyBlocks();
-//  vao->unbind();
+
 }
 
 
@@ -315,12 +312,12 @@ void loop(GLFWwindow *window) {
     startCpuTime();
     g_camera.updateViewMatrix();
 
-    startGpuTimerQuery();
+//    startGpuTimerQuery();
 
     draw();
     glfwSwapBuffers(window);
 
-    endGpuTimerQuery();
+//    endGpuTimerQuery();
 
     glfwPollEvents();
 
@@ -455,7 +452,7 @@ GLFWwindow *init() {
   glfwSwapInterval(0);
   bd::subscribe_debug_callbacks();
 
-  genQueries();
+//  genQueries();
 
   return window;
 }
@@ -586,47 +583,6 @@ int main(int argc, const char *argv[]) {
 
   //// Shaders Init ////
 
-  //// Wireframe Shader ////
-  bd::ShaderProgram *wireframeShader{ new bd::ShaderProgram() };
-
-  GLuint wireframeProgramId{
-      wireframeShader->linkProgram(
-          "shaders/vert_vertexcolor_passthrough.glsl",
-          "shaders/frag_vertcolor.glsl")
-  };
-
-  if (wireframeProgramId==0) {
-    gl_log_err("Error building passthrough shader, program id was 0.");
-    return 1;
-  }
-
-  g_wireframeShader = wireframeShader;
-
-  //// Volume shader ////
- bd::ShaderProgram *volumeShader{ new bd::ShaderProgram() };
-
-  GLuint volumeProgramId{
-      volumeShader->linkProgram(
-          "shaders/vert_vertexcolor_passthrough.glsl",
-          "shaders/frag_volumesampler_noshading.glsl")
-  };
-
-  if (volumeProgramId==0) {
-    gl_log_err("Error building volume sampling shader, program id was 0.");
-    return 1;
-  }
-
-  //// Transfer function texture ////
-  bd::Texture *tfuncTex{ new bd::Texture(bd::Texture::Target::Tex1D) };
-
-  unsigned int tfuncTextureId{
-      loadTransfer_1dtformat(clo.tfuncPath, *tfuncTex, *volumeShader)
-  };
-
-  if (tfuncTextureId==0) {
-    gl_log_err("Exiting because tfunc texture was not bound.");
-    exit(1);
-  }
 
   //// Geometry Init ////
   // 2d slices
@@ -673,6 +629,51 @@ int main(int argc, const char *argv[]) {
 
   //// Render Init ////
   setupCameraPos(clo.cameraPos);
+
+
+  //// Wireframe Shader ////
+  bd::ShaderProgram *wireframeShader{ new bd::ShaderProgram() };
+
+  GLuint wireframeProgramId{
+      wireframeShader->linkProgram(
+          "shaders/vert_vertexcolor_passthrough.glsl",
+          "shaders/frag_vertcolor.glsl")
+  };
+
+  if (wireframeProgramId==0) {
+    gl_log_err("Error building passthrough shader, program id was 0.");
+    return 1;
+  }
+
+  g_wireframeShader = wireframeShader;
+
+  //// Volume shader ////
+  bd::ShaderProgram *volumeShader{ new bd::ShaderProgram() };
+
+  GLuint volumeProgramId{
+      volumeShader->linkProgram(
+          "shaders/vert_vertexcolor_passthrough.glsl",
+          "shaders/frag_volumesampler_noshading.glsl")
+  };
+
+  if (volumeProgramId==0) {
+    gl_log_err("Error building volume sampling shader, program id was 0.");
+    return 1;
+  }
+
+  //// Transfer function texture ////
+  bd::Texture *tfuncTex{ new bd::Texture(bd::Texture::Target::Tex1D) };
+
+  unsigned int tfuncTextureId{
+      loadTransfer_1dtformat(clo.tfuncPath, *tfuncTex, *volumeShader)
+  };
+
+  if (tfuncTextureId==0) {
+    gl_log_err("Exiting because tfunc texture was not bound.");
+    exit(1);
+  }
+
+
   BlockRenderer volRend{ clo.num_slices, volumeShader, wireframeShader,
                          blockCollection, tfuncTex, quadVao, boxVao };
 

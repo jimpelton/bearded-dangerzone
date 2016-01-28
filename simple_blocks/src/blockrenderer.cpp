@@ -146,8 +146,11 @@ void BlockRenderer::drawNonEmptyBlocks() {
   m_quadsVao->bind();
   m_volumeShader->bind();
   m_tfuncTexture->bind(TRANSF_TEXTURE_UNIT);
+
   drawNonEmptyBlocks_Forward();
 
+  m_volumeShader->unbind();
+  m_quadsVao->unbind();
 
 }
 

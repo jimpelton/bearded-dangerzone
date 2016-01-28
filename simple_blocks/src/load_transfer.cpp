@@ -3,8 +3,8 @@
 
 #include <glm/vec4.hpp>
 
-#include <fstream>
 #include <string>
+#include <fstream>
 
 /////////////////////////////////////////////////////////////////////////////////
 unsigned int loadTransfer_1dtformat(const std::string &filename, bd::Texture &transferTex,
