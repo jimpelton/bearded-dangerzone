@@ -173,7 +173,7 @@ void genQuadVao(bd::VertexArrayObject &vao, const glm::vec3 &min,
 
   vao.addVbo(texbuf, 1); // texbuf mapped to attribute 1
 
-  createElementIdx(elebuf, numSlices.x * numSlices.y * numSlices.z);
+  createElementIdx(elebuf, numSlices.x + numSlices.y + numSlices.z);
 
   // element index buffer
   vao.setIndexBuffer(elebuf.data(), elebuf.size());

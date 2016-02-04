@@ -302,33 +302,33 @@ void setRotation(const glm::vec2 &dr) {
 /// \brief Compute the base vertex offset for the slices vertex buffer based off
 ///        the largest component of \c viewdir.
 ///////////////////////////////////////////////////////////////////////////////
-GLint computeBaseVertexFromViewDir(const glm::vec3 &viewdir) {
-  glm::vec3 absViewDir{ glm::abs(viewdir) };
+GLint computeBaseVertexFromViewDir(const glm::vec4 &viewdir) {
+  glm::vec4 absViewDir{ glm::abs(viewdir) };
 
-//  bool isNeg{ viewdir.x < 0 };
+  bool isNeg{ viewdir.x < 0 };
   SliceSet selected = SliceSet::YZ;
   float longest{ absViewDir.x };
 
   if (absViewDir.y > longest) {
-//    isNeg = viewdir.y < 0;
+    isNeg = viewdir.y < 0;
     selected = SliceSet::XZ;
     longest = absViewDir.y;
   }
   if (absViewDir.z > longest) {
-//    isNeg = viewdir.z < 0;
+    isNeg = viewdir.z < 0;
     selected = SliceSet::XY;
   }
 
   // Compute base vertex offset.
   GLint baseVertex{ 0 };
   switch (selected) {
-//    case SliceSet::XY:
+//    case SliceSet::YZ:
 //      baseVertex = 0;
 //      break;
     case SliceSet::XZ:
       baseVertex = bd::Quad::vert_element_size * g_numSlices;
       break;
-    case SliceSet::YZ:
+    case SliceSet::XY:
       baseVertex = 2 * bd::Quad::vert_element_size * g_numSlices;
       break;
     default:
@@ -336,8 +336,15 @@ GLint computeBaseVertexFromViewDir(const glm::vec3 &viewdir) {
   }
 
   if (selected != g_selectedSliceSet) {
-    std::cout << "Switched slice set: " << /* (isNeg ? '-' : '+') << */
-    g_selectedSliceSet << '\n';
+      char neg = '+';
+      if (isNeg) {
+          neg = '-';
+          //g_toggleErrorExtent = true;
+          //g_dontRenderSlices = true;
+      }/* else {
+          
+      }*/
+    std::cout << "Switched slice set: " <<  neg << selected << '\n';
   }
 
   g_selectedSliceSet = selected;
@@ -393,9 +400,9 @@ void drawSlices(GLint baseVertex) {
 ///////////////////////////////////////////////////////////////////////////////
 void drawNonEmptyBlocks_Forward(const std::vector<bd::Block*> &blocks,
                                 const glm::mat4 &vp) {
-  //glm::vec4 viewdir{ glm::normalize(g_camera.getViewMatrix()[2]) };
-//  GLint baseVertex{ computeBaseVertexFromSliceSet(g_selectedSliceSet) };
-  GLint baseVertex{ 0 };
+  glm::vec4 viewdir{ glm::normalize(g_camera.getViewMatrix()[2]) };
+ GLint baseVertex{ computeBaseVertexFromViewDir(viewdir) };
+ // GLint baseVertex{ 0 };
 
   perf_frameBegin();
   for (auto *b : blocks) {
