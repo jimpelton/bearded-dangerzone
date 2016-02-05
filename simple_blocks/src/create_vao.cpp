@@ -1,6 +1,6 @@
 #include "create_vao.h"
 #include "axis_enum.h"
-
+#include "constants.h"
 
 #include <glm/glm.hpp>
 
@@ -156,7 +156,7 @@ void genQuadVao(bd::VertexArrayObject &vao, const glm::vec3 &min,
   createQuads(temp, min, max, numSlices.z, Axis::Z);
   std::copy(temp.begin(), temp.end(), std::back_inserter(vbuf));
 
-  vao.addVbo(vbuf, 0); // vbuf mapped to attribute 0
+  vao.addVbo(vbuf, VERTEX_COORD_ATTR); // vbuf mapped to attribute 0
 
   // Texture buffer
   temp.clear();
@@ -171,9 +171,9 @@ void genQuadVao(bd::VertexArrayObject &vao, const glm::vec3 &min,
   createQuads(temp, { 0, 0, 0 }, { 1, 1, 1 }, numSlices.z, Axis::Z);
   std::copy(temp.begin(), temp.end(), std::back_inserter(texbuf));
 
-  vao.addVbo(texbuf, 1); // texbuf mapped to attribute 1
+  vao.addVbo(texbuf, VERTEX_COLOR_ATTR); // texbuf mapped to attribute 1
 
-  createElementIdx(elebuf, numSlices.x * numSlices.y * numSlices.z);
+  createElementIdx(elebuf, numSlices.x + numSlices.y + numSlices.z);
 
   // element index buffer
   vao.setIndexBuffer(elebuf.data(), elebuf.size());

@@ -11,32 +11,22 @@
 #include <bd/util/ordinal.h>
 
 
-namespace {
-
-
-}
-
 BlockRenderer::BlockRenderer()
   : BlockRenderer(0, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr) { }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-BlockRenderer::BlockRenderer
-(
-  int numSlices,
-  bd::ShaderProgram *volumeShader,
-  bd::ShaderProgram *wireframeShader,
-  bd::BlockCollection *blockCollection,
-  bd::Texture *tfuncTexture,
-  bd::VertexArrayObject *blocksVAO,
-  bd::VertexArrayObject *bboxVAO
-) : m_numSlicesPerBlock{ numSlices }
-  , m_volumeShader   { volumeShader }
+BlockRenderer::BlockRenderer(int numSlices, bd::ShaderProgram *volumeShader, 
+  bd::ShaderProgram *wireframeShader, bd::BlockCollection *blockCollection, 
+  bd::Texture *tfuncTexture, bd::VertexArrayObject *blocksVAO, 
+  bd::VertexArrayObject *bboxVAO) 
+  : m_numSlicesPerBlock{ numSlices }
+  , m_volumeShader{ volumeShader }
   , m_wireframeShader{ wireframeShader }
   , m_blockCollection{ blockCollection }
-  , m_tfuncTexture   { tfuncTexture }
-  , m_quadsVao       { blocksVAO }
-  , m_boxesVao       { bboxVAO }
+  , m_tfuncTexture{ tfuncTexture }
+  , m_quadsVao{ blocksVAO }
+  , m_boxesVao{ bboxVAO }
 { }
 
 
@@ -77,7 +67,9 @@ void BlockRenderer::setNumSlices(const int n) {
 
 ////////////////////////////////////////////////////////////////////////////////
 void BlockRenderer::drawNonEmptyBoundingBoxes() {
+  
   for (auto *b : m_blockCollection->nonEmptyBlocks()) {
+
     glm::mat4 mmvp = m_viewMatrix * b->transform().matrix();
     m_wireframeShader->setUniform(WIREFRAME_MVP_MATRIX_UNIFORM_STR, mmvp);
 
@@ -96,6 +88,7 @@ void BlockRenderer::drawNonEmptyBoundingBoxes() {
                             GL_UNSIGNED_SHORT,
                             (GLvoid *) (8 * sizeof(GLushort))));
   }
+
 }
 
 
@@ -118,9 +111,9 @@ void BlockRenderer::drawSlices(int baseVertex) {
 ////////////////////////////////////////////////////////////////////////////////
 void BlockRenderer::drawNonEmptyBlocks_Forward() {
 
-  //glm::vec4 viewdir{ glm::normalize(g_camera.getViewMatrix()[2]) };
-  //GLint baseVertex{ computeBaseVertexFromSliceSet(g_selectedSliceSet) };
-  GLint baseVertex{ 0 };
+  glm::vec4 viewdir{ glm::normalize(m_viewMatrix[2]) };
+  GLint baseVertex{ computeBaseVertexFromViewDir(viewdir) };
+  //GLint baseVertex{ 0 };
 
   // begin NVPM profiling
   perf_frameBegin();
@@ -156,33 +149,33 @@ void BlockRenderer::drawNonEmptyBlocks() {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-int BlockRenderer::computeBaseVertexFromViewDir(const glm::vec3 &viewdir) {
+int BlockRenderer::computeBaseVertexFromViewDir(const glm::vec4 &viewdir) {
   glm::vec3 absViewDir{ glm::abs(viewdir) };
 
-//  bool isNeg{ viewdir.x < 0 };
+  bool isNeg{ viewdir.x < 0 };
   SliceSet newSelected = SliceSet::YZ;
   float longest{ absViewDir.x };
 
   if (absViewDir.y > longest) {
-//    isNeg = viewdir.y < 0;
+    isNeg = viewdir.y < 0;
     newSelected = SliceSet::XZ;
     longest = absViewDir.y;
   }
   if (absViewDir.z > longest) {
-//    isNeg = viewdir.z < 0;
+    isNeg = viewdir.z < 0;
     newSelected = SliceSet::XY;
   }
 
   // Compute base vertex VBO offset.
   int baseVertex{ 0 };
   switch (newSelected) {
-//  case SliceSet::XY:
+//  case SliceSet::YZ:
 //    baseVertex = 0;
 //    break;
     case SliceSet::XZ:
       baseVertex = bd::Quad::vert_element_size * m_numSlicesPerBlock;
       break;
-    case SliceSet::YZ:
+    case SliceSet::XY:
       baseVertex = 2 * bd::Quad::vert_element_size * m_numSlicesPerBlock;
       break;
     default:
@@ -190,8 +183,8 @@ int BlockRenderer::computeBaseVertexFromViewDir(const glm::vec3 &viewdir) {
   }
 
   if (newSelected != m_selectedSliceSet) {
-    std::cout << "Switched slice set: " << /* (isNeg ? '-' : '+') << */
-        newSelected << '\n';
+    std::cout << "Switched slice set: " << (isNeg ? '-' : '+') <<
+      newSelected << '\n';
   }
 
   m_selectedSliceSet = newSelected;

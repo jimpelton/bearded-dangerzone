@@ -103,7 +103,7 @@ private:
   /// \brief Compute the base vertex offset for the slices vertex buffer based
   ///        off the largest component of \c viewdir.
   /////////////////////////////////////////////////////////////////////////////
-  int computeBaseVertexFromViewDir(const glm::vec3 &viewdir);
+  int computeBaseVertexFromViewDir(const glm::vec4 &viewdir);
 
 private:
 

@@ -84,9 +84,11 @@ enum class ObjType : unsigned int {
 bd::CoordinateAxis g_axis; ///< The coordinate axis lines.
 bd::Box g_box;
 
+BlockRenderer *g_volRend{ nullptr };
+
 size_t g_elementBufferSize{ 0 };
-bd::VertexArrayObject *g_axisVao;
-bd::ShaderProgram *g_wireframeShader;
+bd::VertexArrayObject *g_axisVao{ nullptr };
+bd::ShaderProgram *g_wireframeShader{ nullptr };
 
 float g_scaleValue{ 1.0f };
 
@@ -112,7 +114,7 @@ bool g_toggleWireFrame{ false };
 //  Miscellaneous  radness
 ///////////////////////////////////////////////////////////////////////////////
 
-BlockRenderer *g_volRend{ nullptr };
+
 
 void glfw_cursorpos_callback(GLFWwindow *window, double x, double y);
 
@@ -451,7 +453,7 @@ GLFWwindow *init() {
 
   glfwSwapInterval(0);
   bd::subscribe_debug_callbacks();
-
+  bd::checkForAndLogGlError(__FILE__, __FUNCTION__, __LINE__);
 //  genQueries();
 
   return window;
@@ -588,6 +590,7 @@ int main(int argc, const char *argv[]) {
   // 2d slices
   bd::VertexArrayObject *quadVao{ new bd::VertexArrayObject() };
   quadVao->create();
+  //TODO: generate quads for actual volume extent.
   genQuadVao(*quadVao, { -0.5f, -0.5f, -0.5f }, { 0.5f, 0.5f, 0.5f },
              { clo.num_slices, clo.num_slices, clo.num_slices });
 
@@ -674,7 +677,7 @@ int main(int argc, const char *argv[]) {
   }
 
 
-  BlockRenderer volRend{ clo.num_slices, volumeShader, wireframeShader,
+  BlockRenderer volRend{ int(clo.num_slices), volumeShader, wireframeShader,
                          blockCollection, tfuncTex, quadVao, boxVao };
 
   volRend.init();
