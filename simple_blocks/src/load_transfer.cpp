@@ -7,7 +7,7 @@
 #include <string>
 
 /////////////////////////////////////////////////////////////////////////////////
-unsigned int loadTransfer_1dtformat(const std::string &filename, Texture &transferTex,
+unsigned int loadTransfer_1dtformat(const std::string &filename, bd::Texture &transferTex,
                                     bd::ShaderProgram &volumeShader) {
   gl_log("Reading 1dt formatted transfer function file and generating texture.");
 
@@ -39,8 +39,8 @@ unsigned int loadTransfer_1dtformat(const std::string &filename, Texture &transf
   file.close();
 
   unsigned int texId{
-      transferTex.genGLTex1d(reinterpret_cast<float *>(rgba), Texture::Format::RGBA,
-                             Texture::Format::RGBA, numKnots)
+      transferTex.genGLTex1d(reinterpret_cast<float *>(rgba), bd::Texture::Format::RGBA,
+                             bd::Texture::Format::RGBA, numKnots)
   };
 
   if (texId == 0) {
@@ -48,10 +48,10 @@ unsigned int loadTransfer_1dtformat(const std::string &filename, Texture &transf
     return texId;
   }
 
-  transferTex.textureUnit(1);
+  //transferTex.textureUnit(1);
 
   unsigned int samp{volumeShader.getUniformLocation("tf_sampler")};
-  transferTex.samplerLocation(samp);
+  //transferTex.samplerLocation(samp);
 
   delete[] rgba;
 

@@ -114,7 +114,7 @@ int g_numSlices{ 1 };
 ///////////////////////////////////////////////////////////////////////////////
 bd::ShaderProgram g_simpleShader;
 bd::ShaderProgram g_volumeShader;
-Texture g_tfuncTex;
+bd::Texture g_tfuncTex{ bd::Texture::Target::Tex1D };
 float g_scaleValue{ 1.0f };
 
 
@@ -162,7 +162,7 @@ void loop(GLFWwindow *window);
 void cleanup();
 
 unsigned int loadTransfer_1dtformat(const std::string &filename,
-                                    Texture &transferTex,
+                                    bd::Texture &transferTex,
                                     bd::ShaderProgram &volumeShader);
 
 
@@ -336,15 +336,15 @@ GLint computeBaseVertexFromViewDir(const glm::vec4 &viewdir) {
   }
 
   if (selected != g_selectedSliceSet) {
-      char neg = '+';
-      if (isNeg) {
-          neg = '-';
-          //g_toggleErrorExtent = true;
-          //g_dontRenderSlices = true;
-      }/* else {
-          
-      }*/
-    std::cout << "Switched slice set: " <<  neg << selected << '\n';
+    char neg = '+';
+    if (isNeg) {
+      neg = '-';
+      //g_toggleErrorExtent = true;
+      //g_dontRenderSlices = true;
+    }/* else {
+
+    }*/
+    std::cout << "Switched slice set: " << neg << selected << '\n';
   }
 
   g_selectedSliceSet = selected;
@@ -403,7 +403,12 @@ void drawNonEmptyBlocks_Forward(const std::vector<bd::Block*> &blocks,
   glm::vec4 viewdir{ glm::normalize(g_camera.getViewMatrix()[2]) };
  GLint baseVertex{ computeBaseVertexFromViewDir(viewdir) };
  // GLint baseVertex{ 0 };
+  g_volumeShader.bind();
 
+  if (! g_volumeShader.validateProgram()) {
+    gl_log("Volume shader invalid. Returning from drawNonEmptyBlocks_Forward()!");
+    return;
+  }
   perf_frameBegin();
   for (auto *b : blocks) {
     b->texture().bind(0);
@@ -425,7 +430,7 @@ void drawNonEmptyBlocks(const glm::mat4 &vp) {
   }
 
   //TODO: sort quads farthest to nearest.
-  g_volumeShader.bind();
+
   drawNonEmptyBlocks_Forward(g_blockCollection.nonEmptyBlocks(), vp);
 
   if (g_toggleWireFrame) {
@@ -448,21 +453,21 @@ void draw() {
   g_simpleShader.bind();
   g_simpleShader.setUniform("mvp", viewMat);
   g_axis.draw();
-  vao->unbind();
+  //vao->unbind();
 
   ////////  BBoxes  /////////////////////////////////////////
   if (g_toggleBlockBoxes) {
     vao = g_vaoArray[bd::ordinal(ObjType::Boxes)];
     vao->bind();
     drawNonEmptyBoundingBoxes(viewMat);
-    vao->unbind();
+    //vao->unbind();
   }
 
   //////// Quad Geo (drawNonEmptyBlocks)  /////////////////////
   vao = g_vaoArray[bd::ordinal(ObjType::Quads)];
   vao->bind();
   drawNonEmptyBlocks(viewMat);
-  vao->unbind();
+  //vao->unbind();
 }
 
 
@@ -474,6 +479,8 @@ void loop(GLFWwindow *window) {
   // initial bindage of tfunc texture to volume shader.
   g_volumeShader.bind();
   g_tfuncTex.bind(1);
+  g_volumeShader.setUniform("volume_sampler", 0);
+  g_volumeShader.setUniform("tf_sampler", 1);
 
   do {
     startCpuTime();
@@ -586,7 +593,7 @@ GLFWwindow *init() {
   //glfwWindowHint(GLFW_SAMPLES, 4);
 
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
@@ -619,7 +626,7 @@ GLFWwindow *init() {
   }
 
   glfwSwapInterval(0);
-  //bd::subscribe_debug_callbacks();
+  bd::subscribe_debug_callbacks();
 
   genQueries();
 
@@ -741,7 +748,7 @@ int main(int argc, const char *argv[]) {
   bd::gl_log_restart();
 
   //// GLFW init ////
-  GLFWwindow *window;
+  GLFWwindow *window{ nullptr };
   if ((window = init()) == nullptr) {
     gl_log("Could not initialize GLFW, exiting.");
     return 1;
@@ -758,6 +765,8 @@ int main(int argc, const char *argv[]) {
     gl_log_err("Error building passthrough shader, program id was 0.");
     return 1;
   }
+
+
 
   GLuint volumeProgramId{
       g_volumeShader.linkProgram(
@@ -777,8 +786,8 @@ int main(int argc, const char *argv[]) {
     gl_log_err("Exiting because tfunc texture was not bound.");
     exit(1);
   }
-  g_volumeShader.bind();
-  g_tfuncTex.bind(1);
+  //g_volumeShader.bind();
+  //g_tfuncTex.bind(1);
 
   //// Geometry Init ////
   // 2d slices
@@ -818,7 +827,7 @@ int main(int argc, const char *argv[]) {
   }
 
   g_blockCollection.filterBlocks(data.get(),
-                        g_volumeShader.getUniformLocation("volume_sampler"),
+                        //g_volumeShader.getUniformLocation("volume_sampler"),
                         clo.tmin, clo.tmax);
 
   if (clo.printBlocks) { printBlocks(); }
