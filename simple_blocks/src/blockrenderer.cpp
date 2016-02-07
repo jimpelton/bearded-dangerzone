@@ -39,10 +39,13 @@ bool BlockRenderer::init() {
 //  m_quadsVao.create();
 //  genQuadVao(m_quadsVao, {-0.5f,-0.5f,-0.5f}, {0.5f, 0.5f, 0.5f},
 //             {m_numSlicesPerBlock, m_numSlicesPerBlock, m_numSlicesPerBlock});
+  
   m_volumeShader->bind();
-  m_volumeShader->setUniform("volume_sampler", BLOCK_TEXTURE_UNIT);
-  m_volumeShader->setUniform("tf_sampler", TRANSF_TEXTURE_UNIT);
-  m_volumeShader->setUniform("tfScalingVal", 1.0f);
+  m_tfuncTexture->bind(TRANSF_TEXTURE_UNIT);
+  m_volumeShader->setUniform(VOLUME_SAMPLER_UNIFORM_STR, BLOCK_TEXTURE_UNIT);
+  m_volumeShader->setUniform(TRANSF_SAMPLER_UNIFORM_STR, TRANSF_TEXTURE_UNIT);
+  m_volumeShader->setUniform(VOLUME_TRANSF_UNIFORM_STR, 1.0f);
+
   return false;
 }
 
@@ -119,11 +122,15 @@ void BlockRenderer::drawNonEmptyBlocks_Forward() {
   perf_frameBegin();
 
   for (auto *b : m_blockCollection->nonEmptyBlocks()) {
-    b->texture().bind(BLOCK_TEXTURE_UNIT);
+
     glm::mat4 wmvp = m_viewMatrix * b->transform().matrix();
+    
+    b->texture().bind(BLOCK_TEXTURE_UNIT);
     m_volumeShader->setUniform(VOLUME_MVP_MATRIX_UNIFORM_STR, wmvp);
     m_volumeShader->setUniform(VOLUME_TRANSF_UNIFORM_STR, m_tfuncScaleValue);
+
     drawSlices(baseVertex);
+
   }
 
   // end NVPM profiling
@@ -138,12 +145,12 @@ void BlockRenderer::drawNonEmptyBlocks() {
   //TODO: sort quads farthest to nearest.
   m_quadsVao->bind();
   m_volumeShader->bind();
-  m_tfuncTexture->bind(TRANSF_TEXTURE_UNIT);
+  //m_tfuncTexture->bind(TRANSF_TEXTURE_UNIT);
 
   drawNonEmptyBlocks_Forward();
 
-  m_volumeShader->unbind();
-  m_quadsVao->unbind();
+  //m_volumeShader->unbind();
+ // m_quadsVao->unbind();
 
 }
 

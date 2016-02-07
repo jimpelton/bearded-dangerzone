@@ -27,7 +27,7 @@ namespace {
   ///  z.min         z.min
   ////////////////////////////////////////////////////////////////////////////////
   void createQuads_X(std::vector<glm::vec4> &quads, const glm::vec3 &min,
-                     const glm::vec3 &max, accum_delta<float> &nextDelta);
+    const glm::vec3 &max, accum_delta<float> &nextDelta);
 
 
   ////////////////////////////////////////////////////////////////////////////////
@@ -50,7 +50,7 @@ namespace {
   ///  z.min         z.min
   ////////////////////////////////////////////////////////////////////////////////
   void createQuads_Y(std::vector<glm::vec4> &quads, const glm::vec3 &min,
-                     const glm::vec3 &max, accum_delta<float> &nextDelta);
+    const glm::vec3 &max, accum_delta<float> &nextDelta);
 
 
   ////////////////////////////////////////////////////////////////////////////////
@@ -74,7 +74,7 @@ namespace {
   ///  y.min         y.min
   ////////////////////////////////////////////////////////////////////////////////
   void createQuads_Z(std::vector<glm::vec4> &quads, const glm::vec3 &min,
-                     const glm::vec3 &max, accum_delta<float> &nextDelta);
+    const glm::vec3 &max, accum_delta<float> &nextDelta);
 
 
   ////////////////////////////////////////////////////////////////////////////////
@@ -84,7 +84,7 @@ namespace {
 
   ////////////////////////////////////////////////////////////////////////////////
   void createQuads_X(std::vector<glm::vec4> &quads, const glm::vec3 &min,
-                     const glm::vec3 &max, accum_delta<float> &nextDelta) {
+    const glm::vec3 &max, accum_delta<float> &nextDelta) {
 
     while (nextDelta.hasNext()) {
       float offset = nextDelta();
@@ -99,7 +99,7 @@ namespace {
 
   ////////////////////////////////////////////////////////////////////////////////
   void createQuads_Y(std::vector<glm::vec4> &quads, const glm::vec3 &min,
-                     const glm::vec3 &max, accum_delta<float> &nextDelta) {
+    const glm::vec3 &max, accum_delta<float> &nextDelta) {
 
     while (nextDelta.hasNext()) {
       float offset = nextDelta();
@@ -114,7 +114,7 @@ namespace {
 
   ////////////////////////////////////////////////////////////////////////////////
   void createQuads_Z(std::vector<glm::vec4> &quads, const glm::vec3 &min,
-                     const glm::vec3 &max, accum_delta<float> &nextDelta) {
+    const glm::vec3 &max, accum_delta<float> &nextDelta) {
 
     while (nextDelta.hasNext()) {
       float offset = nextDelta();
@@ -183,33 +183,33 @@ void genQuadVao(bd::VertexArrayObject &vao, const glm::vec3 &min,
 
 ////////////////////////////////////////////////////////////////////////////////
 void createQuads(std::vector<glm::vec4> &quads, const glm::vec3 &min,
-                 const glm::vec3 &max, size_t numPlanes, Axis a) {
+  const glm::vec3 &max, size_t numPlanes, Axis a) {
 
   quads.reserve(numPlanes);
   float delta{ 0 };
 
   switch (a) {
-    case Axis::X: {
-      delta = (max.x - min.x) / static_cast<float>(numPlanes);
-      accum_delta<float> ad(min.x, delta, max.x);
-      createQuads_X(quads, min, max, ad);
-      break;
-    }
+  case Axis::X: {
+    delta = (max.x - min.x) / static_cast<float>(numPlanes);
+    accum_delta<float> ad(min.x, delta, max.x);
+    createQuads_X(quads, min, max, ad);
+    break;
+  }
 
-    case Axis::Y: {
-      delta = (max.y - min.y) / static_cast<float>(numPlanes);
-      accum_delta<float> ad(min.y, delta, max.y);
-      createQuads_Y(quads, min, max, ad);
-      break;
-    }
+  case Axis::Y: {
+    delta = (max.y - min.y) / static_cast<float>(numPlanes);
+    accum_delta<float> ad(min.y, delta, max.y);
+    createQuads_Y(quads, min, max, ad);
+    break;
+  }
 
-    case Axis::Z: {
-      delta = (max.z - min.z) / static_cast<float>(numPlanes);
-      accum_delta<float> ad(min.z, delta, max.z);
-      createQuads_Z(quads, min, max, ad);
-      break;
-    }
-      // default: break;
+  case Axis::Z: {
+    delta = (max.z - min.z) / static_cast<float>(numPlanes);
+    accum_delta<float> ad(min.z, delta, max.z);
+    createQuads_Z(quads, min, max, ad);
+    break;
+  }
+                // default: break;
   }
 
 }

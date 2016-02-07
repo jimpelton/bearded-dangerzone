@@ -19,6 +19,9 @@ extern const int VERTEX_COLOR_ATTR; // = 1;
 extern const int BLOCK_TEXTURE_UNIT; // = 0;
 extern const int TRANSF_TEXTURE_UNIT; // = 1;
 
+extern const char *VOLUME_SAMPLER_UNIFORM_STR;
+extern const char *TRANSF_SAMPLER_UNIFORM_STR;
+
 //  const int BLOCK_TEXTURE_SAMPLER_UNIFORM = 0;
 //  const int TRANSF_TEXTURE_SAMPLER_UNIFORM = 1;
 

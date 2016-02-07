@@ -61,8 +61,8 @@ const int VERTEX_COLOR_ATTR = 1;
 const int BLOCK_TEXTURE_UNIT = 0;
 const int TRANSF_TEXTURE_UNIT = 1;
 
-//  const int BLOCK_TEXTURE_SAMPLER_UNIFORM = 0;
-//  const int TRANSF_TEXTURE_SAMPLER_UNIFORM = 1;
+const char *VOLUME_SAMPLER_UNIFORM_STR = "volume_sampler";
+const char *TRANSF_SAMPLER_UNIFORM_STR = "tf_sampler";
 
 const char *VOLUME_MVP_MATRIX_UNIFORM_STR = "mvp";
 const char *VOLUME_TRANSF_UNIFORM_STR = "tfScalingVal";
@@ -189,28 +189,32 @@ void glfw_keyboard_callback(GLFWwindow *window,
   }
 
   // while holding key down.
-  if (action!=GLFW_RELEASE) {
+  if (action != GLFW_RELEASE) {
     switch (key) {
-      case GLFW_KEY_PERIOD:
-        if (mods & GLFW_MOD_SHIFT)
-          g_scaleValue += 0.1f;
-        else if (mods & GLFW_MOD_CONTROL)
-          g_scaleValue += 0.001f;
-        else
-          g_scaleValue += 0.01f;
+    case GLFW_KEY_PERIOD:
+      if (mods & GLFW_MOD_SHIFT)
+        g_scaleValue += 0.1f;
+      else if (mods & GLFW_MOD_CONTROL)
+        g_scaleValue += 0.001f;
+      else
+        g_scaleValue += 0.01f;
 
-        std::cout << "Transfer function scaler: " << g_scaleValue << std::endl;
-        break;
-      case GLFW_KEY_COMMA:
-        if (mods & GLFW_MOD_SHIFT)
-          g_scaleValue -= 0.1f;
-        else if (mods & GLFW_MOD_CONTROL)
-          g_scaleValue -= 0.001f;
-        else
-          g_scaleValue -= 0.01f;
+      g_volRend->setTfuncScaleValue(g_scaleValue);
 
-        std::cout << "Transfer function scaler: " << g_scaleValue << std::endl;
-        break;
+      std::cout << "Transfer function scaler: " << g_scaleValue << std::endl;
+      break;
+    case GLFW_KEY_COMMA:
+      if (mods & GLFW_MOD_SHIFT)
+        g_scaleValue -= 0.1f;
+      else if (mods & GLFW_MOD_CONTROL)
+        g_scaleValue -= 0.001f;
+      else
+        g_scaleValue -= 0.01f;
+
+      g_volRend->setTfuncScaleValue(g_scaleValue);
+
+      std::cout << "Transfer function scaler: " << g_scaleValue << std::endl;
+      break;
     }
   }
 }
@@ -663,6 +667,7 @@ int main(int argc, const char *argv[]) {
     gl_log_err("Error building volume sampling shader, program id was 0.");
     return 1;
   }
+ 
 
   //// Transfer function texture ////
   bd::Texture *tfuncTex{ new bd::Texture(bd::Texture::Target::Tex1D) };
@@ -677,9 +682,11 @@ int main(int argc, const char *argv[]) {
   }
 
 
+
   BlockRenderer volRend{ int(clo.num_slices), volumeShader, wireframeShader,
                          blockCollection, tfuncTex, quadVao, boxVao };
 
+  volRend.setTfuncScaleValue(g_scaleValue);
   volRend.init();
   g_volRend = &volRend;
 
