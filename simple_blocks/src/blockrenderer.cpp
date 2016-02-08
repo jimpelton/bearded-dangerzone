@@ -71,6 +71,9 @@ void BlockRenderer::setNumSlices(const int n) {
 ////////////////////////////////////////////////////////////////////////////////
 void BlockRenderer::drawNonEmptyBoundingBoxes() {
   
+  m_wireframeShader->bind();
+  m_boxesVao->bind();
+
   for (auto *b : m_blockCollection->nonEmptyBlocks()) {
 
     glm::mat4 mmvp = m_viewMatrix * b->transform().matrix();

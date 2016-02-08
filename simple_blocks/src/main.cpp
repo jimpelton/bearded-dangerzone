@@ -80,7 +80,6 @@ enum class ObjType : unsigned int {
   Axis, /*Quads,*/ Boxes
 };
 
-
 bd::CoordinateAxis g_axis; ///< The coordinate axis lines.
 bd::Box g_box;
 
@@ -102,7 +101,6 @@ float g_fov_deg{ 50.0f };   ///< Field of view in degrees.
 
 glm::vec2 g_cursorPos;
 float g_mouseSpeed{ 1.0f };
-
 bool g_toggleBlockBoxes{ false };
 bool g_toggleWireFrame{ false };
 
@@ -154,37 +152,33 @@ void glfw_error_callback(int error, const char *description) {
   gl_log_err("GLFW ERROR: code %i msg: %s", error, description);
 }
 
+void setupCameraPos(unsigned int);
 
 ////////////////////////////////////////////////////////////////////////////////
-void glfw_keyboard_callback(GLFWwindow *window,
-                            int key,
-                            int scancode,
-                            int action,
-                            int mods) {
+void glfw_keyboard_callback(GLFWwindow *window, int key, int scancode,
+  int action, int mods) {
+
   // on key press
-  if (action==GLFW_PRESS) {
+  if (action == GLFW_PRESS) {
     switch (key) {
-//        case GLFW_KEY_0:
-//            g_selectedSliceSet = SliceSet::NoneOfEm;
-//            break;
-//        case GLFW_KEY_1:
-//            g_selectedSliceSet = SliceSet::XY;
-//            break;
-//        case GLFW_KEY_2:
-//            g_selectedSliceSet = SliceSet::XZ;
-//            break;
-//        case GLFW_KEY_3:
-//            g_selectedSliceSet = SliceSet::YZ;
-//            break;
-//        case GLFW_KEY_4:
-//            g_selectedSliceSet = SliceSet::AllOfEm;
-//            break;
-      case GLFW_KEY_W:
-        g_toggleWireFrame = !g_toggleWireFrame;
-        break;
-      case GLFW_KEY_B:
-        g_toggleBlockBoxes = !g_toggleBlockBoxes;
-        break;
+    case GLFW_KEY_0:
+      setupCameraPos(0);
+      break;
+    case GLFW_KEY_1:
+      setupCameraPos(1);
+      break;
+    case GLFW_KEY_2:
+      setupCameraPos(2);
+      break;
+    case GLFW_KEY_3:
+      setupCameraPos(3);
+      break;
+    case GLFW_KEY_W:
+      g_toggleWireFrame = !g_toggleWireFrame;
+      break;
+    case GLFW_KEY_B:
+      g_toggleBlockBoxes = !g_toggleBlockBoxes;
+      break;
     }
   }
 
@@ -291,15 +285,14 @@ void draw() {
   g_wireframeShader->unbind();
   g_axisVao->unbind();
 
+  g_volRend->setViewMatrix(viewMat);
+  
   ////////  BBoxes  /////////////////////////////////////////
-//  if (g_toggleBlockBoxes) {
-//    vao = g_vaoArray[bd::ordinal(ObjType::Boxes)];
-//    vao->bind();
-//    vao->unbind();
-//  }
+  if (g_toggleBlockBoxes) {
+    g_volRend->drawNonEmptyBoundingBoxes();
+  }
 
   //////// Quad Geo (drawNonEmptyBlocks)  /////////////////////
-  g_volRend->setViewMatrix(viewMat);
   g_volRend->drawNonEmptyBlocks();
 
 }
@@ -516,27 +509,25 @@ void printTimes(std::ostream &str) {
 void setupCameraPos(unsigned cameraPos) {
   glm::quat r;
   switch (cameraPos) {
-    case 2:
-      //cam position = { 2.0f, 0.0f, 0.0f  }
-      r = glm::rotate(r, -1*glm::half_pi<float>(), Y_AXIS);
-      g_camera.rotate(r);
-//      g_selectedSliceSet = SliceSet::YZ;
-      break;
-    case 1:
-      //cam position = { 0.0f, 2.0f, 0.0f }
-      r = glm::rotate(r, glm::half_pi<float>(), X_AXIS);
-      g_camera.rotate(r);
-//      g_selectedSliceSet = SliceSet::XZ;
-      break;
-    case 0:
-    default:
-      //cam position = { 0.0f, 0.0f, 2.0f }
-      // no rotation needed, this is default cam location.
-//      g_selectedSliceSet = SliceSet::XY;
-      break;
+  case 3:
+    break;
+  case 2:
+    //put camera at { 2.0f, 0.0f, 0.0f  } (view along positive X axis)
+    r = glm::rotate(r, -1 * glm::half_pi<float>(), Y_AXIS);
+    g_camera.rotate(r);
+    break;
+  case 1:
+    //put camera at { 0.0f, 2.0f, 0.0f } (view along positive Y axis)
+    r = glm::rotate(r, glm::half_pi<float>(), X_AXIS);
+    g_camera.rotate(r);
+    break;
+  case 0:
+  default:
+    //put camera at { 0.0f, 0.0f, 2.0f } (view along positive Z axis)
+    // no rotation needed, this is default cam location.
+    break;
   }
 
-  //g_viewDirty = true;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
