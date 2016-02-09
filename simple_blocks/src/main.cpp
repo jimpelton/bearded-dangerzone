@@ -152,7 +152,7 @@ void glfw_error_callback(int error, const char *description) {
   gl_log_err("GLFW ERROR: code %i msg: %s", error, description);
 }
 
-void setupCameraPos(unsigned int);
+void setCameraPosPreset(unsigned int);
 
 ////////////////////////////////////////////////////////////////////////////////
 void glfw_keyboard_callback(GLFWwindow *window, int key, int scancode,
@@ -162,16 +162,16 @@ void glfw_keyboard_callback(GLFWwindow *window, int key, int scancode,
   if (action == GLFW_PRESS) {
     switch (key) {
     case GLFW_KEY_0:
-      setupCameraPos(0);
+      setCameraPosPreset(0);
       break;
     case GLFW_KEY_1:
-      setupCameraPos(1);
+      setCameraPosPreset(1);
       break;
     case GLFW_KEY_2:
-      setupCameraPos(2);
+      setCameraPosPreset(2);
       break;
     case GLFW_KEY_3:
-      setupCameraPos(3);
+      setCameraPosPreset(3);
       break;
     case GLFW_KEY_W:
       g_toggleWireFrame = !g_toggleWireFrame;
@@ -218,7 +218,7 @@ void glfw_keyboard_callback(GLFWwindow *window, int key, int scancode,
 void glfw_window_size_callback(GLFWwindow *window, int width, int height) {
   g_screenWidth = width;
   g_screenHeight = height;
-  g_camera.setViewport(0, 0, width, height);
+  g_camera.setGLViewport(0, 0, width, height);
 }
 
 
@@ -243,9 +243,9 @@ void glfw_scrollwheel_callback(GLFWwindow *window, double xoff, double yoff) {
   std::cout << "fov: " << fov << std::endl;
 
   g_fov_deg = fov;
-  g_camera.setProjectionMatrix(glm::radians(fov),
-                               g_screenWidth/float(g_screenHeight),
-                               0.1f, 10000.0f);
+  g_camera.setPerspectiveProjectionMatrix(glm::radians(fov),
+      g_screenWidth / float(g_screenHeight),
+      0.1f, 10000.0f);
 }
 
 
@@ -262,7 +262,7 @@ void setRotation(const glm::vec2 &dr) {
   glm::quat rotY{ glm::angleAxis<float>(glm::radians(dr.x)*g_mouseSpeed,
                                         glm::vec3(0, 1, 0)) };
 
-  g_camera.rotate(rotX*rotY);
+  g_camera.rotateBy(rotX*rotY);
 }
 
 
@@ -504,27 +504,28 @@ void printTimes(std::ostream &str) {
 
 
 ///////////////////////////////////////////////////////////////////////////////
-/// \brief Set an initial camera location/orientation (-c command line option)
+/// \brief Set camera orientation to along X, Y, or Z axis
 ///////////////////////////////////////////////////////////////////////////////
-void setupCameraPos(unsigned cameraPos) {
-  glm::quat r;
+void setCameraPosPreset(unsigned cameraPos) {
+  //glm::quat r;
   switch (cameraPos) {
   case 3:
     break;
   case 2:
     //put camera at { 2.0f, 0.0f, 0.0f  } (view along positive X axis)
-    r = glm::rotate(r, -1 * glm::half_pi<float>(), Y_AXIS);
-    g_camera.rotate(r);
+    //r = glm::rotate(r, -1 * glm::half_pi<float>(), Y_AXIS);
+    g_camera.rotateTo(Y_AXIS);
     break;
   case 1:
     //put camera at { 0.0f, 2.0f, 0.0f } (view along positive Y axis)
-    r = glm::rotate(r, glm::half_pi<float>(), X_AXIS);
-    g_camera.rotate(r);
+    //r = glm::rotate(r, glm::half_pi<float>(), X_AXIS);
+    g_camera.rotateTo(X_AXIS);
     break;
   case 0:
   default:
     //put camera at { 0.0f, 0.0f, 2.0f } (view along positive Z axis)
     // no rotation needed, this is default cam location.
+    //g_camera.rotateTo(Z_AXIS);
     break;
   }
 
@@ -626,7 +627,7 @@ int main(int argc, const char *argv[]) {
   if (clo.printBlocks) { printBlocks(blockCollection); }
 
   //// Render Init ////
-  setupCameraPos(clo.cameraPos);
+  setCameraPosPreset(clo.cameraPos);
 
 
   //// Wireframe Shader ////

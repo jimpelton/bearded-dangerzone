@@ -100,7 +100,7 @@ void BlockRenderer::drawNonEmptyBoundingBoxes() {
 
 ////////////////////////////////////////////////////////////////////////////////
 void BlockRenderer::drawSlices(int baseVertex) {
-  gl_check(glDisable(GL_DEPTH_TEST));
+  //gl_check(glDisable(GL_DEPTH_TEST));
 
   perf_workBegin();
   gl_check(glDrawElementsBaseVertex(GL_TRIANGLE_STRIP,
@@ -110,7 +110,7 @@ void BlockRenderer::drawSlices(int baseVertex) {
                                     baseVertex));
   perf_workEnd();
 
-  gl_check(glEnable(GL_DEPTH_TEST));
+  //gl_check(glEnable(GL_DEPTH_TEST));
 }
 
 
