@@ -10,9 +10,7 @@ if(NOT DEFINED CREATE_TESTS)
 endif()	
 set(CREATE_TESTS ${${CREATE_TESTS}} CACHE BOOL "True if cmake should create unit test projects")
 
-set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake
-    ${CMAKE_MODULE_PATH}
-)
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 
 if (UNIX)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 -std=c++14 -Wall -fdiagnostics-color=auto")
@@ -42,8 +40,8 @@ include_directories("${GLM_INCLUDE_DIR}")
 include_directories("${GLFW_INCLUDE_DIRS}")
 
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/simple_blocks")
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/preprocessor)
 #add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/matrix_benchmark")
-#add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/empty_space_removal")
 
 # Projects temporaily not (or ever) being used.
 #add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/template")
