@@ -609,10 +609,10 @@ int main(int argc, const char *argv[]) {
   bd::BlockCollection *blockCollection{ new bd::BlockCollection() };
   blockCollection->initBlocks(
       glm::u64vec3(clo.numblk_x, clo.numblk_y, clo.numblk_z),
-      glm::u64vec3(clo.w, clo.h, clo.d));
+      glm::u64vec3(clo.vol_w, clo.vol_h, clo.vol_d));
 
   std::unique_ptr<float[]> data{
-      std::move(bd::readVolumeData(clo.type, clo.filePath, clo.w, clo.h, clo.d))
+      std::move(bd::readVolumeData(clo.type, clo.filePath, clo.vol_w, clo.vol_h, clo.vol_d))
   };
 
   if (data == nullptr) {

@@ -1,5 +1,5 @@
-#ifndef cmdline_h__
-#define cmdline_h__
+#ifndef preproc_cmdline_h__
+#define preproc_cmdline_h__
 
 #include <string>
 
@@ -20,8 +20,6 @@ struct CommandLineOptions {
   size_t numblk_y;
   // number of blocks Z
   size_t numblk_z;
-  // slices per block
-  unsigned int num_slices;
   // vol width
   size_t vol_w;
   // vol height
@@ -32,12 +30,6 @@ struct CommandLineOptions {
   float tmax;
   // threshold minimum
   float tmin;
-  // initial camera position
-  unsigned int cameraPos;
-  // path to output file for performance counter values
-  std::string perfOutPath;
-  // quit program when perf tests are completed.
-  bool perfMode;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -53,4 +45,4 @@ int parseThem(int argc, const char *argv[], CommandLineOptions &opts);
 
 void printThem(CommandLineOptions &);
 
-#endif // cmdline_h__
+#endif // preproc_cmdline_h__
