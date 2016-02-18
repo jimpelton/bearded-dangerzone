@@ -8,8 +8,19 @@
 #include "blockcollection2.h"
 
 #include <bd/util/util.h>
+
 #include <bd/log/gl_log.h>
 #include <iostream>
+
+#include <vector>
+
+struct BlockCollection {
+  
+  static glm::u64vec3 g_numBlocks;  ///< Number of blocks in volume;
+  static std::vector<glm::u64vec3> g_nonEmptyBlockIndexes; ///< Vector of the non-empty blocks.
+
+};
+
 
 int main(int argc, const char *argv[])
 {
