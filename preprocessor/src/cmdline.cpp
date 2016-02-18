@@ -13,20 +13,25 @@ try {
 
   TCLAP::CmdLine cmd("Simple Blocks blocking volume render experiment.", ' ');
 
+
   // volume data file
   TCLAP::ValueArg<std::string> fileArg("f", "file", "Path to data file.", false, "", "string");
   cmd.add(fileArg);
+
 
   // transfer function file
   TCLAP::ValueArg<std::string> tfuncArg("u", "tfunc", "Path to transfer function file.", false, "", "string");
   cmd.add(tfuncArg);
 
 
+  // .dat file
+  TCLAP::ValueArg<std::string> datFileArg("d", "datFile", "Path to .dat file", false, "", "string");
+  cmd.add(datFileArg);
+
   // volume data type
-  std::vector<std::string> dataTypes{"float", "ushort", "uchar"};
+  std::vector<std::string> dataTypes{ "float", "ushort", "uchar" };
   TCLAP::ValuesConstraint<std::string> dataTypeAllowValues(dataTypes);
-  TCLAP::ValueArg<std::string> dataTypeArg("t", "type", "Data type (float, ushort, uchar).", false, "",
-                                           &dataTypeAllowValues);;
+  TCLAP::ValueArg<std::string> dataTypeArg("t", "type", "Data type (float, ushort, uchar).", false, "", &dataTypeAllowValues);
   cmd.add(dataTypeArg);
 
 
@@ -51,9 +56,6 @@ try {
   TCLAP::ValueArg<size_t> zBlocksArg("", "nbz", "Num blocks z dim", false, 1, "uint");
   cmd.add(zBlocksArg);
 
-  TCLAP::ValueArg<unsigned int> numSlicesArg("s", "num-slices", "Num slices per block", false, 1, "uint");
-  cmd.add(numSlicesArg);
-
 
   // threshold min/max
   TCLAP::ValueArg<float> tmin("", "tmin", "Thresh min", false, 0.0, "float");
@@ -62,18 +64,6 @@ try {
   TCLAP::ValueArg<float> tmax("", "tmax", "Thresh max", false, 1.0, "float");
   cmd.add(tmax);
 
-  TCLAP::ValueArg<unsigned int> initialCameraPosArg("c", "camera-pos", "Initial camera position (z=0, y=1, x=2)", false,
-                                                    0, "uint");
-  cmd.add(initialCameraPosArg);
-
-
-  // perf output file path
-  TCLAP::ValueArg<std::string> perfOutPathArg("", "perf-out-file", "Print performance metrics to file.", false, "",
-                                              "string");
-  cmd.add(perfOutPathArg);
-
-  // perf mode (exit on when done with performance test)
-  TCLAP::SwitchArg perfMode("p", "perf-mode", "Exit as soon as performance test is done.", cmd, false);
 
   // print blocks
   TCLAP::SwitchArg printBlocksArg("", "print-blocks", "Print blocks into to stdout.", cmd, false);
@@ -83,6 +73,7 @@ try {
 
   opts.filePath = fileArg.getValue();
   opts.tfuncPath = tfuncArg.getValue();
+  opts.datFilePath = datFileArg.getValue();
   opts.type = dataTypeArg.getValue();
   opts.printBlocks = printBlocksArg.getValue();
   opts.vol_w = xdimArg.getValue();
@@ -91,36 +82,29 @@ try {
   opts.numblk_x = xBlocksArg.getValue();
   opts.numblk_y = yBlocksArg.getValue();
   opts.numblk_z = zBlocksArg.getValue();
-  opts.num_slices = numSlicesArg.getValue();
   opts.tmin = tmin.getValue();
   opts.tmax = tmax.getValue();
-  opts.cameraPos = initialCameraPosArg.getValue();
-  opts.perfOutPath = perfOutPathArg.getValue();
-  opts.perfMode = perfMode.getValue();
 
   return static_cast<int>(cmd.getArgList().size());
 
 } catch (TCLAP::ArgException &e) {
   std::cout << "Error parsing command line args: " << e.error() << " for argument "
-  << e.argId() << std::endl;
+      << e.argId() << std::endl;
   return 0;
 }
 
 
 void printThem(CommandLineOptions &opts) {
   std::cout <<
-  "File path: " << opts.filePath << "\n"
+      "File path: " << opts.filePath << "\n"
       "Transfer function: " << opts.tfuncPath << "\n"
       "Dat file: " << opts.datFilePath << "\n"
-      "Perf out file: " << opts.perfOutPath << "\n"
-      "Perf mode: " << opts.perfMode << "\n"
       "Data Type: " << opts.type << "\n"
       "Vol dims (w X h X d): " << opts.vol_w << " X " << opts.vol_h << " X " << opts.vol_d << "\n"
       "Num blocks (x X y X z): " << opts.numblk_x << " X " << opts.numblk_y << " X " << opts.numblk_z << "\n"
-      "Num Slices: " << opts.num_slices << "\n"
       "Threshold (min-max): " << opts.tmin << " - " << opts.tmax << "\n"
       "Print blocks: " << (opts.printBlocks ? "True" : "False") <<
-  std::endl;
+      std::endl;
 }
 
 //namespace {
