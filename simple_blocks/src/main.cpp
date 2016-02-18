@@ -272,8 +272,6 @@ void setRotation(const glm::vec2 &dr) {
 
 ///////////////////////////////////////////////////////////////////////////////
 void draw() {
-//  bd::VertexArrayObject *vao{ nullptr };
-
   glm::mat4 viewMat = g_camera.getViewMatrix();
   gl_check(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
@@ -303,20 +301,16 @@ void loop(GLFWwindow *window) {
   assert(window!=nullptr && "window was passed as nullptr in loop()");
   gl_log("About to enter render loop.");
 
-  // initial bindage of tfunc texture to volume shader.
-//  g_volumeShader.bind();
-//  g_tfuncTex.bind(1);
-
   do {
     startCpuTime();
     g_camera.updateViewMatrix();
 
-//    startGpuTimerQuery();
+    startGpuTimerQuery();
 
     draw();
     glfwSwapBuffers(window);
 
-//    endGpuTimerQuery();
+    endGpuTimerQuery();
 
     glfwPollEvents();
 
@@ -417,8 +411,14 @@ GLFWwindow *init() {
   // number of samples to use for multi sampling
   //glfwWindowHint(GLFW_SAMPLES, 4);
 
+#ifdef __APPLE__
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+#else
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+#endif
+
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
@@ -449,10 +449,16 @@ GLFWwindow *init() {
   }
 
   glfwSwapInterval(0);
-  bd::subscribe_debug_callbacks();
-  bd::checkForAndLogGlError(__FILE__, __FUNCTION__, __LINE__);
-//  genQueries();
 
+#ifndef __APPLE__
+  bd::subscribe_debug_callbacks();
+#endif
+    
+  // Generate OpenGL queries for frame times.
+  genQueries();
+  
+  bd::checkForAndLogGlError(__FILE__, __FUNCTION__, __LINE__);
+  
   return window;
 }
 
@@ -507,28 +513,32 @@ void printTimes(std::ostream &str) {
 /// \brief Set camera orientation to along X, Y, or Z axis
 ///////////////////////////////////////////////////////////////////////////////
 void setCameraPosPreset(unsigned cameraPos) {
-  //glm::quat r;
+  glm::quat r;
   switch (cameraPos) {
   case 3:
     break;
   case 2:
     //put camera at { 2.0f, 0.0f, 0.0f  } (view along positive X axis)
-    //r = glm::rotate(r, -1 * glm::half_pi<float>(), Y_AXIS);
-    g_camera.rotateTo(Y_AXIS);
+    r = glm::rotate(r, -1 * glm::half_pi<float>(), Y_AXIS);
+    //g_camera.rotateTo(Y_AXIS);
     break;
   case 1:
     //put camera at { 0.0f, 2.0f, 0.0f } (view along positive Y axis)
-    //r = glm::rotate(r, glm::half_pi<float>(), X_AXIS);
-    g_camera.rotateTo(X_AXIS);
+    r = glm::rotate(r, glm::half_pi<float>(), X_AXIS);
+    //g_camera.rotateTo(X_AXIS);
     break;
   case 0:
   default:
-    //put camera at { 0.0f, 0.0f, 2.0f } (view along positive Z axis)
+    //put camera at oblique positive quadrant.
     // no rotation needed, this is default cam location.
+    r = glm::rotate(r, glm::pi<float>(), Y_AXIS) * 
+        glm::rotate(r, glm::pi<float>() / 4.0f, X_AXIS);
+      
     //g_camera.rotateTo(Z_AXIS);
     break;
   }
 
+  g_camera.rotateBy(r);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -660,7 +670,6 @@ int main(int argc, const char *argv[]) {
     return 1;
   }
  
-
   //// Transfer function texture ////
   bd::Texture *tfuncTex{ new bd::Texture(bd::Texture::Target::Tex1D) };
 
