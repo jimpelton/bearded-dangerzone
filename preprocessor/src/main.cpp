@@ -45,6 +45,7 @@ int main(int argc, const char *argv[])
 
   BlockCollection2 blockCollection2{ };
   blockCollection2.initBlocks({clo.numblk_x, clo.numblk_y, clo.numblk_z}, {clo.vol_w, clo.vol_h, clo.vol_d});
+
   blockCollection2.filterBlocks(data.get(), clo.tmin, clo.tmax);
 
   for (auto &block : blockCollection2.blocks()) {

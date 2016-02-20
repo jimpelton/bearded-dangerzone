@@ -4,9 +4,12 @@
 #include <bd/log/gl_log.h>
 #include <bd/util/util.h>
 
+// Static members init
 glm::u64vec3 BlockCollection2::m_blockDims{ 0, 0, 0 };
 glm::u64vec3 BlockCollection2::m_volDims{ 0, 0, 0 };
 glm::u64vec3 BlockCollection2::m_numBlocks{ 0, 0, 0 };
+
+// Class members impl
 
 BlockCollection2::BlockCollection2()
 {
@@ -35,7 +38,7 @@ BlockCollection2::blockDims(const glm::u64vec3& dims)
 
 ///////////////////////////////////////////////////////////////////////////////
 glm::u64vec3
-BlockCollection2::volDims()
+BlockCollection2::volDims() const
 {
   return m_volDims;
 }
@@ -123,14 +126,14 @@ void BlockCollection2::filterBlocks(const float* image,
 
 
 const std::vector<bd::Block>&
-BlockCollection2::blocks()
+BlockCollection2::blocks() const
 {
   return m_blocks;
 }
 
 
 const std::vector<bd::Block *>&
-BlockCollection2::nonEmptyBlocks()
+BlockCollection2::nonEmptyBlocks() const
 {
   return m_nonEmptyBlocks;
 }

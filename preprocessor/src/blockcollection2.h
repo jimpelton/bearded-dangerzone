@@ -21,7 +21,7 @@ public:
   /////////////////////////////////////////////////////////////////////////////////
   /// \brief Set/get the volume's dimensions in voxels
   /////////////////////////////////////////////////////////////////////////////////
-  glm::u64vec3 volDims();
+  glm::u64vec3 volDims() const;
   void volDims(const glm::u64vec3& voldims);
   //TODO: move volDims() out of block class (yeah...probably need to make a class representing a volume).
 
@@ -47,9 +47,9 @@ public:
       float tmin = 0.0f, float tmax = 1.0f);
 
 
-  const std::vector<bd::Block>& blocks();
+  const std::vector<bd::Block>& blocks() const;
 
-  const std::vector<bd::Block *>& nonEmptyBlocks();
+  const std::vector<bd::Block *>& nonEmptyBlocks() const;
 
 private:
 
