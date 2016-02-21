@@ -1,8 +1,6 @@
 
 #include "blockcollection2.h"
 
-#include <bd/log/gl_log.h>
-#include <bd/util/util.h>
 
 // Static members init
 glm::u64vec3 BlockCollection2::m_blockDims{ 0, 0, 0 };
@@ -11,10 +9,13 @@ glm::u64vec3 BlockCollection2::m_numBlocks{ 0, 0, 0 };
 
 // Class members impl
 
+///////////////////////////////////////////////////////////////////////////////
 BlockCollection2::BlockCollection2()
 {
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
 BlockCollection2::~BlockCollection2()
 {
 }
@@ -91,40 +92,6 @@ BlockCollection2::initBlocks(glm::u64vec3 nb, glm::u64vec3 vd)
 }
 
 
-///////////////////////////////////////////////////////////////////////////////
-void BlockCollection2::filterBlocks(const float* image,
-                                   float tmin, float tmax)
-{
-  size_t blkPoints{ bd::vecCompMult(m_blockDims) };
-
-  //float* image{ new float[blkPoints] };
-
-  for (auto& b : m_blocks) {
-
-    //fillBlockData(b.ijk(), data, image);
-    // Compute average and determine if Block is empty.
-    float avg{ 0.0f };
-    for (size_t i = 0; i < blkPoints; ++i) {
-      avg += image[i];
-    }
-    avg /= blkPoints;
-    b.avg(avg);
-
-    //TODO: call filter function.
-    if (avg < tmin || avg > tmax) {
-      b.empty(true);
-    } else {
-      b.empty(false);
-      m_nonEmptyBlocks.push_back(&b);
-    }
-  } // for auto
-
-  //delete[] image;
-  gl_log("%d/%d blocks marked empty.",
-    m_blocks.size() - m_nonEmptyBlocks.size(), m_blocks.size());
-}
-
-
 const std::vector<bd::Block>&
 BlockCollection2::blocks() const
 {
@@ -137,31 +104,4 @@ BlockCollection2::nonEmptyBlocks() const
 {
   return m_nonEmptyBlocks;
 }
-
-
-///////////////////////////////////////////////////////////////////////////////
-// Private Members
-///////////////////////////////////////////////////////////////////////////////
-
-
-void BlockCollection2::fillBlockData(glm::u64vec3 ijk, const float* in_data,
-                                    float* out_blockData)
-{
-  size_t imageIdx{ 0 };
-
-  // block start = block index * block size
-  glm::u64vec3 bst{ ijk * m_blockDims };
-
-  // block end = block start + block size
-  glm::u64vec3 end{ bst + m_blockDims };
-
-  for (auto k = bst.z; k < end.z; ++k)
-    for (auto j = bst.y; j < end.y; ++j)
-      for (auto i = bst.x; i < end.x; ++i) {
-        size_t dataIdx{ bd::to1D(i, j, k, m_volDims.x, m_volDims.y) };
-        float val{ in_data[dataIdx] };
-        out_blockData[imageIdx++] = val;
-      }
-}
-
 

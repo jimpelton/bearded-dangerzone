@@ -33,10 +33,10 @@ target_link_libraries(preprocessor
 
 ################################################################################
 # Compiler options for Clang
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-    set_property( TARGET preprocessor APPEND_STRING PROPERTY COMPILE_FLAGS
-            "-Weverything -Wno-c++98-compat -Wno-c++98-compat-pedantic -Wno-documentation")
-endif()
+#if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+#    set_property( TARGET preprocessor APPEND_STRING PROPERTY COMPILE_FLAGS
+#            "-Weverything -Wno-c++98-compat -Wno-c++98-compat-pedantic -Wno-documentation")
+#endif()
 
 #target_link_libraries()
 
