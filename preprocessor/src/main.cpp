@@ -74,7 +74,8 @@ int main(int argc, const char *argv[])
     break;
 
   default:
-    std::cerr << "Unsupported/unknown datatype: " << bd::to_string(datfile.dataType) << std::endl;
+    std::cerr << "Unsupported/unknown datatype: " << 
+        bd::to_string(datfile.dataType) << std::endl;
     cleanupAndExit(1);
     break;
   }

@@ -7,6 +7,7 @@
 #include <bd/log/gl_log.h>
 
 #include <istream>
+#include <iostream>
 
 class BlockCollection2
 {
@@ -58,29 +59,30 @@ public:
   //TODO: filterblocks takes Functor for thresholding.
   template<typename Ty>
   void
-  filterBlocks(std::istream &rawFile, /*unsigned int sampler,*/
-      float tmin = 0.0f, float tmax = 1.0f);
+  filterBlocks(std::istream &rawFile, float tmin = 0.0f, float tmax = 1.0f);
+  
+
+  const std::vector<bd::Block>& 
+  blocks() const;
+
+  const std::vector<bd::Block *>& 
+  nonEmptyBlocks() const;
 
 
-
-
-
-  const std::vector<bd::Block>& blocks() const;
-
-  const std::vector<bd::Block *>& nonEmptyBlocks() const;
-
-
-  /////////////////////////////////////////////////////////////////////////////////
-  /// \brief Fills \c out_blockData with part of \c in_data corresponding to block (i,j,k).
+  //////////////////////////////////////////////////////////////////////////////
+  /// \brief Fills \c out_blockData with part of \c in_data corresponding to 
+  ///        block (i,j,k).
+  ///
   /// \param ijk[in]     ijk coords of the block whos data to get.
   /// \param bsz[in]     The size of the block data.
   /// \param volsz[in]   The size of the volume data s.t.
   ///                    volsz.x*volsz.y*volsz.z == length(in_data).
   /// \param in_data[in] Source data
   /// \param out[out] Destination space for data.
-  ///////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
   template<typename Ty>
-  void fillBlockData(glm::u64vec3 ijk, std::istream &infile, Ty* out);
+  void 
+  fillBlockData(glm::u64vec3 ijk, std::istream &infile, Ty* out);
 
 private:
 
@@ -143,15 +145,18 @@ void BlockCollection2::fillBlockData(glm::u64vec3 blockIndex, std::istream &infi
 
   const size_t rowLength{ m_blockDims.x };
   const size_t rowBytes{ rowLength * sizeof(Ty) };
-
-
-
+  std::cout << "Row Length: " << rowLength << 
+      " Row Bytes: " << rowBytes << std::endl;
+  
   for (auto slab = start.z; slab<end.z; ++slab) {
     for (auto row = start.y; row<end.y; ++row) {
 
       // convert element index to byte index in file.
-      size_t byteIndex{
+      size_t byteIndex{ 
           bd::to1D(start.x, row, slab, m_volDims.x, m_volDims.y) * sizeof(Ty) };
+      
+      //std::cout << "byte index: " << byteIndex << std::endl;
+
       infile.seekg(byteIndex, infile.beg);
 
       // read the bytes of row current row

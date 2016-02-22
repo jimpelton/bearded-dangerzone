@@ -80,7 +80,7 @@ BlockCollection2::initBlocks(glm::u64vec3 nb, glm::u64vec3 vd)
         // i,j,k block identifier
         glm::u64vec3 blkId{ bx, by, bz };
         // lower left corner in world coordinates
-        glm::vec3 worldLoc{ (wld_dims * glm::vec3(blkId)) - 0.5f }; // - 0.5f;
+        glm::vec3 worldLoc{ wld_dims * glm::vec3(blkId) - 0.5f }; // - 0.5f;
         // origin (centroid) in world coordiates
         glm::vec3 blk_origin{ (worldLoc + (worldLoc + wld_dims)) * 0.5f };
 
