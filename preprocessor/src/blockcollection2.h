@@ -152,8 +152,8 @@ void BlockCollection2::fillBlockData(glm::u64vec3 blockIndex, std::istream &infi
   std::cout << "Row Length: " << rowLength << 
       " Row Bytes: " << rowBytes << std::endl;
   
-  for (auto slab = start.z; slab<end.z; ++slab) {
-    for (auto row = start.y; row<end.y; ++row) {
+  for (auto slab = start.z; slab < end.z; ++slab) {
+    for (auto row = start.y; row < end.y; ++row) {
 
       // convert element index to byte index in file.
       size_t byteIndex{ 
@@ -163,7 +163,7 @@ void BlockCollection2::fillBlockData(glm::u64vec3 blockIndex, std::istream &infi
 
       infile.seekg(byteIndex, infile.beg);
 
-      // read the bytes of row current row
+      // read the bytes of current row
       infile.read(reinterpret_cast<char*>(blockBuffer), rowBytes);
       blockBuffer += rowLength;
 

@@ -50,40 +50,44 @@ writeHeaderOnly(std::ostream &os, const BlockCollection2 &collection)
 }
 
 void writeSingleBlock(std::ostream & os, const bd::Block & block)
-{ }
+{
+  
+}
 
 void 
 write(std::ostream &os, const BlockCollection2 &collection)
 {
   writeHeaderOnly(os, collection);
-  
+
   size_t offset{ os.tellp() };
 
   glm::u64vec3 dims{ collection.blockDims() };
   glm::u64vec3 nblk{ collection.numBlocks() };
 
   FileBlock fblk;
-  for (bd::Block &bd_block : collection.blocks) {
+  for (const bd::Block &bd_block : collection.blocks()) {
     glm::u64vec3 ijk{ bd_block.ijk() };
 
     fblk.block_index = bd::to1D(ijk.x, ijk.y, ijk.z, nblk.x, nblk.y);
+
     
     fblk.data_offset = 0;
 
     fblk.voxel_dims[0] = dims.x;
     fblk.voxel_dims[1] = dims.y;
     fblk.voxel_dims[2] = dims.z;
-    
+
     //TODO: blockcollection2 uses struct FileBlock
     fblk.world_pos[0] = 0.0f;
     fblk.world_pos[1] = 0.0f;
     fblk.world_pos[2] = 0.0f;
-    
+
     fblk.avg_val = bd_block.avg();
-   
+
     fblk.is_empty = bd_block.empty();
-   
-  };
+
+  }
+}
     
  
 
@@ -91,7 +95,7 @@ write(std::ostream &os, const BlockCollection2 &collection)
 
     
   }
-}
+
 
 
 
