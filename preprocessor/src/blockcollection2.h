@@ -25,7 +25,7 @@ public:
   blockDims(const glm::u64vec3& dims);
 
   glm::u64vec3
-  blockDims();
+  blockDims() const;
 
 
   /////////////////////////////////////////////////////////////////////////////////
@@ -37,6 +37,12 @@ public:
   void
   volDims(const glm::u64vec3& voldims);
   //TODO: move volDims() out of block class (yeah...probably need to make a class representing a volume).
+
+  /////////////////////////////////////////////////////////////////////////////////
+  /// \brief Get the number of blocks along each axis.
+  /////////////////////////////////////////////////////////////////////////////////
+  glm::u64vec3
+  numBlocks() const;
 
 
   /////////////////////////////////////////////////////////////////////////////////
@@ -75,10 +81,8 @@ public:
   ///
   /// \param ijk[in]     ijk coords of the block whos data to get.
   /// \param bsz[in]     The size of the block data.
-  /// \param volsz[in]   The size of the volume data s.t.
-  ///                    volsz.x*volsz.y*volsz.z == length(in_data).
-  /// \param in_data[in] Source data
-  /// \param out[out] Destination space for data.
+  /// \param infile[in] The raw data file.
+  /// \param out[out]   Destination space for block data.
   //////////////////////////////////////////////////////////////////////////////
   template<typename Ty>
   void 
@@ -87,7 +91,7 @@ public:
 private:
 
   static glm::u64vec3 m_blockDims; ///< Dimensions of a block in something.
-  static glm::u64vec3 m_volDims; ///< Volume dimensions (# data points).
+  static glm::u64vec3 m_volDims;   ///< Volume dimensions (# data points).
   static glm::u64vec3 m_numBlocks; ///< Number of blocks volume is divided into.
 
   std::vector<bd::Block> m_blocks;

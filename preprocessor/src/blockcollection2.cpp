@@ -23,7 +23,7 @@ BlockCollection2::~BlockCollection2()
 
 ///////////////////////////////////////////////////////////////////////////////
 glm::u64vec3
-BlockCollection2::blockDims()
+BlockCollection2::blockDims() const
 {
   return m_blockDims;
 }
@@ -52,6 +52,11 @@ BlockCollection2::volDims(const glm::u64vec3& voldims)
   m_volDims = voldims;
 }
 
+glm::u64vec3
+BlockCollection2::numBlocks() const
+{
+  return m_numBlocks;
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // nb: number of blocks
