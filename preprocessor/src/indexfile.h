@@ -1,14 +1,37 @@
 #ifndef indexfile_h__
 #define indexfile_h__
 
+#include <iostream>
+#include <cstdint>
+
+
+namespace bd {
+  class Block;
+}
+
+
+class BlockCollection2;
+
+
 ///////////////////////////////////////////////////////////////////////////////
-// File meta data (header)
 //   -----------------------------------------
 //   magic number        | 2 bytes unsigned (7376 --> characters "sv")
 //   version             | 2 bytes unsigned
 //   header length       | 4 bytes unsigned
 //   -----------------------------------------
 //   Volume statistics   | ???
+//   -----------------------------------------
+///////////////////////////////////////////////////////////////////////////////
+struct IndexFileHeader
+{
+  uint16_t magic_number;
+  uint16_t version;
+  uint32_t header_length;
+  uint64_t numblocks[3];
+};
+
+
+///////////////////////////////////////////////////////////////////////////////
 //   -----------------------------------------
 //   Block metadata
 //   Num blocks X        | 8 bytes unsigned
@@ -34,24 +57,10 @@
 //   DAT file sz         | 2 bytes unsigned
 //   DAT contents        | n bytes ascii with unix newline chars
 ///////////////////////////////////////////////////////////////////////////////
-
-#include <iostream>
-#include <cstdint>
-
-
-
-struct IndexFileHeader
-{
-  uint16_t magic_number;
-  uint16_t version;
-  uint32_t header_length;
-  uint64_t numblocks[3];
-};
-
 struct FileBlock
 {
   uint64_t block_index;    ///< The 1D idx of this block (derived from the i,j,k block-grid coordinates).
-  uint64_t data_offset;    ///< Offset into the file that the block data starts.
+  uint64_t data_offset;    ///< Offset into the raw file that the block data starts.
   uint32_t voxel_dims[3];  ///< Dimensions of this block in voxels.
   float world_pos[3];      ///< Cordinates within canonical cube.
   float avg_val;           ///< Average value within this block.
@@ -60,28 +69,23 @@ struct FileBlock
 
 
 
-namespace bd {
-  class Block;
-}
-
-class BlockCollection2;
-
-
 void 
 read(std::istream &is, BlockCollection2 &collection);
 
 
 void 
-writeHeaderOnly(std::ostream &os, const BlockCollection2 &collection);
+writeHeader(std::ostream &os, const BlockCollection2 &collection);
 
 
 void 
-writeSingleBlock(std::ostream &os, const bd::Block &block);
+writeSingleBlock(std::ostream &os, const FileBlock &block);
 
 
 void 
 write(std::ostream &os, const BlockCollection2 &collection);
 
 
+std::ostream& 
+operator<<(std::ostream &, const FileBlock &);
 
 #endif indexfile_h__

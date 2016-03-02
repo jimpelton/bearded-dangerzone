@@ -36,69 +36,68 @@ read(std::istream &is, BlockCollection2 &collection)
 }
 
 void 
-writeHeaderOnly(std::ostream &os, const BlockCollection2 &collection)
+writeHeader(std::ostream &os, const BlockCollection2 &collection)
 {
  
-  IndexFileHeader ifh{ 
+  const IndexFileHeader ifh{ 
     MAGIC, VERSION, HEAD_LEN, 
     collection.numBlocks().x, 
     collection.numBlocks().y, 
     collection.numBlocks().z };
  
-  os.write(reinterpret_cast<char*>(&ifh), sizeof(IndexFileHeader));
-
+  os.write(reinterpret_cast<const char*>(&ifh), sizeof(IndexFileHeader));
 }
 
-void writeSingleBlock(std::ostream & os, const bd::Block & block)
+void writeSingleBlockHeader(std::ostream & os, const FileBlock &block)
 {
-  
+  os.write(reinterpret_cast<const char*>(&block), sizeof(FileBlock));
 }
 
 void 
 write(std::ostream &os, const BlockCollection2 &collection)
 {
-  writeHeaderOnly(os, collection);
+  writeHeader(os, collection);
 
-  size_t offset{ os.tellp() };
+//  size_t offset{ os.tellp() };
 
-  glm::u64vec3 dims{ collection.blockDims() };
-  glm::u64vec3 nblk{ collection.numBlocks() };
+//  glm::u64vec3 dims{ collection.blockDims() };
+//  glm::u64vec3 nblk{ collection.numBlocks() };
 
-  FileBlock fblk;
-  for (const bd::Block &bd_block : collection.blocks()) {
-    glm::u64vec3 ijk{ bd_block.ijk() };
+//  FileBlock fblk;
+  for (const FileBlock &b : collection.blocks()) {
+    writeSingleBlockHeader(os, b);
 
-    fblk.block_index = bd::to1D(ijk.x, ijk.y, ijk.z, nblk.x, nblk.y);
+    //const glm::u64vec3 & ijk{ bd_block.ijk() };
 
-    
-    fblk.data_offset = 0;
+    //fblk.block_index = b.block_index; // bd::to1D(b.x, ijk.y, ijk.z, nblk.x, nblk.y);
 
-    fblk.voxel_dims[0] = dims.x;
-    fblk.voxel_dims[1] = dims.y;
-    fblk.voxel_dims[2] = dims.z;
+    //
+    //fblk.data_offset = 0;
 
-    //TODO: blockcollection2 uses struct FileBlock
-    fblk.world_pos[0] = 0.0f;
-    fblk.world_pos[1] = 0.0f;
-    fblk.world_pos[2] = 0.0f;
+    //fblk.voxel_dims[0] = dims.x;
+    //fblk.voxel_dims[1] = dims.y;
+    //fblk.voxel_dims[2] = dims.z;
 
-    fblk.avg_val = bd_block.avg();
+    ////TODO: blockcollection2 uses struct FileBlock
+    //fblk.world_pos[0] = 0.0f;
+    //fblk.world_pos[1] = 0.0f;
+    //fblk.world_pos[2] = 0.0f;
 
-    fblk.is_empty = bd_block.empty();
+    //fblk.avg_val = b.avg_val;
 
+    //fblk.is_empty = b.is_empty;
   }
+
 }
-    
- 
 
+std::ostream& operator<<(std::ostream & os, const FileBlock &block)
+{
+  os << "{ Index: " << block.block_index <<
+    "\n Data Offset: " << block.data_offset <<
+    "\n Voxel dims: " << block.voxel_dims[0] << "x" << block.voxel_dims[1] << "x" << block.voxel_dims[2] <<
+    "\n World pos: " << block.world_pos[0] << ", " << block.world_pos[1] << ", " << block.world_pos[2] <<
+    "\n Avg val: " << block.avg_val <<
+    "\n Empty: " << (block.is_empty ? "True" : "False") << " }";
 
-
-    
-  }
-
-
-
-
-
-
-
+  return os;
+}

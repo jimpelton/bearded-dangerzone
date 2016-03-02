@@ -3,9 +3,9 @@
 
 
 // Static members init
-glm::u64vec3 BlockCollection2::m_blockDims{ 0, 0, 0 };
-glm::u64vec3 BlockCollection2::m_volDims{ 0, 0, 0 };
-glm::u64vec3 BlockCollection2::m_numBlocks{ 0, 0, 0 };
+//glm::u64vec3 BlockCollection2::m_blockDims{ 0, 0, 0 };
+//glm::u64vec3 BlockCollection2::m_volDims{ 0, 0, 0 };
+//glm::u64vec3 BlockCollection2::m_numBlocks{ 0, 0, 0 };
 
 // Class members impl
 
@@ -89,7 +89,19 @@ BlockCollection2::initBlocks(glm::u64vec3 nb, glm::u64vec3 vd)
         // origin (centroid) in world coordiates
         glm::vec3 blk_origin{ (worldLoc + (worldLoc + wld_dims)) * 0.5f };
 
-        bd::Block blk{ glm::u64vec3(bx, by, bz), wld_dims, blk_origin };
+        //bd::Block blk{ glm::u64vec3(bx, by, bz), wld_dims, blk_origin };
+        FileBlock blk;
+        blk.block_index = bd::to1D(bx, by, bz, nb.x, nb.y);
+        blk.data_offset = 0;
+        blk.voxel_dims[0] = m_blockDims.x;
+        blk.voxel_dims[1] = m_blockDims.y;
+        blk.voxel_dims[2] = m_blockDims.z;
+        blk.world_pos[0] = blk_origin.x;
+        blk.world_pos[1] = blk_origin.y;
+        blk.world_pos[2] = blk_origin.z;
+        blk.avg_val = 0;
+        blk.is_empty = true;
+        
         m_blocks.push_back(blk);
       }
 
@@ -97,14 +109,14 @@ BlockCollection2::initBlocks(glm::u64vec3 nb, glm::u64vec3 vd)
 }
 
 
-const std::vector<bd::Block>&
+const std::vector<FileBlock>&
 BlockCollection2::blocks() const
 {
   return m_blocks;
 }
 
 
-const std::vector<bd::Block *>&
+const std::vector<FileBlock *>&
 BlockCollection2::nonEmptyBlocks() const
 {
   return m_nonEmptyBlocks;
