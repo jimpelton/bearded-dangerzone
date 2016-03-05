@@ -15,7 +15,7 @@
 
 
 std::ifstream g_rawFile;
-
+std::ofstream g_outFile;
 
 ///////////////////////////////////////////////////////////////////////////////
 template<typename Ty>
@@ -43,11 +43,11 @@ int main(int argc, const char *argv[])
   CommandLineOptions clo;
   if (parseThem(argc, argv, clo) == 0) {
     gl_log_err("Command line parse error, exiting.");
-    return 1;
+    cleanUp();
+    exit(1);
   }
 
-  // print CL options
-  printThem(clo);
+
   bd::DatFileData datfile;
   if (! clo.datFilePath.empty()) {
     bd::parseDat(clo.datFilePath, datfile);
@@ -55,9 +55,15 @@ int main(int argc, const char *argv[])
     clo.vol_h = datfile.rY;
     clo.vol_d = datfile.rZ;
     clo.type = bd::to_string(datfile.dataType);
-    std::cout << datfile << std::endl;
+    std::cout << datfile << "\n.";
   }
+  printThem(clo); // print cmd line options
 
+  BlockCollection2 collection{ };
+  collection.initBlocks(
+    glm::u64vec3{ clo.numblk_x, clo.numblk_y, clo.numblk_z },
+    glm::u64vec3{ clo.vol_w, clo.vol_h, clo.vol_d }
+  );
   
   g_rawFile.open(clo.filePath, std::ios::in | std::ios::binary);
   if (! g_rawFile.is_open()) {
@@ -65,13 +71,6 @@ int main(int argc, const char *argv[])
     cleanUp();
     exit(1);
   }
-
-  
-  BlockCollection2 collection{ };
-  collection.initBlocks(
-      glm::u64vec3{ clo.numblk_x, clo.numblk_y, clo.numblk_z },
-      glm::u64vec3{ clo.vol_w, clo.vol_h, clo.vol_d }
-  );
 
   switch(datfile.dataType) {
 
@@ -88,15 +87,24 @@ int main(int argc, const char *argv[])
     break;
 
   default:
-    std::cerr << 
-        "Unsupported/unknown datatype: " << 
-        bd::to_string(datfile.dataType) << std::endl;
+    std::cerr << "Unsupported/unknown datatype: " <<
+        bd::to_string(datfile.dataType) << ".\n";
 
     cleanUp();
     exit(1);
     break;
   }
 
+  if (clo.outputFileType == "ascii") {
+    g_outFile.open(clo.outFilePath);
+    writeAscii(g_outFile, collection);
+  } 
+  else { //if (clo.outputFileType == "binary") {
+    // default to binary output file.
+    g_outFile.open(clo.outFilePath, std::ios::binary);
+    writeBinary(g_outFile, collection);
+  }
+  
   if (clo.printBlocks) {
     for (auto &block : collection.blocks()) {
       std::cout << block << std::endl;

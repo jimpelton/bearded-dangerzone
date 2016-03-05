@@ -5,21 +5,20 @@
 #include <cstdint>
 
 
-namespace bd {
-  class Block;
-}
+
 
 
 class BlockCollection2;
 
 
 ///////////////////////////////////////////////////////////////////////////////
+//   Index file header layout
 //   -----------------------------------------
 //   magic number        | 2 bytes unsigned (7376 --> characters "sv")
 //   version             | 2 bytes unsigned
 //   header length       | 4 bytes unsigned
 //   -----------------------------------------
-//   Volume statistics   | ???
+//   Volume statistics   | not implemented yet
 //   -----------------------------------------
 ///////////////////////////////////////////////////////////////////////////////
 struct IndexFileHeader
@@ -32,8 +31,8 @@ struct IndexFileHeader
 
 
 ///////////////////////////////////////////////////////////////////////////////
-//   -----------------------------------------
 //   Block metadata
+//   -----------------------------------------
 //   Num blocks X        | 8 bytes unsigned
 //   Num blocks Y        | 8 bytes unsigned
 //   Num blocks Z        | 8 bytes unsigned
@@ -68,24 +67,47 @@ struct FileBlock
 };
 
 
-
+///////////////////////////////////////////////////////////////////////////////
+/// \brief Read binary index file from \c is and populate \c collection with 
+///        blocks.
+///////////////////////////////////////////////////////////////////////////////
 void 
-read(std::istream &is, BlockCollection2 &collection);
+readBinary(std::istream &is, BlockCollection2 &collection);
 
 
+///////////////////////////////////////////////////////////////////////////////
+/// \brief Write the binary header for index file.
+///////////////////////////////////////////////////////////////////////////////
 void 
-writeHeader(std::ostream &os, const BlockCollection2 &collection);
+writeIndexFileHeaderBinary(std::ostream &os, const BlockCollection2 &collection);
 
 
+///////////////////////////////////////////////////////////////////////////////
+/// \brief Write single block binary to \c os.
+///////////////////////////////////////////////////////////////////////////////
 void 
-writeSingleBlock(std::ostream &os, const FileBlock &block);
+writeSingleBlockHeaderBinary(std::ostream &os, const FileBlock &block);
 
 
+///////////////////////////////////////////////////////////////////////////////
+/// \brief Write binary index file to ostream \c os.
+///////////////////////////////////////////////////////////////////////////////
 void 
-write(std::ostream &os, const BlockCollection2 &collection);
+writeBinary(std::ostream &os, const BlockCollection2 &collection);
+
+
+///////////////////////////////////////////////////////////////////////////////
+/// \brief Write ascii index file to ostream \c os.
+///////////////////////////////////////////////////////////////////////////////
+void 
+writeAscii(std::ostream &os, const BlockCollection2 &collection);
 
 
 std::ostream& 
 operator<<(std::ostream &, const FileBlock &);
+
+
+std::ostream&
+operator<<(std::ostream & os, const IndexFileHeader &h);
 
 #endif indexfile_h__

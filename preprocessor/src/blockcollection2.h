@@ -23,6 +23,44 @@ public:
 
   ~BlockCollection2();
 
+  //////////////////////////////////////////////////////////////////////////////
+  /// \brief Marks blocks as empty and uploads GL textures if average is outside of [tmin..tmax].
+  /// \param rawFile[in] Volume data set
+  /// \param tmin[in] min average block value to filter against.
+  /// \param tmax[in] max average block value to filter against.
+  ///////////////////////////////////////////////////////////////////////////////
+  //TODO: filterblocks takes Functor for thresholding.
+  template<typename Ty>
+  void
+  filterBlocks(std::istream &rawFile, float tmin = 0.0f, float tmax = 1.0f);
+
+
+  //////////////////////////////////////////////////////////////////////////////
+  /// \brief Fills \c out_blockData with part of \c in_data corresponding to 
+  ///        block (i,j,k).
+  /// \param index[in]     ijk coords of the block whos data to get.
+  /// \param infile[in] The raw data file.
+  /// \param out[out]   Destination space for block data.
+  //////////////////////////////////////////////////////////////////////////////
+  template<typename Ty>
+  void
+  fillBlockData(FileBlock &b, glm::u64vec3 index, std::istream &infile, Ty* out);
+
+
+  //////////////////////////////////////////////////////////////////////////////
+  /// \brief Initializes \c nb blocks so that they fit within the extent of \c vd.
+  /// \param nb[in]      Number of blocks in x,y,z directions.
+  /// \param vd[in]      Volume dimensions
+  //////////////////////////////////////////////////////////////////////////////
+  void
+  initBlocks(glm::u64vec3 nb, glm::u64vec3 vd);
+
+
+  //////////////////////////////////////////////////////////////////////////////
+  void
+  addBlock(const FileBlock &b);
+
+
   /////////////////////////////////////////////////////////////////////////////////
   /// \brief Set this BlockCollection2's dimensions in voxels
   /////////////////////////////////////////////////////////////////////////////////
@@ -52,48 +90,11 @@ public:
   //TODO: move volDims() out of block class (yeah...probably need to make a class representing a volume).
 
 
-  /////////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
   /// \brief Get the number of blocks along each axis.
-  /////////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
   glm::u64vec3
   numBlocks() const;
-
-
-  /////////////////////////////////////////////////////////////////////////////////
-  /// \brief Initializes \c nb blocks so that they fit within the extent of \c vd.
-  /// \param nb[in]      Number of blocks in x,y,z directions.
-  /// \param vd[in]      Volume dimensions
-  /// \param blocks[out] Vector that new blocks are pushed onto.
-  ///////////////////////////////////////////////////////////////////////////////
-  void
-  initBlocks(glm::u64vec3 nb, glm::u64vec3 vd);
-
-
-  /////////////////////////////////////////////////////////////////////////////////
-  /// \brief Marks blocks as empty and uploads GL textures if average is outside of [tmin..tmax].
-  /// \param data[in] Volume data set
-  /// \param tmin[in] min average block value to filter against.
-  /// \param tmax[in] max average block value to filter against.
-  /// \param sampler[in] The sampler location of the block texture sampler.
-  ///////////////////////////////////////////////////////////////////////////////
-  //TODO: filterblocks takes Functor for thresholding.
-  template<typename Ty>
-  void
-  filterBlocks(std::istream &rawFile, float tmin = 0.0f, float tmax = 1.0f);
-  
-
-  //////////////////////////////////////////////////////////////////////////////
-  /// \brief Fills \c out_blockData with part of \c in_data corresponding to 
-  ///        block (i,j,k).
-  ///
-  /// \param ijk[in]     ijk coords of the block whos data to get.
-  /// \param bsz[in]     The size of the block data.
-  /// \param infile[in] The raw data file.
-  /// \param out[out]   Destination space for block data.
-  //////////////////////////////////////////////////////////////////////////////
-  template<typename Ty>
-  void 
-  fillBlockData(FileBlock &b, glm::u64vec3 index, std::istream &infile, Ty* out);
 
 
   const std::vector<FileBlock>&
@@ -178,8 +179,8 @@ void BlockCollection2::fillBlockData(FileBlock &block, glm::u64vec3 index,
   size_t byteIndex{ bd::to1D(start.x, start.y, start.z, m_volDims.x, m_volDims.y) * sizeof(Ty) };
   block.data_offset = byteIndex;
 
-  std::cout << "Block Row Length: " << blockRowLength << 
-      " Block Row Bytes: " << blockRowBytes << std::endl;
+  /*std::cout << "Block Row Length: " << blockRowLength << 
+      " Block Row Bytes: " << blockRowBytes << std::endl;*/
   
   for (auto slab = start.z; slab < end.z; ++slab) {
     for (auto row = start.y; row < end.y; ++row) {

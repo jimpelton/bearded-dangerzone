@@ -5,7 +5,8 @@
 #include <iostream>
 #include <string>
 
-int parseThem(int argc, const char *argv[], CommandLineOptions &opts)
+int 
+parseThem(int argc, const char *argv[], CommandLineOptions &opts)
 try {
   if (argc == 1) {
     return 0;
@@ -18,14 +19,16 @@ try {
   TCLAP::ValueArg<std::string> fileArg("f", "file", "Path to data file.", false, "", "string");
   cmd.add(fileArg);
 
+  //output file
+  TCLAP::ValueArg<std::string> outFileArg("o", "outfile", "Path to output file", false, "", "string");
+  cmd.add(outFileArg);
 
   // transfer function file
   TCLAP::ValueArg<std::string> tfuncArg("u", "tfunc", "Path to transfer function file.", false, "", "string");
   cmd.add(tfuncArg);
 
-
   // .dat file
-  TCLAP::ValueArg<std::string> datFileArg("d", "datFile", "Path to .dat file", false, "", "string");
+  TCLAP::ValueArg<std::string> datFileArg("d", "datfile", "Path to .dat file", false, "", "string");
   cmd.add(datFileArg);
 
   // volume data type
@@ -34,6 +37,11 @@ try {
   TCLAP::ValueArg<std::string> dataTypeArg("t", "type", "Data type (float, ushort, uchar).", false, "", &dataTypeAllowValues);
   cmd.add(dataTypeArg);
 
+  // ouput file type
+  std::vector<std::string> outputTypes{ "ascii", "binary" };
+  TCLAP::ValuesConstraint<std::string> outputTypesAllowValues(outputTypes);
+  TCLAP::ValueArg<std::string> outputTypeArg("", "output", "Output file type (ascii, binary)", false, "", &outputTypesAllowValues);
+  cmd.add(outputTypeArg);
 
   // volume dims
   TCLAP::ValueArg<size_t> xdimArg("", "volx", "Volume x dim.", false, 1, "uint");
@@ -72,9 +80,11 @@ try {
   cmd.parse(argc, argv);
 
   opts.filePath = fileArg.getValue();
+  opts.outFilePath = outFileArg.getValue();
   opts.tfuncPath = tfuncArg.getValue();
   opts.datFilePath = datFileArg.getValue();
   opts.type = dataTypeArg.getValue();
+  opts.outputFileType = outputTypeArg.getValue();
   opts.printBlocks = printBlocksArg.getValue();
   opts.vol_w = xdimArg.getValue();
   opts.vol_h = ydimArg.getValue();
@@ -88,24 +98,36 @@ try {
   return static_cast<int>(cmd.getArgList().size());
 
 } catch (TCLAP::ArgException &e) {
-  std::cout << "Error parsing command line args: " << e.error() << " for argument "
+  std::cerr << "Error parsing command line args: " << e.error() << " for argument "
       << e.argId() << std::endl;
   return 0;
 }
 
 
-void printThem(CommandLineOptions &opts) {
-  std::cout <<
-      "File path: " << opts.filePath << "\n"
-      "Transfer function: " << opts.tfuncPath << "\n"
-      "Dat file: " << opts.datFilePath << "\n"
-      "Data Type: " << opts.type << "\n"
-      "Vol dims (w X h X d): " << opts.vol_w << " X " << opts.vol_h << " X " << opts.vol_d << "\n"
-      "Num blocks (x X y X z): " << opts.numblk_x << " X " << opts.numblk_y << " X " << opts.numblk_z << "\n"
-      "Threshold (min-max): " << opts.tmin << " - " << opts.tmax << "\n"
-      "Print blocks: " << (opts.printBlocks ? "True" : "False") <<
-      std::endl;
+void 
+printThem(const CommandLineOptions &opts) 
+{
+  std::cout << opts << std::endl;
 }
+
+std::ostream &
+operator<<(std::ostream & os, const CommandLineOptions &opts)
+{
+  os <<
+    "File path: " << opts.filePath << "\n"
+    "Output file path: " << opts.outFilePath << "\n"
+    "Transfer function path: " << opts.tfuncPath << "\n"
+    "Dat file: " << opts.datFilePath << "\n"
+    "Data Type: " << opts.type << "\n"
+    "Output file type: " << opts.outputFileType << "\n"
+    "Vol dims (w X h X d): " << opts.vol_w << " X " << opts.vol_h << " X " << opts.vol_d << "\n"
+    "Num blocks (x X y X z): " << opts.numblk_x << " X " << opts.numblk_y << " X " << opts.numblk_z << "\n"
+    "Threshold (min-max): " << opts.tmin << " - " << opts.tmax << "\n"
+    "Print blocks: " << (opts.printBlocks ? "True" : "False");
+
+  return os;
+}
+
 
 //namespace {
 //    boost::program_options::variables_map m_vm;

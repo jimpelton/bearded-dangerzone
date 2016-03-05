@@ -22,6 +22,71 @@ BlockCollection2::~BlockCollection2()
 
 
 ///////////////////////////////////////////////////////////////////////////////
+// nb: number of blocks
+// vd: volume voxel dimensions
+// blocks: out parameter to be filled with blocks.
+void
+BlockCollection2::initBlocks(glm::u64vec3 nb, glm::u64vec3 vd)
+{
+  m_blockDims = vd / nb;
+  m_volDims = vd;
+  m_numBlocks = nb;
+
+  // block world dims
+  glm::vec3 wld_dims{ 1.0f / glm::vec3(nb) };
+
+  gl_log("Starting block init: Number of blocks: %dx%dx%d, "
+    "Volume dimensions: %dx%dx%d Block dimensions: %.2f,%.2f,%.2f",
+    nb.x, nb.y, nb.z,
+    vd.x, vd.y, vd.z,
+    wld_dims.x, wld_dims.y, wld_dims.z);
+
+  // Loop through all our blocks (identified by <bx,by,bz>) and populate block fields.
+  for (auto bz = 0ull; bz < nb.z; ++bz)
+    for (auto by = 0ull; by < nb.y; ++by)
+      for (auto bx = 0ull; bx < nb.x; ++bx) {
+        // i,j,k block identifier
+        glm::u64vec3 blkId{ bx, by, bz };
+        // lower left corner in world coordinates
+        glm::vec3 worldLoc{ wld_dims * glm::vec3(blkId) - 0.5f }; // - 0.5f;
+                                                                  // origin (centroid) in world coordiates
+        glm::vec3 blk_origin{ (worldLoc + (worldLoc + wld_dims)) * 0.5f };
+
+        //bd::Block blk{ glm::u64vec3(bx, by, bz), wld_dims, blk_origin };
+        FileBlock blk;
+        blk.block_index = bd::to1D(bx, by, bz, nb.x, nb.y);
+        blk.data_offset = 0;
+        blk.voxel_dims[0] = m_blockDims.x;
+        blk.voxel_dims[1] = m_blockDims.y;
+        blk.voxel_dims[2] = m_blockDims.z;
+        blk.world_pos[0] = blk_origin.x;
+        blk.world_pos[1] = blk_origin.y;
+        blk.world_pos[2] = blk_origin.z;
+        blk.avg_val = 0;
+        blk.is_empty = true;
+
+        m_blocks.push_back(blk);
+      }
+
+  gl_log("Finished block init: total blocks is %d.", m_blocks.size());
+}
+
+
+//////////////////////////////////////////////////////////////////////////////
+void
+BlockCollection2::addBlock(const FileBlock &b)
+{
+  m_blocks.push_back(b);
+ 
+  if (b.is_empty) {
+    FileBlock *pB = &m_blocks.back();
+    m_nonEmptyBlocks.push_back(pB);
+  }
+
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
 glm::u64vec3
 BlockCollection2::blockDims() const
 {
@@ -56,56 +121,6 @@ glm::u64vec3
 BlockCollection2::numBlocks() const
 {
   return m_numBlocks;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// nb: number of blocks
-// vd: volume voxel dimensions
-// blocks: out parameter to be filled with blocks.
-void
-BlockCollection2::initBlocks(glm::u64vec3 nb, glm::u64vec3 vd)
-{
-  m_blockDims = vd / nb;
-  m_volDims = vd;
-  m_numBlocks = nb;
-
-  // block world dims
-  glm::vec3 wld_dims{ 1.0f / glm::vec3(nb) };
-
-  gl_log("Starting block init: Number of blocks: %dx%dx%d, "
-    "Volume dimensions: %dx%dx%d Block dimensions: %.2f,%.2f,%.2f",
-    nb.x, nb.y, nb.z,
-    vd.x, vd.y, vd.z,
-    wld_dims.x, wld_dims.y, wld_dims.z)  ;
-
-  // Loop through all our blocks (identified by <bx,by,bz>) and populate block fields.
-  for (auto bz = 0ull; bz < nb.z; ++bz)
-    for (auto by = 0ull; by < nb.y; ++by)
-      for (auto bx = 0ull; bx < nb.x; ++bx) {
-        // i,j,k block identifier
-        glm::u64vec3 blkId{ bx, by, bz };
-        // lower left corner in world coordinates
-        glm::vec3 worldLoc{ wld_dims * glm::vec3(blkId) - 0.5f }; // - 0.5f;
-        // origin (centroid) in world coordiates
-        glm::vec3 blk_origin{ (worldLoc + (worldLoc + wld_dims)) * 0.5f };
-
-        //bd::Block blk{ glm::u64vec3(bx, by, bz), wld_dims, blk_origin };
-        FileBlock blk;
-        blk.block_index = bd::to1D(bx, by, bz, nb.x, nb.y);
-        blk.data_offset = 0;
-        blk.voxel_dims[0] = m_blockDims.x;
-        blk.voxel_dims[1] = m_blockDims.y;
-        blk.voxel_dims[2] = m_blockDims.z;
-        blk.world_pos[0] = blk_origin.x;
-        blk.world_pos[1] = blk_origin.y;
-        blk.world_pos[2] = blk_origin.z;
-        blk.avg_val = 0;
-        blk.is_empty = true;
-        
-        m_blocks.push_back(blk);
-      }
-
-  gl_log("Finished block init: total blocks is %d.", m_blocks.size());
 }
 
 

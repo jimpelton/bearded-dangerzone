@@ -6,12 +6,16 @@
 struct CommandLineOptions {
   // raw file path
   std::string filePath;
+  // output file path
+  std::string outFilePath;
   // transfer function file path
   std::string tfuncPath;
   // for .dat descriptor file (currently unimplemented)
   std::string datFilePath;
   // volume data type
   std::string type;
+  // output file type
+  std::string outputFileType;
   // true if block data should be dumped to file
   bool printBlocks;
   // number of blocks X
@@ -41,8 +45,13 @@ struct CommandLineOptions {
 ///
 /// \returns 0 on parse failure, non-zero if the parse was successful.
 ///////////////////////////////////////////////////////////////////////////////
-int parseThem(int argc, const char *argv[], CommandLineOptions &opts);
+int 
+parseThem(int argc, const char *argv[], CommandLineOptions &opts);
 
-void printThem(CommandLineOptions &);
+void 
+printThem(const CommandLineOptions &);
+
+std::ostream& 
+operator<<(std::ostream&, const CommandLineOptions &);
 
 #endif // preproc_cmdline_h__
