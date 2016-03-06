@@ -6,6 +6,7 @@
 
 #include "cmdline.h"
 #include "blockcollection2.h"
+#include "indexfile.h"
 
 #include <bd/util/util.h>
 #include <bd/file/parsedat.h>
@@ -17,21 +18,66 @@
 std::ifstream g_rawFile;
 std::ofstream g_outFile;
 
-///////////////////////////////////////////////////////////////////////////////
-template<typename Ty>
-size_t blockBytes(const glm::u64vec3 &dims)
-{
-  return dims.x * dims.y * dims.z * sizeof(Ty);
-}
-
 
 ///////////////////////////////////////////////////////////////////////////////
 void cleanUp()
 {
   bd::gl_log_close();
 
-  if (g_rawFile.is_open())
+  if (g_rawFile.is_open()) {
     g_rawFile.close();
+  }
+
+  if (g_outFile.is_open()) {
+    g_outFile.flush();
+    g_outFile.close();
+  }
+
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+template<typename Ty>
+size_t
+blockBytes(const glm::u64vec3 &dims)
+{
+  return dims.x * dims.y * dims.z * sizeof(Ty);
+}
+
+template<typename Ty>
+void
+doAllTheStuff(const CommandLineOptions &clo)
+{
+  BlockCollection2<Ty> collection{ };
+  collection.initBlocks(
+      glm::u64vec3{ clo.numblk_x, clo.numblk_y, clo.numblk_z },
+      glm::u64vec3{ clo.vol_w, clo.vol_h, clo.vol_d }
+  );
+
+  g_rawFile.open(clo.filePath, std::ios::in | std::ios::binary);
+  if (! g_rawFile.is_open()) {
+    std::cerr << clo.filePath << " not found." << std::endl;
+    cleanUp();
+    exit(1);
+  }
+
+  collection.filterBlocks(g_rawFile, clo.tmin, clo.tmax);
+
+  if (clo.outputFileType == "ascii") {
+    g_outFile.open(clo.outFilePath);
+    writeAscii<Ty>(g_outFile, collection);
+  } else {
+    // default to binary output file.
+    g_outFile.open(clo.outFilePath, std::ios::binary);
+    writeBinary<Ty>(g_outFile, collection);
+  }
+
+  if (clo.printBlocks) {
+    for (auto &block : collection.blocks()) {
+      std::cout << block << std::endl;
+    }
+  }
+
 }
 
 
@@ -47,7 +93,6 @@ int main(int argc, const char *argv[])
     exit(1);
   }
 
-
   bd::DatFileData datfile;
   if (! clo.datFilePath.empty()) {
     bd::parseDat(clo.datFilePath, datfile);
@@ -59,31 +104,18 @@ int main(int argc, const char *argv[])
   }
   printThem(clo); // print cmd line options
 
-  BlockCollection2 collection{ };
-  collection.initBlocks(
-    glm::u64vec3{ clo.numblk_x, clo.numblk_y, clo.numblk_z },
-    glm::u64vec3{ clo.vol_w, clo.vol_h, clo.vol_d }
-  );
-  
-  g_rawFile.open(clo.filePath, std::ios::in | std::ios::binary);
-  if (! g_rawFile.is_open()) {
-    std::cerr << clo.filePath << " not found." << std::endl;
-    cleanUp();
-    exit(1);
-  }
-
   switch(datfile.dataType) {
 
   case bd::DataType::UnsignedCharacter:
-    collection.filterBlocks<unsigned char>(g_rawFile, clo.tmin, clo.tmax);
+    doAllTheStuff<unsigned char>(clo);
     break;
 
   case bd::DataType::UnsignedShort:
-    collection.filterBlocks<unsigned short>(g_rawFile, clo.tmin, clo.tmax);
+    doAllTheStuff<unsigned short>(clo);
     break;
 
   case bd::DataType::Float:
-    collection.filterBlocks<float>(g_rawFile, clo.tmin, clo.tmax);
+    doAllTheStuff<float>(clo);
     break;
 
   default:
@@ -95,22 +127,8 @@ int main(int argc, const char *argv[])
     break;
   }
 
-  if (clo.outputFileType == "ascii") {
-    g_outFile.open(clo.outFilePath);
-    writeAscii(g_outFile, collection);
-  } 
-  else { //if (clo.outputFileType == "binary") {
-    // default to binary output file.
-    g_outFile.open(clo.outFilePath, std::ios::binary);
-    writeBinary(g_outFile, collection);
-  }
-  
-  if (clo.printBlocks) {
-    for (auto &block : collection.blocks()) {
-      std::cout << block << std::endl;
-    }
-  }
-  
+
+
   cleanUp();
   return 0;
 }

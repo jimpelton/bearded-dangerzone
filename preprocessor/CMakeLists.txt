@@ -10,12 +10,13 @@ include_directories("${THIRDPARTY_DIR}/tclap/include")
 set(preprocessor_HEADERS
         src/blockcollection2.h
         src/cmdline.h
-    )
+        src/indexfile.h
+        src/fileblock.h)
 
 set(preprocessor_SOURCES
         src/main.cpp
-        src/blockcollection2.cpp
         src/cmdline.cpp
+        src/indexfile.cpp
     )
 
 
