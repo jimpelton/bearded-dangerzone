@@ -11,6 +11,7 @@
 #include <istream>
 #include <iostream>
 #include <vector>
+#include <algorithm>
 
 
 
@@ -59,7 +60,7 @@ public:
   /// \param vd[in]      Volume dimensions
   //////////////////////////////////////////////////////////////////////////////
   void
-  readRow(std::istream &infile, size_t col, size_t row, size_t slab, Ty *rowBuffer);
+  readBlockRow(std::istream &infile, size_t col, size_t row, size_t slab, Ty *rowBuffer);
 
   //////////////////////////////////////////////////////////////////////////////
   /// \brief Initializes \c nb blocks so that they fit within the extent of \c vd.
@@ -69,6 +70,10 @@ public:
   void
   initBlocks();
 
+  
+  //////////////////////////////////////////////////////////////////////////////
+  void
+  computeVolumeStatistics(std::istream& infile);
 
   //////////////////////////////////////////////////////////////////////////////
   void
@@ -111,12 +116,29 @@ public:
   numBlocks() const;
 
 
+  //////////////////////////////////////////////////////////////////////////////
+  Ty
+  volMin() const { return m_volMin; }
+
+
+  //////////////////////////////////////////////////////////////////////////////
+  Ty
+  volMax() const { return m_volMax; }
+
+
+  //////////////////////////////////////////////////////////////////////////////
+  float
+  volAvg() const { return m_volAvg; }
+
+
+  //////////////////////////////////////////////////////////////////////////////
   const std::vector<FileBlock>&
-  blocks() const;
+  blocks() const { return m_blocks; }
 
 
+  //////////////////////////////////////////////////////////////////////////////
   const std::vector<FileBlock *>&
-  nonEmptyBlocks() const;
+  nonEmptyBlocks() const { return m_nonEmptyBlocks; }
 
 private:
 
@@ -124,9 +146,9 @@ private:
   glm::u64vec3 m_volDims;   ///< Volume dimensions (# data points).
   glm::u64vec3 m_numBlocks; ///< Number of blocks volume is divided into.
 
-  Ty m_max;
-  Ty m_min;
-  float m_avg;
+  Ty m_volMax;
+  Ty m_volMin;
+  float m_volAvg;
 
   std::vector<FileBlock> m_blocks;
   std::vector<FileBlock *> m_nonEmptyBlocks;
@@ -138,6 +160,9 @@ BlockCollection2<Ty>::BlockCollection2(glm::u64vec3 volDims, glm::u64vec3 numBlo
   : m_blockDims{ volDims / numBlocks }
   , m_volDims{ volDims }
   , m_numBlocks{ numBlocks }
+  , m_volMax{ std::numeric_limits<Ty>::min() }
+  , m_volMin{ std::numeric_limits<Ty>::max() }
+  , m_volAvg{ 0.0f }
 {
 
 }
@@ -183,9 +208,9 @@ BlockCollection2<Ty>::initBlocks()
 
         FileBlock blk;
         blk.block_index = bd::to1D(bx, by, bz, nb.x, nb.y);
-        blk.voxel_dims[0] = (uint32_t) m_blockDims.x;
-        blk.voxel_dims[1] = (uint32_t) m_blockDims.y;
-        blk.voxel_dims[2] = (uint32_t) m_blockDims.z;
+        blk.voxel_dims[0] = static_cast<uint32_t>(m_blockDims.x);
+        blk.voxel_dims[1] = static_cast<uint32_t>(m_blockDims.y);
+        blk.voxel_dims[2] = static_cast<uint32_t>(m_blockDims.z);
         blk.world_pos[0] = blk_origin.x;
         blk.world_pos[1] = blk_origin.y;
         blk.world_pos[2] = blk_origin.z;
@@ -200,11 +225,44 @@ BlockCollection2<Ty>::initBlocks()
 //////////////////////////////////////////////////////////////////////////////
 template<typename Ty>
 void
+BlockCollection2<Ty>::computeVolumeStatistics(std::istream& infile)
+{
+  size_t rowbytes{ m_volDims.x * sizeof(Ty) };
+  Ty *rowbuf{ new Ty[rowbytes] };
+
+  infile.seekg(0, std::ios::beg);
+  for (size_t slab{ 0 }; slab < m_volDims.z; ++slab) {
+    for (size_t row{ 0 }; row < m_volDims.y; ++row) {
+      infile.read(reinterpret_cast<char*>(rowbuf), rowbytes);
+
+      for (size_t col{ 0 }; col < m_volDims.x; ++col) {
+        Ty val{ rowbuf[col] };
+
+        m_volMin = std::min<Ty>(m_volMin, val);
+        m_volMax = std::max<Ty>(m_volMax, val);
+        m_volAvg += static_cast<float>(val);
+
+      }
+
+    }
+  } // for(slab...
+
+  m_volAvg /= m_volDims.x * m_volDims.y * m_volDims.z;
+  
+  gl_log("Done computing volume statistics: Min: %f, Max: %f, Avg: %f", 
+    m_volMin, m_volMax, m_volAvg);
+
+  infile.seekg(0, std::ios::beg);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+template<typename Ty>
+void
 BlockCollection2<Ty>::addBlock(const FileBlock &b)
 {
   m_blocks.push_back(b);
 
-  if (b.is_empty) {
+  if (! b.is_empty) {
     FileBlock *pB = &m_blocks.back();
     m_nonEmptyBlocks.push_back(pB);
   }
@@ -247,27 +305,13 @@ BlockCollection2<Ty>::volDims(const glm::u64vec3& voldims)
   m_volDims = voldims;
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
 template<typename Ty>
 glm::u64vec3
 BlockCollection2<Ty>::numBlocks() const
 {
   return m_numBlocks;
-}
-
-
-template<typename Ty>
-const std::vector<FileBlock>&
-BlockCollection2<Ty>::blocks() const
-{
-  return m_blocks;
-}
-
-
-template<typename Ty>
-const std::vector<FileBlock *>&
-BlockCollection2<Ty>::nonEmptyBlocks() const
-{
-  return m_nonEmptyBlocks;
 }
 
 
@@ -281,8 +325,6 @@ BlockCollection2<Ty>::filterBlocks(std::istream &rawFile, float tmin, float tmax
 
   Ty * image{ new Ty[blkPoints] };
 
-
-
   for (FileBlock& b : m_blocks) {
 
     // Convert 1D block index to 3D i,j,k indices.
@@ -292,26 +334,18 @@ BlockCollection2<Ty>::filterBlocks(std::istream &rawFile, float tmin, float tmax
     
     fillBlockData(b, { x,y,z }, rawFile, image);
     
-    //TODO: call filter function.
-    
-    // Compute average and determine if Block is empty.
-    float avg{ 0.0f };
+    // TODO: call filter function.
+
+    // compute block stats
     for (size_t i = 0; i < blkPoints; ++i) {
       Ty val{ image[i] };
-      b.max_val = std::max<Ty>(b.max_val, val);
-      b.min_val = std::min<Ty>(b.max_val, val);
+      b.max_val  = static_cast<float>(std::max<Ty>(b.max_val, val));
+      b.min_val  = static_cast<float>(std::min<Ty>(b.min_val, val));
+      b.avg_val += static_cast<float>(val);
+    } // for (i...
+    b.avg_val /= blkPoints;
 
-      m_avg += val;
-      m_min = std::min<Ty>(m_min, val);
-      m_max = std::max<Ty>(m_max, val);
-
-      avg += image[i];
-    }
-    avg /= blkPoints;
-    b.avg_val = avg;
-
-
-    if (avg < tmin || avg > tmax) {
+    if (b.avg_val < tmin || b.avg_val > tmax) {
       b.is_empty = 1;
     } else {
       b.is_empty = 0;
@@ -320,19 +354,23 @@ BlockCollection2<Ty>::filterBlocks(std::istream &rawFile, float tmin, float tmax
 
   } // for (FileBlock...
 
-  m_avg /= blkPoints * m_blocks.size();
-
   delete [] image;
 
   gl_log("%d/%d blocks marked empty.",
       m_blocks.size() - m_nonEmptyBlocks.size(), m_blocks.size());
 }
 
+
+
 template<typename Ty>
 void
-BlockCollection2<Ty>::readRow(std::istream &infile, size_t c, size_t r, size_t s, Ty *rowBuffer)
+BlockCollection2<Ty>::readBlockRow
+(
+  std::istream &infile, 
+  size_t c, size_t r, size_t s, 
+  Ty *rowBuffer
+)
 {
-
   // seek to start of row
   size_t rowOff = bd::to1D(c, r, s, m_volDims.x, m_volDims.y) * sizeof(Ty);
   infile.seekg(rowOff, infile.beg);
@@ -362,7 +400,7 @@ BlockCollection2<Ty>::fillBlockData(FileBlock &block, glm::u64vec3 index,
     for (auto row = start.y; row < end.y; ++row) {
 
       // convert element index to byte index in file.
-      readRow(infile, start.x, row, slab, blockBuffer);
+      readBlockRow(infile, start.x, row, slab, blockBuffer);
       blockBuffer += blockRowLength;
 
     }

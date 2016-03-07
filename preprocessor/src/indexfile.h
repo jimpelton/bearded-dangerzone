@@ -8,74 +8,95 @@
 #include <cstdint>
 
 
+
+
 ///////////////////////////////////////////////////////////////////////////////
-//   Index file header layout
-//   -----------------------------------------
-//   magic number        | 2 bytes unsigned (7376 --> characters "sv")
-//   version             | 2 bytes unsigned
-//   header length       | 4 bytes unsigned
-//   -----------------------------------------
-//   Volume statistics   | not implemented yet
-//   -----------------------------------------
+///   \brief The header for the index file.
+///
+///   Index file header layout
+///   -----------------------------------------
+///   magic number        | 2 bytes unsigned (7376 --> characters "sv")
+///   version             | 2 bytes unsigned
+///   header length       | 4 bytes unsigned
+///   -----------------------------------------
+///   Block metadata
+///   -----------------------------------------
+///   Num blocks X        | 8 bytes unsigned
+///   Num blocks Y        | 8 bytes unsigned
+///   Num blocks Z        | 8 bytes unsigned
+///   -----------------------------------------
+///   Volume statistics   
+///   -----------------------------------------
+///   Volume average val  | 4 bytes float
+///   Volume min value    | 4 bytes float
+///   Volume max value    | 4 bytes float
 ///////////////////////////////////////////////////////////////////////////////
 struct IndexFileHeader
 {
   uint16_t magic_number;
   uint16_t version;
   uint32_t header_length;
+//------Block metadata---------------------
   uint64_t numblocks[3];
-//   -----------------------------------------
+//------Volume statistics------------------
   float vol_avg;
   float vol_min;
   float vol_max;
 };
 
+namespace
+{
+  const uint16_t MAGIC{ 7376 }; ///< Magic number for the file (ascii 'SV')
+  const uint16_t VERSION{ 1 };
+  const uint32_t HEAD_LEN{ sizeof(IndexFileHeader) };
+}  // namespace
+
+///////////////////////////////////////////////////////////////////////////////
 std::ostream&
 operator<<(std::ostream & os, const IndexFileHeader &h);
 
-namespace
-{
-  const unsigned short MAGIC{ 7376 }; ///< Magic number for the file
-  const unsigned short VERSION{ 1 };
-  const unsigned int HEAD_LEN{ sizeof(IndexFileHeader) };
+///////////////////////////////////////////////////////////////////////////////
 
-}  // namespace
-
+///////////////////////////////////////////////////////////////////////////////
+/// \brief Generate an index file from the provided BlockCollection2. The
+///        IndexFile can be written to disk in either ASCII or binary format.
+///////////////////////////////////////////////////////////////////////////////
 template<typename Ty>
-class IndexFile {
+class IndexFile 
+{
 
 public:
   IndexFile(const BlockCollection2<Ty> &collection);
   ~IndexFile();
 
-///////////////////////////////////////////////////////////////////////////////
-/// \brief Read binary index file from \c is and populate \c collection with 
-///        blocks.
-///////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////
+  /// \brief Read binary index file from \c is and populate \c collection with 
+  ///        blocks.
+  ///////////////////////////////////////////////////////////////////////////////
   void
   readBinary(std::istream& is);
 
-///////////////////////////////////////////////////////////////////////////////
-/// \brief Write the binary header for index file.
-///////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////
+  /// \brief Write the binary header for index file.
+  ///////////////////////////////////////////////////////////////////////////////
   void
   writeIndexFileHeaderBinary(std::ostream& os);
 
-///////////////////////////////////////////////////////////////////////////////
-/// \brief Write single block binary to \c os.
-///////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////
+  /// \brief Write single block binary to \c os.
+  ///////////////////////////////////////////////////////////////////////////////
   void
   writeSingleBlockHeaderBinary(std::ostream& os, const FileBlock& block);
 
-///////////////////////////////////////////////////////////////////////////////
-/// \brief Write binary index file to ostream \c os.
-///////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////
+  /// \brief Write binary index file to ostream \c os.
+  ///////////////////////////////////////////////////////////////////////////////
   void
   writeBinary(std::ostream& os);
 
-///////////////////////////////////////////////////////////////////////////////
-/// \brief Write ascii index file to ostream \c os.
-///////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////
+  /// \brief Write ascii index file to ostream \c os.
+  ///////////////////////////////////////////////////////////////////////////////
   void
   writeAscii(std::ostream& os);
 
@@ -107,7 +128,7 @@ IndexFile<Ty>::~IndexFile()
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// static member
+// static
 template<typename Ty>
 IndexFileHeader
 IndexFile<Ty>::getHeaderFromCollection(const BlockCollection2<Ty> &collection)
@@ -116,7 +137,10 @@ IndexFile<Ty>::getHeaderFromCollection(const BlockCollection2<Ty> &collection)
       MAGIC, VERSION, HEAD_LEN,
       collection.numBlocks().x,
       collection.numBlocks().y,
-      collection.numBlocks().z };
+      collection.numBlocks().z,
+      static_cast<float>(collection.volAvg()),
+      static_cast<float>(collection.volMin()),
+      static_cast<float>(collection.volMax()) };
 
   return ifh;
 }
@@ -165,7 +189,8 @@ IndexFile<Ty>::writeIndexFileHeaderBinary(std::ostream &os)
 ///////////////////////////////////////////////////////////////////////////////
 template<typename Ty>
 void
-IndexFile<Ty>::writeSingleBlockHeaderBinary(std::ostream & os, const FileBlock &block)
+IndexFile<Ty>::writeSingleBlockHeaderBinary(std::ostream & os, 
+    const FileBlock &block)
 {
   os.write(reinterpret_cast<const char*>(&block), sizeof(FileBlock));
 }

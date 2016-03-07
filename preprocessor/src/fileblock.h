@@ -9,32 +9,33 @@
 #include <ostream>
 
 ///////////////////////////////////////////////////////////////////////////////
-//   Block metadata
-//   -----------------------------------------
-//   Num blocks X        | 8 bytes unsigned
-//   Num blocks Y        | 8 bytes unsigned
-//   Num blocks Z        | 8 bytes unsigned
-//   -----------------------------------------
-//   For each block:
-//   block index       | 8 bytes unsigned
-//   block st. offset  | 8 bytes unsigned
-//   --
-//   block dims X      | 4 bytes unsigned
-//   block dims Y      | 4 bytes unsigned
-//   block dims Z      | 4 bytes unsigned
-//   --
-//   block X pos       | 4 bytes float
-//   block Y pos       | 4 bytes float
-//   block Z pos       | 4 bytes float
-//   --
-//   max val           | 4 bytes float
-//   min val           | 4 bytes float
-//   avg val           | 4 bytes float
-//   isEmpty           | 4 bytes bool
-//   -----------------------------------------
-//   Dat file section
-//   DAT file sz         | 2 bytes unsigned
-//   DAT contents        | n bytes ascii with unix newline chars
+///   \brief Describes a block in the IndexFile.
+/// 
+///   All values in the FileBlock struct are initialized to 0 by the c'tor.
+/// 
+
+///   -----------------------------------------
+///   For each block:
+///   block index       | 8 bytes unsigned
+///   block st. offset  | 8 bytes unsigned
+///   --
+///   block dims X      | 4 bytes unsigned
+///   block dims Y      | 4 bytes unsigned
+///   block dims Z      | 4 bytes unsigned
+///   --
+///   block X pos       | 4 bytes float
+///   block Y pos       | 4 bytes float
+///   block Z pos       | 4 bytes float
+///   --
+///   max val           | 4 bytes float
+///   min val           | 4 bytes float
+///   avg val           | 4 bytes float
+///
+///   isEmpty           | 4 bytes unsigned
+///   -----------------------------------------
+///   Dat file section (unimplemented)
+///   DAT file sz         | 2 bytes unsigned
+///   DAT contents        | n bytes ascii with unix newline chars
 ///////////////////////////////////////////////////////////////////////////////
 struct FileBlock
 {
@@ -54,10 +55,11 @@ struct FileBlock
   uint64_t data_offset;    ///< Offset into the raw file that the block data starts.
   uint32_t voxel_dims[3];  ///< Dimensions of this block in voxels.
   float world_pos[3];      ///< Cordinates within canonical cube.
-  float min_val;
-  float max_val;
+  float min_val;           ///< The min value found in this block.
+  float max_val;           ///< The largest value found in this block.
   float avg_val;           ///< Average value within this block.
-  uint8_t is_empty;        ///< If this block is empty or not.
+  uint32_t is_empty;        ///< If this block is empty or not.
+
 };
 
 
