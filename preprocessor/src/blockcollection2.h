@@ -15,6 +15,9 @@
 
 
 //////////////////////////////////////////////////////////////////////////////
+/// \brief Creates a list of blocks from a large binary raw file. The data type
+///        in the binary raw file is supplied by the template parameter.
+///
 /// \tparam Ty Data type in the istream this BlockCollection will be
 ///            generated from.
 //////////////////////////////////////////////////////////////////////////////
@@ -24,7 +27,7 @@ class BlockCollection2
 
 public:
 
-  BlockCollection2();
+  BlockCollection2(glm::u64vec3 volDims, glm::u64vec3 blockDims);
 
   ~BlockCollection2();
 
@@ -40,9 +43,9 @@ public:
 
 
   //////////////////////////////////////////////////////////////////////////////
-  /// \brief Fills \c out_blockData with part of \c in_data corresponding to 
-  ///        block (i,j,k).
-  /// \param index[in]     ijk coords of the block whos data to get.
+  /// \brief Read a single block into buffer \c out.
+  /// \param b[in]      The FileBlock for the block that will be read.
+  /// \param index[in]  i,j,k coords of the block whos data to get.
   /// \param infile[in] The raw data file.
   /// \param out[out]   Destination space for block data.
   //////////////////////////////////////////////////////////////////////////////
@@ -56,7 +59,7 @@ public:
   /// \param vd[in]      Volume dimensions
   //////////////////////////////////////////////////////////////////////////////
   void
-  readRow(std::istream &infile, size_t offset, size_t rowsize, Ty *rowBuffer);
+  readRow(std::istream &infile, size_t col, size_t row, size_t slab, Ty *rowBuffer);
 
   //////////////////////////////////////////////////////////////////////////////
   /// \brief Initializes \c nb blocks so that they fit within the extent of \c vd.
@@ -64,7 +67,7 @@ public:
   /// \param vd[in]      Volume dimensions
   //////////////////////////////////////////////////////////////////////////////
   void
-  initBlocks(glm::u64vec3 nb, glm::u64vec3 vd);
+  initBlocks();
 
 
   //////////////////////////////////////////////////////////////////////////////
@@ -131,8 +134,12 @@ private:
 
 ///////////////////////////////////////////////////////////////////////////////
 template<typename Ty>
-BlockCollection2<Ty>::BlockCollection2()
+BlockCollection2<Ty>::BlockCollection2(glm::u64vec3 volDims, glm::u64vec3 numBlocks)
+  : m_blockDims{ volDims / numBlocks }
+  , m_volDims{ volDims }
+  , m_numBlocks{ numBlocks }
 {
+
 }
 
 
@@ -149,11 +156,10 @@ BlockCollection2<Ty>::~BlockCollection2()
 // blocks: out parameter to be filled with blocks.
 template<typename Ty>
 void
-BlockCollection2<Ty>::initBlocks(glm::u64vec3 nb, glm::u64vec3 vd)
+BlockCollection2<Ty>::initBlocks()
 {
-  m_blockDims = vd / nb;
-  m_volDims = vd;
-  m_numBlocks = nb;
+  const glm::u64vec3 &nb =  m_numBlocks;
+  const glm::u64vec3 &vd =  m_volDims;
 
   // block world dims
   glm::vec3 wld_dims{ 1.0f / glm::vec3(nb) };
@@ -324,15 +330,15 @@ BlockCollection2<Ty>::filterBlocks(std::istream &rawFile, float tmin, float tmax
 
 template<typename Ty>
 void
-BlockCollection2<Ty>::readRow(std::istream &infile, size_t offset, size_t rowsize,
-    Ty *rowBuffer)
+BlockCollection2<Ty>::readRow(std::istream &infile, size_t c, size_t r, size_t s, Ty *rowBuffer)
 {
 
   // seek to start of row
-  infile.seekg(offset, infile.beg);
+  size_t rowOff = bd::to1D(c, r, s, m_volDims.x, m_volDims.y) * sizeof(Ty);
+  infile.seekg(rowOff, infile.beg);
 
   // read the bytes of current row
-  infile.read(reinterpret_cast<char*>(rowBuffer), rowsize);
+  infile.read(reinterpret_cast<char*>(rowBuffer), m_blockDims.x * sizeof(Ty));
 }
 
 template<typename Ty>
@@ -343,23 +349,20 @@ BlockCollection2<Ty>::fillBlockData(FileBlock &block, glm::u64vec3 index,
 
   // start element = block index w/in volume * block size
   const glm::u64vec3 start{ index * m_blockDims };
-
   // block end element = block voxel start dims + block size
   const glm::u64vec3 end{ start + m_blockDims };
 
+  // location in file where this block starts
+  block.data_offset =
+      bd::to1D(start.x, start.y, start.z, m_volDims.x, m_volDims.y) * sizeof(Ty);
 
   const size_t blockRowLength{ m_blockDims.x };
-  const size_t blockRowBytes{ blockRowLength * sizeof(Ty) };
-  
-  size_t rowOff{bd::to1D(start.x, start.y, start.z, m_volDims.x, m_volDims.y) * sizeof(Ty) };
-  block.data_offset = rowOff;
 
   for (auto slab = start.z; slab < end.z; ++slab) {
     for (auto row = start.y; row < end.y; ++row) {
 
       // convert element index to byte index in file.
-      rowOff = bd::to1D(start.x, row, slab, m_volDims.x, m_volDims.y) * sizeof(Ty);
-      readRow(infile, rowOff, blockRowBytes, blockBuffer);
+      readRow(infile, start.x, row, slab, blockBuffer);
       blockBuffer += blockRowLength;
 
     }

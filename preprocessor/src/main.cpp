@@ -46,13 +46,13 @@ blockBytes(const glm::u64vec3 &dims)
 
 template<typename Ty>
 void
-doAllTheStuff(const CommandLineOptions &clo)
+generateIndexFile(const CommandLineOptions &clo)
 {
-  BlockCollection2<Ty> collection{ };
-  collection.initBlocks(
-      glm::u64vec3{ clo.numblk_x, clo.numblk_y, clo.numblk_z },
-      glm::u64vec3{ clo.vol_w, clo.vol_h, clo.vol_d }
-  );
+  BlockCollection2<Ty> collection{
+      glm::u64vec3{clo.numblk_x, clo.numblk_y, clo.numblk_z},
+      glm::u64vec3{clo.vol_w, clo.vol_h, clo.vol_d}
+  };
+  collection.initBlocks( );
 
   g_rawFile.open(clo.filePath, std::ios::in | std::ios::binary);
   if (! g_rawFile.is_open()) {
@@ -62,14 +62,15 @@ doAllTheStuff(const CommandLineOptions &clo)
   }
 
   collection.filterBlocks(g_rawFile, clo.tmin, clo.tmax);
+  IndexFile<Ty> indexFile{ collection };
 
   if (clo.outputFileType == "ascii") {
     g_outFile.open(clo.outFilePath);
-    writeAscii<Ty>(g_outFile, collection);
+    indexFile.writeAscii(g_outFile);
   } else {
     // default to binary output file.
     g_outFile.open(clo.outFilePath, std::ios::binary);
-    writeBinary<Ty>(g_outFile, collection);
+    indexFile.writeBinary(g_outFile);
   }
 
   if (clo.printBlocks) {
@@ -78,6 +79,33 @@ doAllTheStuff(const CommandLineOptions &clo)
     }
   }
 
+}
+
+template<typename Ty>
+void
+readIndexFile(const CommandLineOptions & clo)
+{
+  if (clo.outputFileType == "ascii") {
+    std::cerr << "Reading the ascii index file type isn't implemented.\n "
+        "However, not all hope is lost! Because it is ASCII text, you can \n"
+        "open it in a text editor and read it manually :) ." <<
+    std::endl;
+
+    cleanUp();
+    exit(1);
+  }
+
+}
+
+template<typename Ty>
+void
+execute(const CommandLineOptions &clo)
+{
+  if (clo.actionType == "write") {
+    generateIndexFile<Ty>(clo);
+  } else {
+    readIndexFile<Ty>(clo);
+  }
 }
 
 
@@ -104,30 +132,29 @@ int main(int argc, const char *argv[])
   }
   printThem(clo); // print cmd line options
 
+
   switch(datfile.dataType) {
 
   case bd::DataType::UnsignedCharacter:
-    doAllTheStuff<unsigned char>(clo);
+    execute<unsigned char>(clo);
     break;
 
   case bd::DataType::UnsignedShort:
-    doAllTheStuff<unsigned short>(clo);
+    execute<unsigned short>(clo);
     break;
 
   case bd::DataType::Float:
-    doAllTheStuff<float>(clo);
+    execute<float>(clo);
     break;
 
   default:
-    std::cerr << "Unsupported/unknown datatype: " <<
-        bd::to_string(datfile.dataType) << ".\n";
+    std::cerr << "Unsupported/unknown datatype: " << bd::to_string(datfile.dataType)
+        << ".\n";
 
     cleanUp();
     exit(1);
     break;
   }
-
-
 
   cleanUp();
   return 0;

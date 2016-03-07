@@ -16,6 +16,8 @@ struct CommandLineOptions {
   std::string type;
   // output file type
   std::string outputFileType;
+  // Action to perform (write/read index file)
+  std::string actionType;
   // true if block data should be dumped to file
   bool printBlocks;
   // number of blocks X

@@ -1,7 +1,6 @@
 #ifndef indexfile_h__
 #define indexfile_h__
 
-
 #include "fileblock.h"
 #include "blockcollection2.h"
 
@@ -31,6 +30,9 @@ struct IndexFileHeader
   float vol_max;
 };
 
+std::ostream&
+operator<<(std::ostream & os, const IndexFileHeader &h);
+
 namespace
 {
   const unsigned short MAGIC{ 7376 }; ///< Magic number for the file
@@ -39,53 +41,76 @@ namespace
 
 }  // namespace
 
+template<typename Ty>
+class IndexFile {
+
+public:
+  IndexFile(const BlockCollection2<Ty> &collection);
+  ~IndexFile();
 
 ///////////////////////////////////////////////////////////////////////////////
 /// \brief Read binary index file from \c is and populate \c collection with 
 ///        blocks.
 ///////////////////////////////////////////////////////////////////////////////
-template<typename Ty>
-void 
-readBinary(std::istream &is, BlockCollection2<Ty> &collection);
-
+  void
+  readBinary(std::istream& is);
 
 ///////////////////////////////////////////////////////////////////////////////
 /// \brief Write the binary header for index file.
 ///////////////////////////////////////////////////////////////////////////////
-template<typename Ty>
-void
-writeIndexFileHeaderBinary(std::ostream &os, const BlockCollection2<Ty> &collection);
-
+  void
+  writeIndexFileHeaderBinary(std::ostream& os);
 
 ///////////////////////////////////////////////////////////////////////////////
 /// \brief Write single block binary to \c os.
 ///////////////////////////////////////////////////////////////////////////////
-void
-writeSingleBlockHeaderBinary(std::ostream &os, const FileBlock &block);
-
+  void
+  writeSingleBlockHeaderBinary(std::ostream& os, const FileBlock& block);
 
 ///////////////////////////////////////////////////////////////////////////////
 /// \brief Write binary index file to ostream \c os.
 ///////////////////////////////////////////////////////////////////////////////
-template<typename Ty>
-void
-writeBinary(std::ostream &os, const BlockCollection2<Ty> &collection);
-
+  void
+  writeBinary(std::ostream& os);
 
 ///////////////////////////////////////////////////////////////////////////////
 /// \brief Write ascii index file to ostream \c os.
 ///////////////////////////////////////////////////////////////////////////////
-template<typename Ty>
-void
-writeAscii(std::ostream &os, const BlockCollection2<Ty> &collection);
+  void
+  writeAscii(std::ostream& os);
 
+  static IndexFileHeader
+  getHeaderFromCollection(const BlockCollection2<Ty> &collection);
 
+  const IndexFileHeader &
+  getHeader() const;
+
+private:
+  BlockCollection2<Ty> m_collection;
+  IndexFileHeader m_header;
+
+};
 
 
 ///////////////////////////////////////////////////////////////////////////////
 template<typename Ty>
+IndexFile<Ty>::IndexFile(const BlockCollection2<Ty> &collection)
+  : m_collection{ collection }
+  , m_header{ IndexFile<Ty>::getHeaderFromCollection( collection ) }
+{ }
+
+
+///////////////////////////////////////////////////////////////////////////////
+template<typename Ty>
+IndexFile<Ty>::~IndexFile()
+{ }
+
+
+///////////////////////////////////////////////////////////////////////////////
+// static member
+template<typename Ty>
 IndexFileHeader
-getHeaderFromCollection(const BlockCollection2<Ty> &collection)
+IndexFile<Ty>::getHeaderFromCollection(const BlockCollection2<Ty> &collection)
 {
   IndexFileHeader ifh{
       MAGIC, VERSION, HEAD_LEN,
@@ -96,11 +121,18 @@ getHeaderFromCollection(const BlockCollection2<Ty> &collection)
   return ifh;
 }
 
+template<typename Ty>
+const IndexFileHeader &
+IndexFile<Ty>::getHeader() const
+{
+  return m_header;
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 template<typename Ty>
 void
-readBinary(std::istream &is, BlockCollection2<Ty> &collection)
+IndexFile<Ty>::readBinary(std::istream &is)
 {
   // read header
   IndexFileHeader ifh;
@@ -113,7 +145,7 @@ readBinary(std::istream &is, BlockCollection2<Ty> &collection)
   FileBlock fb;
   for (size_t i = 0; i < numBlocks; ++i) {
     is.read(reinterpret_cast<char*>(&fb), sizeof(FileBlock));
-    collection.addBlock(fb);
+    m_collection.addBlock(fb);
   }
 
 }
@@ -122,22 +154,31 @@ readBinary(std::istream &is, BlockCollection2<Ty> &collection)
 ///////////////////////////////////////////////////////////////////////////////
 template<typename Ty>
 void
-writeIndexFileHeaderBinary(std::ostream &os, const BlockCollection2<Ty> &collection)
+IndexFile<Ty>::writeIndexFileHeaderBinary(std::ostream &os)
 {
-  const IndexFileHeader ifh = getHeaderFromCollection(collection);
+  //const IndexFileHeader ifh = getHeaderFromCollection(collection);
 
-  os.write(reinterpret_cast<const char*>(&ifh), sizeof(IndexFileHeader));
+  os.write(reinterpret_cast<const char*>(&m_header), sizeof(IndexFileHeader));
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 template<typename Ty>
 void
-writeBinary(std::ostream &os, const BlockCollection2<Ty> &collection)
+IndexFile<Ty>::writeSingleBlockHeaderBinary(std::ostream & os, const FileBlock &block)
 {
-  writeIndexFileHeaderBinary(os, collection);
+  os.write(reinterpret_cast<const char*>(&block), sizeof(FileBlock));
+}
 
-  for (const FileBlock &b : collection.blocks()) {
+
+///////////////////////////////////////////////////////////////////////////////
+template<typename Ty>
+void
+IndexFile<Ty>::writeBinary(std::ostream &os)
+{
+  writeIndexFileHeaderBinary(os);
+
+  for (const FileBlock &b : m_collection.blocks()) {
     writeSingleBlockHeaderBinary(os, b);
   }
 }
@@ -147,14 +188,14 @@ writeBinary(std::ostream &os, const BlockCollection2<Ty> &collection)
 ///////////////////////////////////////////////////////////////////////////////
 template<typename Ty>
 void
-writeAscii(std::ostream &os, const BlockCollection2<Ty> &collection)
+IndexFile<Ty>::writeAscii(std::ostream &os)
 {
-  os << getHeaderFromCollection(collection) << "\n";
-  for (const FileBlock &b : collection.blocks()) {
+  os << m_header << "\n";
+  for (const FileBlock &b : m_collection.blocks()) {
     os << b << "\n";
   }
 }
-std::ostream&
-operator<<(std::ostream & os, const IndexFileHeader &h);
+
+
 
 #endif //! indexfile_h__

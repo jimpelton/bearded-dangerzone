@@ -9,16 +9,6 @@
 #include <ostream>
 
 
-
-///////////////////////////////////////////////////////////////////////////////
-void 
-writeSingleBlockHeaderBinary(std::ostream & os, const FileBlock &block)
-{
-  os.write(reinterpret_cast<const char*>(&block), sizeof(FileBlock));
-}
-
-
-
 ///////////////////////////////////////////////////////////////////////////////
 std::ostream& 
 operator<<(std::ostream & os, const FileBlock &block)
@@ -43,7 +33,10 @@ operator<<(std::ostream & os, const IndexFileHeader &h)
     "{ Magic: " << h.magic_number <<
     "\n  Version: " << h.version <<
     "\n  Header Length: " << h.header_length <<
-    "\n  Number o' Blocks: " << h.numblocks[0] << "x" << h.numblocks[1] << "x" << h.numblocks[2] << 
+    "\n  Number o' Blocks: " << h.numblocks[0] << "x" << h.numblocks[1] << "x" << h.numblocks[2] <<
+    "\n  Vol Avg: " << h.vol_avg <<
+    "\n  Vol Min: " << h.vol_min <<
+    "\n  Vol Max: " << h.vol_max <<
     " }";
 
   return os;

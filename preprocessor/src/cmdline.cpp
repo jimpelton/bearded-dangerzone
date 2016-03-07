@@ -43,6 +43,12 @@ try {
   TCLAP::ValueArg<std::string> outputTypeArg("", "output", "Output file type (ascii, binary)", false, "", &outputTypesAllowValues);
   cmd.add(outputTypeArg);
 
+  TCLAP::SwitchArg readArg("r", "read", "Read existing index file");
+  cmd.add(readArg);
+
+  TCLAP::SwitchArg writeArg("w", "write", "Write new index file from raw file");
+  cmd.add(writeArg);
+
   // volume dims
   TCLAP::ValueArg<size_t> xdimArg("", "volx", "Volume x dim.", false, 1, "uint");
   cmd.add(xdimArg);
@@ -94,6 +100,12 @@ try {
   opts.numblk_z = zBlocksArg.getValue();
   opts.tmin = tmin.getValue();
   opts.tmax = tmax.getValue();
+
+  if (readArg.getValue()) {
+    opts.actionType = "read";
+  } else {
+    opts.actionType = "write";
+  }
 
   return static_cast<int>(cmd.getArgList().size());
 
