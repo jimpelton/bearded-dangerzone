@@ -51,7 +51,7 @@ public:
   /// \param out[out]   Destination space for block data.
   //////////////////////////////////////////////////////////////////////////////
   void
-  fillBlockData(FileBlock &b, glm::u64vec3 index, std::istream &infile, Ty* out);
+  fillBlockData(FileBlock &b, std::istream &infile, Ty* out);
 
 
   //////////////////////////////////////////////////////////////////////////////
@@ -160,8 +160,8 @@ BlockCollection2<Ty>::BlockCollection2(glm::u64vec3 volDims, glm::u64vec3 numBlo
   : m_blockDims{ volDims / numBlocks }
   , m_volDims{ volDims }
   , m_numBlocks{ numBlocks }
-  , m_volMax{ std::numeric_limits<Ty>::min() }
-  , m_volMin{ std::numeric_limits<Ty>::max() }
+  , m_volMax{ std::numeric_limits<float>::min() }
+  , m_volMin{ std::numeric_limits<float>::max() }
   , m_volAvg{ 0.0f }
 {
 
@@ -330,25 +330,49 @@ BlockCollection2<Ty>::filterBlocks(std::istream &rawFile, float tmin, float tmax
   Ty * image{ new Ty[blkPoints] };
 
   for (FileBlock &b : m_blocks) {
-
-    // Convert 1D block index to 3D i,j,k indices.
-    glm::u64 x = b.block_index %  m_numBlocks.x;
-    glm::u64 y = (b.block_index / m_numBlocks.x) % m_numBlocks.y;
-    glm::u64 z = (b.block_index / m_numBlocks.x) / m_numBlocks.y;
-    
-    fillBlockData(b, { x,y,z }, rawFile, image);
-    
-    // TODO: call filter function.
+    fillBlockData(b, rawFile, image);
 
     // compute block stats
-    for (size_t i = 0; i < blkPoints; ++i) {
-      Ty val{ image[i] };
-      b.max_val  = std::max<Ty>(b.max_val, val);
-      b.min_val  = std::min<Ty>(b.min_val, val);
-      b.avg_val += static_cast<float>(val);
-    } // for i
+//    for (size_t i = 0; i < blkPoints; ++i) {
+//      Ty val{ image[i] };
+//      b.max_val  = std::max<float>(b.max_val, val);
+//      b.min_val  = std::min<float>(b.min_val, val);
+//      b.avg_val += static_cast<float>(val);
+//    } // for i
+//    b.avg_val /= blkPoints;
+
+    // Find min/max/avg values
+    b.min_val = std::numeric_limits<float>::max();
+    b.max_val = std::numeric_limits<float>::min();
+    b.avg_val = 0.0f;
+    std::for_each(image, image+blkPoints,
+        [&](const Ty &t) {
+          b.min_val  = std::min<float>(b.min_val, t);
+          b.max_val  = std::max<float>(b.max_val, t);
+          b.avg_val += t;
+        });
     b.avg_val /= blkPoints;
 
+    // Normalize values in the block.
+//    const float diff{ m_volMax - m_volMin };
+//    std::for_each(image, image+blkPoints,
+//        [this, diff](Ty &t) {
+//          t = (t - this->m_volMin) / diff;
+//        });
+//
+//    // Now, re-find the new min/max/avg values
+//    b.min_val = std::numeric_limits<float>::max();
+//    b.max_val = std::numeric_limits<float>::min();
+//    b.avg_val = 0.0f;
+//    std::for_each(image, image+blkPoints,
+//        [&](const Ty &t) {
+//          b.max_val  = std::max<float>(b.max_val, t);
+//          b.min_val  = std::min<float>(b.min_val, t);
+//          b.avg_val += t;
+//        });
+//    b.avg_val /= blkPoints;
+
+    // TODO: call filter function.
     if (b.avg_val < tmin || b.avg_val > tmax) {
       b.is_empty = 1;
     } else {
@@ -385,33 +409,34 @@ BlockCollection2<Ty>::readBlockRow
 
 template<typename Ty>
 void
-BlockCollection2<Ty>::fillBlockData(FileBlock &block, glm::u64vec3 index,
-    std::istream &infile, Ty* blockBuffer)
+BlockCollection2<Ty>::fillBlockData(FileBlock &b, std::istream &infile,
+    Ty* blockBuffer)
 {
-
+  // Convert 1D block index to 3D i,j,k indices.
+  glm::u64vec3 index{
+      b.block_index %  m_numBlocks.x,
+      (b.block_index / m_numBlocks.x) % m_numBlocks.y,
+      (b.block_index / m_numBlocks.x) / m_numBlocks.y
+  };
   // start element = block index w/in volume * block size
   const glm::u64vec3 start{ index * m_blockDims };
   // block end element = block voxel start dims + block size
   const glm::u64vec3 end{ start + m_blockDims };
 
   // location in file where this block starts
-  block.data_offset =
+  b.data_offset =
       bd::to1D(start.x, start.y, start.z, m_volDims.x, m_volDims.y) * sizeof(Ty);
 
   const size_t blockRowLength{ m_blockDims.x };
-
   for (auto slab = start.z; slab < end.z; ++slab) {
     for (auto row = start.y; row < end.y; ++row) {
-
       // seek to start of row
-      size_t rowOff{
-          bd::to1D(start.x, row, slab, m_volDims.x, m_volDims.y) * sizeof(Ty) };
-      infile.seekg(rowOff, infile.beg);
+      size_t offset{ bd::to1D(start.x, row, slab, m_volDims.x, m_volDims.y) * sizeof(Ty) };
+      infile.seekg(offset, infile.beg);
 
       // read the bytes of current row
       infile.read(reinterpret_cast<char*>(blockBuffer), blockRowLength * sizeof(Ty));
       blockBuffer += blockRowLength;
-
     }
   }
 }
