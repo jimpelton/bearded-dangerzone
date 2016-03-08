@@ -327,10 +327,9 @@ BlockCollection2<Ty>::filterBlocks(std::istream &rawFile, float tmin, float tmax
   for (FileBlock &b : m_blocks) {
 
     // Convert 1D block index to 3D i,j,k indices.
-    //TODO: this is super messed up!
-    glm::u64 z = b.block_index %  m_numBlocks.z;
-    glm::u64 y = (b.block_index / m_numBlocks.z) % m_numBlocks.y;
-    glm::u64 x = b.block_index / (m_numBlocks.y  * m_numBlocks.z);
+    glm::u64 x = b.block_index %  m_numBlocks.x;
+    glm::u64 y = (b.block_index / m_numBlocks.x) % m_numBlocks.y;
+    glm::u64 z = (b.block_index / m_numBlocks.x) / m_numBlocks.y;
     
     fillBlockData(b, { x,y,z }, rawFile, image);
     
