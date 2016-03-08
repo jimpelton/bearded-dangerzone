@@ -187,7 +187,7 @@ BlockCollection2<Ty>::initBlocks()
   const glm::u64vec3 &vd = m_volDims;
 
   // block world dims
-  glm::vec3 wld_dims{ 2.0f / glm::vec3(nb) };
+  glm::vec3 wld_dims{ 1.0f / glm::vec3(nb) };
 
   gl_log("Starting block init: Number of blocks: %dx%dx%d, "
       "Volume dimensions: %dx%dx%d Block dimensions: %.2f,%.2f,%.2f",
