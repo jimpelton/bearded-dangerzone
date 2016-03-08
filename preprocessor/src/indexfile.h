@@ -67,6 +67,7 @@ class IndexFile
 
 public:
   IndexFile(const BlockCollection2<Ty> &collection);
+  IndexFile(const IndexFile<Ty> &) = default;
   ~IndexFile();
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -138,9 +139,9 @@ IndexFile<Ty>::getHeaderFromCollection(const BlockCollection2<Ty> &collection)
       collection.numBlocks().x,
       collection.numBlocks().y,
       collection.numBlocks().z,
-      static_cast<float>(collection.volAvg()),
-      static_cast<float>(collection.volMin()),
-      static_cast<float>(collection.volMax()) };
+      collection.volAvg(),
+      collection.volMin(),
+      collection.volMax() };
 
   return ifh;
 }
@@ -180,8 +181,6 @@ template<typename Ty>
 void
 IndexFile<Ty>::writeIndexFileHeaderBinary(std::ostream &os)
 {
-  //const IndexFileHeader ifh = getHeaderFromCollection(collection);
-
   os.write(reinterpret_cast<const char*>(&m_header), sizeof(IndexFileHeader));
 }
 

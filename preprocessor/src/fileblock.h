@@ -19,9 +19,9 @@
 ///   block index       | 8 bytes unsigned
 ///   block st. offset  | 8 bytes unsigned
 ///   --
-///   block dims X      | 4 bytes unsigned
-///   block dims Y      | 4 bytes unsigned
-///   block dims Z      | 4 bytes unsigned
+///   block dims X      | 8 bytes unsigned
+///   block dims Y      | 8 bytes unsigned
+///   block dims Z      | 8 bytes unsigned
 ///   --
 ///   block X pos       | 4 bytes float
 ///   block Y pos       | 4 bytes float
@@ -53,7 +53,7 @@ struct FileBlock
 
   uint64_t block_index;    ///< The 1D idx of this block (derived from the i,j,k block-grid coordinates).
   uint64_t data_offset;    ///< Offset into the raw file that the block data starts.
-  uint32_t voxel_dims[3];  ///< Dimensions of this block in voxels.
+  uint64_t voxel_dims[3];  ///< Dimensions of this block in voxels.
   float world_pos[3];      ///< Cordinates within canonical cube.
   float min_val;           ///< The min value found in this block.
   float max_val;           ///< The largest value found in this block.

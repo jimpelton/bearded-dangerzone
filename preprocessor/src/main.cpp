@@ -49,10 +49,10 @@ void
 generateIndexFile(const CommandLineOptions &clo)
 {
   BlockCollection2<Ty> collection{
-      glm::u64vec3{clo.numblk_x, clo.numblk_y, clo.numblk_z},
-      glm::u64vec3{clo.vol_w, clo.vol_h, clo.vol_d}
+      glm::u64vec3{clo.vol_w, clo.vol_h, clo.vol_d},
+      glm::u64vec3{clo.numblk_x, clo.numblk_y, clo.numblk_z}
   };
-  collection.initBlocks( );
+  collection.initBlocks();
 
   g_rawFile.open(clo.filePath, std::ios::in | std::ios::binary);
   if (! g_rawFile.is_open()) {
