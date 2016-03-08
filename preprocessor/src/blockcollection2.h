@@ -319,6 +319,11 @@ template<typename Ty>
 void
 BlockCollection2<Ty>::filterBlocks(std::istream &rawFile, float tmin, float tmax)
 {
+
+  gl_log("Computing volume statistics...");
+  computeVolumeStatistics(rawFile);
+  gl_log("Computing volume statistics... done.");
+
   // total voxels per block
   size_t blkPoints{ m_blockDims.x * m_blockDims.y * m_blockDims.z };
 

@@ -132,8 +132,8 @@ int main(int argc, const char *argv[])
   }
   printThem(clo); // print cmd line options
 
-
-  switch(datfile.dataType) {
+  bd::DataType type{ bd::DataTypesMap.at(clo.type) };
+  switch(type) {
 
   case bd::DataType::UnsignedCharacter:
     execute<unsigned char>(clo);
