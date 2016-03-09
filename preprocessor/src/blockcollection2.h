@@ -55,14 +55,6 @@ public:
 
 
   //////////////////////////////////////////////////////////////////////////////
-  /// \brief Read offset
-  /// \param nb[in]      Number of blocks in x,y,z directions.
-  /// \param vd[in]      Volume dimensions
-  //////////////////////////////////////////////////////////////////////////////
-  void
-  readBlockRow(std::istream &infile, size_t col, size_t row, size_t slab, Ty *rowBuffer);
-
-  //////////////////////////////////////////////////////////////////////////////
   /// \brief Initializes \c nb blocks so that they fit within the extent of \c vd.
   /// \param nb[in]      Number of blocks in x,y,z directions.
   /// \param vd[in]      Volume dimensions
@@ -70,11 +62,10 @@ public:
   void
   initBlocks();
 
-  
-  //////////////////////////////////////////////////////////////////////////////
-  void
-  computeVolumeStatistics(std::istream& infile);
 
+  //////////////////////////////////////////////////////////////////////////////
+  /// \brief Add a pre-initialized block to this BlockCollection2.
+  /// \param b The block to add.
   //////////////////////////////////////////////////////////////////////////////
   void
   addBlock(const FileBlock &b);
@@ -142,6 +133,11 @@ public:
 
 private:
 
+  //////////////////////////////////////////////////////////////////////////////
+  void
+  computeVolumeStatistics(std::istream& infile);
+
+
   glm::u64vec3 m_blockDims; ///< Dimensions of a block in something.
   glm::u64vec3 m_volDims;   ///< Volume dimensions (# data points).
   glm::u64vec3 m_numBlocks; ///< Number of blocks volume is divided into.
@@ -200,14 +196,18 @@ BlockCollection2<Ty>::initBlocks()
     for (auto by = 0ull; by < nb.y; ++by)
       for (auto bx = 0ull; bx < nb.x; ++bx) {
         // i,j,k block identifier
-        glm::u64vec3 blkId{ bx, by, bz };
+        const glm::u64vec3 blkId{ bx, by, bz };
         // lower left corner in world coordinates
-        glm::vec3 worldLoc{ wld_dims * glm::vec3(blkId) - 0.5f }; // - 0.5f;
+        const glm::vec3 worldLoc{ wld_dims * glm::vec3(blkId) - 0.5f }; // - 0.5f;
         // origin (centroid) in world coordiates
-        glm::vec3 blk_origin{ (worldLoc + (worldLoc + wld_dims)) * 0.5f };
+        const glm::vec3 blk_origin{ (worldLoc + (worldLoc + wld_dims)) * 0.5f };
+        // voxel start of block within volume
+        const glm::u64vec3 startVoxel{ blkId * m_blockDims };
 
         FileBlock blk;
         blk.block_index = bd::to1D(bx, by, bz, nb.x, nb.y);
+        blk.data_offset = bd::to1D(startVoxel.x, startVoxel.y, startVoxel.z, 
+            m_volDims.x, m_volDims.y) * sizeof(Ty);
         blk.voxel_dims[0] = static_cast<uint32_t>(m_blockDims.x);
         blk.voxel_dims[1] = static_cast<uint32_t>(m_blockDims.y);
         blk.voxel_dims[2] = static_cast<uint32_t>(m_blockDims.z);
@@ -322,13 +322,13 @@ BlockCollection2<Ty>::filterBlocks(std::istream &rawFile, float tmin, float tmax
 
   gl_log("Computing volume statistics...");
   computeVolumeStatistics(rawFile);
-  gl_log("Computing volume statistics... done.");
 
   // total voxels per block
-  size_t blkPoints{ m_blockDims.x * m_blockDims.y * m_blockDims.z };
+  size_t numvox{ m_blockDims.x * m_blockDims.y * m_blockDims.z };
 
-  Ty * image{ new Ty[blkPoints] };
+  Ty * image{ new Ty[numvox] };
 
+  gl_log("Starting block filtering for %d blocks...", m_numBlocks.x*m_numBlocks.y*m_numBlocks.z);
   for (FileBlock &b : m_blocks) {
     fillBlockData(b, rawFile, image);
 
@@ -345,13 +345,13 @@ BlockCollection2<Ty>::filterBlocks(std::istream &rawFile, float tmin, float tmax
     b.min_val = std::numeric_limits<float>::max();
     b.max_val = std::numeric_limits<float>::min();
     b.avg_val = 0.0f;
-    std::for_each(image, image+blkPoints,
+    std::for_each(image, image+numvox,
         [&](const Ty &t) {
           b.min_val  = std::min<float>(b.min_val, t);
           b.max_val  = std::max<float>(b.max_val, t);
           b.avg_val += t;
         });
-    b.avg_val /= blkPoints;
+    b.avg_val /= numvox;
 
     // Normalize values in the block.
 //    const float diff{ m_volMax - m_volMin };
@@ -389,28 +389,14 @@ BlockCollection2<Ty>::filterBlocks(std::istream &rawFile, float tmin, float tmax
 }
 
 
-
 template<typename Ty>
 void
-BlockCollection2<Ty>::readBlockRow
+BlockCollection2<Ty>::fillBlockData
 (
-  std::istream &infile, 
-  size_t c, size_t r, size_t s, 
-  Ty *rowBuffer
+  FileBlock &b, 
+  std::istream &infile,
+  Ty* blockBuffer
 )
-{
-  // seek to start of row
-  size_t rowOff = bd::to1D(c, r, s, m_volDims.x, m_volDims.y) * sizeof(Ty);
-  infile.seekg(rowOff, infile.beg);
-
-  // read the bytes of current row
-  infile.read(reinterpret_cast<char*>(rowBuffer), m_blockDims.x * sizeof(Ty));
-}
-
-template<typename Ty>
-void
-BlockCollection2<Ty>::fillBlockData(FileBlock &b, std::istream &infile,
-    Ty* blockBuffer)
 {
   // Convert 1D block index to 3D i,j,k indices.
   glm::u64vec3 index{
@@ -418,25 +404,31 @@ BlockCollection2<Ty>::fillBlockData(FileBlock &b, std::istream &infile,
       (b.block_index / m_numBlocks.x) % m_numBlocks.y,
       (b.block_index / m_numBlocks.x) / m_numBlocks.y
   };
+
   // start element = block index w/in volume * block size
   const glm::u64vec3 start{ index * m_blockDims };
   // block end element = block voxel start dims + block size
   const glm::u64vec3 end{ start + m_blockDims };
-
+  
+  size_t offset{ b.data_offset };
   // location in file where this block starts
-  b.data_offset =
-      bd::to1D(start.x, start.y, start.z, m_volDims.x, m_volDims.y) * sizeof(Ty);
+//  b.data_offset =
+//      bd::to1D(start.x, start.y, start.z, m_volDims.x, m_volDims.y) * sizeof(Ty);
 
+  // Loop through rows and slabs of volume reading rows of voxels into memory.
   const size_t blockRowLength{ m_blockDims.x };
   for (auto slab = start.z; slab < end.z; ++slab) {
     for (auto row = start.y; row < end.y; ++row) {
       // seek to start of row
-      size_t offset{ bd::to1D(start.x, row, slab, m_volDims.x, m_volDims.y) * sizeof(Ty) };
       infile.seekg(offset, infile.beg);
-
+      
       // read the bytes of current row
       infile.read(reinterpret_cast<char*>(blockBuffer), blockRowLength * sizeof(Ty));
       blockBuffer += blockRowLength;
+
+      // offset of next row
+      offset = bd::to1D(start.x, row, slab, m_volDims.x, m_volDims.y);
+      offset *= sizeof(Ty);
     }
   }
 }
