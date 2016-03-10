@@ -5,13 +5,13 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "cmdline.h"
-#include "blockcollection2.h"
-#include "indexfile.h"
 
 #include <bd/util/util.h>
 #include <bd/file/parsedat.h>
-
+#include <bd/volume/indexfile.h>
+#include <bd/volume/blockcollection2.h>
 #include <bd/log/gl_log.h>
+
 #include <iostream>
 
 
@@ -48,11 +48,10 @@ template<typename Ty>
 void
 generateIndexFile(const CommandLineOptions &clo)
 {
-  BlockCollection2<Ty> collection{
+  bd::BlockCollection2<Ty> collection{
       glm::u64vec3{clo.vol_w, clo.vol_h, clo.vol_d},
       glm::u64vec3{clo.numblk_x, clo.numblk_y, clo.numblk_z}
   };
-  collection.initBlocks();
 
   g_rawFile.open(clo.filePath, std::ios::in | std::ios::binary);
   if (! g_rawFile.is_open()) {
@@ -62,7 +61,7 @@ generateIndexFile(const CommandLineOptions &clo)
   }
 
   collection.filterBlocks(g_rawFile, clo.tmin, clo.tmax);
-  IndexFile<Ty> indexFile{ collection };
+  bd::IndexFile<Ty> indexFile{ collection };
 
   if (clo.outputFileType == "ascii") {
     g_outFile.open(clo.outFilePath);
@@ -90,11 +89,29 @@ readIndexFile(const CommandLineOptions & clo)
         "However, not all hope is lost! Because it is ASCII text, you can \n"
         "open it in a text editor and read it manually :) ." <<
     std::endl;
-
     cleanUp();
     exit(1);
   }
 
+  std::ifstream file{ clo.filePath, std::ios::binary };
+  if (! file.is_open()){
+    std::cerr << "The file " << clo.filePath << " could not be opened." << std::endl;
+    cleanUp();
+    exit(1);
+  }
+
+  bd::IndexFileHeader ifh{ bd::IndexFile<Ty>::getHeaderFromStream(file) };
+  bd::BlockCollection2<Ty> collection{{ clo.vol_w,    clo.vol_h,    clo.vol_d },
+                                      { clo.numblk_x, clo.numblk_y, clo.numblk_z }};
+
+  bd::IndexFile<Ty> index{ collection };
+
+
+  if (clo.printBlocks) {
+    for (auto &block : collection.blocks()) {
+      std::cout << block << std::endl;
+    }
+  }
 }
 
 template<typename Ty>
@@ -104,13 +121,15 @@ execute(const CommandLineOptions &clo)
   if (clo.actionType == "write") {
     generateIndexFile<Ty>(clo);
   } else {
+    std::cout << "Going to read file." << std::endl;
     readIndexFile<Ty>(clo);
   }
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
-int main(int argc, const char *argv[])
+int
+main(int argc, const char *argv[])
 {
   bd::gl_log_restart();
 
@@ -150,9 +169,6 @@ int main(int argc, const char *argv[])
   default:
     std::cerr << "Unsupported/unknown datatype: " << bd::to_string(datfile.dataType)
         << ".\n";
-
-    cleanUp();
-    exit(1);
     break;
   }
 

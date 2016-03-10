@@ -427,7 +427,7 @@ BlockCollection2<Ty>::fillBlockData
       blockBuffer += blockRowLength;
 
       // offset of next row
-      offset = bd::to1D(start.x, row, slab, m_volDims.x, m_volDims.y);
+      offset = bd::to1D(start.x, row+1, slab, m_volDims.x, m_volDims.y);
       offset *= sizeof(Ty);
     }
   }
