@@ -85,12 +85,15 @@ try {
 
   cmd.parse(argc, argv);
 
+  opts.actionType = readArg.getValue() ?
+                    ActionType::READ : ActionType::WRITE;
   opts.filePath = fileArg.getValue();
   opts.outFilePath = outFileArg.getValue();
   opts.tfuncPath = tfuncArg.getValue();
   opts.datFilePath = datFileArg.getValue();
   opts.type = dataTypeArg.getValue();
-  opts.outputFileType = outputTypeArg.getValue();
+  opts.outputFileType = outputTypeArg.getValue() == "ascii" ?
+                        OutputType::Ascii : OutputType::Binary;
   opts.printBlocks = printBlocksArg.getValue();
   opts.vol_w = xdimArg.getValue();
   opts.vol_h = ydimArg.getValue();
@@ -100,12 +103,6 @@ try {
   opts.numblk_z = zBlocksArg.getValue();
   opts.tmin = tmin.getValue();
   opts.tmax = tmax.getValue();
-
-  if (readArg.getValue()) {
-    opts.actionType = "read";
-  } else {
-    opts.actionType = "write";
-  }
 
   return static_cast<int>(cmd.getArgList().size());
 
@@ -126,12 +123,13 @@ std::ostream &
 operator<<(std::ostream & os, const CommandLineOptions &opts)
 {
   os <<
+    "Action type: " << (opts.actionType == ActionType::READ ? "Read" : "Write") << "\n"
     "File path: " << opts.filePath << "\n"
     "Output file path: " << opts.outFilePath << "\n"
     "Transfer function path: " << opts.tfuncPath << "\n"
     "Dat file: " << opts.datFilePath << "\n"
     "Data Type: " << opts.type << "\n"
-    "Output file type: " << opts.outputFileType << "\n"
+    "Output file type: " << (opts.outputFileType == OutputType::Binary ? "Binary" : "Ascii") << "\n"
     "Vol dims (w X h X d): " << opts.vol_w << " X " << opts.vol_h << " X " << opts.vol_d << "\n"
     "Num blocks (x X y X z): " << opts.numblk_x << " X " << opts.numblk_y << " X " << opts.numblk_z << "\n"
     "Threshold (min-max): " << opts.tmin << " - " << opts.tmax << "\n"

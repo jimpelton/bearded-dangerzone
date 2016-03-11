@@ -3,6 +3,14 @@
 
 #include <string>
 
+enum class ActionType {
+  READ, WRITE
+};
+
+enum class OutputType {
+  Ascii, Binary
+};
+
 struct CommandLineOptions {
   // raw file path
   std::string filePath;
@@ -15,9 +23,9 @@ struct CommandLineOptions {
   // volume data type
   std::string type;
   // output file type
-  std::string outputFileType;
+  OutputType outputFileType;
   // Action to perform (write/read index file)
-  std::string actionType;
+  ActionType actionType;
   // true if block data should be dumped to file
   bool printBlocks;
   // number of blocks X

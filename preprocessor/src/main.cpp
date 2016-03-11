@@ -14,7 +14,6 @@
 
 #include <iostream>
 
-
 std::ifstream g_rawFile;
 std::ofstream g_outFile;
 
@@ -63,7 +62,7 @@ generateIndexFile(const CommandLineOptions &clo)
   collection.filterBlocks(g_rawFile, clo.tmin, clo.tmax);
   bd::IndexFile<Ty> indexFile{ collection };
 
-  if (clo.outputFileType == "ascii") {
+  if (clo.outputFileType == OutputType::Ascii) {
     g_outFile.open(clo.outFilePath);
     indexFile.writeAscii(g_outFile);
   } else {
@@ -84,33 +83,32 @@ template<typename Ty>
 void
 readIndexFile(const CommandLineOptions & clo)
 {
-  if (clo.outputFileType == "ascii") {
-    std::cerr << "Reading the ascii index file type isn't implemented.\n "
-        "However, not all hope is lost! Because it is ASCII text, you can \n"
-        "open it in a text editor and read it manually :) ." <<
-    std::endl;
-    cleanUp();
-    exit(1);
-  }
+//  if (clo.outputFileType == "ascii") {
+//    std::cerr << "Reading the ascii index file type isn't implemented.\n "
+//        "However, not all hope is lost! Because it is ASCII text, you can \n"
+//        "open it in a text editor and read it manually :) ." <<
+//    std::endl;
+//    cleanUp();
+//    exit(1);
+//  }
 
-  std::ifstream file{ clo.filePath, std::ios::binary };
-  if (! file.is_open()){
+  std::ifstream inFile{ clo.filePath, std::ios::binary };
+  if (! inFile.is_open()){
     std::cerr << "The file " << clo.filePath << " could not be opened." << std::endl;
     cleanUp();
     exit(1);
   }
 
-  bd::IndexFileHeader ifh{ bd::IndexFile<Ty>::getHeaderFromStream(file) };
-  bd::BlockCollection2<Ty> collection{{ clo.vol_w,    clo.vol_h,    clo.vol_d },
-                                      { clo.numblk_x, clo.numblk_y, clo.numblk_z }};
+  bd::IndexFileHeader ifh{ bd::IndexFile<Ty>::makeHeaderFromStream(inFile) };
+  bd::BlockCollection2<Ty> collection{
+      { ifh.num_vox[0], ifh.num_vox[1], ifh.num_vox[2] },
+      { ifh.numblocks[0], ifh.numblocks[1], ifh.numblocks[2] }};
 
   bd::IndexFile<Ty> index{ collection };
+  index.readBinary(inFile);
 
-
-  if (clo.printBlocks) {
-    for (auto &block : collection.blocks()) {
-      std::cout << block << std::endl;
-    }
+  for (auto &block : collection.blocks()) {
+    std::cout << block << std::endl;
   }
 }
 
@@ -118,10 +116,9 @@ template<typename Ty>
 void
 execute(const CommandLineOptions &clo)
 {
-  if (clo.actionType == "write") {
+  if (clo.actionType == ActionType::WRITE) {
     generateIndexFile<Ty>(clo);
   } else {
-    std::cout << "Going to read file." << std::endl;
     readIndexFile<Ty>(clo);
   }
 }
@@ -140,19 +137,22 @@ main(int argc, const char *argv[])
     exit(1);
   }
 
-  bd::DatFileData datfile;
-  if (! clo.datFilePath.empty()) {
-    bd::parseDat(clo.datFilePath, datfile);
-    clo.vol_w = datfile.rX;
-    clo.vol_h = datfile.rY;
-    clo.vol_d = datfile.rZ;
-    clo.type = bd::to_string(datfile.dataType);
-    std::cout << datfile << "\n.";
+  if (clo.actionType == ActionType::WRITE) {
+    bd::DatFileData datfile;
+    if (!clo.datFilePath.empty()) {
+      bd::parseDat(clo.datFilePath, datfile);
+      clo.vol_w = datfile.rX;
+      clo.vol_h = datfile.rY;
+      clo.vol_d = datfile.rZ;
+      clo.type = bd::to_string(datfile.dataType);
+      std::cout << datfile << "\n.";
+    }
+  } else {
+
   }
   printThem(clo); // print cmd line options
-
   bd::DataType type{ bd::DataTypesMap.at(clo.type) };
-  switch(type) {
+  switch (type) {
 
   case bd::DataType::UnsignedCharacter:
     execute<unsigned char>(clo);
@@ -167,10 +167,12 @@ main(int argc, const char *argv[])
     break;
 
   default:
-    std::cerr << "Unsupported/unknown datatype: " << bd::to_string(datfile.dataType)
+    std::cerr << "Unsupported/unknown datatype: "
+        << bd::to_string(clo.type)
         << ".\n";
     break;
   }
+
 
   cleanUp();
   return 0;
