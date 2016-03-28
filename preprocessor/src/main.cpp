@@ -52,6 +52,7 @@ generateIndexFile(const CommandLineOptions &clo)
       glm::u64vec3{clo.numblk_x, clo.numblk_y, clo.numblk_z}
   };
 
+  // open raw file
   g_rawFile.open(clo.filePath, std::ios::in | std::ios::binary);
   if (! g_rawFile.is_open()) {
     std::cerr << clo.filePath << " not found." << std::endl;
@@ -59,6 +60,7 @@ generateIndexFile(const CommandLineOptions &clo)
     exit(1);
   }
 
+  // filter the blocks
   collection.filterBlocks(g_rawFile, clo.tmin, clo.tmax);
   bd::IndexFile<Ty> indexFile{ collection };
 
@@ -81,7 +83,7 @@ generateIndexFile(const CommandLineOptions &clo)
 
 template<typename Ty>
 void
-readIndexFile(const CommandLineOptions & clo)
+readIndexFile(const CommandLineOptions & clo, const bd::IndexFileHeader &header)
 {
 //  if (clo.outputFileType == "ascii") {
 //    std::cerr << "Reading the ascii index file type isn't implemented.\n "
@@ -92,6 +94,7 @@ readIndexFile(const CommandLineOptions & clo)
 //    exit(1);
 //  }
 
+  // open index file (binary)
   std::ifstream inFile{ clo.filePath, std::ios::binary };
   if (! inFile.is_open()){
     std::cerr << "The file " << clo.filePath << " could not be opened." << std::endl;
@@ -99,14 +102,16 @@ readIndexFile(const CommandLineOptions & clo)
     exit(1);
   }
 
-  bd::IndexFileHeader ifh{ bd::IndexFile<Ty>::makeHeaderFromStream(inFile) };
+  // get the header so we know params for BlockCollection object.
   bd::BlockCollection2<Ty> collection{
-      { ifh.num_vox[0], ifh.num_vox[1], ifh.num_vox[2] },
-      { ifh.numblocks[0], ifh.numblocks[1], ifh.numblocks[2] }};
+      { clo.vol_w, clo.vol_h, clo.vol_d },
+      { clo.numblk_x, clo.numblk_y, clo.numblk_z }};
 
-  bd::IndexFile<Ty> index{ collection };
+  // Read the rest of file into BlockCollection
+  bd::IndexFile<Ty> index{ collection, header };
   index.readBinary(inFile);
 
+  // Print the collection to stdout.
   for (auto &block : collection.blocks()) {
     std::cout << block << std::endl;
   }
@@ -147,11 +152,22 @@ main(int argc, const char *argv[])
       clo.type = bd::to_string(datfile.dataType);
       std::cout << datfile << "\n.";
     }
-  } else {
 
+  } else {
+    // if reading, we don't care what the data type actually is, because
+    // we will never open the volume data.
+    clo.type = bd::to_string(bd::DataType::Float);
   }
+
   printThem(clo); // print cmd line options
-  bd::DataType type{ bd::DataTypesMap.at(clo.type) };
+  bd::DataType type;
+  try {
+    type = bd::DataTypesMap.at(clo.type);
+  } catch (std::exception e) {
+    std::cerr << e.what() << std::endl;
+    exit(1);
+  }
+
   switch (type) {
 
   case bd::DataType::UnsignedCharacter:
@@ -167,9 +183,7 @@ main(int argc, const char *argv[])
     break;
 
   default:
-    std::cerr << "Unsupported/unknown datatype: "
-        << bd::to_string(clo.type)
-        << ".\n";
+    std::cerr << "Unsupported/unknown datatype: " << clo.type << ".\n";
     break;
   }
 

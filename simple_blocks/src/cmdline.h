@@ -3,6 +3,14 @@
 
 #include <string>
 
+enum class FileDataType
+{
+  Ascii, Binary
+};
+
+enum class
+
+
 struct CommandLineOptions {
   // raw file path
   std::string filePath;

@@ -29,17 +29,17 @@ struct CommandLineOptions {
   // true if block data should be dumped to file
   bool printBlocks;
   // number of blocks X
-  size_t numblk_x;
+  unsigned long long numblk_x;
   // number of blocks Y
-  size_t numblk_y;
+  unsigned long long numblk_y;
   // number of blocks Z
-  size_t numblk_z;
+  unsigned long long numblk_z;
   // vol width
-  size_t vol_w;
+  unsigned long long vol_w;
   // vol height
-  size_t vol_h;
+  unsigned long long vol_h;
   // vol depth
-  size_t vol_d;
+  unsigned long long vol_d;
   // threshold max
   float tmax;
   // threshold minimum
