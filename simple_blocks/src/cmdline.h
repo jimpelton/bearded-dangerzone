@@ -13,13 +13,13 @@ enum class
 
 struct CommandLineOptions {
   // raw file path
-  std::string filePath;
+  std::string inFilePath;
   // transfer function file path
   std::string tfuncPath;
   // for .dat descriptor file (currently unimplemented)
   std::string datFilePath;
   // volume data type
-  std::string type;
+  std::string dataType;
   // true if block data should be dumped to file
   bool printBlocks;
   // number of blocks X

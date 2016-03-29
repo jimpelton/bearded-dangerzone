@@ -12,116 +12,67 @@
 #include <bd/volume/blockcollection2.h>
 #include <bd/log/gl_log.h>
 
-#include <iostream>
-
-std::ifstream g_rawFile;
-std::ofstream g_outFile;
 
 
-///////////////////////////////////////////////////////////////////////////////
-void cleanUp()
-{
-  bd::gl_log_close();
-
-  if (g_rawFile.is_open()) {
-    g_rawFile.close();
-  }
-
-  if (g_outFile.is_open()) {
-    g_outFile.flush();
-    g_outFile.close();
-  }
-
-}
 
 
-///////////////////////////////////////////////////////////////////////////////
-template<typename Ty>
-size_t
-blockBytes(const glm::u64vec3 &dims)
-{
-  return dims.x * dims.y * dims.z * sizeof(Ty);
-}
 
 template<typename Ty>
 void
 generateIndexFile(const CommandLineOptions &clo)
 {
-  bd::BlockCollection2<Ty> collection{
-      glm::u64vec3{clo.vol_w, clo.vol_h, clo.vol_d},
-      glm::u64vec3{clo.numblk_x, clo.numblk_y, clo.numblk_z}
+
+  float minmax[2];
+  minmax[0] = clo.tmin;
+  minmax[1] = clo.tmax;
+
+  std::shared_ptr<bd::IndexFile> indexFile{
+      bd::IndexFile::fromRawFile(
+        clo.inFilePath,
+        bd::DataTypesMap.at(clo.dataType),
+        clo.vol_dims,
+        clo.num_blks,
+        minmax)
   };
 
-  // open raw file
-  g_rawFile.open(clo.filePath, std::ios::in | std::ios::binary);
-  if (! g_rawFile.is_open()) {
-    std::cerr << clo.filePath << " not found." << std::endl;
-    cleanUp();
-    exit(1);
-  }
+  switch(clo.outputFileType){
+  case OutputType::Ascii:
+    indexFile->writeAsciiIndexFile(clo.outFilePath);
+    break;
 
-  // filter the blocks
-  collection.filterBlocks(g_rawFile, clo.tmin, clo.tmax);
-  bd::IndexFile<Ty> indexFile{ collection };
-
-  if (clo.outputFileType == OutputType::Ascii) {
-    g_outFile.open(clo.outFilePath);
-    indexFile.writeAscii(g_outFile);
-  } else {
-    // default to binary output file.
-    g_outFile.open(clo.outFilePath, std::ios::binary);
-    indexFile.writeBinary(g_outFile);
+  case OutputType::Binary:
+    indexFile->writeBinaryIndexFile(clo.outFilePath);
+    break;
   }
 
   if (clo.printBlocks) {
-    for (auto &block : collection.blocks()) {
-      std::cout << block << std::endl;
+    std::stringstream ss;
+    ss << "{\n";
+    for (std::shared_ptr<bd::FileBlock> block : indexFile->blocks()) {
+      std::cout << *block << std::endl;
     }
+    ss << "}\n";
   }
-
 }
 
 template<typename Ty>
 void
-readIndexFile(const CommandLineOptions & clo, const bd::IndexFileHeader &header)
+readIndexFile(const CommandLineOptions & clo)
 {
-//  if (clo.outputFileType == "ascii") {
-//    std::cerr << "Reading the ascii index file type isn't implemented.\n "
-//        "However, not all hope is lost! Because it is ASCII text, you can \n"
-//        "open it in a text editor and read it manually :) ." <<
-//    std::endl;
-//    cleanUp();
-//    exit(1);
-//  }
 
-  // open index file (binary)
-  std::ifstream inFile{ clo.filePath, std::ios::binary };
-  if (! inFile.is_open()){
-    std::cerr << "The file " << clo.filePath << " could not be opened." << std::endl;
-    cleanUp();
-    exit(1);
-  }
+  std::shared_ptr<bd::IndexFile> index{
+      bd::IndexFile::fromBinaryIndexFile(clo.inFilePath)
+  };
 
-  // get the header so we know params for BlockCollection object.
-  bd::BlockCollection2<Ty> collection{
-      { clo.vol_w, clo.vol_h, clo.vol_d },
-      { clo.numblk_x, clo.numblk_y, clo.numblk_z }};
+  index->writeAsciiIndexFile(clo.outFilePath);
 
-  // Read the rest of file into BlockCollection
-  bd::IndexFile<Ty> index{ collection, header };
-  index.readBinary(inFile);
-
-  // Print the collection to stdout.
-  for (auto &block : collection.blocks()) {
-    std::cout << block << std::endl;
-  }
 }
 
 template<typename Ty>
 void
 execute(const CommandLineOptions &clo)
 {
-  if (clo.actionType == ActionType::WRITE) {
+  if (clo.actionType == ActionType::GENERATE) {
     generateIndexFile<Ty>(clo);
   } else {
     readIndexFile<Ty>(clo);
@@ -138,34 +89,28 @@ main(int argc, const char *argv[])
   CommandLineOptions clo;
   if (parseThem(argc, argv, clo) == 0) {
     gl_log_err("Command line parse error, exiting.");
-    cleanUp();
     exit(1);
   }
 
-  if (clo.actionType == ActionType::WRITE) {
-    bd::DatFileData datfile;
+  if (clo.actionType == ActionType::GENERATE) {
     if (!clo.datFilePath.empty()) {
+      bd::DatFileData datfile;
       bd::parseDat(clo.datFilePath, datfile);
-      clo.vol_w = datfile.rX;
-      clo.vol_h = datfile.rY;
-      clo.vol_d = datfile.rZ;
-      clo.type = bd::to_string(datfile.dataType);
-      std::cout << datfile << "\n.";
+      clo.vol_dims[0] = datfile.rX;
+      clo.vol_dims[1] = datfile.rY;
+      clo.vol_dims[2] = datfile.rZ;
+      clo.dataType = bd::to_string(datfile.dataType);
+      std::cout << ".dat file: \n" << datfile << "\n.";
     }
-
-  } else {
-    // if reading, we don't care what the data type actually is, because
-    // we will never open the volume data.
-    clo.type = bd::to_string(bd::DataType::Float);
   }
 
   printThem(clo); // print cmd line options
+
   bd::DataType type;
   try {
-    type = bd::DataTypesMap.at(clo.type);
+    type = bd::DataTypesMap.at(clo.dataType);
   } catch (std::exception e) {
     std::cerr << e.what() << std::endl;
-    exit(1);
   }
 
   switch (type) {
@@ -183,12 +128,12 @@ main(int argc, const char *argv[])
     break;
 
   default:
-    std::cerr << "Unsupported/unknown datatype: " << clo.type << ".\n";
+    std::cerr << "Unsupported/unknown datatype: " << clo.dataType << ".\n Executing with float data type as default.";
+    execute<float>(clo);
     break;
   }
 
 
-  cleanUp();
   return 0;
 }
 

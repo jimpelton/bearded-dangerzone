@@ -4,7 +4,7 @@
 #include <string>
 
 enum class ActionType {
-  READ, WRITE
+  CONV, GENERATE
 };
 
 enum class OutputType {
@@ -13,7 +13,7 @@ enum class OutputType {
 
 struct CommandLineOptions {
   // raw file path
-  std::string filePath;
+  std::string inFilePath;
   // output file path
   std::string outFilePath;
   // transfer function file path
@@ -21,25 +21,17 @@ struct CommandLineOptions {
   // for .dat descriptor file (currently unimplemented)
   std::string datFilePath;
   // volume data type
-  std::string type;
+  std::string dataType;
   // output file type
   OutputType outputFileType;
   // Action to perform (write/read index file)
   ActionType actionType;
   // true if block data should be dumped to file
   bool printBlocks;
-  // number of blocks X
-  unsigned long long numblk_x;
-  // number of blocks Y
-  unsigned long long numblk_y;
-  // number of blocks Z
-  unsigned long long numblk_z;
-  // vol width
-  unsigned long long vol_w;
-  // vol height
-  unsigned long long vol_h;
-  // vol depth
-  unsigned long long vol_d;
+  // number of blocks
+  unsigned long long num_blks[3];
+  // volume dimensions
+  unsigned long long vol_dims[3];
   // threshold max
   float tmax;
   // threshold minimum

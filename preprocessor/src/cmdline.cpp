@@ -86,21 +86,26 @@ try {
   cmd.parse(argc, argv);
 
   opts.actionType = readArg.getValue() ?
-                    ActionType::READ : ActionType::WRITE;
-  opts.filePath = fileArg.getValue();
+                    ActionType::CONV : ActionType::GENERATE;
+
+  opts.inFilePath = fileArg.getValue();
   opts.outFilePath = outFileArg.getValue();
   opts.tfuncPath = tfuncArg.getValue();
   opts.datFilePath = datFileArg.getValue();
-  opts.type = dataTypeArg.getValue();
+  opts.dataType = dataTypeArg.getValue();
   opts.outputFileType = outputTypeArg.getValue() == "ascii" ?
                         OutputType::Ascii : OutputType::Binary;
+
   opts.printBlocks = printBlocksArg.getValue();
-  opts.vol_w = xdimArg.getValue();
-  opts.vol_h = ydimArg.getValue();
-  opts.vol_d = zdimArg.getValue();
-  opts.numblk_x = xBlocksArg.getValue();
-  opts.numblk_y = yBlocksArg.getValue();
-  opts.numblk_z = zBlocksArg.getValue();
+
+  opts.vol_dims[0] = xdimArg.getValue();
+  opts.vol_dims[1] = ydimArg.getValue();
+  opts.vol_dims[2] = zdimArg.getValue();
+
+  opts.num_blks[0] = xBlocksArg.getValue();
+  opts.num_blks[1] = yBlocksArg.getValue();
+  opts.num_blks[2] = zBlocksArg.getValue();
+
   opts.tmin = tmin.getValue();
   opts.tmax = tmax.getValue();
 
@@ -123,15 +128,15 @@ std::ostream &
 operator<<(std::ostream & os, const CommandLineOptions &opts)
 {
   os <<
-    "Action type: " << (opts.actionType == ActionType::READ ? "Read" : "Write") << "\n"
-    "File path: " << opts.filePath << "\n"
+    "Action type: " << (opts.actionType == ActionType::CONV ? "Convert" : "Generate") << "\n"
+    "File path: " << opts.inFilePath << "\n"
     "Output file path: " << opts.outFilePath << "\n"
     "Transfer function path: " << opts.tfuncPath << "\n"
     "Dat file: " << opts.datFilePath << "\n"
-    "Data Type: " << opts.type << "\n"
+    "Data Type: " << opts.dataType << "\n"
     "Output file type: " << (opts.outputFileType == OutputType::Binary ? "Binary" : "Ascii") << "\n"
-    "Vol dims (w X h X d): " << opts.vol_w << " X " << opts.vol_h << " X " << opts.vol_d << "\n"
-    "Num blocks (x X y X z): " << opts.numblk_x << " X " << opts.numblk_y << " X " << opts.numblk_z << "\n"
+    "Vol dims (w X h X d): " << opts.vol_dims[0] << " X " << opts.vol_dims[1] << " X " << opts.vol_dims[2] << "\n"
+    "Num blocks (x X y X z): " << opts.num_blks[0] << " X " << opts.num_blks[1] << " X " << opts.num_blks[2] << "\n"
     "Threshold (min-max): " << opts.tmin << " - " << opts.tmax << "\n"
     "Print blocks: " << (opts.printBlocks ? "True" : "False");
 

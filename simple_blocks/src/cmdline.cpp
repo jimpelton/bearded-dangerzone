@@ -81,9 +81,9 @@ try {
 
   cmd.parse(argc, argv);
 
-  opts.filePath = fileArg.getValue();
+  opts.inFilePath = fileArg.getValue();
   opts.tfuncPath = tfuncArg.getValue();
-  opts.type = dataTypeArg.getValue();
+  opts.dataType = dataTypeArg.getValue();
   opts.printBlocks = printBlocksArg.getValue();
   opts.vol_w = xdimArg.getValue();
   opts.vol_h = ydimArg.getValue();
@@ -109,12 +109,12 @@ try {
 
 void printThem(CommandLineOptions &opts) {
   std::cout <<
-  "File path: " << opts.filePath << "\n"
+  "File path: " << opts.inFilePath << "\n"
       "Transfer function: " << opts.tfuncPath << "\n"
       "Dat file: " << opts.datFilePath << "\n"
       "Perf out file: " << opts.perfOutPath << "\n"
       "Perf mode: " << opts.perfMode << "\n"
-      "Data Type: " << opts.type << "\n"
+      "Data Type: " << opts.dataType << "\n"
       "Vol dims (w X h X d): " << opts.vol_w << " X " << opts.vol_h << " X " << opts.vol_d << "\n"
       "Num blocks (x X y X z): " << opts.numblk_x << " X " << opts.numblk_y << " X " << opts.numblk_z << "\n"
       "Num Slices: " << opts.num_slices << "\n"
