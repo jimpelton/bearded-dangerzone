@@ -13,10 +13,6 @@
 #include <bd/log/gl_log.h>
 
 
-
-
-
-
 template<typename Ty>
 void
 generateIndexFile(const CommandLineOptions &clo)
@@ -29,13 +25,14 @@ generateIndexFile(const CommandLineOptions &clo)
   std::shared_ptr<bd::IndexFile> indexFile{
       bd::IndexFile::fromRawFile(
         clo.inFilePath,
-        bd::DataTypesMap.at(clo.dataType),
+        bd::to_dataType(clo.dataType),
         clo.vol_dims,
         clo.num_blks,
         minmax)
   };
 
-  switch(clo.outputFileType){
+  switch(clo.outputFileType) {
+
   case OutputType::Ascii:
     indexFile->writeAsciiIndexFile(clo.outFilePath);
     break;
@@ -106,13 +103,7 @@ main(int argc, const char *argv[])
 
   printThem(clo); // print cmd line options
 
-  bd::DataType type;
-  try {
-    type = bd::DataTypesMap.at(clo.dataType);
-  } catch (std::exception e) {
-    std::cerr << e.what() << std::endl;
-  }
-
+  bd::DataType type{ bd::to_dataType(clo.dataType) };
   switch (type) {
 
   case bd::DataType::UnsignedCharacter:
@@ -128,8 +119,8 @@ main(int argc, const char *argv[])
     break;
 
   default:
-    std::cerr << "Unsupported/unknown datatype: " << clo.dataType << ".\n Executing with float data type as default.";
-    execute<float>(clo);
+    std::cerr << "Unsupported/unknown datatype: " << clo.dataType << ".\n Exiting...";
+    return 1;
     break;
   }
 
