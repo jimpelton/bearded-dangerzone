@@ -72,8 +72,8 @@ try {
 
 
   // buffer size
-  const unsigned sixty_four_megs = 67'108'864;
-  TCLAP::ValueArg<size_t> bufferSizeArg("b", "buffer-sz", "Buffer size bytes", false, sixty_four_megs, "uint64");
+  const std::string sixty_four_megs = "64M";
+  TCLAP::ValueArg<std::string> bufferSizeArg("b", "buffer-sz", "Buffer size bytes", false, sixty_four_megs, "uint");
   cmd.add(bufferSizeArg);
 
   // threshold min/max
@@ -109,7 +109,9 @@ try {
   opts.num_blks[1] = yBlocksArg.getValue();
   opts.num_blks[2] = zBlocksArg.getValue();
 
-  opts.bufferSize = bufferSizeArg.getValue();
+
+
+  opts.bufferSize = convertToBytes(bufferSizeArg.getValue());
 
   opts.tmin = tmin.getValue();
   opts.tmax = tmax.getValue();
@@ -122,6 +124,25 @@ try {
   return 0;
 }
 
+size_t
+convertToBytes(std::string s)
+{
+  size_t multiplier{ 1 };
+  std::string last{ *(s.end()-1) };
+
+  if (last == "K") {
+    multiplier = 1024;
+  } else if (last == "M") {
+    multiplier = 1024*1024;
+  } else if (last == "G") {
+    multiplier = 1024*1024*1024;
+  }
+
+  std::string numPart(s.begin(), s.end()-1);
+  auto num = stoull(numPart);
+
+  return num*multiplier;
+}
 
 void 
 printThem(const CommandLineOptions &opts) 

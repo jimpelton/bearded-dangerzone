@@ -41,6 +41,9 @@ struct CommandLineOptions {
   float tmin;
 };
 
+size_t
+convertToBytes(std::string s);
+
 ///////////////////////////////////////////////////////////////////////////////
 /// \brief Parses command line args and populates \c opts.
 ///
