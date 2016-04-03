@@ -21,10 +21,12 @@ generateIndexFile(const CommandLineOptions &clo)
   float minmax[2];
   minmax[0] = clo.tmin;
   minmax[1] = clo.tmax;
+  //const size_t bufsz = 67'108'864;
 
   std::shared_ptr<bd::IndexFile> indexFile{
       bd::IndexFile::fromRawFile(
         clo.inFilePath,
+        clo.bufferSize,
         bd::to_dataType(clo.dataType),
         clo.vol_dims,
         clo.num_blks,
@@ -69,7 +71,7 @@ template<typename Ty>
 void
 execute(const CommandLineOptions &clo)
 {
-  if (clo.actionType == ActionType::GENERATE) {
+  if (clo.actionType == ActionType::Generate) {
     generateIndexFile<Ty>(clo);
   } else {
     readIndexFile<Ty>(clo);
@@ -89,7 +91,7 @@ main(int argc, const char *argv[])
     exit(1);
   }
 
-  if (clo.actionType == ActionType::GENERATE) {
+  if (clo.actionType == ActionType::Generate) {
     if (!clo.datFilePath.empty()) {
       bd::DatFileData datfile;
       bd::parseDat(clo.datFilePath, datfile);
@@ -101,7 +103,7 @@ main(int argc, const char *argv[])
     }
   }
 
-  printThem(clo); // print cmd line options
+  std::cout << clo << std::endl; // print cmd line options
 
   bd::DataType type{ bd::to_dataType(clo.dataType) };
   switch (type) {

@@ -40,13 +40,13 @@ try {
   // ouput file type
   std::vector<std::string> outputTypes{ "ascii", "binary" };
   TCLAP::ValuesConstraint<std::string> outputTypesAllowValues(outputTypes);
-  TCLAP::ValueArg<std::string> outputTypeArg("", "output", "Output file type (ascii, binary)", false, "", &outputTypesAllowValues);
+  TCLAP::ValueArg<std::string> outputTypeArg("", "output-format", "Output file type (ascii, binary)", false, "", &outputTypesAllowValues);
   cmd.add(outputTypeArg);
 
-  TCLAP::SwitchArg readArg("r", "read", "Read existing index file");
+  TCLAP::SwitchArg readArg("c", "convert", "Read existing index file");
   cmd.add(readArg);
 
-  TCLAP::SwitchArg writeArg("w", "write", "Write new index file from raw file");
+  TCLAP::SwitchArg writeArg("g", "generate", "Write new index file from raw file");
   cmd.add(writeArg);
 
   // volume dims
@@ -71,6 +71,11 @@ try {
   cmd.add(zBlocksArg);
 
 
+  // buffer size
+  const unsigned sixty_four_megs = 67'108'864;
+  TCLAP::ValueArg<size_t> bufferSizeArg("b", "buffer-sz", "Buffer size bytes", false, sixty_four_megs, "uint64");
+  cmd.add(bufferSizeArg);
+
   // threshold min/max
   TCLAP::ValueArg<float> tmin("", "tmin", "Thresh min", false, 0.0, "float");
   cmd.add(tmin);
@@ -85,16 +90,14 @@ try {
 
   cmd.parse(argc, argv);
 
-  opts.actionType = readArg.getValue() ?
-                    ActionType::CONV : ActionType::GENERATE;
+  opts.actionType = readArg.getValue() ? ActionType::Convert : ActionType::Generate;
 
   opts.inFilePath = fileArg.getValue();
   opts.outFilePath = outFileArg.getValue();
   opts.tfuncPath = tfuncArg.getValue();
   opts.datFilePath = datFileArg.getValue();
   opts.dataType = dataTypeArg.getValue();
-  opts.outputFileType = outputTypeArg.getValue() == "ascii" ?
-                        OutputType::Ascii : OutputType::Binary;
+  opts.outputFileType = outputTypeArg.getValue() == "ascii" ? OutputType::Ascii : OutputType::Binary;
 
   opts.printBlocks = printBlocksArg.getValue();
 
@@ -105,6 +108,8 @@ try {
   opts.num_blks[0] = xBlocksArg.getValue();
   opts.num_blks[1] = yBlocksArg.getValue();
   opts.num_blks[2] = zBlocksArg.getValue();
+
+  opts.bufferSize = bufferSizeArg.getValue();
 
   opts.tmin = tmin.getValue();
   opts.tmax = tmax.getValue();
@@ -128,7 +133,7 @@ std::ostream &
 operator<<(std::ostream & os, const CommandLineOptions &opts)
 {
   os <<
-    "Action type: " << (opts.actionType == ActionType::CONV ? "Convert" : "Generate") << "\n"
+    "Action type: " << (opts.actionType == ActionType::Convert ? "Convert" : "Generate") << "\n"
     "File path: " << opts.inFilePath << "\n"
     "Output file path: " << opts.outFilePath << "\n"
     "Transfer function path: " << opts.tfuncPath << "\n"
@@ -137,6 +142,7 @@ operator<<(std::ostream & os, const CommandLineOptions &opts)
     "Output file type: " << (opts.outputFileType == OutputType::Binary ? "Binary" : "Ascii") << "\n"
     "Vol dims (w X h X d): " << opts.vol_dims[0] << " X " << opts.vol_dims[1] << " X " << opts.vol_dims[2] << "\n"
     "Num blocks (x X y X z): " << opts.num_blks[0] << " X " << opts.num_blks[1] << " X " << opts.num_blks[2] << "\n"
+    "Buffer Size: " << opts.bufferSize << " bytes.\n"
     "Threshold (min-max): " << opts.tmin << " - " << opts.tmax << "\n"
     "Print blocks: " << (opts.printBlocks ? "True" : "False");
 

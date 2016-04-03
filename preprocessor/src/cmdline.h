@@ -4,7 +4,8 @@
 #include <string>
 
 enum class ActionType {
-  CONV, GENERATE
+  Convert,  ///< Convert binary to ascii
+  Generate  ///< Generate a new binary or ascii index file
 };
 
 enum class OutputType {
@@ -29,9 +30,11 @@ struct CommandLineOptions {
   // true if block data should be dumped to file
   bool printBlocks;
   // number of blocks
-  unsigned long long num_blks[3];
+  uint64_t num_blks[3];
   // volume dimensions
-  unsigned long long vol_dims[3];
+  uint64_t vol_dims[3];
+  // buffer size
+  uint64_t bufferSize;
   // threshold max
   float tmax;
   // threshold minimum
