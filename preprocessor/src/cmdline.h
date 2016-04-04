@@ -14,7 +14,7 @@ enum class OutputType {
 
 struct CommandLineOptions {
   // raw file path
-  std::string inFilePath;
+  std::string inFile;
   // output file path
   std::string outFilePath;
   // output file prefix

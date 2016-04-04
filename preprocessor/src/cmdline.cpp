@@ -16,7 +16,7 @@ try {
 
 
   // volume data file
-  TCLAP::ValueArg<std::string> fileArg("f", "file", "Path to data file.", false, "", "string");
+  TCLAP::ValueArg<std::string> fileArg("f", "in-file", "Path to data file.", false, "", "string");
   cmd.add(fileArg);
 
   //output file
@@ -39,7 +39,7 @@ try {
   cmd.add(tfuncArg);
 
   // .dat file
-  TCLAP::ValueArg<std::string> datFileArg("d", "datfile", "Path to .dat file", false, "", "string");
+  TCLAP::ValueArg<std::string> datFileArg("d", "dat-file", "Path to .dat file", false, "", "string");
   cmd.add(datFileArg);
 
   // volume data type
@@ -79,7 +79,7 @@ try {
 
   // buffer size
   const std::string sixty_four_megs = "64M";
-  TCLAP::ValueArg<std::string> bufferSizeArg("b", "buffer-sz", "Buffer size bytes", false, sixty_four_megs, "uint");
+  TCLAP::ValueArg<std::string> bufferSizeArg("b", "buffer-size", "Buffer size bytes", false, sixty_four_megs, "uint");
   cmd.add(bufferSizeArg);
 
   // threshold min/max
@@ -98,7 +98,7 @@ try {
 
   opts.actionType = readArg.getValue() ? ActionType::Convert : ActionType::Generate;
 
-  opts.inFilePath = fileArg.getValue();
+  opts.inFile = fileArg.getValue();
 
   opts.outFilePath = outFilePathArg.getValue();
   opts.outFilePrefix = outFilePrefixArg.getValue();
@@ -166,7 +166,7 @@ operator<<(std::ostream & os, const CommandLineOptions &opts)
 {
   os <<
     "Action type: " << (opts.actionType == ActionType::Convert ? "Convert" : "Generate") << "\n"
-    "File path: " << opts.inFilePath << "\n"
+    "Input file path: " << opts.inFile << "\n"
     "Output file path: " << opts.outFilePath << "\n"
     "Output file prefix: " << opts.outFilePrefix << "\n"
     "Output file type: " << (opts.outputFileType == OutputType::Binary ? "Binary" : "Ascii") << "\n"

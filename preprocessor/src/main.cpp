@@ -30,7 +30,7 @@ generateIndexFile(const CommandLineOptions &clo)
   try {
     std::shared_ptr<bd::IndexFile> indexFile{
         bd::IndexFile::fromRawFile(
-            clo.inFilePath,
+            clo.inFile,
             clo.bufferSize,
             bd::to_dataType(clo.dataType),
             clo.vol_dims,
@@ -78,11 +78,15 @@ readIndexFile(const CommandLineOptions & clo)
 {
 
   std::shared_ptr<bd::IndexFile> index{
-      bd::IndexFile::fromBinaryIndexFile(clo.inFilePath)
+      bd::IndexFile::fromBinaryIndexFile(clo.inFile)
   };
 
-  index->writeAsciiIndexFile(clo.outFilePath);
+  auto startName = clo.inFile.rfind('/')+1;
+  auto endName = startName + (clo.inFile.size() - clo.inFile.rfind('.'));
+  std::string name(clo.inFile, startName, endName);
+  name += ".json";
 
+  index->writeAsciiIndexFile(clo.outFilePath + '/' + name);
 }
 
 template<typename Ty>
