@@ -20,8 +20,19 @@ try {
   cmd.add(fileArg);
 
   //output file
-  TCLAP::ValueArg<std::string> outFileArg("o", "outfile", "Path to output file", false, "", "string");
-  cmd.add(outFileArg);
+  TCLAP::ValueArg<std::string> outFilePathArg("o", "outfile-path", "Path to output file (default is '.')", false, ".", "string");
+  cmd.add(outFilePathArg);
+
+  //output file prefix
+  TCLAP::ValueArg<std::string> outFilePrefixArg("", "outfile-prefix", "Output file name prefix.", false, "", "string");
+  cmd.add(outFilePrefixArg);
+
+  // ouput file type
+  std::vector<std::string> outputTypes{ "ascii", "binary" };
+  TCLAP::ValuesConstraint<std::string> outputTypesAllowValues(outputTypes);
+  TCLAP::ValueArg<std::string> outputTypeArg("", "output-format", "Output file type (ascii, binary)", false, "", &outputTypesAllowValues);
+  cmd.add(outputTypeArg);
+
 
   // transfer function file
   TCLAP::ValueArg<std::string> tfuncArg("u", "tfunc", "Path to transfer function file.", false, "", "string");
@@ -37,11 +48,6 @@ try {
   TCLAP::ValueArg<std::string> dataTypeArg("t", "type", "Data type (float, ushort, uchar).", false, "", &dataTypeAllowValues);
   cmd.add(dataTypeArg);
 
-  // ouput file type
-  std::vector<std::string> outputTypes{ "ascii", "binary" };
-  TCLAP::ValuesConstraint<std::string> outputTypesAllowValues(outputTypes);
-  TCLAP::ValueArg<std::string> outputTypeArg("", "output-format", "Output file type (ascii, binary)", false, "", &outputTypesAllowValues);
-  cmd.add(outputTypeArg);
 
   TCLAP::SwitchArg readArg("c", "convert", "Read existing index file");
   cmd.add(readArg);
@@ -93,11 +99,16 @@ try {
   opts.actionType = readArg.getValue() ? ActionType::Convert : ActionType::Generate;
 
   opts.inFilePath = fileArg.getValue();
-  opts.outFilePath = outFileArg.getValue();
+
+  opts.outFilePath = outFilePathArg.getValue();
+  opts.outFilePrefix = outFilePrefixArg.getValue();
+  opts.outputFileType = outputTypeArg.getValue() == "ascii" ? OutputType::Ascii : OutputType::Binary;
+
   opts.tfuncPath = tfuncArg.getValue();
+
   opts.datFilePath = datFileArg.getValue();
   opts.dataType = dataTypeArg.getValue();
-  opts.outputFileType = outputTypeArg.getValue() == "ascii" ? OutputType::Ascii : OutputType::Binary;
+
 
   opts.printBlocks = printBlocksArg.getValue();
 
@@ -157,10 +168,11 @@ operator<<(std::ostream & os, const CommandLineOptions &opts)
     "Action type: " << (opts.actionType == ActionType::Convert ? "Convert" : "Generate") << "\n"
     "File path: " << opts.inFilePath << "\n"
     "Output file path: " << opts.outFilePath << "\n"
+    "Output file prefix: " << opts.outFilePrefix << "\n"
+    "Output file type: " << (opts.outputFileType == OutputType::Binary ? "Binary" : "Ascii") << "\n"
     "Transfer function path: " << opts.tfuncPath << "\n"
     "Dat file: " << opts.datFilePath << "\n"
     "Data Type: " << opts.dataType << "\n"
-    "Output file type: " << (opts.outputFileType == OutputType::Binary ? "Binary" : "Ascii") << "\n"
     "Vol dims (w X h X d): " << opts.vol_dims[0] << " X " << opts.vol_dims[1] << " X " << opts.vol_dims[2] << "\n"
     "Num blocks (x X y X z): " << opts.num_blks[0] << " X " << opts.num_blks[1] << " X " << opts.num_blks[2] << "\n"
     "Buffer Size: " << opts.bufferSize << " bytes.\n"

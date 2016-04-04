@@ -17,14 +17,16 @@ struct CommandLineOptions {
   std::string inFilePath;
   // output file path
   std::string outFilePath;
+  // output file prefix
+  std::string outFilePrefix;
+  // output file type
+  OutputType outputFileType;
   // transfer function file path
   std::string tfuncPath;
   // for .dat descriptor file (currently unimplemented)
   std::string datFilePath;
   // volume data type
   std::string dataType;
-  // output file type
-  OutputType outputFileType;
   // Action to perform (write/read index file)
   ActionType actionType;
   // true if block data should be dumped to file

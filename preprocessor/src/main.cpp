@@ -12,6 +12,11 @@
 #include <bd/volume/blockcollection2.h>
 #include <bd/log/gl_log.h>
 
+#include <sstream>
+#include <string>
+#include <iostream>
+#include <stdexcept>
+
 
 template<typename Ty>
 void
@@ -22,35 +27,48 @@ generateIndexFile(const CommandLineOptions &clo)
   minmax[0] = clo.tmin;
   minmax[1] = clo.tmax;
   //const size_t bufsz = 67'108'864;
+  try {
+    std::shared_ptr<bd::IndexFile> indexFile{
+        bd::IndexFile::fromRawFile(
+            clo.inFilePath,
+            clo.bufferSize,
+            bd::to_dataType(clo.dataType),
+            clo.vol_dims,
+            clo.num_blks,
+            minmax)
+    };
 
-  std::shared_ptr<bd::IndexFile> indexFile{
-      bd::IndexFile::fromRawFile(
-        clo.inFilePath,
-        clo.bufferSize,
-        bd::to_dataType(clo.dataType),
-        clo.vol_dims,
-        clo.num_blks,
-        minmax)
-  };
+    switch (clo.outputFileType) {
 
-  switch(clo.outputFileType) {
-
-  case OutputType::Ascii:
-    indexFile->writeAsciiIndexFile(clo.outFilePath);
-    break;
-
-  case OutputType::Binary:
-    indexFile->writeBinaryIndexFile(clo.outFilePath);
-    break;
-  }
-
-  if (clo.printBlocks) {
-    std::stringstream ss;
-    ss << "{\n";
-    for (std::shared_ptr<bd::FileBlock> block : indexFile->blocks()) {
-      std::cout << *block << std::endl;
+    case OutputType::Ascii: {
+      std::stringstream outFileName;
+      outFileName << clo.outFilePath << '/' << clo.outFilePrefix << '_' <<
+          clo.num_blks[0] << '-' << clo.num_blks[1] << '-' << clo.num_blks[2] << '_' <<
+          clo.tmin << '-' << clo.tmax << ".json";
+      indexFile->writeAsciiIndexFile(outFileName.str());
+      break;
     }
-    ss << "}\n";
+    case OutputType::Binary: {
+      std::stringstream outFileName;
+      outFileName << clo.outFilePath << '/' << clo.outFilePrefix << '_' <<
+          clo.num_blks[0] << '-' << clo.num_blks[1] << '-' << clo.num_blks[2] << '_' <<
+          clo.tmin << '-' << clo.tmax << ".bin";
+      indexFile->writeBinaryIndexFile(outFileName.str());
+      break;
+    }
+    }
+
+    if (clo.printBlocks) {
+      std::stringstream ss;
+      ss << "{\n";
+      for (std::shared_ptr<bd::FileBlock> block : indexFile->blocks()) {
+        std::cout << *block << std::endl;
+      }
+      ss << "}\n";
+    }
+  } catch (std::runtime_error e) {
+    std::cerr << e.what() << std::endl;
+    gl_log_err("%s", e.what());
   }
 }
 
