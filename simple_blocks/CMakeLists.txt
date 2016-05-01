@@ -48,17 +48,6 @@ if (USE_NVPMAPI)
 endif(USE_NVPMAPI)
 
 
-################################################################################
-# Libcrufterly
-if(NOT DEFINED CRUFT_INCLUDE_DIR)
-    set(CRUFT_INCLUDE_DIR)
-endif()
-set(CRUFT_INCLUDE_DIR ${${CRUFT_INCLUDE_DIR}} CACHE PATH "Cruft includes directory path")
-
-if(NOT DEFINED CRUFT_LIBRARIES)
-    set(CRUFT_LIBRARIES)
-endif()
-set(CRUFT_LIBRARIES ${${CRUFT_LIBRARIES}} CACHE FILEPATH "Cruft library file (crufterly.a).")
 
 
 ################################################################################
@@ -109,7 +98,8 @@ target_link_libraries(simple_blocks
     ${OPENGL_LIBRARIES}
     ${GLFW_LIBRARIES}
     ${GLEW_LIBRARIES}
-    ${CRUFT_LIBRARIES}
+    debug ${CRUFT_DEBUG_LIBRARIES}
+    optimized ${CRUFT_RELEASE_LIBRARIES}
     ${NVTOOLSEXT_LIB}
 )
 
