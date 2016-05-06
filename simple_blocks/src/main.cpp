@@ -16,12 +16,12 @@
 #include <bd/graphics/shader.h>
 #include <bd/graphics/vertexarrayobject.h>
 #include <bd/graphics/view.h>
+#include <bd/log/logger.h>
 #include <bd/log/gl_log.h>
 #include <bd/volume/block.h>
 #include <bd/volume/blockcollection.h>
 #include <bd/util/util.h>
 #include <bd/util/ordinal.h>
-#include <bd/log/logger.h>
 
 // GLM
 #include <glm/glm.hpp>
@@ -578,8 +578,6 @@ int main(int argc, const char *argv[]) {
   }
 
   printThem(clo);
-  bd::gl_log_restart();
-
 
   //// GLFW init ////
   GLFWwindow *window;
@@ -589,8 +587,6 @@ int main(int argc, const char *argv[]) {
   }
 
   initGraphicsState();
-
-  //// Shaders Init ////
 
 
   //// Geometry Init ////
@@ -701,7 +697,6 @@ int main(int argc, const char *argv[]) {
 
   printNvPmApiCounters(clo.perfOutPath.c_str());
   cleanup();
-  //bd::gl_log_close();
 
   return 0;
 }
