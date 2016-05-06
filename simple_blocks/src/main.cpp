@@ -21,6 +21,7 @@
 #include <bd/volume/blockcollection.h>
 #include <bd/util/util.h>
 #include <bd/util/ordinal.h>
+#include <bd/log/logger.h>
 
 // GLM
 #include <glm/glm.hpp>
@@ -149,7 +150,7 @@ unsigned int loadTransfer_1dtformat(const std::string &filename,
 /* G L F W     C A L L B A C K S                                        */
 /************************************************************************/
 void glfw_error_callback(int error, const char *description) {
-  gl_log_err("GLFW ERROR: code %i msg: %s", error, description);
+  bd::Err() << "GLFW ERROR: code " << error << " msg: " << description;
 }
 
 void setCameraPosPreset(unsigned int);
@@ -299,7 +300,7 @@ void draw() {
 ///////////////////////////////////////////////////////////////////////////////
 void loop(GLFWwindow *window) {
   assert(window!=nullptr && "window was passed as nullptr in loop()");
-  gl_log("About to enter render loop.");
+  bd::Info() << "About to enter render loop.";
 
   do {
     startCpuTime();
@@ -319,7 +320,7 @@ void loop(GLFWwindow *window) {
   } while (glfwGetKey(window, GLFW_KEY_ESCAPE)!=GLFW_PRESS &&
       glfwWindowShouldClose(window)==0);
 
-  gl_log("Render loop exited.");
+  bd::Info() << "Render loop exited.";
 }
 
 
@@ -330,7 +331,7 @@ void loop(GLFWwindow *window) {
 
 ///////////////////////////////////////////////////////////////////////////////
 void genAxisVao(bd::VertexArrayObject &vao) {
-  gl_log("Generating axis vertex buffers.");
+  bd::Info() <<  "Generating axis vertex buffers.";
 
   using Axis = bd::CoordinateAxis;
 
@@ -352,7 +353,7 @@ void genAxisVao(bd::VertexArrayObject &vao) {
 /// \brief Generate the vertex buffers for bounding box around the blocks
 ///////////////////////////////////////////////////////////////////////////////
 void genBoxVao(bd::VertexArrayObject &vao) {
-  gl_log("Generating bounding box vertex buffers.");
+  bd::Info() << "Generating bounding box vertex buffers.";
 
   // positions as vertex attribute 0
   vao.addVbo((float *) (bd::Box::vertices.data()),
@@ -379,7 +380,7 @@ void genBoxVao(bd::VertexArrayObject &vao) {
 
 /////////////////////////////////////////////////////////////////////////////////
 void initGraphicsState() {
-  gl_log("Initializing gl state.");
+  bd::Info() << "Initializing gl state.";
   gl_check(glClearColor(0.15f, 0.15f, 0.15f, 0.0f));
 
 //  gl_check(glEnable(GL_CULL_FACE));
@@ -399,9 +400,9 @@ void initGraphicsState() {
 
 /////////////////////////////////////////////////////////////////////////////////
 GLFWwindow *init() {
-  gl_log("Initializing GLFW.");
+  bd::Info() << "Initializing GLFW.";
   if (!glfwInit()) {
-    gl_log("could not start GLFW3");
+    bd::Err() << "could not start GLFW3";
     return nullptr;
   }
 
@@ -428,7 +429,7 @@ GLFWwindow *init() {
   };
 
   if (!window) {
-    gl_log("ERROR: could not open window with GLFW3");
+    bd::Err () << "ERROR: could not open window with GLFW3";
     glfwTerminate();
     return nullptr;
   }
@@ -444,7 +445,7 @@ GLFWwindow *init() {
   glewExperimental = GL_TRUE;
   GLenum error{ glewInit() };
   if (error) {
-    gl_log("Could not init glew %s", glewGetErrorString(error));
+    bd::Err() << "Could not init glew " << glewGetErrorString(error);
     return nullptr;
   }
 
@@ -481,15 +482,15 @@ void printBlocks(bd::BlockCollection *bcol) {
   std::ofstream block_file("blocks.txt", std::ofstream::trunc);
 
   if (block_file.is_open()) {
-    gl_log("Writing blocks to blocks.txt in the current working directory.");
+    bd::Info() << "Writing blocks to blocks.txt in the current working directory.";
     for (auto &b : bcol->blocks()) {
       block_file << b << "\n";
     }
     block_file.flush();
     block_file.close();
   } else {
-    gl_log_err("Could not print blocks because blocks.txt coulnt'd be created "
-                   "in the current working directory.");
+    bd::Err() << "Could not print blocks because blocks.txt couldn't be created "
+                   "in the current working directory.";
   }
 }
 
@@ -557,9 +558,9 @@ void printNvPmApiCounters(const char *perfOutPath = "") {
       printTimes(outStream);
     }
     else {
-      gl_log_err(
-          "Could not open %s for performance counter output. Using stdout instead.",
-          perfOutPath);
+      bd::Err() <<
+          "Could not open " << perfOutPath << " for performance counter output. "
+            "Using stdout instead.";
       perf_printCounters(std::cout);
       printTimes(std::cout);
     }
@@ -583,7 +584,7 @@ int main(int argc, const char *argv[]) {
   //// GLFW init ////
   GLFWwindow *window;
   if ((window = init()) == nullptr) {
-    gl_log("Could not initialize GLFW, exiting.");
+    bd::Err() << "Could not initialize GLFW, exiting.";
     return 1;
   }
 
@@ -626,7 +627,7 @@ int main(int argc, const char *argv[]) {
   };
 
   if (data == nullptr) {
-    gl_log_err("data file was not opened. exiting...");
+    bd::Err() <<  "data file was not opened. exiting...";
     cleanup();
     return 1;
   }
@@ -650,7 +651,7 @@ int main(int argc, const char *argv[]) {
   };
 
   if (wireframeProgramId==0) {
-    gl_log_err("Error building passthrough shader, program id was 0.");
+    bd::Err() << "Error building passthrough shader, program id was 0.";
     return 1;
   }
 
@@ -666,7 +667,7 @@ int main(int argc, const char *argv[]) {
   };
 
   if (volumeProgramId==0) {
-    gl_log_err("Error building volume sampling shader, program id was 0.");
+    bd::Err() << "Error building volume sampling shader, program id was 0.";
     return 1;
   }
  
@@ -678,7 +679,7 @@ int main(int argc, const char *argv[]) {
   };
 
   if (tfuncTextureId==0) {
-    gl_log_err("Exiting because tfunc texture was not bound.");
+    bd::Err() << "Exiting because tfunc texture was not bound.";
     exit(1);
   }
 
@@ -700,7 +701,7 @@ int main(int argc, const char *argv[]) {
 
   printNvPmApiCounters(clo.perfOutPath.c_str());
   cleanup();
-  bd::gl_log_close();
+  //bd::gl_log_close();
 
   return 0;
 }

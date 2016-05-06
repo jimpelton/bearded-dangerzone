@@ -1,5 +1,6 @@
 #include <bd/graphics/texture.h>
 #include <bd/log/gl_log.h>
+#include <bd/log/logger.h>
 
 #include <glm/vec4.hpp>
 
@@ -9,11 +10,11 @@
 /////////////////////////////////////////////////////////////////////////////////
 unsigned int loadTransfer_1dtformat(const std::string &filename, bd::Texture &transferTex,
                                     bd::ShaderProgram &volumeShader) {
-  gl_log("Reading 1dt formatted transfer function file and generating texture.");
+  bd::Dbg() << "Reading 1dt formatted transfer function file and generating texture.";
 
   std::ifstream file(filename.c_str(), std::ifstream::in);
   if (!file.is_open()) {
-    gl_log_err("Can't open tfunc file: %s", filename.c_str());
+    bd::Err() << "Can't open tfunc file: " << filename;
     return 0;
   }
 
@@ -23,8 +24,8 @@ unsigned int loadTransfer_1dtformat(const std::string &filename, bd::Texture &tr
   file >> numKnots; // number of entries/lines in the 1dt file.
   lineNum++;
   if (numKnots > 8192) {
-    gl_log_err("The 1dt transfer function has %d knots but max allowed is 8192)."
-                   "Skipping loading the transfer function file.", numKnots);
+    bd::Err() << "The 1dt transfer function has " << numKnots << " knots but max allowed is 8192)."
+                   "Skipping loading the transfer function file.";
     return 0;
   }
 
@@ -44,7 +45,7 @@ unsigned int loadTransfer_1dtformat(const std::string &filename, bd::Texture &tr
                              bd::Texture::Format::RGBA, numKnots) };
 
   if (texId == 0) {
-    gl_log_err("Could not make transfer function texture, returned id was 0.");
+    bd::Err() << "Could not make transfer function texture, returned id was 0.";
     return texId;
   }
 
