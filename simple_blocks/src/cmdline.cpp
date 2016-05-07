@@ -21,6 +21,10 @@ try {
   TCLAP::ValueArg<std::string> tfuncArg("u", "tfunc", "Path to transfer function file.", false, "", "string");
   cmd.add(tfuncArg);
 
+  // dat file
+  TCLAP::ValueArg<std::string> datFilePath("d", "dat-file", "Path to .dat file.", false, "", "string");
+  cmd.add(datFilePath);
+
 
   // volume data type
   std::vector<std::string> dataTypes{"float", "ushort", "uchar"};
@@ -56,10 +60,10 @@ try {
 
 
   // threshold min/max
-  TCLAP::ValueArg<float> tmin("", "tmin", "Thresh min", false, 0.0, "float");
+  TCLAP::ValueArg<float> tmin("", "tmin", "Thresh min", false, std::numeric_limits<float>::min(), "float");
   cmd.add(tmin);
 
-  TCLAP::ValueArg<float> tmax("", "tmax", "Thresh max", false, 1.0, "float");
+  TCLAP::ValueArg<float> tmax("", "tmax", "Thresh max", false, std::numeric_limits<float>::max(), "float");
   cmd.add(tmax);
 
   TCLAP::ValueArg<unsigned int> initialCameraPosArg("c", "camera-pos", "Initial camera position (z=0, y=1, x=2)", false,
@@ -83,6 +87,7 @@ try {
 
   opts.inFilePath = fileArg.getValue();
   opts.tfuncPath = tfuncArg.getValue();
+  opts.datFilePath = tfuncArg.getValue();
   opts.dataType = dataTypeArg.getValue();
   opts.printBlocks = printBlocksArg.getValue();
   opts.vol_w = xdimArg.getValue();
