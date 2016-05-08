@@ -70,13 +70,15 @@ include_directories("${THIRDPARTY_DIR}/tclap/include")
 # Sources
 set(simple_blocks_HEADERS
         src/axis_enum.h
+        src/blockrenderer.h
         src/cmdline.h
+        src/constants.h
         src/create_vao.h
         src/glfw_callbacks.h
         src/nvpm.h
         src/sliceset.h
         src/timing.h
-        src/blockrenderer.h src/constants.h)
+        )
 
 set(simple_blocks_SOURCES
         src/main.cpp
@@ -101,6 +103,7 @@ target_link_libraries(simple_blocks
     debug ${CRUFT_DEBUG_LIBRARIES}
     optimized ${CRUFT_RELEASE_LIBRARIES}
     ${NVTOOLSEXT_LIB}
+    /usr/lib/libtbb.so
 )
 
 ################################################################################

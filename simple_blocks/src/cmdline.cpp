@@ -5,6 +5,10 @@
 #include <iostream>
 #include <string>
 
+namespace subvol
+{
+
+
 int parseThem(int argc, const char *argv[], CommandLineOptions &opts)
 try {
   if (argc == 1) {
@@ -25,6 +29,9 @@ try {
   TCLAP::ValueArg<std::string> datFilePath("d", "dat-file", "Path to .dat file.", false, "", "string");
   cmd.add(datFilePath);
 
+  // index file path
+  TCLAP::ValueArg<std::string> indexFilePath("", "index-file", "Path to index file.", false, "", "string");
+  cmd.add(indexFilePath);
 
   // volume data type
   std::vector<std::string> dataTypes{"float", "ushort", "uchar"};
@@ -87,7 +94,8 @@ try {
 
   opts.inFilePath = fileArg.getValue();
   opts.tfuncPath = tfuncArg.getValue();
-  opts.datFilePath = tfuncArg.getValue();
+  opts.datFilePath = datFilePath.getValue();
+  opts.indexFilePath = indexFilePath.getValue();
   opts.dataType = dataTypeArg.getValue();
   opts.printBlocks = printBlocksArg.getValue();
   opts.vol_w = xdimArg.getValue();
@@ -127,6 +135,8 @@ void printThem(CommandLineOptions &opts) {
       "Print blocks: " << (opts.printBlocks ? "True" : "False") <<
   std::endl;
 }
+
+} // namespace subvol
 
 //namespace {
 //    boost::program_options::variables_map m_vm;

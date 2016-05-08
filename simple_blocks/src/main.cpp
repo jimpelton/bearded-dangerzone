@@ -22,6 +22,7 @@
 #include <bd/volume/blockcollection.h>
 #include <bd/util/util.h>
 #include <bd/util/ordinal.h>
+#include <bd/io/indexfile.h>
 
 // GLM
 #include <glm/glm.hpp>
@@ -570,14 +571,14 @@ void printNvPmApiCounters(const char *perfOutPath = "") {
 
 /////////////////////////////////////////////////////////////////////////////////
 int main(int argc, const char *argv[]) {
-  CommandLineOptions clo;
-  if (parseThem(argc, argv, clo)==0) {
+  subvol::CommandLineOptions clo;
+  if (subvol::parseThem(argc, argv, clo)==0) {
     std::cout << "No arguments provided.\nPlease use -h for usage info."
         << std::endl;
     return 1;
   }
 
-  printThem(clo);
+  subvol::printThem(clo);
 
   //// GLFW init ////
   GLFWwindow *window;
@@ -587,6 +588,10 @@ int main(int argc, const char *argv[]) {
   }
 
   initGraphicsState();
+
+  bd::IndexFile *indexFile{ bd::IndexFile::fromBinaryIndexFile(clo.indexFilePath) };
+  bd::IndexFileHeader header = indexFile->getHeader();
+
 
 
   //// Geometry Init ////
@@ -676,7 +681,7 @@ int main(int argc, const char *argv[]) {
 
   if (tfuncTextureId==0) {
     bd::Err() << "Exiting because tfunc texture was not bound.";
-    exit(1);
+    return 1;
   }
 
 
