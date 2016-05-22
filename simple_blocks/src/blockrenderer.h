@@ -68,6 +68,9 @@ public:
 
 
   //////////////////////////////////////////////////////////////////////////////
+  void setTFuncTexture(const bd::Texture &tfunc);
+
+  //////////////////////////////////////////////////////////////////////////////
   void setTfuncScaleValue(float val);
 
 
@@ -92,6 +95,7 @@ private:
   //////////////////////////////////////////////////////////////////////////////
   void drawNonEmptyBlocks_Forward();
 
+  void initGraphicsState();
 
   //////////////////////////////////////////////////////////////////////////////
   /// \brief Determine the viewing direction and draw the blocks in proper
@@ -117,7 +121,7 @@ private:
   bd::ShaderProgram *m_volumeShader;
   bd::ShaderProgram *m_wireframeShader;
   bd::BlockCollection *m_blockCollection;
-  bd::Texture *m_tfuncTexture;               ///< Transfer function texture
+  const bd::Texture *m_tfuncTexture;               ///< Transfer function texture
   bd::VertexArrayObject *m_quadsVao;         ///< Quad geometry verts
   bd::VertexArrayObject *m_boxesVao;         ///< bounding box wireframe verts
 

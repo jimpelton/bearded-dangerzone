@@ -76,7 +76,7 @@ set(simple_blocks_HEADERS
         src/nvpm.h
         src/sliceset.h
         src/timing.h
-        src/blockrenderer.h src/constants.h)
+        src/blockrenderer.h src/constants.h src/colormap.h)
 
 set(simple_blocks_SOURCES
         src/main.cpp
@@ -87,7 +87,7 @@ set(simple_blocks_SOURCES
         src/sliceset.cpp
         src/timing.cpp
         src/blockrenderer.cpp
-        )
+        src/colormap.cpp)
 
 
 ################################################################################

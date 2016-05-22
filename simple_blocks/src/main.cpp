@@ -8,6 +8,7 @@
 #include "timing.h"
 #include "blockrenderer.h"
 #include "constants.h"
+#include "colormap.h"
 
 // BD lib
 #include <bd/geo/axis.h>
@@ -379,23 +380,23 @@ void genBoxVao(bd::VertexArrayObject &vao) {
 
 
 /////////////////////////////////////////////////////////////////////////////////
-void initGraphicsState() {
-  bd::Info() << "Initializing gl state.";
-  gl_check(glClearColor(0.15f, 0.15f, 0.15f, 0.0f));
+//void initGraphicsState() {
+//  bd::Info() << "Initializing gl state.";
+//  gl_check(glClearColor(0.15f, 0.15f, 0.15f, 0.0f));
+//
+////  gl_check(glEnable(GL_CULL_FACE));
+////  gl_check(glCullFace(GL_FRONT));
+//  gl_check(glDisable(GL_CULL_FACE));
+//
+//  gl_check(glEnable(GL_DEPTH_TEST));
+//  gl_check(glDepthFunc(GL_LESS));
+//
+//  gl_check(glEnable(GL_BLEND));
+//  gl_check(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
 
-//  gl_check(glEnable(GL_CULL_FACE));
-//  gl_check(glCullFace(GL_FRONT));
-  gl_check(glDisable(GL_CULL_FACE));
-
-  gl_check(glEnable(GL_DEPTH_TEST));
-  gl_check(glDepthFunc(GL_LESS));
-
-  gl_check(glEnable(GL_BLEND));
-  gl_check(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
-
-  gl_check(glEnable(GL_PRIMITIVE_RESTART));
-  gl_check(glPrimitiveRestartIndex(0xFFFF));
-}
+//  gl_check(glEnable(GL_PRIMITIVE_RESTART));
+//  gl_check(glPrimitiveRestartIndex(0xFFFF));
+//}
 
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -483,7 +484,7 @@ void printBlocks(bd::BlockCollection *bcol) {
 
   if (block_file.is_open()) {
     bd::Info() << "Writing blocks to blocks.txt in the current working directory.";
-    for (auto &b : bcol->blocks()) {
+    for (const bd::Block &b : bcol->blocks()) {
       block_file << b << "\n";
     }
     block_file.flush();
@@ -567,6 +568,19 @@ void printNvPmApiCounters(const char *perfOutPath = "") {
   }
 }
 
+void
+generateTransferFunctions()
+{
+
+  unsigned char * texels = new unsigned char[256 * 4];
+  float *colormap{ subvol::ColorMap::FULL_RAINBOW.data() };
+  for (int i = 0; i < 256; i++) {
+//    texels[4 * i + RED] = colormap[4 * (i * 256 + i) + RED];
+//    texels[4 * i + GREEN] = colormap[4 * (i * 256 + i) + GREEN];
+//    texels[4 * i + BLUE] = colormap[4 * (i * 256 + i) + BLUE];
+//    texels[4 * i + ALPHA] = colormap[4 * (i * 256 + i) + ALPHA];
+  }
+}
 
 /////////////////////////////////////////////////////////////////////////////////
 int main(int argc, const char *argv[]) {
@@ -585,8 +599,6 @@ int main(int argc, const char *argv[]) {
     bd::Err() << "Could not initialize GLFW, exiting.";
     return 1;
   }
-
-  initGraphicsState();
 
 
   //// Geometry Init ////
@@ -619,7 +631,7 @@ int main(int argc, const char *argv[]) {
       glm::u64vec3(clo.vol_w, clo.vol_h, clo.vol_d));
 
   std::unique_ptr<float[]> data{
-      std::move(bd::readVolumeData(clo.dataType, clo.inFilePath, clo.vol_w, clo.vol_h, clo.vol_d))
+      bd::readVolumeData(clo.dataType, clo.inFilePath, clo.vol_w, clo.vol_h, clo.vol_d)
   };
 
   if (data == nullptr) {
@@ -666,7 +678,8 @@ int main(int argc, const char *argv[]) {
     bd::Err() << "Error building volume sampling shader, program id was 0.";
     return 1;
   }
- 
+
+  generateTransferFunctions();
   //// Transfer function texture ////
   bd::Texture *tfuncTex{ new bd::Texture(bd::Texture::Target::Tex1D) };
 

@@ -9,6 +9,7 @@
 #include <bd/log/gl_log.h>
 #include <bd/geo/quad.h>
 #include <bd/util/ordinal.h>
+#include <bd/log/logger.h>
 
 
 BlockRenderer::BlockRenderer()
@@ -39,16 +40,28 @@ bool BlockRenderer::init() {
 //  m_quadsVao.create();
 //  genQuadVao(m_quadsVao, {-0.5f,-0.5f,-0.5f}, {0.5f, 0.5f, 0.5f},
 //             {m_numSlicesPerBlock, m_numSlicesPerBlock, m_numSlicesPerBlock});
-  
+
+  // set initial graphics state.
+  initGraphicsState();
+
   m_volumeShader->bind();
-  m_tfuncTexture->bind(TRANSF_TEXTURE_UNIT);
+  setTFuncTexture(*m_tfuncTexture);
+//  m_tfuncTexture->bind(TRANSF_TEXTURE_UNIT);
   m_volumeShader->setUniform(VOLUME_SAMPLER_UNIFORM_STR, BLOCK_TEXTURE_UNIT);
   m_volumeShader->setUniform(TRANSF_SAMPLER_UNIFORM_STR, TRANSF_TEXTURE_UNIT);
   m_volumeShader->setUniform(VOLUME_TRANSF_UNIFORM_STR, 1.0f);
 
+
   return false;
 }
 
+void
+BlockRenderer::setTFuncTexture(const bd::Texture &tfunc)
+{
+  // bind tfunc to the transfer texture unit.
+  tfunc.bind(TRANSF_TEXTURE_UNIT);
+  m_tfuncTexture = &tfunc;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 void BlockRenderer::setTfuncScaleValue(float val) {
@@ -202,5 +215,24 @@ int BlockRenderer::computeBaseVertexFromViewDir(const glm::vec4 &viewdir) {
   return baseVertex;
 }
 
+void
+BlockRenderer::initGraphicsState()
+{
+  bd::Info() << "Initializing gl state.";
+  gl_check(glClearColor(0.15f, 0.15f, 0.15f, 0.0f));
+
+//  gl_check(glEnable(GL_CULL_FACE));
+//  gl_check(glCullFace(GL_FRONT));
+  gl_check(glDisable(GL_CULL_FACE));
+
+  gl_check(glEnable(GL_DEPTH_TEST));
+  gl_check(glDepthFunc(GL_LESS));
+
+  gl_check(glEnable(GL_BLEND));
+  gl_check(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+
+  gl_check(glEnable(GL_PRIMITIVE_RESTART));
+  gl_check(glPrimitiveRestartIndex(0xFFFF));
+}
 
 
