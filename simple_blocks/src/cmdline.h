@@ -3,21 +3,18 @@
 
 #include <string>
 
-enum class FileDataType
+namespace subvol
 {
-  Ascii, Binary
-};
-
-
-
-
-struct CommandLineOptions {
+struct CommandLineOptions
+{
   // raw file path
   std::string inFilePath;
   // transfer function file path
   std::string tfuncPath;
   // for .dat descriptor file (currently unimplemented)
   std::string datFilePath;
+  // index file path
+  std::string indexFilePath;
   // volume data type
   std::string dataType;
   // true if block data should be dumped to file
@@ -48,6 +45,7 @@ struct CommandLineOptions {
   bool perfMode;
 };
 
+
 ///////////////////////////////////////////////////////////////////////////////
 /// \brief Parses command line args and populates \c opts.
 ///
@@ -57,8 +55,10 @@ struct CommandLineOptions {
 ///
 /// \returns 0 on parse failure, non-zero if the parse was successful.
 ///////////////////////////////////////////////////////////////////////////////
-int parseThem(int argc, const char *argv[], CommandLineOptions &opts);
+int parseThem(int argc, const char* argv[], CommandLineOptions& opts);
 
-void printThem(CommandLineOptions &);
+
+void printThem(CommandLineOptions&);
+} // namespace subvol
 
 #endif // cmdline_h__

@@ -33,7 +33,12 @@ set(CRUFT_RELEASE_LIBRARIES ${${CRUFT_RELEASE_LIBRARIES}} CACHE FILEPATH "Cruft 
 
 
 if (UNIX)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 -std=c++14 -Wall -fdiagnostics-color=auto")
+    set(CMAKE_CXX_FLAGS
+            "${CMAKE_CXX_FLAGS} \
+            -std=c++14 \
+            -pthread \
+            -Wall \
+            -fdiagnostics-color=auto")
 endif (UNIX)
 
 # Windows requires a few extra definitions.

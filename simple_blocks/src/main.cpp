@@ -8,7 +8,6 @@
 #include "timing.h"
 #include "blockrenderer.h"
 #include "constants.h"
-#include "colormap.h"
 
 // BD lib
 #include <bd/geo/axis.h>
@@ -23,6 +22,7 @@
 #include <bd/volume/blockcollection.h>
 #include <bd/util/util.h>
 #include <bd/util/ordinal.h>
+#include <bd/io/indexfile.h>
 
 // GLM
 #include <glm/glm.hpp>
@@ -380,23 +380,23 @@ void genBoxVao(bd::VertexArrayObject &vao) {
 
 
 /////////////////////////////////////////////////////////////////////////////////
-//void initGraphicsState() {
-//  bd::Info() << "Initializing gl state.";
-//  gl_check(glClearColor(0.15f, 0.15f, 0.15f, 0.0f));
-//
-////  gl_check(glEnable(GL_CULL_FACE));
-////  gl_check(glCullFace(GL_FRONT));
-//  gl_check(glDisable(GL_CULL_FACE));
-//
-//  gl_check(glEnable(GL_DEPTH_TEST));
-//  gl_check(glDepthFunc(GL_LESS));
-//
-//  gl_check(glEnable(GL_BLEND));
-//  gl_check(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+void initGraphicsState() {
+  bd::Info() << "Initializing gl state.";
+  gl_check(glClearColor(0.15f, 0.15f, 0.15f, 0.0f));
 
-//  gl_check(glEnable(GL_PRIMITIVE_RESTART));
-//  gl_check(glPrimitiveRestartIndex(0xFFFF));
-//}
+//  gl_check(glEnable(GL_CULL_FACE));
+//  gl_check(glCullFace(GL_FRONT));
+  gl_check(glDisable(GL_CULL_FACE));
+
+  gl_check(glEnable(GL_DEPTH_TEST));
+  gl_check(glDepthFunc(GL_LESS));
+
+  gl_check(glEnable(GL_BLEND));
+  gl_check(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+
+  gl_check(glEnable(GL_PRIMITIVE_RESTART));
+  gl_check(glPrimitiveRestartIndex(0xFFFF));
+}
 
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -484,7 +484,7 @@ void printBlocks(bd::BlockCollection *bcol) {
 
   if (block_file.is_open()) {
     bd::Info() << "Writing blocks to blocks.txt in the current working directory.";
-    for (const bd::Block &b : bcol->blocks()) {
+    for (auto &b : bcol->blocks()) {
       block_file << b << "\n";
     }
     block_file.flush();
@@ -584,14 +584,14 @@ generateTransferFunctions()
 
 /////////////////////////////////////////////////////////////////////////////////
 int main(int argc, const char *argv[]) {
-  CommandLineOptions clo;
-  if (parseThem(argc, argv, clo)==0) {
+  subvol::CommandLineOptions clo;
+  if (subvol::parseThem(argc, argv, clo)==0) {
     std::cout << "No arguments provided.\nPlease use -h for usage info."
         << std::endl;
     return 1;
   }
 
-  printThem(clo);
+  subvol::printThem(clo);
 
   //// GLFW init ////
   GLFWwindow *window;
@@ -599,6 +599,8 @@ int main(int argc, const char *argv[]) {
     bd::Err() << "Could not initialize GLFW, exiting.";
     return 1;
   }
+
+  initGraphicsState();
 
 
   //// Geometry Init ////
@@ -689,7 +691,7 @@ int main(int argc, const char *argv[]) {
 
   if (tfuncTextureId==0) {
     bd::Err() << "Exiting because tfunc texture was not bound.";
-    exit(1);
+    return 1;
   }
 
 
