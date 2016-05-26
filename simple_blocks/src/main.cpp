@@ -47,6 +47,7 @@
 
 // profiling
 #include "nvpm.h"
+#include "colormap.h"
 
 
 // Constant definitions
