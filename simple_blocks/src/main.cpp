@@ -569,17 +569,54 @@ void printNvPmApiCounters(const char *perfOutPath = "") {
   }
 }
 
+glm::vec4
+lerp(glm::vec4 x, glm::vec4 y, float a)
+{
+  return x * (1.0f - a) + y * a;
+}
+
+void
+makeTexture(unsigned char *texels, size_t texLength, glm::vec4 *map, size_t mapLength)
+{
+  size_t steps{ texLength/4 };
+  float stepDelta{ mapLength/float(steps) };
+
+  glm::vec4 *mapEnd{ map+mapLength };
+
+  glm::vec4 *prevKnot{ map };
+  map++;
+  glm::vec4 *knot{ map };
+  int knotScalar{ 0 };
+  for(int i{ 0 }; i < steps; ++i) {
+
+  }
+
+  while (map != mapEnd) {
+    glm::vec4 *knot{ map };
+    float step{ 0 };
+    for(int i{ 0 }; i < steps/mapLength; ++i) {
+
+
+      step += stepDelta;
+    }
+    prevKnot = knot;
+    map++;
+  }
+
+}
+
 void
 generateTransferFunctions()
 {
-
+  const unsigned int RED = 0;
+  const unsigned int GREEN = 1;
+  const unsigned int BLUE = 2;
+  const unsigned int ALPHA = 3;
   unsigned char * texels = new unsigned char[256 * 4];
-  float *colormap{ subvol::ColorMap::FULL_RAINBOW.data() };
+  const int steps{ subvol::ColorMap::FULL_RAINBOW.size() / 256 };
+
   for (int i = 0; i < 256; i++) {
-//    texels[4 * i + RED] = colormap[4 * (i * 256 + i) + RED];
-//    texels[4 * i + GREEN] = colormap[4 * (i * 256 + i) + GREEN];
-//    texels[4 * i + BLUE] = colormap[4 * (i * 256 + i) + BLUE];
-//    texels[4 * i + ALPHA] = colormap[4 * (i * 256 + i) + ALPHA];
+
   }
 }
 

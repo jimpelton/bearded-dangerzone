@@ -6,7 +6,6 @@
 #include "constants.h"
 #include "nvpm.h"
 
-#include <bd/log/gl_log.h>
 #include <bd/geo/quad.h>
 #include <bd/util/ordinal.h>
 #include <bd/log/logger.h>
