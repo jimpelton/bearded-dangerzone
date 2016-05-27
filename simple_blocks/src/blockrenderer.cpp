@@ -16,15 +16,22 @@ BlockRenderer::BlockRenderer()
 
 
 ////////////////////////////////////////////////////////////////////////////////
-BlockRenderer::BlockRenderer(int numSlices, bd::ShaderProgram *volumeShader, 
-  bd::ShaderProgram *wireframeShader, bd::BlockCollection *blockCollection, 
-  bd::Texture *tfuncTexture, bd::VertexArrayObject *blocksVAO, 
-  bd::VertexArrayObject *bboxVAO) 
+BlockRenderer::BlockRenderer
+(
+  int numSlices,
+  bd::ShaderProgram *volumeShader,
+  bd::ShaderProgram *wireframeShader,
+  std::vector<bd::Block*> *blocks,
+  bd::Texture *colorMap,
+  bd::VertexArrayObject *blocksVAO,
+  bd::VertexArrayObject *bboxVAO
+)
   : m_numSlicesPerBlock{ numSlices }
   , m_volumeShader{ volumeShader }
   , m_wireframeShader{ wireframeShader }
-  , m_blockCollection{ blockCollection }
-  , m_tfuncTexture{ tfuncTexture }
+//  , m_blockCollection{ blockCollection }
+  , m_blocks{ blocks }
+  , m_colorMapTexture{ colorMap }
   , m_quadsVao{ blocksVAO }
   , m_boxesVao{ bboxVAO }
 { }
@@ -44,8 +51,8 @@ bool BlockRenderer::init() {
   initGraphicsState();
 
   m_volumeShader->bind();
-  setTFuncTexture(*m_tfuncTexture);
-//  m_tfuncTexture->bind(TRANSF_TEXTURE_UNIT);
+  setTFuncTexture(*m_colorMapTexture);
+//  m_colorMapTexture->bind(TRANSF_TEXTURE_UNIT);
   m_volumeShader->setUniform(VOLUME_SAMPLER_UNIFORM_STR, BLOCK_TEXTURE_UNIT);
   m_volumeShader->setUniform(TRANSF_SAMPLER_UNIFORM_STR, TRANSF_TEXTURE_UNIT);
   m_volumeShader->setUniform(VOLUME_TRANSF_UNIFORM_STR, 1.0f);
@@ -59,7 +66,7 @@ BlockRenderer::setTFuncTexture(const bd::Texture &tfunc)
 {
   // bind tfunc to the transfer texture unit.
   tfunc.bind(TRANSF_TEXTURE_UNIT);
-  m_tfuncTexture = &tfunc;
+  m_colorMapTexture = &tfunc;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -86,9 +93,9 @@ void BlockRenderer::drawNonEmptyBoundingBoxes() {
   m_wireframeShader->bind();
   m_boxesVao->bind();
 
-  for (auto *b : m_blockCollection->nonEmptyBlocks()) {
+  for (auto *b : *m_blocks) {
 
-    glm::mat4 mmvp = m_viewMatrix * b->transform().matrix();
+    glm::mat4 mmvp = m_viewMatrix * b->transform();
     m_wireframeShader->setUniform(WIREFRAME_MVP_MATRIX_UNIFORM_STR, mmvp);
 
     gl_check(glDrawElements(GL_LINE_LOOP,
@@ -136,9 +143,9 @@ void BlockRenderer::drawNonEmptyBlocks_Forward() {
   // begin NVPM profiling
   perf_frameBegin();
 
-  for (auto *b : m_blockCollection->nonEmptyBlocks()) {
+  for (auto *b : *m_blocks) {
 
-    glm::mat4 wmvp = m_viewMatrix * b->transform().matrix();
+    glm::mat4 wmvp = m_viewMatrix * b->transform();
     
     b->texture().bind(BLOCK_TEXTURE_UNIT);
     m_volumeShader->setUniform(VOLUME_MVP_MATRIX_UNIFORM_STR, wmvp);
@@ -160,7 +167,7 @@ void BlockRenderer::drawNonEmptyBlocks() {
   //TODO: sort quads farthest to nearest.
   m_quadsVao->bind();
   m_volumeShader->bind();
-  //m_tfuncTexture->bind(TRANSF_TEXTURE_UNIT);
+  //m_colorMapTexture->bind(TRANSF_TEXTURE_UNIT);
 
   drawNonEmptyBlocks_Forward();
 

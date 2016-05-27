@@ -5,65 +5,62 @@
 #ifndef SUBVOL_COLORMAPS_H
 #define SUBVOL_COLORMAPS_H
 
+#include <bd/graphics/texture.h>
+
 #include <glm/glm.hpp>
 
-#include <array>
+#include <vector>
+#include <map>
+
 
 namespace subvol
 {
-
-
-//struct RGBAColor
-//{
-//  RGBAColor(float r, float g, float b, float a)
-//      : r{ r }
-//      , g{ g }
-//      , b{ b }
-//      , a{ a }
-//  { }
-//
-//
-//  float r,g,b,a;
-//
-//};
 
 class ColorMap
 {
 
 
 public:
+  static const std::vector<glm::vec4> FULL_RAINBOW;
+  static const std::vector<glm::vec4> INVERSE_FULL_RAINBOW;
+  /* RAINBOW */
+  static const std::vector<glm::vec4> RAINBOW;
+  static const std::vector<glm::vec4> INVERSE_RAINBOW;
+  /* COLD_TO_HOT */
+  static const std::vector<glm::vec4> COLD_TO_HOT;
+  static const std::vector<glm::vec4> HOT_TO_COLD;
+  /* BLACK_TO_WHITE */
+  static const std::vector<glm::vec4> BLACK_TO_WHITE;
+  static const std::vector<glm::vec4> WHITE_TO_BLACK;
+  /* HSB_HUES */
+  static const std::vector<glm::vec4> HSB_HUES;
+  static const std::vector<glm::vec4> INVERSE_HSB_HUES;
+  /* DAVINCI */
+  static const std::vector<glm::vec4> DAVINCI;
+  static const std::vector<glm::vec4> INVERSE_DAVINCI;
+  /* SEISMIC */
+  static const std::vector<glm::vec4> SEISMIC;
+  static const std::vector<glm::vec4> INVERSE_SEISMIC;
+  /* ALL OF EM */
+  static const std::map<const char*, const std::vector<glm::vec4>* > maps;
 
-  static const std::array<glm::vec4, 7> FULL_RAINBOW;
 
-  static const std::array<glm::vec4, 7> INVERSE_FULL_RAINBOW;
+public:
+  static void generateTransferFunctionTextures();
 
-/* RAINBOW */
-  static const std::array<glm::vec4, 5> RAINBOW;
-  static const std::array<glm::vec4, 5> INVERSE_RAINBOW;
+  /// \brief Get the texture of colormap with name.
+  /// \throws std::out_of_range
+  static bd::Texture* getMapTexture(const std::string &name);
 
-/* COLD_TO_HOT */
-  static const std::array<glm::vec4, 3> COLD_TO_HOT;
-  static const std::array<glm::vec4, 3> HOT_TO_COLD;
+private:
+  static void makeTexture(std::vector<glm::vec4> *texels, const std::vector<glm::vec4> &map);
+  static glm::vec4 lerp(glm::vec4, glm::vec4, float);
 
-/* BLACK_TO_WHITE */
-  static const  std::array<glm::vec4, 2> BLACK_TO_WHITE;
 
-  static const std::array<glm::vec4, 2> WHITE_TO_BLACK;
+public:
 
-/* HSB_HUES */
-  static const std::array<glm::vec4, 7> HSB_HUES;
-
-  static const std::array<glm::vec4, 7> INVERSE_HSB_HUES;
-/* DAVINCI */
-  static const std::array<glm::vec4, 11> DAVINCI;
-
-  static const std::array<glm::vec4, 11> INVERSE_DAVINCI;
-/* SEISMIC */
-  static const std::array<glm::vec4, 3> SEISMIC;
-
-  static const std::array<glm::vec4, 3> INVERSE_SEISMIC;
-
-  static const std::map<std::string, glm::vec4*> maps;
+private:
+  static std::map<const char*, bd::Texture*> textures;
 }; // class ColorMap
 
 } // namespace subvol

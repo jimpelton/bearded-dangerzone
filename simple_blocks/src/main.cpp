@@ -84,7 +84,7 @@ enum class ObjType : unsigned int {
 };
 
 bd::CoordinateAxis g_axis; ///< The coordinate axis lines.
-bd::Box g_box;
+//bd::Box g_box;
 
 BlockRenderer *g_volRend{ nullptr };
 
@@ -107,6 +107,8 @@ float g_mouseSpeed{ 1.0f };
 bool g_toggleBlockBoxes{ false };
 bool g_toggleWireFrame{ false };
 
+bd::IndexFile *g_indexFile;
+std::vector<bd::Block*> g_blocks;
 
 //TODO: bool g_toggleVolumeBox{ false };
 
@@ -522,7 +524,7 @@ void setCameraPosPreset(unsigned cameraPos) {
     break;
   case 2:
     //put camera at { 2.0f, 0.0f, 0.0f  } (view along positive X axis)
-    r = glm::rotate(r, -1 * glm::half_pi<float>(), Y_AXIS);
+    r = glm::rotate(r, -1.0f * glm::half_pi<float>(), Y_AXIS);
     //g_camera.rotateTo(Y_AXIS);
     break;
   case 1:
@@ -569,55 +571,30 @@ void printNvPmApiCounters(const char *perfOutPath = "") {
   }
 }
 
-glm::vec4
-lerp(glm::vec4 x, glm::vec4 y, float a)
-{
-  return x * (1.0f - a) + y * a;
-}
 
 void
-makeTexture(unsigned char *texels, size_t texLength, glm::vec4 *map, size_t mapLength)
+readIndexFile(const std::string& filePath)
 {
-  size_t steps{ texLength/4 };
-  float stepDelta{ mapLength/float(steps) };
-
-  glm::vec4 *mapEnd{ map+mapLength };
-
-  glm::vec4 *prevKnot{ map };
-  map++;
-  glm::vec4 *knot{ map };
-  int knotScalar{ 0 };
-  for(int i{ 0 }; i < steps; ++i) {
-
-  }
-
-  while (map != mapEnd) {
-    glm::vec4 *knot{ map };
-    float step{ 0 };
-    for(int i{ 0 }; i < steps/mapLength; ++i) {
-
-
-      step += stepDelta;
-    }
-    prevKnot = knot;
-    map++;
-  }
-
-}
-
-void
-generateTransferFunctions()
-{
-  const unsigned int RED = 0;
-  const unsigned int GREEN = 1;
-  const unsigned int BLUE = 2;
-  const unsigned int ALPHA = 3;
-  unsigned char * texels = new unsigned char[256 * 4];
-  const int steps{ subvol::ColorMap::FULL_RAINBOW.size() / 256 };
-
-  for (int i = 0; i < 256; i++) {
-
-  }
+//  bd::BlockCollection *collection{ new bd::BlockCollection() };
+//  collection->initBlocksFromFileBlocks(indexFile->blocks(),
+//                                       {header->numblocks[0],
+//                                        header->numblocks[1],
+//                                        header->numblocks[2]});
+//
+//
+////  for(const bd::FileBlock *fb : indexFile->blocks()) {
+////    uint64_t idx{ fb->block_index };
+////
+////    uint64_t i{ idx % header->numblocks[0] };
+////    uint64_t j{ (idx / header->numblocks[0]) % header->numblocks[1] };
+////    uint64_t k{ (idx / header->numblocks[0]) / header->numblocks[1] };
+////
+////    bd::Block *b{ new bd::Block{ { i,j,k }, *fb }};
+////    g_blocks.push_back(b);
+////  }
+//
+//
+//  g_indexFile = indexFile;
 }
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -639,6 +616,8 @@ int main(int argc, const char *argv[]) {
   }
 
   initGraphicsState();
+  subvol::ColorMap::generateTransferFunctionTextures();
+  readIndexFile(clo.indexFilePath);
 
 
   //// Geometry Init ////
@@ -665,25 +644,25 @@ int main(int argc, const char *argv[]) {
 
 
   //// Blocks and Data Init ////
-  bd::BlockCollection *blockCollection{ new bd::BlockCollection() };
-  blockCollection->initBlocks(
-      glm::u64vec3(clo.numblk_x, clo.numblk_y, clo.numblk_z),
-      glm::u64vec3(clo.vol_w, clo.vol_h, clo.vol_d));
+//  bd::BlockCollection *blockCollection{ new bd::BlockCollection() };
+//  blockCollection->initBlocks(
+//      glm::u64vec3(clo.numblk_x, clo.numblk_y, clo.numblk_z),
+//      glm::u64vec3(clo.vol_w, clo.vol_h, clo.vol_d));
+//
+//  std::unique_ptr<float[]> data{
+//      bd::readVolumeData(clo.dataType, clo.inFilePath, clo.vol_w, clo.vol_h, clo.vol_d)
+//  };
+//
+//  if (data == nullptr) {
+//    bd::Err() <<  "data file was not opened. exiting...";
+//    cleanup();
+//    return 1;
+//  }
 
-  std::unique_ptr<float[]> data{
-      bd::readVolumeData(clo.dataType, clo.inFilePath, clo.vol_w, clo.vol_h, clo.vol_d)
-  };
-
-  if (data == nullptr) {
-    bd::Err() <<  "data file was not opened. exiting...";
-    cleanup();
-    return 1;
-  }
-
-  blockCollection->filterBlocks(data.get(), clo.tmin, clo.tmax);
+//  blockCollection->filterBlocks(data.get(), clo.tmin, clo.tmax);
 //  data.release();
 
-  if (clo.printBlocks) { printBlocks(blockCollection); }
+//  if (clo.printBlocks) { printBlocks(blockCollection); }
 
   //// Render Init ////
   setCameraPosPreset(clo.cameraPos);
@@ -719,23 +698,27 @@ int main(int argc, const char *argv[]) {
     return 1;
   }
 
-  generateTransferFunctions();
   //// Transfer function texture ////
-  bd::Texture *tfuncTex{ new bd::Texture(bd::Texture::Target::Tex1D) };
+//  bd::Texture *tfuncTex{ new bd::Texture(bd::Texture::Target::Tex1D) };
 
-  unsigned int tfuncTextureId{
-      loadTransfer_1dtformat(clo.tfuncPath, *tfuncTex, *volumeShader)
-  };
+//  unsigned int tfuncTextureId{
+//      loadTransfer_1dtformat(clo.tfuncPath, *tfuncTex, *volumeShader)
+//  };
 
-  if (tfuncTextureId==0) {
-    bd::Err() << "Exiting because tfunc texture was not bound.";
-    return 1;
-  }
+//  if (tfuncTextureId==0) {
+//    bd::Err() << "Exiting because tfunc texture was not bound.";
+//    return 1;
+//  }
 
 
-
-  BlockRenderer volRend{ int(clo.num_slices), volumeShader, wireframeShader,
-                         blockCollection, tfuncTex, quadVao, boxVao };
+  bd::Texture *colormap{ subvol::ColorMap::getMapTexture("FULL_RAINBOW") };
+  BlockRenderer volRend{ int(clo.num_slices),
+                         volumeShader,
+                         wireframeShader,
+                         &g_blocks,
+                         colormap,
+                         quadVao,
+                         boxVao };
 
   volRend.setTfuncScaleValue(g_scaleValue);
   volRend.init();
@@ -750,6 +733,7 @@ int main(int argc, const char *argv[]) {
 
   printNvPmApiCounters(clo.perfOutPath.c_str());
   cleanup();
+  delete colormap;
 
   return 0;
 }
