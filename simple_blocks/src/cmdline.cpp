@@ -92,7 +92,7 @@ try {
 
   cmd.parse(argc, argv);
 
-  opts.inFilePath = fileArg.getValue();
+  opts.rawFilePath = fileArg.getValue();
   opts.tfuncPath = tfuncArg.getValue();
   opts.datFilePath = datFilePath.getValue();
   opts.indexFilePath = indexFilePath.getValue();
@@ -122,7 +122,7 @@ try {
 
 void printThem(CommandLineOptions &opts) {
   std::cout <<
-  "File path: " << opts.inFilePath << "\n"
+  "File path: " << opts.rawFilePath << "\n"
       "Transfer function: " << opts.tfuncPath << "\n"
       "Dat file: " << opts.datFilePath << "\n"
       "Perf out file: " << opts.perfOutPath << "\n"

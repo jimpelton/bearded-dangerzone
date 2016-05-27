@@ -48,7 +48,7 @@ bool BlockRenderer::init() {
 //             {m_numSlicesPerBlock, m_numSlicesPerBlock, m_numSlicesPerBlock});
 
   // set initial graphics state.
-  initGraphicsState();
+  setInitialGLState();
 
   m_volumeShader->bind();
   setTFuncTexture(*m_colorMapTexture);
@@ -222,7 +222,7 @@ int BlockRenderer::computeBaseVertexFromViewDir(const glm::vec4 &viewdir) {
 }
 
 void
-BlockRenderer::initGraphicsState()
+BlockRenderer::setInitialGLState()
 {
   bd::Info() << "Initializing gl state.";
   gl_check(glClearColor(0.15f, 0.15f, 0.15f, 0.0f));

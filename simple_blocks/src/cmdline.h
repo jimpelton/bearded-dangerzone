@@ -8,7 +8,7 @@ namespace subvol
 struct CommandLineOptions
 {
   // raw file path
-  std::string inFilePath;
+  std::string rawFilePath;
   // transfer function file path
   std::string tfuncPath;
   // for .dat descriptor file (currently unimplemented)

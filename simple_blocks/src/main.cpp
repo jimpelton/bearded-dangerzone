@@ -78,10 +78,6 @@ const char *WIREFRAME_MVP_MATRIX_UNIFORM_STR = "mvp";
 // Geometry  /  VAOs
 ///////////////////////////////////////////////////////////////////////////////
 
-/// \brief Enumerates the types of objects in the scene.
-enum class ObjType : unsigned int {
-  Axis, /*Quads,*/ Boxes
-};
 
 bd::CoordinateAxis g_axis; ///< The coordinate axis lines.
 //bd::Box g_box;
@@ -329,61 +325,12 @@ void loop(GLFWwindow *window) {
 
 
 ///////////////////////////////////////////////////////////////////////////////
-//  G E O M E T R Y   C R E A T I O N
-///////////////////////////////////////////////////////////////////////////////
-
-
-///////////////////////////////////////////////////////////////////////////////
-void genAxisVao(bd::VertexArrayObject &vao) {
-  bd::Info() <<  "Generating axis vertex buffers.";
-
-  using Axis = bd::CoordinateAxis;
-
-  // vertex positions into attribute 0
-  vao.addVbo((float *) (Axis::verts.data()),
-             Axis::verts.size()*Axis::vert_element_size,
-             Axis::vert_element_size,
-             VERTEX_COORD_ATTR); // attr 0
-
-  // vertex colors into attribute 1
-  vao.addVbo((float *) (Axis::colors.data()),
-             Axis::colors.size()*3,
-             3,   // 3 floats per color
-             VERTEX_COLOR_ATTR);  // attr 1
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-/// \brief Generate the vertex buffers for bounding box around the blocks
-///////////////////////////////////////////////////////////////////////////////
-void genBoxVao(bd::VertexArrayObject &vao) {
-  bd::Info() << "Generating bounding box vertex buffers.";
-
-  // positions as vertex attribute 0
-  vao.addVbo((float *) (bd::Box::vertices.data()),
-             bd::Box::vertices.size()*bd::Box::vert_element_size,
-             bd::Box::vert_element_size,
-             VERTEX_COORD_ATTR);
-
-  // colors as vertex attribute 1
-  vao.addVbo((float *) bd::Box::colors.data(),
-             bd::Box::colors.size()*3,
-             3,
-             VERTEX_COLOR_ATTR);
-
-  vao.setIndexBuffer((unsigned short *) bd::Box::elements.data(),
-                     bd::Box::elements.size());
-
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
 //   I N I T I A L I Z A T I O N
 ///////////////////////////////////////////////////////////////////////////////
 
 
 /////////////////////////////////////////////////////////////////////////////////
-void initGraphicsState() {
+void setInitialGLState() {
   bd::Info() << "Initializing gl state.";
   gl_check(glClearColor(0.15f, 0.15f, 0.15f, 0.0f));
 
@@ -403,7 +350,7 @@ void initGraphicsState() {
 
 
 /////////////////////////////////////////////////////////////////////////////////
-GLFWwindow *init() {
+GLFWwindow *initGLContext() {
   bd::Info() << "Initializing GLFW.";
   if (!glfwInit()) {
     bd::Err() << "could not start GLFW3";
@@ -449,7 +396,7 @@ GLFWwindow *init() {
   glewExperimental = GL_TRUE;
   GLenum error{ glewInit() };
   if (error) {
-    bd::Err() << "Could not init glew " << glewGetErrorString(error);
+    bd::Err() << "Could not initGLContext glew " << glewGetErrorString(error);
     return nullptr;
   }
 
@@ -572,31 +519,6 @@ void printNvPmApiCounters(const char *perfOutPath = "") {
 }
 
 
-void
-readIndexFile(const std::string& filePath)
-{
-//  bd::BlockCollection *collection{ new bd::BlockCollection() };
-//  collection->initBlocksFromFileBlocks(indexFile->blocks(),
-//                                       {header->numblocks[0],
-//                                        header->numblocks[1],
-//                                        header->numblocks[2]});
-//
-//
-////  for(const bd::FileBlock *fb : indexFile->blocks()) {
-////    uint64_t idx{ fb->block_index };
-////
-////    uint64_t i{ idx % header->numblocks[0] };
-////    uint64_t j{ (idx / header->numblocks[0]) % header->numblocks[1] };
-////    uint64_t k{ (idx / header->numblocks[0]) / header->numblocks[1] };
-////
-////    bd::Block *b{ new bd::Block{ { i,j,k }, *fb }};
-////    g_blocks.push_back(b);
-////  }
-//
-//
-//  g_indexFile = indexFile;
-}
-
 /////////////////////////////////////////////////////////////////////////////////
 int main(int argc, const char *argv[]) {
   subvol::CommandLineOptions clo;
@@ -608,43 +530,39 @@ int main(int argc, const char *argv[]) {
 
   subvol::printThem(clo);
 
-  //// GLFW init ////
-  GLFWwindow *window;
-  if ((window = init()) == nullptr) {
+  GLFWwindow *window{ initGLContext() };
+  if (window == nullptr) {
     bd::Err() << "Could not initialize GLFW, exiting.";
     return 1;
   }
-
-  initGraphicsState();
+  setInitialGLState();
   subvol::ColorMap::generateTransferFunctionTextures();
-  readIndexFile(clo.indexFilePath);
 
-
-  //// Geometry Init ////
   // 2d slices
   bd::VertexArrayObject *quadVao{ new bd::VertexArrayObject() };
   quadVao->create();
   //TODO: generate quads for actual volume extent.
-  genQuadVao(*quadVao, { -0.5f, -0.5f, -0.5f }, { 0.5f, 0.5f, 0.5f },
+  subvol::genQuadVao(*quadVao, { -0.5f, -0.5f, -0.5f }, { 0.5f, 0.5f, 0.5f },
              { clo.num_slices, clo.num_slices, clo.num_slices });
 
   // coordinate axis
   bd::VertexArrayObject *axisVao{ new bd::VertexArrayObject() };
   axisVao->create();
-  genAxisVao(*axisVao);
-
+  subvol::genAxisVao(*axisVao);
   g_axisVao = axisVao;
 
   // bounding boxes
   bd::VertexArrayObject *boxVao{ new bd::VertexArrayObject() };
   boxVao->create();
-  genBoxVao(*boxVao);
+  subvol::genBoxVao(*boxVao);
 
 
+  bd::BlockCollection *blockCollection{ new bd::BlockCollection() };
+  blockCollection->initBlocksFromIndexFile(clo.indexFilePath);
+  blockCollection->initBlockTextures(clo.rawFilePath);
 
 
   //// Blocks and Data Init ////
-//  bd::BlockCollection *blockCollection{ new bd::BlockCollection() };
 //  blockCollection->initBlocks(
 //      glm::u64vec3(clo.numblk_x, clo.numblk_y, clo.numblk_z),
 //      glm::u64vec3(clo.vol_w, clo.vol_h, clo.vol_d));
