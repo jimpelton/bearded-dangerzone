@@ -153,7 +153,7 @@ const std::map<const char*, const std::vector<glm::vec4> * >
       { "INVERSE_SEISMIC",      &INVERSE_SEISMIC }
 };
 
-std::map<const char*, bd::Texture*> ColorMap::textures;
+std::map<std::string, bd::Texture*> ColorMap::textures;
 
 
 /* static */
@@ -179,6 +179,7 @@ ColorMap::generateTransferFunctionTextures()
       Err() << "The texture for colormap " << it.first << " could not be created.";
     } else {
       textures[it.first] = t;
+      bd::Dbg() << "Added " << it.first << " colormap texture.";
     }
 
   } // for
@@ -193,7 +194,7 @@ ColorMap::getMapTexture(const std::string &name)
 {
   bd::Texture *rval{ nullptr };
   try{
-    rval = textures.at(name.c_str());
+    rval = textures.at(name);
   } catch (std::out_of_range e) {
     Err() << name << " is not a colormap.";
     throw e;

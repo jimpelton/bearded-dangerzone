@@ -60,7 +60,7 @@ private:
 public:
 
 private:
-  static std::map<const char*, bd::Texture*> textures;
+  static std::map<std::string, bd::Texture*> textures;
 }; // class ColorMap
 
 } // namespace subvol
