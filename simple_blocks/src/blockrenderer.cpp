@@ -21,7 +21,7 @@ BlockRenderer::BlockRenderer
   int numSlices,
   bd::ShaderProgram *volumeShader,
   bd::ShaderProgram *wireframeShader,
-  std::vector<bd::Block*> *blocks,
+  const std::vector<bd::Block*> *blocks,
   bd::Texture *colorMap,
   bd::VertexArrayObject *blocksVAO,
   bd::VertexArrayObject *bboxVAO
@@ -47,8 +47,8 @@ bool BlockRenderer::init() {
 //  genQuadVao(m_quadsVao, {-0.5f,-0.5f,-0.5f}, {0.5f, 0.5f, 0.5f},
 //             {m_numSlicesPerBlock, m_numSlicesPerBlock, m_numSlicesPerBlock});
 
-  // set initial graphics state.
-  setInitialGLState();
+  // set initial graphics state.   // this is done in main method -- J.P. 05-28-16
+//  setInitialGLState();
 
   m_volumeShader->bind();
   setTFuncTexture(*m_colorMapTexture);
@@ -167,7 +167,7 @@ void BlockRenderer::drawNonEmptyBlocks() {
   //TODO: sort quads farthest to nearest.
   m_quadsVao->bind();
   m_volumeShader->bind();
-  //m_colorMapTexture->bind(TRANSF_TEXTURE_UNIT);
+  m_colorMapTexture->bind(TRANSF_TEXTURE_UNIT);
 
   drawNonEmptyBlocks_Forward();
 

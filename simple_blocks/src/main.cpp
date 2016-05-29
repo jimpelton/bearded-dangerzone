@@ -179,6 +179,7 @@ void glfw_keyboard_callback(GLFWwindow *window, int key, int scancode,
       break;
     case GLFW_KEY_B:
       g_toggleBlockBoxes = !g_toggleBlockBoxes;
+      std::cout << "Toggle bounding boxes.\n";
       break;
     }
   }
@@ -560,6 +561,7 @@ int main(int argc, const char *argv[]) {
   bd::BlockCollection *blockCollection{ new bd::BlockCollection() };
   blockCollection->initBlocksFromIndexFile(clo.indexFilePath);
   blockCollection->initBlockTextures(clo.rawFilePath);
+  std::cout << blockCollection->blocks()[0]->texture() << std::endl;
 
 
   //// Blocks and Data Init ////
@@ -633,7 +635,7 @@ int main(int argc, const char *argv[]) {
   BlockRenderer volRend{ int(clo.num_slices),
                          volumeShader,
                          wireframeShader,
-                         &g_blocks,
+                         &blockCollection->blocks(),
                          colormap,
                          quadVao,
                          boxVao };
