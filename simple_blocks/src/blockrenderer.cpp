@@ -22,7 +22,7 @@ BlockRenderer::BlockRenderer
   bd::ShaderProgram *volumeShader,
   bd::ShaderProgram *wireframeShader,
   const std::vector<bd::Block*> *blocks,
-  bd::Texture *colorMap,
+  const bd::Texture *colorMap,
   bd::VertexArrayObject *blocksVAO,
   bd::VertexArrayObject *bboxVAO
 )

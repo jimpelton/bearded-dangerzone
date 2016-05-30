@@ -629,20 +629,7 @@ int main(int argc, const char *argv[]) {
     return 1;
   }
 
-  //// Transfer function texture ////
-//  bd::Texture *tfuncTex{ new bd::Texture(bd::Texture::Target::Tex1D) };
-
-//  unsigned int tfuncTextureId{
-//      loadTransfer_1dtformat(clo.tfuncPath, *tfuncTex, *volumeShader)
-//  };
-
-//  if (tfuncTextureId==0) {
-//    bd::Err() << "Exiting because tfunc texture was not bound.";
-//    return 1;
-//  }
-
-
-  bd::Texture *colormap{ subvol::ColorMap::getMapTexture("INVERSE_RAINBOW") };
+  const bd::Texture *colormap{ subvol::ColorMap::getMapTexture("INVERSE_RAINBOW") };
   BlockRenderer volRend{ int(clo.num_slices),
                          volumeShader,
                          wireframeShader,

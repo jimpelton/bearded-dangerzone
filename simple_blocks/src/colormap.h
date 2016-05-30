@@ -19,6 +19,17 @@ namespace subvol
 class ColorMap
 {
 
+public:
+  static void generateTransferFunctionTextures();
+
+  /// \brief Get the texture of colormap with name.
+  /// \throws std::out_of_range
+  static const bd::Texture* getMapTexture(const std::string &name);
+
+private:
+  static void makeTexture(std::vector<glm::vec4> *texels, const std::vector<glm::vec4> &map);
+  static glm::vec4 lerp(glm::vec4, glm::vec4, float);
+
 
 public:
   static const std::vector<glm::vec4> FULL_RAINBOW;
@@ -42,25 +53,14 @@ public:
   static const std::vector<glm::vec4> SEISMIC;
   static const std::vector<glm::vec4> INVERSE_SEISMIC;
   /* ALL OF EM */
-  static const std::map<const char*, const std::vector<glm::vec4>* > maps;
-
-
-public:
-  static void generateTransferFunctionTextures();
-
-  /// \brief Get the texture of colormap with name.
-  /// \throws std::out_of_range
-  static bd::Texture* getMapTexture(const std::string &name);
+  static const std::map<std::string, const std::vector<glm::vec4>* > maps;
 
 private:
-  static void makeTexture(std::vector<glm::vec4> *texels, const std::vector<glm::vec4> &map);
-  static glm::vec4 lerp(glm::vec4, glm::vec4, float);
+  static std::map<std::string, const bd::Texture*> textures;
 
 
-public:
 
-private:
-  static std::map<std::string, bd::Texture*> textures;
+
 }; // class ColorMap
 
 } // namespace subvol

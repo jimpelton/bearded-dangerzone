@@ -39,7 +39,7 @@ public:
                 bd::ShaderProgram *volumeShader,
                 bd::ShaderProgram *wireframeShader,
                 const std::vector<bd::Block*> *blocks,
-                bd::Texture *tfuncTexture,
+                const bd::Texture *tfuncTexture,
                 bd::VertexArrayObject *blocksVAO,
                 bd::VertexArrayObject *bboxVAO );
 
