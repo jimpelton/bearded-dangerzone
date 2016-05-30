@@ -161,7 +161,7 @@ void
 ColorMap::generateTransferFunctionTextures()
 {
   std::vector<glm::vec4> texels;
-  texels.reserve(256);
+  texels.resize(4096);
   size_t texelElements{ texels.size() * 4 };
 
   for(auto it : maps) {

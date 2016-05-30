@@ -43,10 +43,6 @@ BlockRenderer::~BlockRenderer() { }
 
 ////////////////////////////////////////////////////////////////////////////////
 bool BlockRenderer::init() {
-//  m_quadsVao.create();
-//  genQuadVao(m_quadsVao, {-0.5f,-0.5f,-0.5f}, {0.5f, 0.5f, 0.5f},
-//             {m_numSlicesPerBlock, m_numSlicesPerBlock, m_numSlicesPerBlock});
-
   // set initial graphics state.   // this is done in main method -- J.P. 05-28-16
 //  setInitialGLState();
 
@@ -221,24 +217,24 @@ int BlockRenderer::computeBaseVertexFromViewDir(const glm::vec4 &viewdir) {
   return baseVertex;
 }
 
-void
-BlockRenderer::setInitialGLState()
-{
-  bd::Info() << "Initializing gl state.";
-  gl_check(glClearColor(0.15f, 0.15f, 0.15f, 0.0f));
-
-//  gl_check(glEnable(GL_CULL_FACE));
-//  gl_check(glCullFace(GL_FRONT));
-  gl_check(glDisable(GL_CULL_FACE));
-
-  gl_check(glEnable(GL_DEPTH_TEST));
-  gl_check(glDepthFunc(GL_LESS));
-
-  gl_check(glEnable(GL_BLEND));
-  gl_check(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
-
-  gl_check(glEnable(GL_PRIMITIVE_RESTART));
-  gl_check(glPrimitiveRestartIndex(0xFFFF));
-}
+//void
+//BlockRenderer::setInitialGLState()
+//{
+//  bd::Info() << "Initializing gl state.";
+//  gl_check(glClearColor(0.15f, 0.15f, 0.15f, 0.0f));
+//
+////  gl_check(glEnable(GL_CULL_FACE));
+////  gl_check(glCullFace(GL_FRONT));
+//  gl_check(glDisable(GL_CULL_FACE));
+//
+//  gl_check(glEnable(GL_DEPTH_TEST));
+//  gl_check(glDepthFunc(GL_LESS));
+//
+//  gl_check(glEnable(GL_BLEND));
+//  gl_check(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+//
+//  gl_check(glEnable(GL_PRIMITIVE_RESTART));
+//  gl_check(glPrimitiveRestartIndex(0xFFFF));
+//}
 
 

@@ -307,12 +307,12 @@ void loop(GLFWwindow *window) {
     startCpuTime();
     g_camera.updateViewMatrix();
 
-    startGpuTimerQuery();
+//    startGpuTimerQuery();
 
     draw();
     glfwSwapBuffers(window);
 
-    endGpuTimerQuery();
+//    endGpuTimerQuery();
 
     glfwPollEvents();
 
@@ -529,6 +529,18 @@ int main(int argc, const char *argv[]) {
     return 1;
   }
 
+  bd::BlockCollection *blockCollection{ new bd::BlockCollection() };
+  blockCollection->initBlocksFromIndexFile(clo.indexFilePath);
+  const bd::IndexFileHeader &idxHead{ blockCollection->indexFile().getHeader() };
+
+  clo.vol_w = idxHead.volume_extent[0];
+  clo.vol_h = idxHead.volume_extent[1];
+  clo.vol_d = idxHead.volume_extent[2];
+  clo.numblk_x = idxHead.numblocks[0];
+  clo.numblk_y = idxHead.numblocks[1];
+  clo.numblk_z = idxHead.numblocks[2];
+  clo.dataType = bd::to_string(bd::IndexFileHeader::getType(idxHead));
+
   subvol::printThem(clo);
 
   GLFWwindow *window{ initGLContext() };
@@ -543,8 +555,9 @@ int main(int argc, const char *argv[]) {
   bd::VertexArrayObject *quadVao{ new bd::VertexArrayObject() };
   quadVao->create();
   //TODO: generate quads for actual volume extent.
-  subvol::genQuadVao(*quadVao, { -0.5f, -0.5f, -0.5f }, { 0.5f, 0.5f, 0.5f },
-             { clo.num_slices, clo.num_slices, clo.num_slices });
+  subvol::genQuadVao(*quadVao,
+                     { -0.5f, -0.5f, -0.5f }, { 0.5f, 0.5f, 0.5f },
+                     { clo.num_slices, clo.num_slices, clo.num_slices });
 
   // coordinate axis
   bd::VertexArrayObject *axisVao{ new bd::VertexArrayObject() };
@@ -558,8 +571,6 @@ int main(int argc, const char *argv[]) {
   subvol::genBoxVao(*boxVao);
 
 
-  bd::BlockCollection *blockCollection{ new bd::BlockCollection() };
-  blockCollection->initBlocksFromIndexFile(clo.indexFilePath);
   blockCollection->initBlockTextures(clo.rawFilePath);
   std::cout << blockCollection->blocks()[0]->texture() << std::endl;
 
@@ -631,7 +642,7 @@ int main(int argc, const char *argv[]) {
 //  }
 
 
-  bd::Texture *colormap{ subvol::ColorMap::getMapTexture("FULL_RAINBOW") };
+  bd::Texture *colormap{ subvol::ColorMap::getMapTexture("INVERSE_RAINBOW") };
   BlockRenderer volRend{ int(clo.num_slices),
                          volumeShader,
                          wireframeShader,
