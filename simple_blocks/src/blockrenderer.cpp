@@ -8,7 +8,7 @@
 
 #include <bd/geo/quad.h>
 #include <bd/util/ordinal.h>
-#include <bd/log/logger.h>
+//#include <bd/log/logger.h>
 
 
 BlockRenderer::BlockRenderer()

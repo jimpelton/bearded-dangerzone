@@ -7,12 +7,15 @@
 
 #include <bd/log/logger.h>
 
+#include <fstream>
+
 using bd::Err;
 using bd::Info;
 
 namespace subvol
 {
 
+// These colormaps are lifted out of Toirt volume renderer.
 // scalar, r, g, b
 
 const std::vector<glm::vec4> ColorMap::FULL_RAINBOW {
@@ -135,7 +138,7 @@ const std::vector<glm::vec4> ColorMap::INVERSE_SEISMIC{
     glm::vec4{ 1.00f, 1.00f, 0.00f, 0.00f }
 };
 
-const std::map<std::string, const std::vector<glm::vec4>*> ColorMap::maps{
+const std::map<std::string, const std::vector<glm::vec4> *> ColorMap::s_mapPtrs{
       { "FULL_RAINBOW",         &FULL_RAINBOW },
       { "INVERSE_FULL_RAINBOW", &INVERSE_FULL_RAINBOW },
       { "RAINBOW",              &RAINBOW },
@@ -152,19 +155,71 @@ const std::map<std::string, const std::vector<glm::vec4>*> ColorMap::maps{
       { "INVERSE_SEISMIC",      &INVERSE_SEISMIC }
 };
 
-std::map<std::string, const bd::Texture*> ColorMap::textures;
+std::map<std::string, const bd::Texture*> ColorMap::s_textures;
+
+
+const bd::Texture*
+ColorMap::load_1dt(const std::string& filename)
+{
+  bd::Dbg() << "Reading 1dt formatted transfer function file and generating texture.";
+
+  std::ifstream file(filename.c_str(), std::ifstream::in);
+  if (!file.is_open()) {
+    bd::Err() << "Can't open tfunc file: " << filename;
+    return nullptr;
+  }
+
+  size_t lineNum{ 0 };
+  size_t numKnots{ 0 };
+
+  file >> numKnots; // number of entries/lines in the 1dt file.
+  lineNum++;
+  if (numKnots > 8192) {
+    bd::Err() << "The 1dt transfer function has " << numKnots <<
+        " knots but max allowed is 8192)."
+            "Skipping loading the transfer function file.";
+    return nullptr;
+  }
+
+  glm::vec4 * rgba{ new glm::vec4[numKnots] };
+// read rest of file consisting of rgba colors
+  float r, g, b, a;
+  while (lineNum < numKnots && file >> r >> g >> b >> a) {
+    rgba[lineNum] = { r, g, b, a };
+    lineNum++;
+  }
+
+  file.close();
+  bd::Texture *transferTex{ new bd::Texture(bd::Texture::Target::Tex1D) };
+  unsigned int texId{ transferTex->genGLTex1d(reinterpret_cast<float *>(rgba),
+                                              bd::Texture::Format::RGBA,
+                                              bd::Texture::Format::RGBA, numKnots)
+  };
+
+  if (texId == 0) {
+    bd::Err() << "Could not make transfer function texture, returned id was 0.";
+    return nullptr;
+  }
+
+  delete[] rgba;
+}
+//  transferTex.textureUnit(1);
+
+//  unsigned int samp{volumeShader.getUniformLocation("tf_sampler")};
+//  transferTex.samplerLocation(samp);
+
 
 
 /* static */
 void
-ColorMap::generateTransferFunctionTextures()
+ColorMap::generateDefaultTransferFunctionTextures()
 {
   std::vector<glm::vec4> texels;
   texels.resize(4096);
   size_t texelElements{ texels.size() * 4 };
 
-  for(auto it : maps) {
-    makeTexture(&texels, *(it.second));
+  for(auto it : s_mapPtrs) {
+    interpolateTexels(&texels, *(it.second));
 
     float *textureData{ reinterpret_cast<float*>(texels.data()) };
     bd::Texture *t{ new bd::Texture(bd::Texture::Target::Tex1D) };
@@ -177,23 +232,23 @@ ColorMap::generateTransferFunctionTextures()
     if (name == 0) {
       Err() << "The texture for colormap " << it.first << " could not be created.";
     } else {
-      textures[it.first] = t;
+      s_textures[it.first] = t;
       bd::Dbg() << "Added " << it.first << " colormap texture.";
     }
 
   } // for
 
-  Info() << "Generated " << textures.size() << " built-in colormaps.";
+  Info() << "Generated " << s_textures.size() << " built-in colormaps.";
 
 }
 
 /* static */
 const bd::Texture*
-ColorMap::getMapTexture(const std::string &name)
+ColorMap::getDefaultMapTexture(const std::string& name)
 {
   const bd::Texture *rval{ nullptr };
   try{
-    rval = textures.at(name);
+    rval = s_textures.at(name);
   } catch (std::out_of_range e) {
     Err() << name << " is not a colormap.";
     throw e;
@@ -203,7 +258,8 @@ ColorMap::getMapTexture(const std::string &name)
 
 /* static */
 void
-ColorMap::makeTexture(std::vector<glm::vec4> *texels, const std::vector<glm::vec4> &map)
+ColorMap::interpolateTexels(std::vector< glm::vec4 > * texels,
+                            const std::vector< glm::vec4 >& map)
 {
 
 //  const unsigned int RED = 0; const unsigned int GREEN = 1;

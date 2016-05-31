@@ -540,8 +540,12 @@ int main(int argc, const char *argv[]) {
   clo.numblk_y = idxHead.numblocks[1];
   clo.numblk_z = idxHead.numblocks[2];
   clo.dataType = bd::to_string(bd::IndexFileHeader::getType(idxHead));
-
   subvol::printThem(clo);
+
+  auto isEmpty = [&](const bd::Block *b) -> bool {
+    return b->avg() < clo.tmin || b->avg() > clo.tmax;
+  };
+  blockCollection->filterBlocks(isEmpty);
 
   GLFWwindow *window{ initGLContext() };
   if (window == nullptr) {
@@ -549,7 +553,9 @@ int main(int argc, const char *argv[]) {
     return 1;
   }
   setInitialGLState();
-  subvol::ColorMap::generateTransferFunctionTextures();
+  subvol::ColorMap::generateDefaultTransferFunctionTextures();
+  blockCollection->initBlockTextures(clo.rawFilePath);
+  std::cout << blockCollection->blocks()[0]->texture() << std::endl;
 
   // 2d slices
   bd::VertexArrayObject *quadVao{ new bd::VertexArrayObject() };
@@ -571,69 +577,37 @@ int main(int argc, const char *argv[]) {
   subvol::genBoxVao(*boxVao);
 
 
-  blockCollection->initBlockTextures(clo.rawFilePath);
-  std::cout << blockCollection->blocks()[0]->texture() << std::endl;
-
-
-  //// Blocks and Data Init ////
-//  blockCollection->initBlocks(
-//      glm::u64vec3(clo.numblk_x, clo.numblk_y, clo.numblk_z),
-//      glm::u64vec3(clo.vol_w, clo.vol_h, clo.vol_d));
-//
-//  std::unique_ptr<float[]> data{
-//      bd::readVolumeData(clo.dataType, clo.inFilePath, clo.vol_w, clo.vol_h, clo.vol_d)
-//  };
-//
-//  if (data == nullptr) {
-//    bd::Err() <<  "data file was not opened. exiting...";
-//    cleanup();
-//    return 1;
-//  }
-
-//  blockCollection->filterBlocks(data.get(), clo.tmin, clo.tmax);
-//  data.release();
-
-//  if (clo.printBlocks) { printBlocks(blockCollection); }
-
-  //// Render Init ////
-  setCameraPosPreset(clo.cameraPos);
-
-
   //// Wireframe Shader ////
   bd::ShaderProgram *wireframeShader{ new bd::ShaderProgram() };
-
   GLuint wireframeProgramId{
       wireframeShader->linkProgram(
           "shaders/vert_vertexcolor_passthrough.glsl",
           "shaders/frag_vertcolor.glsl")
   };
-
   if (wireframeProgramId==0) {
     bd::Err() << "Error building passthrough shader, program id was 0.";
     return 1;
   }
-
   g_wireframeShader = wireframeShader;
 
   //// Volume shader ////
   bd::ShaderProgram *volumeShader{ new bd::ShaderProgram() };
-
   GLuint volumeProgramId{
       volumeShader->linkProgram(
           "shaders/vert_vertexcolor_passthrough.glsl",
           "shaders/frag_volumesampler_noshading.glsl")
   };
-
   if (volumeProgramId==0) {
     bd::Err() << "Error building volume sampling shader, program id was 0.";
     return 1;
   }
 
-  const bd::Texture *colormap{ subvol::ColorMap::getMapTexture("INVERSE_RAINBOW") };
+
+  const bd::Texture *colormap{ subvol::ColorMap::getDefaultMapTexture("WHITE_TO_BLACK") };
   BlockRenderer volRend{ int(clo.num_slices),
                          volumeShader,
                          wireframeShader,
-                         &blockCollection->blocks(),
+                         &blockCollection->nonEmptyBlocks(),
                          colormap,
                          quadVao,
                          boxVao };
@@ -642,6 +616,7 @@ int main(int argc, const char *argv[]) {
   volRend.init();
   g_volRend = &volRend;
 
+  setCameraPosPreset(clo.cameraPos);
 
   //// NV Perf Thing ////
   perf_initNvPm();
