@@ -27,11 +27,17 @@ BlockRenderer::BlockRenderer
   bd::VertexArrayObject *bboxVAO
 )
   : m_numSlicesPerBlock{ numSlices }
+  , m_tfuncScaleValue{ 1.0f }
+
+  , m_backgroundColor{ 0.0f }
+
   , m_volumeShader{ volumeShader }
   , m_wireframeShader{ wireframeShader }
-//  , m_blockCollection{ blockCollection }
+
   , m_blocks{ blocks }
+
   , m_colorMapTexture{ colorMap }
+
   , m_quadsVao{ blocksVAO }
   , m_boxesVao{ bboxVAO }
 { }
@@ -78,10 +84,16 @@ void BlockRenderer::setViewMatrix(const glm::mat4 &viewMatrix) {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void BlockRenderer::setNumSlices(const int n) {
-  m_numSlicesPerBlock = n;
-}
+//void BlockRenderer::setNumSlices(const int n) {
+//  m_numSlicesPerBlock = n;
+//}
 
+void
+BlockRenderer::setBackgroundColor(const glm::vec3 &c)
+{
+  m_backgroundColor = c;
+  glClearColor(c.r, c.g, c.b, 0.0f);
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 void BlockRenderer::drawNonEmptyBoundingBoxes() {

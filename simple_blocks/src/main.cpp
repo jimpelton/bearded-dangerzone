@@ -103,8 +103,14 @@ float g_mouseSpeed{ 1.0f };
 bool g_toggleBlockBoxes{ false };
 bool g_toggleWireFrame{ false };
 
-bd::IndexFile *g_indexFile;
-std::vector<bd::Block*> g_blocks;
+//bd::IndexFile *g_indexFile;
+//std::vector<bd::Block*> g_blocks;
+
+glm::vec3 g_backgroundColors[2] {
+    {0.15, 0.15, 0.15},
+    {1.0, 1.0, 1.0 }
+};
+int g_currentBackgroundColor{ 0 };
 
 //TODO: bool g_toggleVolumeBox{ false };
 
@@ -180,6 +186,11 @@ void glfw_keyboard_callback(GLFWwindow *window, int key, int scancode,
     case GLFW_KEY_B:
       g_toggleBlockBoxes = !g_toggleBlockBoxes;
       std::cout << "Toggle bounding boxes.\n";
+      break;
+    case GLFW_KEY_Q:
+      g_currentBackgroundColor ^= 1;
+      std::cout << "Background color: " << (g_currentBackgroundColor == 0 ? "Dark" : "Light") << '\n';
+      g_volRend->setBackgroundColor(g_backgroundColors[g_currentBackgroundColor]);
       break;
     }
   }
@@ -603,7 +614,7 @@ int main(int argc, const char *argv[]) {
   }
 
 
-  const bd::Texture *colormap{ subvol::ColorMap::getDefaultMapTexture("WHITE_TO_BLACK") };
+  const bd::Texture *colormap{ subvol::ColorMap::getDefaultMapTexture("BLACK_TO_WHITE") };
   BlockRenderer volRend{ int(clo.num_slices),
                          volumeShader,
                          wireframeShader,

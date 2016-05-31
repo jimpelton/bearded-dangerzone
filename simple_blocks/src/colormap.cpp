@@ -202,6 +202,8 @@ ColorMap::load_1dt(const std::string& filename)
   }
 
   delete[] rgba;
+
+  return transferTex;
 }
 //  transferTex.textureUnit(1);
 

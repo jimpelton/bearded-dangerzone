@@ -73,13 +73,15 @@ public:
   //////////////////////////////////////////////////////////////////////////////
   void setTfuncScaleValue(float val);
 
-
   //////////////////////////////////////////////////////////////////////////////
   void setViewMatrix(const glm::mat4 &);
 
+  //////////////////////////////////////////////////////////////////////////////
+//  void setNumSlices(int n);
+
 
   //////////////////////////////////////////////////////////////////////////////
-  void setNumSlices(int n);
+  void setBackgroundColor(const glm::vec3 &c);
 
 private:
 
@@ -113,6 +115,8 @@ private:
 
   int m_numSlicesPerBlock;            ///< Number of slices per block
   float m_tfuncScaleValue;            ///< Transfer function scaling value
+
+  glm::vec3 m_backgroundColor;
 
   glm::mat4 m_viewMatrix;             ///< View matrix for the camera
 
