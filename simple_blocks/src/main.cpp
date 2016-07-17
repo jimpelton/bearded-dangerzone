@@ -542,7 +542,7 @@ int main(int argc, const char *argv[]) {
 
   bd::BlockCollection *blockCollection{ new bd::BlockCollection() };
   blockCollection->initBlocksFromIndexFile(clo.indexFilePath);
-  const bd::IndexFileHeader &idxHead{ blockCollection->indexFile().getHeader() };
+  bd::IndexFileHeader const &idxHead{ blockCollection->indexFile().getHeader() };
 
   clo.vol_w = idxHead.volume_extent[0];
   clo.vol_h = idxHead.volume_extent[1];
@@ -553,7 +553,7 @@ int main(int argc, const char *argv[]) {
   clo.dataType = bd::to_string(bd::IndexFileHeader::getType(idxHead));
   subvol::printThem(clo);
 
-  auto isEmpty = [&](const bd::Block *b) -> bool {
+  auto isEmpty = [&](bd::Block const *b) -> bool {
     return b->avg() < clo.tmin || b->avg() > clo.tmax;
   };
   blockCollection->filterBlocks(isEmpty);
@@ -614,7 +614,7 @@ int main(int argc, const char *argv[]) {
   }
 
 
-  const bd::Texture *colormap{ subvol::ColorMap::getDefaultMapTexture("BLACK_TO_WHITE") };
+  bd::Texture const *colormap{ subvol::ColorMap::getDefaultMapTexture("BLACK_TO_WHITE") };
   BlockRenderer volRend{ int(clo.num_slices),
                          volumeShader,
                          wireframeShader,

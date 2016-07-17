@@ -233,6 +233,7 @@ ColorMap::generateDefaultTransferFunctionTextures()
 
     if (name == 0) {
       Err() << "The texture for colormap " << it.first << " could not be created.";
+      delete t;
     } else {
       s_textures[it.first] = t;
       bd::Dbg() << "Added " << it.first << " colormap texture.";
