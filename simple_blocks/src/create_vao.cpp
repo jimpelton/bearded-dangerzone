@@ -168,7 +168,7 @@ void genQuadVao(bd::VertexArrayObject &vao, const glm::vec3 &min,
   createQuads(temp, min, max, numSlices.z, Axis::Z);
   std::copy(temp.begin(), temp.end(), std::back_inserter(vbuf));
 
-  vao.addVbo(vbuf, VERTEX_COORD_ATTR); // vbuf mapped to attribute 0
+  vao.addVbo(vbuf, VERTEX_COORD_ATTR, bd::VertexArrayObject::Usage::Static_Draw); // vbuf mapped to attribute 0
 
   // Texture buffer
   temp.clear();
@@ -183,12 +183,14 @@ void genQuadVao(bd::VertexArrayObject &vao, const glm::vec3 &min,
   createQuads(temp, { 0, 0, 0 }, { 1, 1, 1 }, numSlices.z, Axis::Z);
   std::copy(temp.begin(), temp.end(), std::back_inserter(texbuf));
 
-  vao.addVbo(texbuf, VERTEX_COLOR_ATTR); // texbuf mapped to attribute 1
+  vao.addVbo(texbuf, VERTEX_COLOR_ATTR, bd::VertexArrayObject::Usage::Static_Draw); // texbuf mapped to attribute 1
 
   createElementIdx(elebuf, numSlices.x + numSlices.y + numSlices.z);
 
   // element index buffer
-  vao.setIndexBuffer(elebuf.data(), elebuf.size());
+  vao.setIndexBuffer(elebuf.data(),
+                     elebuf.size(),
+                     bd::VertexArrayObject::Usage::Static_Draw);
 
 }
 
@@ -259,13 +261,15 @@ void genAxisVao(bd::VertexArrayObject &vao)
   vao.addVbo((float *) (Axis::verts.data()),
              Axis::verts.size() * Axis::vert_element_size,
              Axis::vert_element_size,
-             VERTEX_COORD_ATTR); // attr 0
+             VERTEX_COORD_ATTR,
+             bd::VertexArrayObject::Usage::Static_Draw); // attr 0
 
   // vertex colors into attribute 1
   vao.addVbo((float *) (Axis::colors.data()),
              Axis::colors.size()*3,
              3,   // 3 floats per color
-             VERTEX_COLOR_ATTR);  // attr 1
+             VERTEX_COLOR_ATTR,
+             bd::VertexArrayObject::Usage::Static_Draw);  // attr 1
 }
 
 
@@ -278,16 +282,19 @@ void genBoxVao(bd::VertexArrayObject &vao)
   vao.addVbo((float *) (bd::Box::vertices.data()),
              bd::Box::vertices.size()*bd::Box::vert_element_size,
              bd::Box::vert_element_size,
-             VERTEX_COORD_ATTR);
+             VERTEX_COORD_ATTR,
+             bd::VertexArrayObject::Usage::Static_Draw);
 
   // colors as vertex attribute 1
   vao.addVbo((float *) bd::Box::colors.data(),
              bd::Box::colors.size()*3,
              3,
-             VERTEX_COLOR_ATTR);
+             VERTEX_COLOR_ATTR,
+             bd::VertexArrayObject::Usage::Static_Draw);
 
   vao.setIndexBuffer((unsigned short *) bd::Box::elements.data(),
-                     bd::Box::elements.size());
+                     bd::Box::elements.size(),
+                     bd::VertexArrayObject::Usage::Static_Draw);
 
 }
 
