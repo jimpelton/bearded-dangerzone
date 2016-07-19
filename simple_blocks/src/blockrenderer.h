@@ -38,8 +38,8 @@ public:
   BlockRenderer(int numSlices,
                 bd::ShaderProgram *volumeShader,
                 bd::ShaderProgram *wireframeShader,
-                const std::vector<bd::Block*> *blocks,
-                const bd::Texture *tfuncTexture,
+                std::vector<bd::Block*> const *blocks,
+                bd::Texture const *tfuncTexture,
                 bd::VertexArrayObject *blocksVAO,
                 bd::VertexArrayObject *bboxVAO );
 
@@ -119,8 +119,8 @@ private:
   bd::ShaderProgram *m_volumeShader;
   bd::ShaderProgram *m_wireframeShader;
 //  bd::BlockCollection *m_blockCollection;
-  const std::vector<bd::Block*> *m_blocks;
-  const bd::Texture *m_colorMapTexture;               ///< Transfer function texture
+  std::vector<bd::Block*> const *m_blocks;
+  bd::Texture const *m_colorMapTexture;      ///< Transfer function texture
   bd::VertexArrayObject *m_quadsVao;         ///< Quad geometry verts
   bd::VertexArrayObject *m_boxesVao;         ///< bounding box wireframe verts
 
