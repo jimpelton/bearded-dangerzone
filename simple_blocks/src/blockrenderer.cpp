@@ -18,13 +18,13 @@ BlockRenderer::BlockRenderer()
 ////////////////////////////////////////////////////////////////////////////////
 BlockRenderer::BlockRenderer
 (
-  int numSlices,
-  bd::ShaderProgram *volumeShader,
-  bd::ShaderProgram *wireframeShader,
-  const std::vector<bd::Block*> *blocks,
-  const bd::Texture *colorMap,
-  bd::VertexArrayObject *blocksVAO,
-  bd::VertexArrayObject *bboxVAO
+  int                      numSlices,
+  bd::ShaderProgram       *volumeShader,
+  bd::ShaderProgram       *wireframeShader,
+  std::vector<bd::Block*> *blocks,
+  bd::Texture const       *colorMap,
+  bd::VertexArrayObject   *blocksVAO,
+  bd::VertexArrayObject   *bboxVAO
 )
   : m_numSlicesPerBlock{ numSlices }
   , m_tfuncScaleValue{ 1.0f }
@@ -88,12 +88,14 @@ void BlockRenderer::setViewMatrix(const glm::mat4 &viewMatrix) {
 //  m_numSlicesPerBlock = n;
 //}
 
+
 void
 BlockRenderer::setBackgroundColor(const glm::vec3 &c)
 {
   m_backgroundColor = c;
   glClearColor(c.r, c.g, c.b, 0.0f);
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////
 void BlockRenderer::drawNonEmptyBoundingBoxes() {
@@ -127,17 +129,20 @@ void BlockRenderer::drawNonEmptyBoundingBoxes() {
 
 ////////////////////////////////////////////////////////////////////////////////
 void BlockRenderer::drawSlices(int baseVertex) {
-  //gl_check(glDisable(GL_DEPTH_TEST));
 
+//  gl_check(glDisable(GL_DEPTH_TEST));
+  // Begin NVPM work profiling
   perf_workBegin();
+
   gl_check(glDrawElementsBaseVertex(GL_TRIANGLE_STRIP,
                                     ELEMENTS_PER_QUAD * m_numSlicesPerBlock,
                                     GL_UNSIGNED_SHORT,
                                     0,
                                     baseVertex));
+  // End NVPM work profiling.
   perf_workEnd();
 
-  //gl_check(glEnable(GL_DEPTH_TEST));
+//  gl_check(glEnable(GL_DEPTH_TEST));
 }
 
 
@@ -148,7 +153,7 @@ void BlockRenderer::drawNonEmptyBlocks_Forward() {
   GLint baseVertex{ computeBaseVertexFromViewDir(viewdir) };
   //GLint baseVertex{ 0 };
 
-  // begin NVPM profiling
+  // Start an NVPM profiling frame
   perf_frameBegin();
 
   for (auto *b : *m_blocks) {
@@ -163,7 +168,7 @@ void BlockRenderer::drawNonEmptyBlocks_Forward() {
 
   }
 
-  // end NVPM profiling
+  // End the NVPM profiling frame.
   perf_frameEnd();
 
 }
@@ -173,6 +178,18 @@ void BlockRenderer::drawNonEmptyBlocks_Forward() {
 void BlockRenderer::drawNonEmptyBlocks() {
 
   //TODO: sort quads farthest to nearest.
+
+  glm::vec3 camPos{ m_viewMatrix[2].x, m_viewMatrix[2].y, m_viewMatrix[3].z };
+
+    //g_camera.getPosition();
+  std::sort(m_blocks->begin(), m_blocks->end(),
+            [&camPos](bd::Block *a, bd::Block *b)
+            {
+              float a_dist = glm::distance(camPos, a->origin());
+              float b_dist = glm::distance(camPos, b->origin());
+              return a_dist < b_dist;
+            });
+
   m_quadsVao->bind();
   m_volumeShader->bind();
   m_colorMapTexture->bind(TRANSF_TEXTURE_UNIT);

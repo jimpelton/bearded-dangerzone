@@ -132,13 +132,13 @@ void glfw_window_size_callback(GLFWwindow *window, int width, int height);
 
 void glfw_scrollwheel_callback(GLFWwindow *window, double xoff, double yoff);
 
-void setRotation(const glm::vec2 &dr);
+void setRotation(glm::vec2 const &dr);
 
 void loop(GLFWwindow *window);
 
 void cleanup();
 
-unsigned int loadTransfer_1dtformat(const std::string &filename,
+unsigned int loadTransfer_1dtformat(std::string const &filename,
                                     bd::Texture &transferTex,
                                     bd::ShaderProgram &volumeShader);
 
@@ -412,7 +412,7 @@ GLFWwindow *initGLContext() {
     return nullptr;
   }
 
-  glfwSwapInterval(0);
+  glfwSwapInterval(1); // 0 = no vertical sync.
 
 #ifndef __APPLE__
   bd::subscribe_debug_callbacks();

@@ -36,12 +36,12 @@ public:
 //                std::shared_ptr<bd::VertexArrayObject> bboxVAO);
 
   BlockRenderer(int numSlices,
-                bd::ShaderProgram *volumeShader,
-                bd::ShaderProgram *wireframeShader,
-                std::vector<bd::Block*> const *blocks,
-                bd::Texture const *tfuncTexture,
-                bd::VertexArrayObject *blocksVAO,
-                bd::VertexArrayObject *bboxVAO );
+                bd::ShaderProgram *       volumeShader,
+                bd::ShaderProgram *       wireframeShader,
+                std::vector<bd::Block*> * blocks,
+                bd::Texture const *       tfuncTexture,
+                bd::VertexArrayObject *   blocksVAO,
+                bd::VertexArrayObject *   bboxVAO );
 
 
   //////////////////////////////////////////////////////////////////////////////
@@ -119,7 +119,7 @@ private:
   bd::ShaderProgram *m_volumeShader;
   bd::ShaderProgram *m_wireframeShader;
 //  bd::BlockCollection *m_blockCollection;
-  std::vector<bd::Block*> const *m_blocks;
+  std::vector<bd::Block*> *m_blocks;
   bd::Texture const *m_colorMapTexture;      ///< Transfer function texture
   bd::VertexArrayObject *m_quadsVao;         ///< Quad geometry verts
   bd::VertexArrayObject *m_boxesVao;         ///< bounding box wireframe verts
