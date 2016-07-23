@@ -167,62 +167,85 @@ void glfw_keyboard_callback(GLFWwindow *window, int key, int scancode,
 
   // on key press
   if (action == GLFW_PRESS) {
+
     switch (key) {
+
     case GLFW_KEY_0:
       setCameraPosPreset(0);
       break;
+
     case GLFW_KEY_1:
       setCameraPosPreset(1);
       break;
+
     case GLFW_KEY_2:
       setCameraPosPreset(2);
       break;
+
     case GLFW_KEY_3:
       setCameraPosPreset(3);
       break;
+
     case GLFW_KEY_W:
       g_toggleWireFrame = !g_toggleWireFrame;
       break;
+
     case GLFW_KEY_B:
       g_toggleBlockBoxes = !g_toggleBlockBoxes;
       std::cout << "Toggle bounding boxes.\n";
       break;
+
     case GLFW_KEY_Q:
       g_currentBackgroundColor ^= 1;
-      std::cout << "Background color: " << (g_currentBackgroundColor == 0 ? "Dark" : "Light") << '\n';
+      std::cout << "Background color: "
+                << (g_currentBackgroundColor == 0 ? "Dark" : "Light")
+                << '\n';
       g_volRend->setBackgroundColor(g_backgroundColors[g_currentBackgroundColor]);
       break;
-    }
+
+    default:
+      break;
+    } // switch
   }
 
   // while holding key down.
   if (action != GLFW_RELEASE) {
+
     switch (key) {
+
+    // Positive transfer function scaling
     case GLFW_KEY_PERIOD:
       if (mods & GLFW_MOD_SHIFT)
         g_scaleValue += 0.1f;
       else if (mods & GLFW_MOD_CONTROL)
         g_scaleValue += 0.001f;
+      else if (mods & GLFW_MOD_ALT)
+        g_scaleValue += 0.0001f;
       else
         g_scaleValue += 0.01f;
 
       g_volRend->setTfuncScaleValue(g_scaleValue);
-
       std::cout << "Transfer function scaler: " << g_scaleValue << std::endl;
       break;
+
+    // Negative transfer function scaling
     case GLFW_KEY_COMMA:
       if (mods & GLFW_MOD_SHIFT)
         g_scaleValue -= 0.1f;
       else if (mods & GLFW_MOD_CONTROL)
         g_scaleValue -= 0.001f;
+      else if (mods & GLFW_MOD_ALT)
+        g_scaleValue -= 0.0001f;
       else
         g_scaleValue -= 0.01f;
 
       g_volRend->setTfuncScaleValue(g_scaleValue);
-
       std::cout << "Transfer function scaler: " << g_scaleValue << std::endl;
       break;
-    }
+
+    default:
+      break;
+    } // switch
   }
 }
 
@@ -237,7 +260,7 @@ void glfw_window_size_callback(GLFWwindow *window, int width, int height) {
 
 ////////////////////////////////////////////////////////////////////////////////
 void glfw_cursorpos_callback(GLFWwindow *window, double x, double y) {
-  glm::vec2 cpos(floor(x), floor(y));
+  glm::vec2 cpos(std::floor(x), std::floor(y));
   if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT)==GLFW_PRESS) {
     glm::vec2 delta(cpos - g_cursorPos);
     setRotation(delta);
@@ -249,6 +272,8 @@ void glfw_cursorpos_callback(GLFWwindow *window, double x, double y) {
 
 ///////////////////////////////////////////////////////////////////////////////
 void glfw_scrollwheel_callback(GLFWwindow *window, double xoff, double yoff) {
+  // 1.75 scales the vertical motion of the scroll wheel so changing the
+  // field of view isn't so slow.
   float fov = static_cast<float>(g_fov_deg + (yoff*1.75f));
 
   if (fov < 1 || fov > 120) return;
@@ -540,24 +565,36 @@ int main(int argc, const char *argv[]) {
     return 1;
   }
 
-  bd::BlockCollection *blockCollection{ new bd::BlockCollection() };
-  blockCollection->initBlocksFromIndexFile(clo.indexFilePath);
-  bd::IndexFileHeader const &idxHead{ blockCollection->indexFile().getHeader() };
+  // initialize the BlockCollection blocks from the provided index file.
+  std::unique_ptr<bd::IndexFile> indexFile{
+    bd::IndexFile::fromBinaryIndexFile(clo.indexFilePath) };
 
-  clo.vol_w = idxHead.volume_extent[0];
-  clo.vol_h = idxHead.volume_extent[1];
-  clo.vol_d = idxHead.volume_extent[2];
-  clo.numblk_x = idxHead.numblocks[0];
-  clo.numblk_y = idxHead.numblocks[1];
-  clo.numblk_z = idxHead.numblocks[2];
-  clo.dataType = bd::to_string(bd::IndexFileHeader::getType(idxHead));
+  // Since the IndexFileHeader contains most of the options needed to
+  // render the volume, we copy those over into the CommandLineOptions struct.
+  // Without an index file these options are provided via argv anyway.
+  clo.vol_w = indexFile->getHeader().volume_extent[0];
+  clo.vol_h = indexFile->getHeader().volume_extent[1];
+  clo.vol_d = indexFile->getHeader().volume_extent[2];
+  clo.numblk_x = indexFile->getHeader().numblocks[0];
+  clo.numblk_y = indexFile->getHeader().numblocks[1];
+  clo.numblk_z = indexFile->getHeader().numblocks[2];
+  clo.dataType = bd::to_string(bd::IndexFileHeader::getType(indexFile->getHeader()));
   subvol::printThem(clo);
 
+  // Setup the block collection and give up ownership of the index file.
+  bd::BlockCollection *blockCollection{ new bd::BlockCollection() };
+  blockCollection->initBlocksFromIndexFile(std::move(indexFile));
+
+
+  // This lambda is used by the BlockCollection to filter the blocks by
+  // the block average voxel value.
   auto isEmpty = [&](bd::Block const *b) -> bool {
     return b->avg() < clo.tmin || b->avg() > clo.tmax;
   };
   blockCollection->filterBlocks(isEmpty);
 
+
+  // Initialize OpenGL and GLFW and generate our transfer function textures.
   GLFWwindow *window{ initGLContext() };
   if (window == nullptr) {
     bd::Err() << "Could not initialize GLFW, exiting.";
@@ -565,8 +602,12 @@ int main(int argc, const char *argv[]) {
   }
   setInitialGLState();
   subvol::ColorMap::generateDefaultTransferFunctionTextures();
+
+
+  // Now that OpenGL is initialized, generate the textures for each block
+  // that is marked non-empty.
   blockCollection->initBlockTextures(clo.rawFilePath);
-  std::cout << blockCollection->blocks()[0]->texture() << std::endl;
+  bd::Dbg() << blockCollection->blocks()[0]->texture() << std::endl;
 
   // 2d slices
   bd::VertexArrayObject *quadVao{ new bd::VertexArrayObject() };
