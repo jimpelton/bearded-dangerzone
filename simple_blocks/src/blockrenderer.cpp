@@ -128,15 +128,17 @@ void BlockRenderer::drawNonEmptyBoundingBoxes() {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void BlockRenderer::drawSlices(int baseVertex) {
+void
+BlockRenderer::drawSlices(int baseVertex)
+{
 
 //  gl_check(glDisable(GL_DEPTH_TEST));
   // Begin NVPM work profiling
   perf_workBegin();
 
   gl_check(glDrawElementsBaseVertex(GL_TRIANGLE_STRIP,
-                                    ELEMENTS_PER_QUAD * m_numSlicesPerBlock,
-                                    GL_UNSIGNED_SHORT,
+                                    ELEMENTS_PER_QUAD * m_numSlicesPerBlock, // count
+                                    GL_UNSIGNED_SHORT,                       // type
                                     0,
                                     baseVertex));
   // End NVPM work profiling.
@@ -147,9 +149,11 @@ void BlockRenderer::drawSlices(int baseVertex) {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void BlockRenderer::drawNonEmptyBlocks_Forward() {
+void
+BlockRenderer::drawNonEmptyBlocks_Forward()
+{
 
-  glm::vec4 viewdir{ glm::normalize(m_viewMatrix[2]) };
+  glm::vec4 viewdir{ m_viewMatrix[2] };
   GLint baseVertex{ computeBaseVertexFromViewDir(viewdir) };
   //GLint baseVertex{ 0 };
 
@@ -175,13 +179,14 @@ void BlockRenderer::drawNonEmptyBlocks_Forward() {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void BlockRenderer::drawNonEmptyBlocks() {
+void
+BlockRenderer::drawNonEmptyBlocks()
+{
 
   //TODO: sort quads farthest to nearest.
 
   glm::vec3 camPos{ m_viewMatrix[2].x, m_viewMatrix[2].y, m_viewMatrix[3].z };
 
-    //g_camera.getPosition();
   std::sort(m_blocks->begin(), m_blocks->end(),
             [&camPos](bd::Block *a, bd::Block *b)
             {
@@ -203,7 +208,9 @@ void BlockRenderer::drawNonEmptyBlocks() {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-int BlockRenderer::computeBaseVertexFromViewDir(const glm::vec4 &viewdir) {
+int
+BlockRenderer::computeBaseVertexFromViewDir(const glm::vec4 &viewdir)
+{
   glm::vec3 absViewDir{ glm::abs(viewdir) };
 
   bool isNeg{ viewdir.x < 0 };
@@ -223,17 +230,31 @@ int BlockRenderer::computeBaseVertexFromViewDir(const glm::vec4 &viewdir) {
   // Compute base vertex VBO offset.
   int baseVertex{ 0 };
   switch (newSelected) {
-//  case SliceSet::YZ:
-//    baseVertex = 0;
-//    break;
+    case SliceSet::YZ:
+      if (!isNeg) {
+        baseVertex = 0;
+      } else {
+        baseVertex = 1 * bd::Quad::vert_element_size * m_numSlicesPerBlock;
+      }
+      break;
     case SliceSet::XZ:
-      baseVertex = bd::Quad::vert_element_size * m_numSlicesPerBlock;
+      if (!isNeg) {
+        baseVertex = 2 * bd::Quad::vert_element_size * m_numSlicesPerBlock;
+      } else {
+        baseVertex = 3 * bd::Quad::vert_element_size * m_numSlicesPerBlock;
+      }
       break;
+
     case SliceSet::XY:
-      baseVertex = 2 * bd::Quad::vert_element_size * m_numSlicesPerBlock;
+      if (!isNeg) {
+        baseVertex = 4 * bd::Quad::vert_element_size * m_numSlicesPerBlock;
+      } else {
+        baseVertex = 5 * bd::Quad::vert_element_size * m_numSlicesPerBlock;
+      }
       break;
-    default:
-      break;
+
+//    default:
+//      break;
   }
 
   if (newSelected != m_selectedSliceSet) {

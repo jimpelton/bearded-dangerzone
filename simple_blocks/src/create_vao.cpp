@@ -14,7 +14,7 @@ namespace subvol
 
 namespace
 {
-////////////////////////////////////////////////////////////////////////////////
+
 /// \brief Create quads perpendicular to X-axis within the region with diagonal
 ///        from min to max.
 ///
@@ -22,7 +22,7 @@ namespace
 ///
 /// \param[in] min Minimum corner of first plane
 /// \param[in] max Maximum corner of first plane.
-///
+/// \verbatim
 ///  y.min         y.max
 ///  z.max         z.max
 ///    +------------+
@@ -33,12 +33,11 @@ namespace
 ///    +------------+
 ///  y.min         y.max
 ///  z.min         z.min
-////////////////////////////////////////////////////////////////////////////////
+/// \endverbatim
 void createQuads_X(std::vector<glm::vec4> &quads, const glm::vec3 &min,
     const glm::vec3 &max, accum_delta<float> &nextDelta);
 
 
-////////////////////////////////////////////////////////////////////////////////
 /// \brief Create quads perpendicular to Y-axis within the region with diagonal
 ///        from min to max.
 ///
@@ -46,6 +45,7 @@ void createQuads_X(std::vector<glm::vec4> &quads, const glm::vec3 &min,
 ///
 /// \param[in] min Minimum corner of first plane
 /// \param[in] max Maximum corner of first plane.
+/// \verbatim
 ///  x.min         x.max
 ///  z.max         z.max
 ///    +------------+
@@ -56,12 +56,11 @@ void createQuads_X(std::vector<glm::vec4> &quads, const glm::vec3 &min,
 ///    +------------+
 ///  x.min         x.max
 ///  z.min         z.min
-////////////////////////////////////////////////////////////////////////////////
+/// \endverbatim
 void createQuads_Y(std::vector<glm::vec4> &quads, const glm::vec3 &min,
     const glm::vec3 &max, accum_delta<float> &nextDelta);
 
 
-////////////////////////////////////////////////////////////////////////////////
 /// \brief Create quads perpendicular to Z-axis within the region with diagonal
 ///        from min to max.
 ///
@@ -70,6 +69,7 @@ void createQuads_Y(std::vector<glm::vec4> &quads, const glm::vec3 &min,
 /// \param[in] min Minimum corner of region
 /// \param[in] max Maximum corner of region.
 ///
+/// \verbatim
 ///  x.min         x.max
 ///  y.max         y.max
 ///    +------------+
@@ -80,17 +80,16 @@ void createQuads_Y(std::vector<glm::vec4> &quads, const glm::vec3 &min,
 ///    +------------+
 ///  x.min         x.max
 ///  y.min         y.min
-////////////////////////////////////////////////////////////////////////////////
+/// \endverbatim
 void createQuads_Z(std::vector<glm::vec4> &quads, const glm::vec3 &min,
     const glm::vec3 &max, accum_delta<float> &nextDelta);
 
 
-////////////////////////////////////////////////////////////////////////////////
+/*////////////////////////////////////////////////////////////////////////////////
 //   createQuads_* Implementations
-////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////*/
 
 
-////////////////////////////////////////////////////////////////////////////////
 void createQuads_X(std::vector<glm::vec4> &quads, const glm::vec3 &min,
     const glm::vec3 &max, accum_delta<float> &nextDelta)
 {
@@ -106,7 +105,6 @@ void createQuads_X(std::vector<glm::vec4> &quads, const glm::vec3 &min,
 }
 
 
-////////////////////////////////////////////////////////////////////////////////
 void createQuads_Y(std::vector<glm::vec4> &quads, const glm::vec3 &min,
     const glm::vec3 &max, accum_delta<float> &nextDelta)
 {
@@ -122,7 +120,6 @@ void createQuads_Y(std::vector<glm::vec4> &quads, const glm::vec3 &min,
 }
 
 
-////////////////////////////////////////////////////////////////////////////////
 void createQuads_Z(std::vector<glm::vec4> &quads, const glm::vec3 &min,
     const glm::vec3 &max, accum_delta<float> &nextDelta)
 {
@@ -140,54 +137,68 @@ void createQuads_Z(std::vector<glm::vec4> &quads, const glm::vec3 &min,
 } // namespace
 
 
-////////////////////////////////////////////////////////////////////////////////
 void genQuadVao(bd::VertexArrayObject &vao, const glm::vec3 &min,
     const glm::vec3 &max,
     const glm::u64vec3 &numSlices)
 {
-
-//  gl_log("Generating proxy geometry vertex buffers for %dx%dx%d slices.",
-//         numSlices.x, numSlices.y, numSlices.z );
 
   std::vector<glm::vec4> temp;
   std::vector<glm::vec4> vbuf;
   std::vector<glm::vec4> texbuf;
   std::vector<uint16_t> elebuf;
 
+  // Create two sets of slices (+ and - direction)
+  // for the vertex buffer
 
-  // Vertex buffer
+  // Along X, in the YZ plane.
   temp.clear();
   createQuads(temp, min, max, numSlices.x, Axis::X);
   std::copy(temp.begin(), temp.end(), std::back_inserter(vbuf));
+  std::copy(temp.rbegin(), temp.rend(), std::back_inserter(vbuf));
 
+  // Along Y, in the XZ plane.
   temp.clear();
   createQuads(temp, min, max, numSlices.y, Axis::Y);
   std::copy(temp.begin(), temp.end(), std::back_inserter(vbuf));
+  std::copy(temp.rbegin(), temp.rend(), std::back_inserter(vbuf));
 
+  // Along Z, in the XY plane.
   temp.clear();
   createQuads(temp, min, max, numSlices.z, Axis::Z);
   std::copy(temp.begin(), temp.end(), std::back_inserter(vbuf));
+  std::copy(temp.rbegin(), temp.rend(), std::back_inserter(vbuf));
 
-  vao.addVbo(vbuf, VERTEX_COORD_ATTR, bd::VertexArrayObject::Usage::Static_Draw); // vbuf mapped to attribute 0
+  vao.addVbo(vbuf, VERTEX_COORD_ATTR,
+             bd::VertexArrayObject::Usage::Static_Draw); // vbuf mapped to attribute 0
 
-  // Texture buffer
+  // Create two sets of slices (+ and - direction) for the texture coord buffer
+
+  // Along X, in the YZ plane.
   temp.clear();
   createQuads(temp, { 0, 0, 0 }, { 1, 1, 1 }, numSlices.x, Axis::X);
   std::copy(temp.begin(), temp.end(), std::back_inserter(texbuf));
+  std::copy(temp.rbegin(), temp.rend(), std::back_inserter(texbuf));
 
+  // Along Y, in the XZ plane.
   temp.clear();
   createQuads(temp, { 0, 0, 0 }, { 1, 1, 1 }, numSlices.y, Axis::Y);
   std::copy(temp.begin(), temp.end(), std::back_inserter(texbuf));
+  std::copy(temp.rbegin(), temp.rend(), std::back_inserter(texbuf));
 
+  // Along Z, in the XY plane.
   temp.clear();
   createQuads(temp, { 0, 0, 0 }, { 1, 1, 1 }, numSlices.z, Axis::Z);
   std::copy(temp.begin(), temp.end(), std::back_inserter(texbuf));
+  std::copy(temp.rbegin(), temp.rend(), std::back_inserter(texbuf));
 
-  vao.addVbo(texbuf, VERTEX_COLOR_ATTR, bd::VertexArrayObject::Usage::Static_Draw); // texbuf mapped to attribute 1
+  vao.addVbo(texbuf, VERTEX_COLOR_ATTR,
+             bd::VertexArrayObject::Usage::Static_Draw); // texbuf mapped to attribute 1
 
-  createElementIdx(elebuf, numSlices.x + numSlices.y + numSlices.z);
+  // Create element indexes for twice the number of slices since there are
+  // actually two sets of slices per axis (+ and - direction slices).
+  createElementIdx(elebuf, 2 * (numSlices.x + numSlices.y + numSlices.z) );
 
-  // element index buffer
+  // Element index buffer
   vao.setIndexBuffer(elebuf.data(),
                      elebuf.size(),
                      bd::VertexArrayObject::Usage::Static_Draw);
@@ -195,7 +206,6 @@ void genQuadVao(bd::VertexArrayObject &vao, const glm::vec3 &min,
 }
 
 
-////////////////////////////////////////////////////////////////////////////////
 void createQuads(std::vector<glm::vec4> &quads, const glm::vec3 &min,
     const glm::vec3 &max, size_t numPlanes, Axis a)
 {

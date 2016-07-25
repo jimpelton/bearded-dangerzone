@@ -13,17 +13,15 @@
 namespace subvol
 {
 
-///////////////////////////////////////////////////////////////////////////
 /// \brief Generates (max-start)/d Ts.
 ///
-/// Values in sequence from [start .. max), non-inclusive on the right.
+/// \note Values in sequence from [start .. max), non-inclusive on the right.
 template<typename T,
     typename = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
 class accum_delta
 {
 public:
 
-  ///////////////////////////////////////////////////////////////////////////
   accum_delta(T start, T d, T max)
       : m_delta{ d }
         , m_next{ start }
@@ -31,7 +29,6 @@ public:
   { }
 
 
-  ///////////////////////////////////////////////////////////////////////////
   T operator()()
   {
     T r = m_next;
@@ -41,7 +38,6 @@ public:
   }
 
 
-  ///////////////////////////////////////////////////////////////////////////
   /// \return True until max has been returned by operator().
   bool hasNext()
   {
@@ -56,10 +52,9 @@ private:
 };
 
 
-////////////////////////////////////////////////////////////////////////////////
 /// \brief Create slices for each axis with in a region. The min, max of the
 ///        region boundingbox is given by min and max vectors.
-///
+/// \verbatim
 ///     {min.x, max.y, max.z}
 ///           +---------------+ max
 ///          /               /|
@@ -73,6 +68,7 @@ private:
 ///       |              |  /
 ///       |              | /
 ///  min  +--------------+`  {max.x,  min.y, min.z}
+/// \endverbatim
 ///
 ///
 /// \param vao[out] VertexArrayObject
@@ -84,7 +80,6 @@ void genQuadVao(bd::VertexArrayObject &vao, const glm::vec3 &min,
     const glm::u64vec3 &numSlices);
 
 
-///////////////////////////////////////////////////////////////////////////////
 /// \brief Create quad proxy geometry along axis \c a, within bounding box with
 ///        corners \c min and \c max.
 ///
@@ -99,7 +94,6 @@ void createQuads(std::vector<glm::vec4> &quads, const glm::vec3 &min,
     const glm::vec3 &max, size_t numPlanes, Axis a);
 
 
-////////////////////////////////////////////////////////////////////////////////
 /// \brief Create element indexes for the verts returned by \c createQuads()
 ///
 /// \note Elements are separated by restart symbol 0xFFFF.
@@ -109,12 +103,10 @@ void createQuads(std::vector<glm::vec4> &quads, const glm::vec3 &min,
 void createElementIdx(std::vector<unsigned short> &elebuf, size_t numQuads);
 
 
-///////////////////////////////////////////////////////////////////////////////
 /// \brief Generate the vertex buffers for coordinate axis widget
 void genAxisVao(bd::VertexArrayObject &vao);
 
 
-///////////////////////////////////////////////////////////////////////////////
 /// \brief Generate the vertex buffers for bounding box around the blocks
 void genBoxVao(bd::VertexArrayObject &vao);
 

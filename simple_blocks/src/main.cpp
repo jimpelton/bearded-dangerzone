@@ -371,9 +371,9 @@ void setInitialGLState() {
   bd::Info() << "Initializing gl state.";
   gl_check(glClearColor(0.15f, 0.15f, 0.15f, 0.0f));
 
-//  gl_check(glEnable(GL_CULL_FACE));
-//  gl_check(glCullFace(GL_FRONT));
-  gl_check(glDisable(GL_CULL_FACE));
+  gl_check(glEnable(GL_CULL_FACE));
+  gl_check(glCullFace(GL_FRONT));
+//  gl_check(glDisable(GL_CULL_FACE));
 
   gl_check(glEnable(GL_DEPTH_TEST));
   gl_check(glDepthFunc(GL_LESS));
@@ -565,7 +565,8 @@ int main(int argc, const char *argv[]) {
     return 1;
   }
 
-  // initialize the BlockCollection blocks from the provided index file.
+  // Read the index file to get values from it that we need to populate
+  // the CommandLineOptions struct.
   std::unique_ptr<bd::IndexFile> indexFile{
     bd::IndexFile::fromBinaryIndexFile(clo.indexFilePath) };
 
@@ -607,23 +608,26 @@ int main(int argc, const char *argv[]) {
   // Now that OpenGL is initialized, generate the textures for each block
   // that is marked non-empty.
   blockCollection->initBlockTextures(clo.rawFilePath);
-  bd::Dbg() << blockCollection->blocks()[0]->texture() << std::endl;
+  bd::Dbg() << blockCollection->blocks()[0]->texture();
 
   // 2d slices
   bd::VertexArrayObject *quadVao{ new bd::VertexArrayObject() };
   quadVao->create();
   //TODO: generate quads for actual volume extent.
+  bd::Dbg() << "Generating proxy geometry VAO";
   subvol::genQuadVao(*quadVao,
                      { -0.5f, -0.5f, -0.5f }, { 0.5f, 0.5f, 0.5f },
                      { clo.num_slices, clo.num_slices, clo.num_slices });
 
   // coordinate axis
+  bd::Dbg() << "Generating coordinate axis VAO";
   bd::VertexArrayObject *axisVao{ new bd::VertexArrayObject() };
   axisVao->create();
   subvol::genAxisVao(*axisVao);
   g_axisVao = axisVao;
 
   // bounding boxes
+  bd::Dbg() << "Generating bounding box VAO";
   bd::VertexArrayObject *boxVao{ new bd::VertexArrayObject() };
   boxVao->create();
   subvol::genBoxVao(*boxVao);
