@@ -94,6 +94,10 @@ void createQuads(std::vector<glm::vec4> &quads, const glm::vec3 &min,
     const glm::vec3 &max, size_t numPlanes, Axis a);
 
 
+void createQuads_Reversed(std::vector<glm::vec4> &quads, const glm::vec3 &min,
+  const glm::vec3 &max, size_t numPlanes, Axis a);
+
+
 /// \brief Create element indexes for the verts returned by \c createQuads()
 ///
 /// \note Elements are separated by restart symbol 0xFFFF.

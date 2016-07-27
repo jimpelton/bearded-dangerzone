@@ -335,7 +335,9 @@ void draw() {
 
 
 ///////////////////////////////////////////////////////////////////////////////
-void loop(GLFWwindow *window) {
+void
+loop(GLFWwindow *window)
+{
   assert(window!=nullptr && "window was passed as nullptr in loop()");
   bd::Info() << "About to enter render loop.";
 
@@ -365,9 +367,29 @@ void loop(GLFWwindow *window) {
 //   I N I T I A L I Z A T I O N
 ///////////////////////////////////////////////////////////////////////////////
 
+//void
+//initializeQuadVaos(glm::vec3 const &min, glm::vec3 const &max, glm::u64vec3 const &numSlices)
+//{
+//  std::unique_ptr<bd::VertexArrayObject> yz; // along x
+//  std::unique_ptr<bd::VertexArrayObject> xz; // along y
+//  std::unique_ptr<bd::VertexArrayObject> xy; // along z
+//
+//  std::vector<glm::vec4> temp;
+//
+//  temp.clear();
+//  createQuads(temp, min, max, numSlices.x, Axis::X);
+//
+//  temp.clear();
+//  createQuads(temp, min, max, numSlices.y, Axis::Y);
+//
+//  temp.clear();
+//  createQuads(temp, min, max, numSlices.z, Axis::Z);
+//
+//}
 
 /////////////////////////////////////////////////////////////////////////////////
-void setInitialGLState() {
+void setInitialGLState()
+{
   bd::Info() << "Initializing gl state.";
   gl_check(glClearColor(0.15f, 0.15f, 0.15f, 0.0f));
 

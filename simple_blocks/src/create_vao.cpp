@@ -137,12 +137,12 @@ void createQuads_Z(std::vector<glm::vec4> &quads, const glm::vec3 &min,
 } // namespace
 
 
-void genQuadVao(bd::VertexArrayObject &vao, const glm::vec3 &min,
-    const glm::vec3 &max,
-    const glm::u64vec3 &numSlices)
+void
+genQuadVao(bd::VertexArrayObject &vao, glm::vec3 const &min, glm::vec3 const &max,
+  glm::u64vec3 const &numSlices)
 {
 
-  std::vector<glm::vec4> temp;
+//  std::vector<glm::vec4> temp;
   std::vector<glm::vec4> vbuf;
   std::vector<glm::vec4> texbuf;
   std::vector<uint16_t> elebuf;
@@ -151,31 +151,33 @@ void genQuadVao(bd::VertexArrayObject &vao, const glm::vec3 &min,
   // for the vertex buffer
 
   // Along X, in the YZ plane.
-  temp.clear();
-  createQuads(temp, min, max, numSlices.x, Axis::X);
-  std::copy(temp.begin(), temp.end(), std::back_inserter(vbuf));
-  std::copy(temp.rbegin(), temp.rend(), std::back_inserter(vbuf));
+  //temp.clear();
+  createQuads(vbuf, min, max, numSlices.x, Axis::X);
+  createQuads_Reversed(vbuf, min, max, numSlices.x, Axis::X);
+  //std::copy(temp.begin(), temp.end(), std::back_inserter(vbuf));
 
   // Along Y, in the XZ plane.
-  temp.clear();
-  createQuads(temp, min, max, numSlices.y, Axis::Y);
-  std::copy(temp.begin(), temp.end(), std::back_inserter(vbuf));
-  std::copy(temp.rbegin(), temp.rend(), std::back_inserter(vbuf));
+//  temp.clear();
+  createQuads(vbuf, min, max, numSlices.y, Axis::Y);
+  createQuads_Reversed(vbuf, min, max, numSlices.y, Axis::Y);
+//  std::copy(temp.begin(), temp.end(), std::back_inserter(vbuf));
 
   // Along Z, in the XY plane.
-  temp.clear();
-  createQuads(temp, min, max, numSlices.z, Axis::Z);
-  std::copy(temp.begin(), temp.end(), std::back_inserter(vbuf));
-  std::copy(temp.rbegin(), temp.rend(), std::back_inserter(vbuf));
+//  temp.clear();
+  createQuads(vbuf, min, max, numSlices.z, Axis::Z);
+  createQuads_Reversed(vbuf, min, max, numSlices.z, Axis::Z);
+//  std::copy(temp.begin(), temp.end(), std::back_inserter(vbuf));
 
-  vao.addVbo(vbuf, VERTEX_COORD_ATTR,
+  vao.addVbo(vbuf,
+             VERTEX_COORD_ATTR,
              bd::VertexArrayObject::Usage::Static_Draw); // vbuf mapped to attribute 0
 
   // Create two sets of slices (+ and - direction) for the texture coord buffer
 
   // Along X, in the YZ plane.
+  std::vector<glm::vec4> temp;
   temp.clear();
-  createQuads(temp, { 0, 0, 0 }, { 1, 1, 1 }, numSlices.x, Axis::X);
+  createQuads(texbuf, { 0, 0, 0 }, { 1, 1, 1 }, numSlices.x, Axis::X);
   std::copy(temp.begin(), temp.end(), std::back_inserter(texbuf));
   std::copy(temp.rbegin(), temp.rend(), std::back_inserter(texbuf));
 
@@ -191,7 +193,8 @@ void genQuadVao(bd::VertexArrayObject &vao, const glm::vec3 &min,
   std::copy(temp.begin(), temp.end(), std::back_inserter(texbuf));
   std::copy(temp.rbegin(), temp.rend(), std::back_inserter(texbuf));
 
-  vao.addVbo(texbuf, VERTEX_COLOR_ATTR,
+  vao.addVbo(texbuf,
+             VERTEX_COLOR_ATTR,
              bd::VertexArrayObject::Usage::Static_Draw); // texbuf mapped to attribute 1
 
   // Create element indexes for twice the number of slices since there are
@@ -206,11 +209,11 @@ void genQuadVao(bd::VertexArrayObject &vao, const glm::vec3 &min,
 }
 
 
-void createQuads(std::vector<glm::vec4> &quads, const glm::vec3 &min,
-    const glm::vec3 &max, size_t numPlanes, Axis a)
+void
+createQuads(std::vector<glm::vec4> &quads, const glm::vec3 &min, const glm::vec3 &max,
+  size_t numPlanes, Axis a)
 {
 
-  quads.reserve(numPlanes);
   float delta{ 0 };
 
   switch (a) {
@@ -239,6 +242,38 @@ void createQuads(std::vector<glm::vec4> &quads, const glm::vec3 &min,
 
 }
 
+void
+createQuads_Reversed(std::vector<glm::vec4> &quads, const glm::vec3 &min, const glm::vec3 &max,
+  size_t numPlanes, Axis a)
+{
+
+  float delta{ 0 };
+
+  switch (a) {
+    case Axis::X: {
+      delta = (max.x - min.x) / static_cast<float>(numPlanes);
+      accum_delta<float> ad(-max.x, delta, -min.x);
+      createQuads_X(quads, min, max, ad);
+      break;
+    }
+
+    case Axis::Y: {
+      delta = (max.y - min.y) / static_cast<float>(numPlanes);
+      accum_delta<float> ad(-max.y, delta, -min.y);
+      createQuads_Y(quads, min, max, ad);
+      break;
+    }
+
+    case Axis::Z: {
+      delta = (max.z - min.z) / static_cast<float>(numPlanes);
+      accum_delta<float> ad(-max.z, delta, -min.z);
+      createQuads_Z(quads, min, max, ad);
+      break;
+    }
+      // default: break;
+  }
+
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 void createElementIdx(std::vector<unsigned short> &elebuf, size_t numQuads)
@@ -247,7 +282,7 @@ void createElementIdx(std::vector<unsigned short> &elebuf, size_t numQuads)
   size_t totalElems{ numQuads * 5 };  // 4 verts + 1 restart symbol per quad.
 
   elebuf.clear();
-  elebuf.reserve(totalElems);
+//  elebuf.reserve(totalElems);
 
   for (size_t i{ 0 }; i < numQuads; ++i) {
     elebuf.push_back(0 + 4 * i);
