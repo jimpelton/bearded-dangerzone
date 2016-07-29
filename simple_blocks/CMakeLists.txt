@@ -104,8 +104,8 @@ target_link_libraries(simple_blocks
     debug ${CRUFT_DEBUG_LIBRARIES}
     optimized ${CRUFT_RELEASE_LIBRARIES}
     ${NVTOOLSEXT_LIB}
-    #    /usr/lib/libtbb.so
-    /usr/local/lib/libtbb.dylib
+        /usr/lib/libtbb.so
+#    /usr/local/lib/libtbb.dylib
 )
 
 

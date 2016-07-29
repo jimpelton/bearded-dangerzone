@@ -10,7 +10,7 @@
 #include <glm/glm.hpp>
 
 #include <vector>
-#include <map>
+#include <unordered_map>
 
 
 namespace subvol
@@ -57,10 +57,10 @@ public:
   static const std::vector<glm::vec4> SEISMIC;
   static const std::vector<glm::vec4> INVERSE_SEISMIC;
   /* ALL OF EM */
-  static const std::map<std::string, const std::vector<glm::vec4>* > s_mapPtrs;
+  static const std::unordered_map<std::string, const std::vector<glm::vec4>* > s_mapPtrs;
 
 private:
-  static std::map<std::string, const bd::Texture*> s_textures;
+  static std::unordered_map<std::string, const bd::Texture*> s_textures;
 
 
 

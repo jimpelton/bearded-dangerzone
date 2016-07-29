@@ -36,6 +36,7 @@ public:
 //                std::shared_ptr<bd::VertexArrayObject> bboxVAO);
 
   BlockRenderer(int numSlices,
+                bd::View *camera,
                 bd::ShaderProgram *       volumeShader,
                 bd::ShaderProgram *       wireframeShader,
                 std::vector<bd::Block*> * blocks,
@@ -59,7 +60,8 @@ public:
 
   //////////////////////////////////////////////////////////////////////////////
   /// \brief Draw wireframe bounding boxes around the blocks.
-  void drawNonEmptyBoundingBoxes();
+  /// \param[in] vp View projection matrix.
+  void drawNonEmptyBoundingBoxes(glm::mat4 const& vp);
 
   //////////////////////////////////////////////////////////////////////////////
   bool init();
@@ -72,7 +74,7 @@ public:
   void setTfuncScaleValue(float val);
 
   //////////////////////////////////////////////////////////////////////////////
-  void setViewMatrix(const glm::mat4 &);
+//  void setViewMatrix(const glm::mat4 &);
 
   //////////////////////////////////////////////////////////////////////////////
 //  void setNumSlices(int n);
@@ -109,13 +111,13 @@ private:
 
   int m_numSlicesPerBlock;            ///< Number of slices per block
   float m_tfuncScaleValue;            ///< Transfer function scaling value
-
+  bool m_drawNonEmptyBoundingBoxes;
   glm::vec3 m_backgroundColor;
 
-  glm::mat4 m_viewMatrix;             ///< View matrix for the camera
+//  glm::mat4 m_viewMatrix;             ///< View matrix for the camera
 
   SliceSet m_selectedSliceSet;
-
+  bd::View *m_camera;
   bd::ShaderProgram *m_volumeShader;
   bd::ShaderProgram *m_wireframeShader;
 //  bd::BlockCollection *m_blockCollection;

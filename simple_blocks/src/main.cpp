@@ -292,22 +292,23 @@ void setRotation(const glm::vec2 &dr) {
 ///////////////////////////////////////////////////////////////////////////////
 void draw() {
   glm::mat4 viewMat = g_camera.getViewMatrix();
+  glm::mat4 projMat = g_camera.getProjectionMatrix();
   gl_check(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
   ////////  Axis    /////////////////////////////////////////
   g_axisVao->bind();
   g_wireframeShader->bind();
-  g_wireframeShader->setUniform("mvp", viewMat);
+  g_wireframeShader->setUniform("mvp", projMat * viewMat);
   g_axis.draw();
   g_wireframeShader->unbind();
   g_axisVao->unbind();
 
-  g_volRend->setViewMatrix(viewMat);
+  //g_volRend->setViewMatrix(viewMat);
   
   ////////  BBoxes  /////////////////////////////////////////
-  if (g_toggleBlockBoxes) {
-    g_volRend->drawNonEmptyBoundingBoxes();
-  }
+//  if (g_toggleBlockBoxes) {
+//    g_volRend->drawNonEmptyBoundingBoxes();
+//  }
 
   //////// Quad Geo (drawNonEmptyBlocks)  /////////////////////
   g_volRend->drawNonEmptyBlocks();
@@ -324,7 +325,7 @@ loop(GLFWwindow *window)
 
   do {
     startCpuTime();
-    g_camera.updateViewMatrix();
+//    g_camera.updateViewMatrix();
 
 //    startGpuTimerQuery();
 
@@ -529,7 +530,7 @@ void setCameraPosPreset(unsigned cameraPos) {
     //g_camera.rotateTo(Z_AXIS);
     break;
   }
-
+//  g_camera.setPosition({0,0,-10});
   g_camera.rotateBy(r);
 }
 
@@ -587,7 +588,7 @@ int main(int argc, const char *argv[]) {
 
   // Setup the block collection and give up ownership of the index file.
   bd::BlockCollection *blockCollection{ new bd::BlockCollection() };
-  blockCollection->initBlocksFromIndexFile(std::move(indexFile));
+  blockCollection->initBlocksFromIndexFile( std::move(indexFile) );
 
 
   // This lambda is used by the BlockCollection to filter the blocks by
@@ -664,6 +665,7 @@ int main(int argc, const char *argv[]) {
 
   bd::Texture const *colormap{ subvol::ColorMap::getDefaultMapTexture("RAINBOW") };
   BlockRenderer volRend{ int(clo.num_slices),
+                         &g_camera,
                          volumeShader,
                          wireframeShader,
                          &blockCollection->nonEmptyBlocks(),

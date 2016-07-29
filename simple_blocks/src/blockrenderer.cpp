@@ -8,17 +8,19 @@
 
 #include <bd/geo/quad.h>
 #include <bd/util/ordinal.h>
+#include <glm/gtx/string_cast.hpp>
 //#include <bd/log/logger.h>
 
 
 BlockRenderer::BlockRenderer()
-  : BlockRenderer(0, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr) { }
+  : BlockRenderer(0, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr) { }
 
 
 ////////////////////////////////////////////////////////////////////////////////
 BlockRenderer::BlockRenderer
 (
   int                      numSlices,
+  bd::View *camera,
   bd::ShaderProgram       *volumeShader,
   bd::ShaderProgram       *wireframeShader,
   std::vector<bd::Block*> *blocks,
@@ -28,9 +30,9 @@ BlockRenderer::BlockRenderer
 )
   : m_numSlicesPerBlock{ numSlices }
   , m_tfuncScaleValue{ 1.0f }
-
+  , m_drawNonEmptyBoundingBoxes{ false }
   , m_backgroundColor{ 0.0f }
-
+  , m_camera{ camera }
   , m_volumeShader{ volumeShader }
   , m_wireframeShader{ wireframeShader }
 
@@ -78,9 +80,9 @@ void BlockRenderer::setTfuncScaleValue(float val) {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void BlockRenderer::setViewMatrix(const glm::mat4 &viewMatrix) {
-  m_viewMatrix = viewMatrix;
-}
+//void BlockRenderer::setViewMatrix(const glm::mat4 &viewMatrix) {
+//  m_viewMatrix = viewMatrix;
+//}
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -98,14 +100,14 @@ BlockRenderer::setBackgroundColor(const glm::vec3 &c)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void BlockRenderer::drawNonEmptyBoundingBoxes() {
+void BlockRenderer::drawNonEmptyBoundingBoxes(glm::mat4 const &vp) {
   
   m_wireframeShader->bind();
   m_boxesVao->bind();
 
   for (auto *b : *m_blocks) {
 
-    glm::mat4 mmvp = m_viewMatrix * b->transform();
+    glm::mat4 mmvp = vp * b->transform();
     m_wireframeShader->setUniform(WIREFRAME_MVP_MATRIX_UNIFORM_STR, mmvp);
 
     gl_check(glDrawElements(GL_LINE_LOOP,
@@ -153,19 +155,40 @@ void
 BlockRenderer::drawNonEmptyBlocks_Forward()
 {
 
-  glm::vec4 viewdir{ m_viewMatrix[2] };
-  GLint baseVertex{ computeBaseVertexFromViewDir(viewdir) };
+  glm::mat4 viewMatrix{ m_camera->getViewMatrix() };
+  glm::vec4 viewdir{ viewMatrix[2] };
+  glm::mat4 vp{ m_camera->getProjectionMatrix() * viewMatrix };
+
+
+  std::cout << "Camera pos: " << glm::to_string(m_camera->getPosition()) << '\n';
+
   //GLint baseVertex{ 0 };
+
+  // Sort the blocks by their distance from the camera.
+  // The origin of each block is used.
+  std::sort(m_blocks->begin(), m_blocks->end(),
+            [&viewdir](bd::Block *a, bd::Block *b)
+            {
+              float a_dist = glm::distance(viewdir, glm::vec4{ a->origin(), 1 });
+              float b_dist = glm::distance(viewdir, glm::vec4{ b->origin(), 1 });
+              return a_dist < b_dist;
+            });
+
+  if (m_drawNonEmptyBoundingBoxes) {
+    drawNonEmptyBoundingBoxes(vp);
+  }
+  // Compute the SliceSet and offset into the vertex buffer of that slice set.
+  GLint baseVertex{ computeBaseVertexFromViewDir(viewdir) };
 
   // Start an NVPM profiling frame
   perf_frameBegin();
 
   for (auto *b : *m_blocks) {
 
-    glm::mat4 wmvp = m_viewMatrix * b->transform();
+    glm::mat4 mvp = vp * b->transform();
     
     b->texture().bind(BLOCK_TEXTURE_UNIT);
-    m_volumeShader->setUniform(VOLUME_MVP_MATRIX_UNIFORM_STR, wmvp);
+    m_volumeShader->setUniform(VOLUME_MVP_MATRIX_UNIFORM_STR, mvp);
     m_volumeShader->setUniform(VOLUME_TRANSF_UNIFORM_STR, m_tfuncScaleValue);
 
     drawSlices(baseVertex);
@@ -183,22 +206,9 @@ void
 BlockRenderer::drawNonEmptyBlocks()
 {
 
-  //TODO: sort quads farthest to nearest.
-
-  glm::vec3 camPos{ m_viewMatrix[2].x, m_viewMatrix[2].y, m_viewMatrix[3].z };
-
-  std::sort(m_blocks->begin(), m_blocks->end(),
-            [&camPos](bd::Block *a, bd::Block *b)
-            {
-              float a_dist = glm::distance(camPos, a->origin());
-              float b_dist = glm::distance(camPos, b->origin());
-              return a_dist < b_dist;
-            });
-
   m_quadsVao->bind();
   m_volumeShader->bind();
   m_colorMapTexture->bind(TRANSF_TEXTURE_UNIT);
-
   drawNonEmptyBlocks_Forward();
 
   //m_volumeShader->unbind();

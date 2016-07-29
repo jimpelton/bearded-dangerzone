@@ -138,7 +138,7 @@ const std::vector<glm::vec4> ColorMap::INVERSE_SEISMIC{
     glm::vec4{ 1.00f, 1.00f, 0.00f, 0.00f }
 };
 
-const std::map<std::string, const std::vector<glm::vec4> *> ColorMap::s_mapPtrs{
+const std::unordered_map<std::string, const std::vector<glm::vec4> *> ColorMap::s_mapPtrs{
       { "FULL_RAINBOW",         &FULL_RAINBOW },
       { "INVERSE_FULL_RAINBOW", &INVERSE_FULL_RAINBOW },
       { "RAINBOW",              &RAINBOW },
@@ -155,7 +155,7 @@ const std::map<std::string, const std::vector<glm::vec4> *> ColorMap::s_mapPtrs{
       { "INVERSE_SEISMIC",      &INVERSE_SEISMIC }
 };
 
-std::map<std::string, const bd::Texture*> ColorMap::s_textures;
+std::unordered_map<std::string, const bd::Texture*> ColorMap::s_textures;
 
 
 const bd::Texture*
