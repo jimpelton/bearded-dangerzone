@@ -43,6 +43,8 @@
 #include <memory>
 #include <chrono>
 
+//#include <filesystem>
+
 #include <cstring>
 
 // profiling
@@ -50,27 +52,6 @@
 #include "colormap.h"
 
 
-// Constant definitions
-
-const int ELEMENTS_PER_QUAD{ 5 }; //< 5 elements = 4 verts + 1 restart symbol
-
-const glm::vec3 X_AXIS{ 1.0f, 0.0f, 0.0f };
-const glm::vec3 Y_AXIS{ 0.0f, 1.0f, 0.0f };
-const glm::vec3 Z_AXIS{ 0.0f, 0.0f, 1.0f };
-
-const int VERTEX_COORD_ATTR = 0;
-const int VERTEX_COLOR_ATTR = 1;
-
-const int BLOCK_TEXTURE_UNIT = 0;
-const int TRANSF_TEXTURE_UNIT = 1;
-
-const char *VOLUME_SAMPLER_UNIFORM_STR = "volume_sampler";
-const char *TRANSF_SAMPLER_UNIFORM_STR = "tf_sampler";
-
-const char *VOLUME_MVP_MATRIX_UNIFORM_STR = "mvp";
-const char *VOLUME_TRANSF_UNIFORM_STR = "tfScalingVal";
-
-const char *WIREFRAME_MVP_MATRIX_UNIFORM_STR = "mvp";
 
 
 
@@ -630,7 +611,7 @@ int main(int argc, const char *argv[]) {
   // Now that OpenGL is initialized, generate the textures for each block
   // that is marked non-empty.
   blockCollection->initBlockTextures(clo.rawFilePath);
-  bd::Dbg() << blockCollection->blocks()[0]->texture();
+//  bd::Dbg() << blockCollection->blocks()[0]->texture();
 
   // 2d slices
   bd::VertexArrayObject *quadVao{ new bd::VertexArrayObject() };
@@ -681,7 +662,7 @@ int main(int argc, const char *argv[]) {
   }
 
 
-  bd::Texture const *colormap{ subvol::ColorMap::getDefaultMapTexture("BLACK_TO_WHITE") };
+  bd::Texture const *colormap{ subvol::ColorMap::getDefaultMapTexture("RAINBOW") };
   BlockRenderer volRend{ int(clo.num_slices),
                          volumeShader,
                          wireframeShader,

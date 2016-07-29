@@ -1,5 +1,6 @@
 #include <create_vao.h>
 #include <axis_enum.h>
+#include <constants.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtx/string_cast.hpp>
@@ -47,10 +48,10 @@ TEST_CASE("createQuads_X single slice", "[vertex][X][single]") {
       glm::vec4{ 0, 1, 1, 1 },
   };
 
-      std::vector<glm::vec4> actual;
-      createQuads(actual, min, max, numSlices, Axis::X);
+  std::vector<glm::vec4> actual;
+  subvol::createQuads(actual, min, max, numSlices, Axis::X);
 
-      REQUIRE(actual == expected);
+  REQUIRE(actual == expected);
 }
 
 
@@ -83,7 +84,8 @@ TEST_CASE("createQuads_X", "[vertex][X]") {
   };
 
   std::vector<glm::vec4> actual;
-  createQuads(actual, min, max, numSlices, Axis::X);
+//  createQuads(actual, min, max, numSlices, Axis::X);
+  subvol::createQuads(actual, min, max, numSlices, Axis::X);
 
   REQUIRE(actual == expected);
 
@@ -119,7 +121,8 @@ TEST_CASE("createQuads_Y", "[vertex][Y]") {
   };
 
   std::vector<glm::vec4> actual;
-  createQuads(actual, min, max, numSlices, Axis::Y);
+//  createQuads(actual, min, max, numSlices, Axis::Y);
+  subvol::createQuads(actual, min, max, numSlices, Axis::Y);
 
   REQUIRE(actual == expected);
 
@@ -155,7 +158,8 @@ TEST_CASE("createQuads_Z", "[vertex][Z]") {
   };
 
   std::vector<glm::vec4> actual;
-  createQuads(actual, min, max, numSlices, Axis::Z);
+//  createQuads(actual, min, max, numSlices, Axis::Z);
+  subvol::createQuads(actual, min, max, numSlices, Axis::Z);
 
   REQUIRE(actual == expected);
 
@@ -172,7 +176,7 @@ TEST_CASE("createElementIdx generates increasing sequence with restart symbol Ox
   };
 
   std::vector<unsigned short> actual;
-  createElementIdx(actual, numSlices);
+  subvol::createElementIdx(actual, numSlices);
 
   REQUIRE(actual == expected);
 
