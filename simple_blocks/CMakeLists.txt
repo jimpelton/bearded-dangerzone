@@ -78,7 +78,9 @@ set(simple_blocks_HEADERS
         src/sliceset.h
         src/timing.h
         src/constants.h
-        src/colormap.h)
+        src/colormap.h
+        src/renderer.h
+        src/renderhelp.h )
 
 set(simple_blocks_SOURCES
         src/main.cpp
@@ -90,7 +92,9 @@ set(simple_blocks_SOURCES
         src/timing.cpp
         src/blockrenderer.cpp
         src/colormap.cpp
-        src/constants.cpp)
+        src/constants.cpp
+        src/renderer.cpp
+        src/renderhelp.cpp)
 
 
 ################################################################################
@@ -104,8 +108,8 @@ target_link_libraries(simple_blocks
     debug ${CRUFT_DEBUG_LIBRARIES}
     optimized ${CRUFT_RELEASE_LIBRARIES}
     ${NVTOOLSEXT_LIB}
-        /usr/lib/libtbb.so
-#    /usr/local/lib/libtbb.dylib
+#        /usr/lib/libtbb.so
+    /usr/local/lib/libtbb.dylib
 )
 
 
