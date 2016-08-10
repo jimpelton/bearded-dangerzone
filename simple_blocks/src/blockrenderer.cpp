@@ -16,7 +16,7 @@ namespace subvol
 {
 
 BlockRenderer::BlockRenderer()
-    : BlockRenderer(0, nullptr, nullptr, nullptr, nullptr, nullptr)
+  : BlockRenderer(0, nullptr, nullptr, nullptr, nullptr, nullptr)
 {}
 
 
@@ -24,19 +24,20 @@ BlockRenderer::BlockRenderer()
 BlockRenderer::BlockRenderer(int numSlices,
                              std::shared_ptr<bd::ShaderProgram> volumeShader,
                              std::shared_ptr<bd::ShaderProgram> wireframeShader,
-                             std::vector<bd::Block*>* blocks,
+                             std::vector<bd::Block *> *blocks,
                              std::shared_ptr<bd::VertexArrayObject> blocksVAO,
                              std::shared_ptr<bd::VertexArrayObject> bboxVAO)
   : Renderer()
-  , m_numSlicesPerBlock{ numSlices }
-  , m_tfuncScaleValue{ 1.0f }
-  , m_drawNonEmptyBoundingBoxes{ false }
-  , m_backgroundColor{ 0.0f }
-  , m_volumeShader{ std::move(volumeShader) }
-  , m_wireframeShader{ std::move(wireframeShader) }
-  , m_blocks{ blocks }
-  , m_quadsVao{ blocksVAO }
-  , m_boxesVao{ bboxVAO }
+    , m_numSlicesPerBlock{ numSlices }
+    , m_tfuncScaleValue{ 1.0f }
+    , m_drawNonEmptyBoundingBoxes{ false }
+    , m_backgroundColor{ 0.0f }
+    , m_volumeShader{ std::move(volumeShader) }
+    , m_wireframeShader{ std::move(wireframeShader) }
+    , m_blocks{ blocks }
+    , m_colorMapTexture{ nullptr }
+    , m_quadsVao{ blocksVAO }
+    , m_boxesVao{ bboxVAO }
 {
 
 }
@@ -61,7 +62,7 @@ bool BlockRenderer::init()
 
 
 void
-BlockRenderer::setTFuncTexture(bd::Texture const& tfunc)
+BlockRenderer::setTFuncTexture(bd::Texture const &tfunc)
 {
   // bind tfunc to the transfer texture unit.
   tfunc.bind(TRANSF_TEXTURE_UNIT);
@@ -85,7 +86,7 @@ void BlockRenderer::setTfuncScaleValue(float val)
 
 
 void
-BlockRenderer::setBackgroundColor(const glm::vec3& c)
+BlockRenderer::setBackgroundColor(const glm::vec3 &c)
 {
   m_backgroundColor = c;
   glClearColor(c.r, c.g, c.b, 0.0f);
@@ -99,27 +100,27 @@ void BlockRenderer::drawNonEmptyBoundingBoxes()
   m_wireframeShader->bind();
   m_boxesVao->bind();
 
-  for (auto* b : *m_blocks) {
+  for (auto *b : *m_blocks) {
 
     setWorldMatrix(b->transform());
 
     m_wireframeShader->setUniform(WIREFRAME_MVP_MATRIX_UNIFORM_STR,
-        getWorldViewProjectionMatrix());
+                                  getWorldViewProjectionMatrix());
 
     gl_check(glDrawElements(GL_LINE_LOOP,
-        4,
-        GL_UNSIGNED_SHORT,
-        (GLvoid*) 0));
+                            4,
+                            GL_UNSIGNED_SHORT,
+                            (GLvoid *) 0));
 
     gl_check(glDrawElements(GL_LINE_LOOP,
-        4,
-        GL_UNSIGNED_SHORT,
-        (GLvoid*) (4*sizeof(GLushort))));
+                            4,
+                            GL_UNSIGNED_SHORT,
+                            (GLvoid *) (4 * sizeof(GLushort))));
 
     gl_check(glDrawElements(GL_LINES,
-        8,
-        GL_UNSIGNED_SHORT,
-        (GLvoid*) (8*sizeof(GLushort))));
+                            8,
+                            GL_UNSIGNED_SHORT,
+                            (GLvoid *) (8 * sizeof(GLushort))));
   }
 
 }
@@ -129,17 +130,15 @@ void BlockRenderer::drawNonEmptyBoundingBoxes()
 void
 BlockRenderer::drawSlices(int baseVertex)
 {
-
-//  gl_check(glDisable(GL_DEPTH_TEST));
-
+  m_volumeShader->setUniform(VOLUME_MVP_MATRIX_UNIFORM_STR, getWorldViewProjectionMatrix());
+  m_volumeShader->setUniform(VOLUME_TRANSF_UNIFORM_STR, m_tfuncScaleValue);
   // Begin NVPM work profiling
   perf_workBegin();
-
   gl_check(glDrawElementsBaseVertex(GL_TRIANGLE_STRIP,
-      ELEMENTS_PER_QUAD*m_numSlicesPerBlock, // count
-      GL_UNSIGNED_SHORT,                       // type
-      0,
-      baseVertex));
+                                    ELEMENTS_PER_QUAD * m_numSlicesPerBlock, // count
+                                    GL_UNSIGNED_SHORT,                       // type
+                                    0,
+                                    baseVertex));
   // End NVPM work profiling.
   perf_workEnd();
 
@@ -155,11 +154,11 @@ BlockRenderer::drawNonEmptyBlocks_Forward()
   // The origin of each block is used.
   glm::vec3 const eye{ getCamera().getEye() };
   std::sort(m_blocks->begin(), m_blocks->end(),
-      [&eye](bd::Block* a, bd::Block* b) {
-        float a_dist = glm::distance(eye, a->origin());
-        float b_dist = glm::distance(eye, b->origin());
-        return a_dist < b_dist;
-      });
+            [&eye](bd::Block *a, bd::Block *b) {
+              float a_dist = glm::distance(eye, a->origin());
+              float b_dist = glm::distance(eye, b->origin());
+              return a_dist < b_dist;
+            });
 
   if (m_drawNonEmptyBoundingBoxes) {
     drawNonEmptyBoundingBoxes();
@@ -170,16 +169,11 @@ BlockRenderer::drawNonEmptyBlocks_Forward()
   // Start an NVPM profiling frame
   perf_frameBegin();
 
-  for (auto* b : *m_blocks) {
+  for (auto *b : *m_blocks) {
 
     setWorldMatrix(b->transform());
     b->texture().bind(BLOCK_TEXTURE_UNIT);
 
-    m_volumeShader->setUniform(VOLUME_MVP_MATRIX_UNIFORM_STR,
-        getWorldViewProjectionMatrix());
-
-    m_volumeShader->setUniform(VOLUME_TRANSF_UNIFORM_STR,
-        m_tfuncScaleValue);
 
     drawSlices(baseVertex);
 
@@ -206,56 +200,61 @@ BlockRenderer::drawNonEmptyBlocks()
 int
 BlockRenderer::computeBaseVertexFromViewDir()
 {
-  glm::vec3 viewdir{ glm::normalize(getCamera().getLookAt() - getCamera().getEye()) };
-  glm::vec3 absViewDir{ glm::abs(viewdir) };
+  glm::vec3 const viewdir{ glm::normalize(getCamera().getLookAt() - getCamera().getEye()) };
+  glm::vec3 const absViewDir{ glm::abs(viewdir) };
 
-  bool isNeg{ viewdir.x<0 };
-  SliceSet newSelected = SliceSet::YZ;
+  bool isPos{ viewdir.x > 0 };
+  SliceSet newSelected{ SliceSet::YZ };
   float longest{ absViewDir.x };
 
-  if (absViewDir.y>longest) {
-    isNeg = viewdir.y<0;
+  if (absViewDir.y > longest) {
+    isPos = viewdir.y > 0;
     newSelected = SliceSet::XZ;
     longest = absViewDir.y;
   }
-  if (absViewDir.z>longest) {
-    isNeg = viewdir.z<0;
+  if (absViewDir.z > longest) {
+    isPos = viewdir.z > 0;
     newSelected = SliceSet::XY;
   }
 
   // Compute base vertex VBO offset.
   int baseVertex{ 0 };
   switch (newSelected) {
-  case SliceSet::YZ:
-    if (!isNeg) {
-      baseVertex = 0;
-    } else {
-      baseVertex = 1*bd::Quad::vert_element_size*m_numSlicesPerBlock;
-    }
-    break;
-  case SliceSet::XZ:
-    if (!isNeg) {
-      baseVertex = 2*bd::Quad::vert_element_size*m_numSlicesPerBlock;
-    } else {
-      baseVertex = 3*bd::Quad::vert_element_size*m_numSlicesPerBlock;
-    }
-    break;
+    case SliceSet::YZ:
+      if (isPos) {
+        baseVertex = 0;                                                     // works
+      } else {
+//        baseVertex = 1 * 5 * m_numSlicesPerBlock;
+        baseVertex = 1 * bd::Quad::vert_element_size * m_numSlicesPerBlock;
+      }
+      break;
+    case SliceSet::XZ:
+      if (isPos) {
+//        baseVertex = 2 * 5 * m_numSlicesPerBlock;
+        baseVertex = 2 * bd::Quad::vert_element_size * m_numSlicesPerBlock;
+      } else {
+//        baseVertex = 3 * 5 * m_numSlicesPerBlock;
+        baseVertex = 3 * bd::Quad::vert_element_size * m_numSlicesPerBlock;  // works
+      }
+      break;
 
-  case SliceSet::XY:
-    if (!isNeg) {
-      baseVertex = 4*bd::Quad::vert_element_size*m_numSlicesPerBlock;
-    } else {
-      baseVertex = 5*bd::Quad::vert_element_size*m_numSlicesPerBlock;
-    }
-    break;
+    case SliceSet::XY:
+      if (isPos) {
+//        baseVertex = 4 * 5 * m_numSlicesPerBlock;
+        baseVertex = 4 * bd::Quad::vert_element_size * m_numSlicesPerBlock;  // works
+      } else {
+//        baseVertex = 5 * 5 * m_numSlicesPerBlock;
+        baseVertex = 5 * bd::Quad::vert_element_size * m_numSlicesPerBlock;
+      }
+      break;
 
 //    default:
 //      break;
   }
 
   if (newSelected != m_selectedSliceSet) {
-    std::cout << "Switched slice set: " << (isNeg ? '-' : '+') <<
-              newSelected << '\n';
+    std::cout << "Switched slice set: " << (isPos ? '+' : '-') <<
+              newSelected << " Base vertex: " << baseVertex << '\n';
   }
 
   m_selectedSliceSet = newSelected;

@@ -102,14 +102,14 @@ set(simple_blocks_SOURCES
 add_executable(simple_blocks "${simple_blocks_HEADERS}" "${simple_blocks_SOURCES}")
 
 target_link_libraries(simple_blocks
-    ${OPENGL_LIBRARIES}
-    ${GLFW_LIBRARIES}
-    ${GLEW_LIBRARIES}
-    debug ${CRUFT_DEBUG_LIBRARIES}
-    optimized ${CRUFT_RELEASE_LIBRARIES}
-    ${NVTOOLSEXT_LIB}
-#        /usr/lib/libtbb.so
-    /usr/local/lib/libtbb.dylib
+        ${OPENGL_LIBRARIES}
+        ${GLFW_LIBRARIES}
+        ${GLEW_LIBRARIES}
+        debug ${CRUFT_DEBUG_LIBRARIES}
+        optimized ${CRUFT_RELEASE_LIBRARIES}
+        ${NVTOOLSEXT_LIB}
+        /usr/lib/libtbb.so
+#    /usr/local/lib/libtbb.dylib
 )
 
 

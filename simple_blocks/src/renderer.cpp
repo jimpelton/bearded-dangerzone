@@ -11,30 +11,32 @@
 namespace subvol
 {
 
-namespace {
+namespace
+{
 }
 
 Renderer::Renderer()
   : m_viewPortXPos{ 0 }
-  , m_viewPortYPos{ 0 }
-  , m_viewPortWidth{ 640 }
-  , m_viewPortHeight{ 480 }
-  , m_near{ 0.01f }
-  , m_far{ 10000.0f }
-  , m_fov{ glm::radians(50.0f) }
-  , m_clearColor{ 0, 0, 0 }
-  , m_worldMat{ 1.0f }
-  , m_viewMat{ 1.0f }
-  , m_projMat{ 1.0f }
-  , m_wvpMat{ 1.0f }
-  , m_camera{ }
+    , m_viewPortYPos{ 0 }
+    , m_viewPortWidth{ 640 }
+    , m_viewPortHeight{ 480 }
+    , m_near{ 0.01f }
+    , m_far{ 10000.0f }
+    , m_fov{ glm::radians(50.0f) }
+    , m_clearColor{ 0, 0, 0 }
+    , m_worldMat{ 1.0f }
+    , m_viewMat{ 1.0f }
+    , m_projMat{ 1.0f }
+    , m_wvpMat{ 1.0f }
+    , m_camera{}
 {
   bd::Dbg() << "Default renderer created.";
   // resize(m_viewPortWidth, m_viewPortHeight);
 }
 
 
-Renderer::~Renderer() { }
+Renderer::~Renderer()
+{}
 
 void Renderer::resize(unsigned int w, unsigned int h)
 {
@@ -43,12 +45,15 @@ void Renderer::resize(unsigned int w, unsigned int h)
   m_viewPortWidth = w;
   m_viewPortHeight = h;
   glViewport(0, 0, w, h);
-  setProjectionMatrix(glm::perspectiveRH(m_fov, w/float(h), m_near, m_far));
-
-  bd::Dbg() << "Resized render viewport: " << w << "X" << h;
 
 //  setViewMatrix(I4x4);
 //  setWorldMatrix(I4x4);
+
+  updateProjectionMatrix();
+
+
+  bd::Dbg() << "Resized render viewport: " << w << "X" << h;
+
 
 }
 
@@ -64,6 +69,12 @@ unsigned int Renderer::getViewPortHeight() const
   return m_viewPortHeight;
 }
 
+void Renderer::setFov(float fov)
+{
+  m_fov = fov;
+  updateProjectionMatrix();
+}
+
 
 void Renderer::setClearColor(glm::vec3 const &color)
 {
@@ -71,65 +82,74 @@ void Renderer::setClearColor(glm::vec3 const &color)
 }
 
 
-glm::vec3 const& Renderer::getClearColor() const
+glm::vec3 const &Renderer::getClearColor() const
 {
   return m_clearColor;
 }
 
 
-void Renderer::setWorldMatrix(glm::mat4 const& world)
+void Renderer::setWorldMatrix(glm::mat4 const &world)
 {
   m_worldMat = world;
-  m_wvpMat = m_projMat*m_viewMat*m_worldMat;
+  m_wvpMat = m_projMat * m_viewMat * m_worldMat;
 }
 
 
-void Renderer::setViewMatrix(glm::mat4 const& view)
+void Renderer::setViewMatrix(glm::mat4 const &view)
 {
   m_viewMat = view;
-  m_wvpMat = m_projMat*m_viewMat*m_worldMat;
+  m_wvpMat = m_projMat * m_viewMat * m_worldMat;
 
 }
 
 
-void Renderer::setProjectionMatrix(glm::mat4 const& proj)
+void Renderer::setProjectionMatrix(glm::mat4 const &proj)
 {
   m_projMat = proj;
-  m_wvpMat = m_projMat*m_viewMat*m_worldMat;
+  m_wvpMat = m_projMat * m_viewMat * m_worldMat;
 }
 
 
-glm::mat4 const& Renderer::getWorldMatrix() const
+glm::mat4 const &Renderer::getWorldMatrix() const
 {
   return m_worldMat;
 }
 
 
-glm::mat4 const& Renderer::getViewMatrix() const
+glm::mat4 const &Renderer::getViewMatrix() const
 {
   return m_viewMat;
 }
 
 
-glm::mat4 const& Renderer::getProjectionMatrix() const
+glm::mat4 const &Renderer::getProjectionMatrix() const
 {
   return m_projMat;
 }
 
 
-glm::mat4 const& Renderer::getWorldViewProjectionMatrix() const
+glm::mat4 const &Renderer::getWorldViewProjectionMatrix() const
 {
   return m_wvpMat;
 }
 
-Camera const& Renderer::getCamera() const
+
+Camera const &Renderer::getCamera() const
 {
   return m_camera;
 }
 
-Camera& Renderer::getCamera()
+
+Camera &Renderer::getCamera()
 {
   return m_camera;
+}
+
+
+void Renderer::updateProjectionMatrix()
+{
+  setProjectionMatrix(glm::perspectiveRH(m_fov, m_viewPortWidth / float(m_viewPortHeight),
+                                         m_near, m_far));
 }
 
 

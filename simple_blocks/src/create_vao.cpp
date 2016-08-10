@@ -81,8 +81,9 @@ void createQuads_Y(std::vector<glm::vec4> &quads, const glm::vec3 &min,
 ///  x.min         x.max
 ///  y.min         y.min
 /// \endverbatim
-void createQuads_Z(std::vector<glm::vec4> &quads, const glm::vec3 &min,
-    const glm::vec3 &max, accum_delta<float> &nextDelta);
+void createQuads_Z(std::vector<glm::vec4> &quads,
+                   glm::vec3 const &min, glm::vec3 const &max,
+                   accum_delta<float> &nextDelta);
 
 
 /*////////////////////////////////////////////////////////////////////////////////
@@ -90,8 +91,9 @@ void createQuads_Z(std::vector<glm::vec4> &quads, const glm::vec3 &min,
 ////////////////////////////////////////////////////////////////////////////////*/
 
 
-void createQuads_X(std::vector<glm::vec4> &quads, const glm::vec3 &min,
-    const glm::vec3 &max, accum_delta<float> &nextDelta)
+void createQuads_X(std::vector<glm::vec4> &quads,
+                   glm::vec3 const &min, glm::vec3 const &max,
+                   accum_delta<float> &nextDelta)
 {
 
   while (nextDelta.hasNext()) {
@@ -105,8 +107,9 @@ void createQuads_X(std::vector<glm::vec4> &quads, const glm::vec3 &min,
 }
 
 
-void createQuads_Y(std::vector<glm::vec4> &quads, const glm::vec3 &min,
-    const glm::vec3 &max, accum_delta<float> &nextDelta)
+void createQuads_Y(std::vector<glm::vec4> &quads,
+                   glm::vec3 const &min, glm::vec3 const &max,
+                   accum_delta<float> &nextDelta)
 {
 
   while (nextDelta.hasNext()) {
@@ -120,8 +123,9 @@ void createQuads_Y(std::vector<glm::vec4> &quads, const glm::vec3 &min,
 }
 
 
-void createQuads_Z(std::vector<glm::vec4> &quads, const glm::vec3 &min,
-    const glm::vec3 &max, accum_delta<float> &nextDelta)
+void createQuads_Z(std::vector<glm::vec4> &quads,
+                   glm::vec3 const &min, glm::vec3 const &max,
+                   accum_delta<float> &nextDelta)
 {
 
   while (nextDelta.hasNext()) {
@@ -132,17 +136,18 @@ void createQuads_Z(std::vector<glm::vec4> &quads, const glm::vec3 &min,
     quads.push_back({ max.x, max.y, offset, 1 });   // ur
   }
 
+
 }
+
 
 } // namespace
 
 
 void
 genQuadVao(bd::VertexArrayObject &vao, glm::vec3 const &min, glm::vec3 const &max,
-  glm::u64vec3 const &numSlices)
+           glm::u64vec3 const &numSlices)
 {
 
-//  std::vector<glm::vec4> temp;
   std::vector<glm::vec4> vbuf;
   std::vector<glm::vec4> texbuf;
   std::vector<uint16_t> elebuf;
@@ -150,27 +155,22 @@ genQuadVao(bd::VertexArrayObject &vao, glm::vec3 const &min, glm::vec3 const &ma
   // Create two sets of slices (+ and - direction)
   // for the vertex buffer
 
-  // Along X, in the YZ plane.
-  //temp.clear();
+  // Towards +X axis, in the YZ plane.
   createQuads(vbuf, min, max, numSlices.x, Axis::X);
+  // Towards -X axis, in the YZ plane.
   createQuads_Reversed(vbuf, min, max, numSlices.x, Axis::X);
-  //std::copy(temp.begin(), temp.end(), std::back_inserter(vbuf));
 
-  // Along Y, in the XZ plane.
-//  temp.clear();
+  // Towards +Y axis, in the XZ plane.
   createQuads(vbuf, min, max, numSlices.y, Axis::Y);
+  // Towards -Y axis, in the XZ plane.
   createQuads_Reversed(vbuf, min, max, numSlices.y, Axis::Y);
-//  std::copy(temp.begin(), temp.end(), std::back_inserter(vbuf));
 
-  // Along Z, in the XY plane.
-//  temp.clear();
+  // Towards +Z axis, in the XY plane.
   createQuads(vbuf, min, max, numSlices.z, Axis::Z);
+  // Towards -Z axis, in the XY plane.
   createQuads_Reversed(vbuf, min, max, numSlices.z, Axis::Z);
-//  std::copy(temp.begin(), temp.end(), std::back_inserter(vbuf));
 
-  vao.addVbo(vbuf,
-             VERTEX_COORD_ATTR,
-             bd::VertexArrayObject::Usage::Static_Draw); // vbuf mapped to attribute 0
+  vao.addVbo(vbuf, VERTEX_COORD_ATTR, bd::VertexArrayObject::Usage::Static_Draw);
 
   // Create two sets of slices (+ and - direction) for the texture coord buffer
 
@@ -210,8 +210,11 @@ genQuadVao(bd::VertexArrayObject &vao, glm::vec3 const &min, glm::vec3 const &ma
 
 
 void
-createQuads(std::vector<glm::vec4> &quads, const glm::vec3 &min, const glm::vec3 &max,
-  size_t numPlanes, Axis a)
+createQuads(std::vector<glm::vec4> &quads,
+            glm::vec3 const &min,
+            glm::vec3 const &max,
+            size_t numPlanes,
+            Axis a)
 {
 
   float delta{ 0 };
@@ -243,8 +246,9 @@ createQuads(std::vector<glm::vec4> &quads, const glm::vec3 &min, const glm::vec3
 }
 
 void
-createQuads_Reversed(std::vector<glm::vec4> &quads, const glm::vec3 &min, const glm::vec3 &max,
-  size_t numPlanes, Axis a)
+createQuads_Reversed(std::vector<glm::vec4> &quads,
+                     glm::vec3 const &min, glm::vec3 const &max,
+                     size_t numPlanes, Axis a)
 {
 
   float delta{ 0 };
@@ -252,25 +256,48 @@ createQuads_Reversed(std::vector<glm::vec4> &quads, const glm::vec3 &min, const 
   switch (a) {
     case Axis::X: {
       delta = (max.x - min.x) / static_cast<float>(numPlanes);
-      accum_delta<float> ad(-max.x, delta, -min.x);
-      createQuads_X(quads, min, max, ad);
+      decrement_delta<float> ad(max.x, delta, min.x);
+
+      while (ad.hasNext()) {
+        float offset = ad();
+        quads.push_back({ offset, min.y, max.z, 1 });   // ll
+        quads.push_back({ offset, min.y, min.z, 1 });   // lr
+        quads.push_back({ offset, max.y, max.z, 1 });   // ul
+        quads.push_back({ offset, max.y, min.z, 1 });   // ur
+      }
+
       break;
     }
 
     case Axis::Y: {
       delta = (max.y - min.y) / static_cast<float>(numPlanes);
-      accum_delta<float> ad(-max.y, delta, -min.y);
-      createQuads_Y(quads, min, max, ad);
+      decrement_delta<float> ad(max.y, delta, min.y);
+
+      while (ad.hasNext()) {
+        float offset = ad();
+        quads.push_back({ min.x, offset, min.z, 1 });   // ll
+        quads.push_back({ max.x, offset, min.z, 1 });   // lr
+        quads.push_back({ min.x, offset, max.z, 1 });   // ul
+        quads.push_back({ max.x, offset, max.z, 1 });   // ur
+      }
+
       break;
     }
 
     case Axis::Z: {
       delta = (max.z - min.z) / static_cast<float>(numPlanes);
-      accum_delta<float> ad(-max.z, delta, -min.z);
-      createQuads_Z(quads, min, max, ad);
+      decrement_delta<float> ad(max.z, delta, min.z);
+
+      while (ad.hasNext()) {
+        float offset = ad();
+        quads.push_back({ min.x, min.y, offset, 1 });   // ll
+        quads.push_back({ max.x, min.y, offset, 1 });   // lr
+        quads.push_back({ min.x, max.y, offset, 1 });   // ul
+        quads.push_back({ max.x, max.y, offset, 1 });   // ur
+      }
+
       break;
     }
-      // default: break;
   }
 
 }

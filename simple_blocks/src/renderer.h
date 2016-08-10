@@ -69,6 +69,12 @@ public:
   unsigned int getViewPortWidth() const;
   unsigned int getViewPortHeight() const;
 
+//  void setNearClip(float near);
+
+//  void setFarClip(float far);
+
+  void setFov(float fov);
+
   void setClearColor(glm::vec3 const &color);
   glm::vec3 const& getClearColor() const;
 
@@ -87,6 +93,8 @@ public:
   Camera& getCamera();
 
 //  void setShader(Shader *s);
+private:
+  void updateProjectionMatrix();
 
 private:
   /// Window X pos

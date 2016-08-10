@@ -17,15 +17,15 @@ namespace subvol
 ///
 /// \note Values in sequence from [start .. max), non-inclusive on the right.
 template<typename T,
-    typename = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
+  typename = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
 class accum_delta
 {
 public:
 
-  accum_delta(T start, T d, T max)
+  accum_delta(T start, T d, T end)
       : m_delta{ d }
         , m_next{ start }
-        , m_max{ max }
+        , m_end{ end }
   { }
 
 
@@ -41,16 +41,50 @@ public:
   /// \return True until max has been returned by operator().
   bool hasNext()
   {
-    return m_next < m_max;
+    return m_next < m_end;
   }
 
 
 private:
   T m_delta;
   T m_next;
-  T m_max;
+  T m_end;
 };
 
+template<typename T,
+  typename = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
+class decrement_delta
+{
+public:
+
+  decrement_delta(T start, T d, T end)
+      : m_delta{ d }
+        , m_next{ start }
+        , m_end{ end }
+  { }
+
+
+  T operator()()
+  {
+    T const r = m_next;
+    m_next -= m_delta;
+
+    return r;
+  }
+
+
+  /// \return True until max has been returned by operator().
+  bool hasNext()
+  {
+    return m_next > m_end;
+  }
+
+
+private:
+  T m_delta;
+  T m_next;
+  T m_end;
+};
 
 /// \brief Create slices for each axis with in a region. The min, max of the
 ///        region boundingbox is given by min and max vectors.
@@ -75,9 +109,10 @@ private:
 /// \param min[in] Min corner of region
 /// \param max[in] Max corner of region
 /// \param numSlices[in] Number of slices per each axis.
-void genQuadVao(bd::VertexArrayObject &vao, const glm::vec3 &min,
-    const glm::vec3 &max,
-    const glm::u64vec3 &numSlices);
+void genQuadVao(bd::VertexArrayObject &vao,
+                const glm::vec3 &min,
+                const glm::vec3 &max,
+                const glm::u64vec3 &numSlices);
 
 
 /// \brief Create quad proxy geometry along axis \c a, within bounding box with
@@ -91,11 +126,11 @@ void genQuadVao(bd::VertexArrayObject &vao, const glm::vec3 &min,
 /// \param numPlanes[in] Number of quads to create.
 /// \param a[in] Quads created perpendicular to \c a.
 void createQuads(std::vector<glm::vec4> &quads, const glm::vec3 &min,
-    const glm::vec3 &max, size_t numPlanes, Axis a);
+                 const glm::vec3 &max, size_t numPlanes, Axis a);
 
 
 void createQuads_Reversed(std::vector<glm::vec4> &quads, const glm::vec3 &min,
-  const glm::vec3 &max, size_t numPlanes, Axis a);
+                          const glm::vec3 &max, size_t numPlanes, Axis a);
 
 
 /// \brief Create element indexes for the verts returned by \c createQuads()
