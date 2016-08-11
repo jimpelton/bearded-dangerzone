@@ -22,8 +22,8 @@ void setInitialGLState()
   bd::Info() << "Initializing gl state.";
   gl_check(glClearColor(0.15f, 0.15f, 0.15f, 0.0f));
 
-//  gl_check(glEnable(GL_CULL_FACE));
-//  gl_check(glCullFace(GL_FRONT));
+  gl_check(glEnable(GL_CULL_FACE));
+  gl_check(glCullFace(GL_FRONT));
 //  gl_check(glDisable(GL_CULL_FACE));
 
   gl_check(glEnable(GL_DEPTH_TEST));

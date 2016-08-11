@@ -629,7 +629,7 @@ int main(int argc, const char *argv[])
                                             g_quadVao, g_boxVao);
 
   g_renderer->resize(g_screenWidth, g_screenHeight);
-  g_renderer->getCamera().setEye({ 0, 0, 10 });
+  g_renderer->getCamera().setEye({ 0, 0, 5 });
   g_renderer->getCamera().setLookAt({ 0, 0, 0 });
   g_renderer->getCamera().setUp({ 0, 1, 0 });
   g_renderer->setViewMatrix(g_renderer->getCamera().createViewMatrix());
