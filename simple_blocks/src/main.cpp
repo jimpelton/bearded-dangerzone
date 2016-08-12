@@ -630,6 +630,7 @@ int main(int argc, const char *argv[])
   g_renderer->getCamera().setLookAt({ 0, 0, 0 });
   g_renderer->getCamera().setUp({ 0, 1, 0 });
   g_renderer->setViewMatrix(g_renderer->getCamera().createViewMatrix());
+//  g_renderer->setTFuncTexture(&subvol::ColorMap::getDefaultMapTexture("FULL_RAINBOW"));
   g_renderer->setTfuncScaleValue(g_scaleValue);
   g_renderer->init();
 

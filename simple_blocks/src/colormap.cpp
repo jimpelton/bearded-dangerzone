@@ -19,13 +19,13 @@ namespace subvol
 // scalar, r, g, b
 
 const std::vector<glm::vec4> ColorMap::FULL_RAINBOW {
-    glm::vec4{ 0.00f, 0.93f, 0.51f, 0.93f },
-    glm::vec4{ 0.16f, 0.40f, 0.00f, 0.40f },
-    glm::vec4{ 0.33f, 0.00f, 0.00f, 1.00f },
-    glm::vec4{ 0.50f, 0.00f, 1.00f, 0.00f },
-    glm::vec4{ 0.66f, 1.00f, 1.00f, 0.00f },
-    glm::vec4{ 0.83f, 1.00f, 0.50f, 0.00f },
-    glm::vec4{ 1.00f, 1.00f, 0.00f, 0.00f }
+    glm::vec4{  0.93f, 0.51f, 0.93f , 0.00f},
+    glm::vec4{  0.40f, 0.00f, 0.40f , 0.16f},
+    glm::vec4{  0.00f, 0.00f, 1.00f , 0.33f},
+    glm::vec4{  0.00f, 1.00f, 0.00f , 0.50f},
+    glm::vec4{  1.00f, 1.00f, 0.00f , 0.66f},
+    glm::vec4{  1.00f, 0.50f, 0.00f , 0.83f},
+    glm::vec4{  1.00f, 0.00f, 0.00f , 1.00f}
 };
 
 const std::vector<glm::vec4> ColorMap::INVERSE_FULL_RAINBOW {
@@ -39,11 +39,11 @@ const std::vector<glm::vec4> ColorMap::INVERSE_FULL_RAINBOW {
 };
 
 const std::vector<glm::vec4> ColorMap::RAINBOW {
-    glm::vec4{ 0.00f, 0.00f, 0.00f, 1.00f },
-    glm::vec4{ 0.25f, 0.00f, 1.00f, 1.00f },
-    glm::vec4{ 0.50f, 0.00f, 1.00f, 0.00f },
-    glm::vec4{ 0.75f, 1.00f, 1.00f, 0.00f },
-    glm::vec4{ 1.00f, 1.00f, 0.00f, 0.00f }
+    glm::vec4{  0.00f, 0.00f, 1.00f, 0.00f},
+    glm::vec4{  0.00f, 1.00f, 1.00f, 0.25f},
+    glm::vec4{  0.00f, 1.00f, 0.00f, 0.50f},
+    glm::vec4{  1.00f, 1.00f, 0.00f, 0.75f},
+    glm::vec4{  1.00f, 0.00f, 0.00f, 1.00f}
 };
 
 
@@ -221,9 +221,11 @@ ColorMap::generateDefaultTransferFunctionTextures()
   size_t texelElements{ texels.size() * 4 };
 
   for(auto it : s_mapPtrs) {
-    interpolateTexels(&texels, *(it.second));
+//    interpolateTexels(&texels, *(it.second));
 
-    float *textureData{ reinterpret_cast<float*>(texels.data()) };
+//    float *textureData{ reinterpret_cast<float*>(texels.data()) };
+    float const *textureData{ reinterpret_cast<float const*>((it.second)->data()) };
+    texelElements = (it.second)->size() * 4;
     bd::Texture *t{ new bd::Texture(bd::Texture::Target::Tex1D) };
 
     unsigned int name = t->genGLTex1d(textureData,

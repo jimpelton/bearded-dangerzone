@@ -160,7 +160,7 @@ BlockRenderer::drawNonEmptyBlocks_Forward()
             [&eye](bd::Block *a, bd::Block *b) {
               float a_dist = glm::distance(eye, a->origin());
               float b_dist = glm::distance(eye, b->origin());
-              return a_dist < b_dist;
+              return a_dist > b_dist;
             });
 
   if (m_drawNonEmptyBoundingBoxes) {
