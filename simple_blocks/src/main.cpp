@@ -324,9 +324,9 @@ void draw()
   g_axisVao->unbind();
 
   ////////  BBoxes  /////////////////////////////////////////
-//  if (g_toggleBlockBoxes) {
-//    g_volRend->drawNonEmptyBoundingBoxes();
-//  }
+  if (g_toggleBlockBoxes) {
+    g_renderer->drawNonEmptyBoundingBoxes();
+  }
 
   //////// Quad Geo (drawNonEmptyBlocks)  /////////////////////
   g_renderer->drawNonEmptyBlocks();
@@ -392,9 +392,8 @@ GLFWwindow *initGLContext()
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
-  GLFWwindow *window{
-    glfwCreateWindow(g_screenWidth, g_screenHeight, "Blocks", nullptr, nullptr)
-  };
+  GLFWwindow *window{ glfwCreateWindow(g_screenWidth, g_screenHeight, "Blocks",
+                                       nullptr, nullptr) };
 
   if (!window) {
     bd::Err() << "ERROR: could not open window with GLFW3";
@@ -540,7 +539,7 @@ int main(int argc, const char *argv[])
 
   // Read the index file to get values from it that we need to populate
   // the CommandLineOptions struct.
-  std::unique_ptr<bd::IndexFile> indexFile{
+  std::shared_ptr<bd::IndexFile> indexFile{
     bd::IndexFile::fromBinaryIndexFile(clo.indexFilePath) };
 
   // Since the IndexFileHeader contains most of the options needed to
@@ -614,13 +613,11 @@ int main(int argc, const char *argv[])
   g_volumeShader = std::make_shared<bd::ShaderProgram>();
   GLuint volumeProgramId{
     g_volumeShader->linkProgram("shaders/vert_vertexcolor_passthrough.glsl",
-                                "shaders/frag_volumesampler_noshading.glsl")
-  };
+                                "shaders/frag_volumesampler_noshading.glsl") };
   if (volumeProgramId == 0) {
     bd::Err() << "Error building volume sampling shader, program id was 0.";
     return 1;
   }
-
 
   g_renderer =
     std::make_shared<subvol::BlockRenderer>(int(clo.num_slices),
@@ -629,7 +626,7 @@ int main(int argc, const char *argv[])
                                             g_quadVao, g_boxVao);
 
   g_renderer->resize(g_screenWidth, g_screenHeight);
-  g_renderer->getCamera().setEye({ 0, 0, 5 });
+  g_renderer->getCamera().setEye({ 0, 0, 2 });
   g_renderer->getCamera().setLookAt({ 0, 0, 0 });
   g_renderer->getCamera().setUp({ 0, 1, 0 });
   g_renderer->setViewMatrix(g_renderer->getCamera().createViewMatrix());

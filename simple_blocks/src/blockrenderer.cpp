@@ -224,32 +224,30 @@ BlockRenderer::computeBaseVertexFromViewDir()
   int baseVertex{ 0 };
   switch (newSelected) {
     case SliceSet::YZ:
-//      if (isPos) {
-        baseVertex = 0;                                                     // works
-//      } else {
-//        baseVertex = 1 * bd::Quad::vert_element_size * m_numSlicesPerBlock;
-//      }
+      if (isPos) {
+        baseVertex = 0;
+      } else {
+        baseVertex = 1 * bd::Quad::vert_element_size * m_numSlicesPerBlock;
+      }
       break;
     case SliceSet::XZ:
-//      if (isPos) {
-        baseVertex = 1 * bd::Quad::vert_element_size * m_numSlicesPerBlock;
-//        baseVertex = 2 * bd::Quad::vert_element_size * m_numSlicesPerBlock;
-//      } else {
-//        baseVertex = 3 * bd::Quad::vert_element_size * m_numSlicesPerBlock;  // works
-//      }
+      if (isPos) {
+        baseVertex = 2 * bd::Quad::vert_element_size * m_numSlicesPerBlock;
+      } else {
+        baseVertex = 3 * bd::Quad::vert_element_size * m_numSlicesPerBlock;
+      }
       break;
 
     case SliceSet::XY:
-//      if (isPos) {
-        baseVertex = 2 * bd::Quad::vert_element_size * m_numSlicesPerBlock;  // works
-//        baseVertex = 4 * bd::Quad::vert_element_size * m_numSlicesPerBlock;  // works
-//      } else {
-//        baseVertex = 5 * bd::Quad::vert_element_size * m_numSlicesPerBlock;
-//      }
+      if (isPos) {
+        baseVertex = 4 * bd::Quad::vert_element_size * m_numSlicesPerBlock;
+      } else {
+        baseVertex = 5 * bd::Quad::vert_element_size * m_numSlicesPerBlock;
+      }
       break;
 
-//    default:
-//      break;
+    default:
+      break;
   }
 
   if (newSelected != m_selectedSliceSet) {

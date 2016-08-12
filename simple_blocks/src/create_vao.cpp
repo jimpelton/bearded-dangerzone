@@ -195,11 +195,12 @@ createQuads(std::vector<glm::vec4> &quads,
   float delta{ 0 };
 
   switch (a) {
-    case Axis::X: {
+    case Axis::X:
+    {
       delta = (max.x - min.x) / static_cast<float>(numPlanes);
-      decrement_delta<float> ad(max.x, delta, min.x);
-      while (ad.hasNext()) {
-        float offset = ad();
+      decrement_delta<float> dd(max.x, delta, min.x);
+      while (dd.hasNext()) {
+        float offset = dd();
         quads.push_back({ offset, min.y, max.z, 1 });   // ll
         quads.push_back({ offset, min.y, min.z, 1 });   // lr
         quads.push_back({ offset, max.y, max.z, 1 });   // ul
@@ -208,11 +209,12 @@ createQuads(std::vector<glm::vec4> &quads,
         break;
     }
 
-    case Axis::Y: {
+    case Axis::Y:
+    {
       delta = (max.y - min.y) / static_cast<float>(numPlanes);
-      decrement_delta<float> ad(max.y, delta, min.y);
-      while (ad.hasNext()) {
-        float offset = ad();
+      decrement_delta<float> dd(max.y, delta, min.y);
+      while (dd.hasNext()) {
+        float offset = dd();
         quads.push_back({ min.x, offset, max.z, 1 });   // ll
         quads.push_back({ max.x, offset, max.z, 1 });   // lr
         quads.push_back({ min.x, offset, min.z, 1 });   // ul
@@ -221,7 +223,8 @@ createQuads(std::vector<glm::vec4> &quads,
           break;
     }
 
-    case Axis::Z: {
+    case Axis::Z:
+    {
       delta = (max.z - min.z) / static_cast<float>(numPlanes);
       decrement_delta<float> dd(max.z, delta, min.z);
       while (dd.hasNext()) {
@@ -246,7 +249,8 @@ createQuads_Reversed(std::vector<glm::vec4> &quads,
   float delta{ 0 };
 
   switch (a) {
-    case Axis::X: {
+    case Axis::X:  // -YZ
+    {
       delta = (max.x - min.x) / static_cast<float>(numPlanes);
       accum_delta<float> ad(min.x, delta, max.x);
       while (ad.hasNext()) {
@@ -259,14 +263,15 @@ createQuads_Reversed(std::vector<glm::vec4> &quads,
       break;
     }
 
-    case Axis::Y: {
+    case Axis::Y:  // -XZ
+    {
       delta = (max.y - min.y) / static_cast<float>(numPlanes);
       accum_delta<float> ad(min.y, delta, max.y);
       while (ad.hasNext()) {
         float offset = ad();
         quads.push_back({ min.x, offset, min.z, 1 });   // ll
-        quads.push_back({ min.x, offset, max.z, 1 });   // lr
-        quads.push_back({ max.x, offset, min.z, 1 });   // ul
+        quads.push_back({ max.x, offset, min.z, 1 });   // lr
+        quads.push_back({ min.x, offset, max.z, 1 });   // ul
         quads.push_back({ max.x, offset, max.z, 1 });   // ur
       }
       break;
