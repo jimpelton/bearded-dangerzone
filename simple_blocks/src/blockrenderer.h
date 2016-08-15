@@ -36,7 +36,8 @@ public:
                 std::shared_ptr<bd::ShaderProgram> wireframeShader,
                 std::vector<bd::Block*>* blocks,
                 std::shared_ptr<bd::VertexArrayObject> blocksVAO,
-                std::shared_ptr<bd::VertexArrayObject> bboxVAO);
+                std::shared_ptr<bd::VertexArrayObject> bboxVAO,
+                std::shared_ptr<bd::VertexArrayObject> axisVao);
 
 
   virtual ~BlockRenderer();
@@ -107,7 +108,7 @@ private:
   bd::Texture const* m_colorMapTexture; ///< Transfer function texture
   std::shared_ptr<bd::VertexArrayObject> m_quadsVao;    ///< Quad geometry verts
   std::shared_ptr<bd::VertexArrayObject> m_boxesVao;    ///< bounding box wireframe verts
-
+  std::shared_ptr<bd::VertexArrayObject> m_axisVao;
 };
 
 } // namepsace subvol

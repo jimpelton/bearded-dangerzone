@@ -10,17 +10,15 @@
 #include "constants.h"
 #include "colormap.h"
 #include "renderhelp.h"
+#include "controls.h"
 
 // BD lib
 #include <bd/geo/axis.h>
-#include <bd/geo/BBox.h>
-#include <bd/geo/quad.h>
 #include <bd/graphics/shader.h>
 #include <bd/graphics/vertexarrayobject.h>
-#include <bd/graphics/view.h>
 #include <bd/log/logger.h>
 #include <bd/log/gl_log.h>
-#include <bd/volume/block.h>
+//#include <bd/volume/block.h>
 #include <bd/volume/blockcollection.h>
 #include <bd/util/util.h>
 #include <bd/util/ordinal.h>
@@ -28,9 +26,7 @@
 
 // GLM
 #include <glm/glm.hpp>
-//#include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/constants.hpp>
-//#include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/string_cast.hpp>
 
 // STL and STD lib
@@ -44,8 +40,6 @@
 
 #include <memory>
 #include <chrono>
-
-//#include <filesystem>
 
 #include <cstring>
 
@@ -62,41 +56,28 @@
 
 
 bd::CoordinateAxis g_axis; ///< The coordinate axis lines.
-//bd::Box g_box;
-
 std::shared_ptr<subvol::BlockRenderer> g_renderer{};
 std::shared_ptr<bd::ShaderProgram> g_wireframeShader{};
 std::shared_ptr<bd::ShaderProgram> g_volumeShader{};
 std::shared_ptr<bd::VertexArrayObject> g_axisVao{};
 std::shared_ptr<bd::VertexArrayObject> g_boxVao{};
 std::shared_ptr<bd::VertexArrayObject> g_quadVao{};
+std::shared_ptr<subvol::Controls> g_controls{};
 
-float g_scaleValue{ 1.0f };
-
-///////////////////////////////////////////////////////////////////////////////
-// Viewing and Controls Data
-///////////////////////////////////////////////////////////////////////////////
+float g_scaleValue{ 1.0f }; ///< Transfer function scaler value.
 int g_screenWidth{ 1000 };
 int g_screenHeight{ 1000 };
-float g_fov_deg{ 50.0f };   ///< Field of view in degrees.
 
-struct Cursor
-{
-  glm::vec2 pos{};
-  float mouseSpeed{ 1.0f };
-} g_cursor;
 
-bool g_toggleBlockBoxes{ false };
-bool g_toggleWireFrame{ false };
 
-//bd::IndexFile *g_indexFile;
-//std::vector<bd::Block*> g_blocks;
+bool g_toggleBlockBoxes{ false }; ///< Draw bboxes around blocks.
+bool g_toggleWireFrame{ false };  ///< Draw quads as wireframe.
 
-glm::vec3 g_backgroundColors[2]{
+glm::vec3 const g_backgroundColors[2]{
   { 0.15, 0.15, 0.15 },
   { 1.0,  1.0,  1.0 }
 };
-int g_currentBackgroundColor{ 0 };
+int g_currentBackgroundColor{ 0 }; ///< Toggle between dark and light background.
 
 //TODO: bool g_toggleVolumeBox{ false };
 
@@ -118,26 +99,10 @@ void glfw_window_size_callback(GLFWwindow *window, int width, int height);
 
 void glfw_scrollwheel_callback(GLFWwindow *window, double xoff, double yoff);
 
-void setRotation(glm::vec2 const &dr);
-
 void loop(GLFWwindow *window);
 
 void cleanup();
 
-unsigned int loadTransfer_1dtformat(std::string const &filename,
-                                    bd::Texture &transferTex,
-                                    bd::ShaderProgram &volumeShader);
-
-
-/************************************************************************/
-/* Timer Stuff                                                          */
-/************************************************************************/
-
-
-
-///////////////////////////////////////////////////////////////////////////////
-/// \brief Init opengl queries for GPU frame times.
-///////////////////////////////////////////////////////////////////////////////
 /************************************************************************/
 /* G L F W     C A L L B A C K S                                        */
 /************************************************************************/
@@ -145,10 +110,6 @@ void glfw_error_callback(int error, const char *description)
 {
   bd::Err() << "GLFW ERROR: code " << error << " msg: " << description;
 }
-
-
-////////////////////////////////////////////////////////////////////////////////
-void setCameraPosPreset(unsigned int);
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -161,21 +122,21 @@ void glfw_keyboard_callback(GLFWwindow *window, int key, int scancode,
 
     switch (key) {
 
-      case GLFW_KEY_0:
-        setCameraPosPreset(0);
-        break;
-
-      case GLFW_KEY_1:
-        setCameraPosPreset(1);
-        break;
-
-      case GLFW_KEY_2:
-        setCameraPosPreset(2);
-        break;
-
-      case GLFW_KEY_3:
-        setCameraPosPreset(3);
-        break;
+//      case GLFW_KEY_0:
+//        setCameraPosPreset(0);
+//        break;
+//
+//      case GLFW_KEY_1:
+//        setCameraPosPreset(1);
+//        break;
+//
+//      case GLFW_KEY_2:
+//        setCameraPosPreset(2);
+//        break;
+//
+//      case GLFW_KEY_3:
+//        setCameraPosPreset(3);
+//        break;
 
       case GLFW_KEY_W:
         g_toggleWireFrame = !g_toggleWireFrame;
@@ -257,7 +218,8 @@ void glfw_cursorpos_callback(GLFWwindow *window, double x, double y)
 {
   glm::vec2 cpos(std::floor(x), std::floor(y));
   if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
-    glm::vec2 delta(cpos - g_cursor.pos);
+
+    glm::vec2 delta(cpos - g_controls->getCursor().pos);
     subvol::Camera &cam{ g_renderer->getCamera() };
 
     // rotate around camera right
@@ -281,7 +243,7 @@ void glfw_cursorpos_callback(GLFWwindow *window, double x, double y)
               << std::flush;
   }
 
-  g_cursor.pos = cpos;
+  g_controls->getCursor().pos = cpos;
 }
 
 
@@ -290,17 +252,13 @@ void glfw_scrollwheel_callback(GLFWwindow *window, double xoff, double yoff)
 {
   // 1.75 scales the vertical motion of the scroll wheel so changing the
   // field of view isn't so slow.
-  float fov = static_cast<float>(g_fov_deg + (yoff * 1.75f));
+  float fov = static_cast<float>(g_renderer->getFov() + (yoff * 1.75f));
 
   if (fov < 1 || fov > 120)
     return;
 
   std::cout << "\rfov: " << fov << std::flush;
-
-  g_renderer->setFov(fov);
-
-  g_fov_deg = fov;
-
+  g_renderer->setFov(glm::radians(fov));
 }
 
 
@@ -319,7 +277,9 @@ void draw()
   g_wireframeShader->bind();
   g_renderer->setWorldMatrix(glm::mat4{ 1.0f });
   g_wireframeShader->setUniform("mvp", g_renderer->getWorldViewProjectionMatrix());
-  g_axis.draw();
+  gl_check( glDrawArrays(GL_LINES,
+                         0,
+                         static_cast<GLsizei>(bd::CoordinateAxis::verts.size())) );
   g_wireframeShader->unbind();
   g_axisVao->unbind();
 
@@ -330,7 +290,6 @@ void draw()
 
   //////// Quad Geo (drawNonEmptyBlocks)  /////////////////////
   g_renderer->drawNonEmptyBlocks();
-
 }
 
 
@@ -343,18 +302,12 @@ loop(GLFWwindow *window)
 
   do {
     startCpuTime();
-
 //    startGpuTimerQuery();
-
     draw();
     glfwSwapBuffers(window);
-
 //    endGpuTimerQuery();
-
     glfwPollEvents();
-
     endCpuTime();
-
   } while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
     glfwWindowShouldClose(window) == 0);
 
@@ -561,7 +514,7 @@ int main(int argc, const char *argv[])
     return 1;
   }
   subvol::setInitialGLState();
-  subvol::ColorMap::generateDefaultTransferFunctionTextures();
+  subvol::ColorMapManager::generateDefaultTransferFunctionTextures();
 
 
   // Setup the block collection and give up ownership of the index file.
@@ -630,7 +583,7 @@ int main(int argc, const char *argv[])
   g_renderer->getCamera().setLookAt({ 0, 0, 0 });
   g_renderer->getCamera().setUp({ 0, 1, 0 });
   g_renderer->setViewMatrix(g_renderer->getCamera().createViewMatrix());
-//  g_renderer->setTFuncTexture(&subvol::ColorMap::getDefaultMapTexture("FULL_RAINBOW"));
+//  g_renderer->setTFuncTexture(*subvol::ColorMapManager::getMapTextureByName("FULL_RAINBOW"));
   g_renderer->setTfuncScaleValue(g_scaleValue);
   g_renderer->init();
 

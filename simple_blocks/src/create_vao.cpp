@@ -5,7 +5,7 @@
 
 #include <bd/geo/axis.h>
 #include <bd/log/logger.h>
-#include <bd/geo/BBox.h>
+#include <bd/geo/wireframebox.h>
 
 #include <glm/glm.hpp>
 
@@ -335,18 +335,18 @@ void genAxisVao(bd::VertexArrayObject &vao)
 {
   bd::Info() <<  "Generating axis vertex buffers.";
 
-  using Axis = bd::CoordinateAxis;
+  using BDAxis = bd::CoordinateAxis;
 
   // vertex positions into attribute 0
-  vao.addVbo((float *) (Axis::verts.data()),
-             Axis::verts.size() * Axis::vert_element_size,
-             Axis::vert_element_size,
+  vao.addVbo((float *) (BDAxis::verts.data()),
+             BDAxis::verts.size() * BDAxis::vert_element_size,
+             BDAxis::vert_element_size,
              VERTEX_COORD_ATTR,
              bd::VertexArrayObject::Usage::Static_Draw); // attr 0
 
   // vertex colors into attribute 1
-  vao.addVbo((float *) (Axis::colors.data()),
-             Axis::colors.size()*3,
+  vao.addVbo((float *) (BDAxis::colors.data()),
+             BDAxis::colors.size()*3,
              3,   // 3 floats per color
              VERTEX_COLOR_ATTR,
              bd::VertexArrayObject::Usage::Static_Draw);  // attr 1
@@ -359,21 +359,21 @@ void genBoxVao(bd::VertexArrayObject &vao)
   bd::Info() << "Generating bounding box vertex buffers.";
 
   // positions as vertex attribute 0
-  vao.addVbo((float *) (bd::Box::vertices.data()),
-             bd::Box::vertices.size()*bd::Box::vert_element_size,
-             bd::Box::vert_element_size,
+  vao.addVbo((float *) (bd::WireframeBox::vertices.data()),
+             bd::WireframeBox::vertices.size()*bd::WireframeBox::vert_element_size,
+             bd::WireframeBox::vert_element_size,
              VERTEX_COORD_ATTR,
              bd::VertexArrayObject::Usage::Static_Draw);
 
   // colors as vertex attribute 1
-  vao.addVbo((float *) bd::Box::colors.data(),
-             bd::Box::colors.size()*3,
+  vao.addVbo((float *) bd::WireframeBox::colors.data(),
+             bd::WireframeBox::colors.size()*3,
              3,
              VERTEX_COLOR_ATTR,
              bd::VertexArrayObject::Usage::Static_Draw);
 
-  vao.setIndexBuffer((unsigned short *) bd::Box::elements.data(),
-                     bd::Box::elements.size(),
+  vao.setIndexBuffer((unsigned short *) bd::WireframeBox::elements.data(),
+                     bd::WireframeBox::elements.size(),
                      bd::VertexArrayObject::Usage::Static_Draw);
 
 }

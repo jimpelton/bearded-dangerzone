@@ -16,26 +16,46 @@
 namespace subvol
 {
 
-class ColorMap
+class ColorMapManager
 {
 
 public:
-  static void generateDefaultTransferFunctionTextures();
+
+  /// \brief Generate the set of predefined transfer functions.
+  static void
+  generateDefaultTransferFunctionTextures();
 
   /// \brief Get the texture of colormap with name.
   /// \throws std::out_of_range if name is not a default colormap
-  static const bd::Texture* getDefaultMapTexture(const std::string& name);
+  static bd::Texture const &
+  getMapTextureByName(std::string const &name) ;
 
-  static const bd::Texture* load_1dt(const std::string& filename);
+  /// \brief Get the strings of the names of each color map in the
+  /// list of maps.
+  static std::vector<std::string>
+  getMapNameStrings();
+
+  /// \brief Load a .1dt format transfer function
+  /// This is the type of 1D transfer function exported by ImageVis3D
+  static void
+  load_1dt(std::string const &funcName, std::string const &filename); //TODO: error handling in load_1dt
+
+
 
 private:
-  static void interpolateTexels(std::vector< glm::vec4 > * texels,
-                                const std::vector< glm::vec4 >& map);
+  /// \brief Fill texels with interpolated values between the knots in map.
+  static void
+  interpolateTexels(std::vector<glm::vec4> * texels,
+                    std::vector<glm::vec4> const &map);
 
-  static glm::vec4 lerp(glm::vec4, glm::vec4, float);
+  static void
+  do_generateTransferFunctionTexture(std::string const &name,
+                                     std::vector<glm::vec4> const &func);
+
+  static glm::vec4
+  lerp(glm::vec4, glm::vec4, float);
 
 
-public:
   static const std::vector<glm::vec4> FULL_RAINBOW;
   static const std::vector<glm::vec4> INVERSE_FULL_RAINBOW;
   /* RAINBOW */
@@ -56,16 +76,11 @@ public:
   /* SEISMIC */
   static const std::vector<glm::vec4> SEISMIC;
   static const std::vector<glm::vec4> INVERSE_SEISMIC;
-  /* ALL OF EM */
-  static const std::unordered_map<std::string, const std::vector<glm::vec4>* > s_mapPtrs;
 
-private:
-  static std::unordered_map<std::string, const bd::Texture*> s_textures;
+  /// \brief Holds the textures generated.
+  static std::unordered_map<std::string, bd::Texture const *> s_textures;
 
-
-
-
-}; // class ColorMap
+}; // class ColorMapManager
 
 } // namespace subvol
 

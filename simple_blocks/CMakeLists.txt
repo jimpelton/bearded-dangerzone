@@ -73,28 +73,25 @@ set(simple_blocks_HEADERS
         src/blockrenderer.h
         src/cmdline.h
         src/create_vao.h
-        src/glfw_callbacks.h
         src/nvpm.h
         src/sliceset.h
         src/timing.h
         src/constants.h
         src/colormap.h
         src/renderer.h
-        src/renderhelp.h )
+        src/renderhelp.h src/controls.h)
 
 set(simple_blocks_SOURCES
         src/main.cpp
         src/cmdline.cpp
         src/create_vao.cpp
-        src/glfw_callbacks.cpp
-        src/load_transfer.cpp
         src/sliceset.cpp
         src/timing.cpp
         src/blockrenderer.cpp
         src/colormap.cpp
         src/constants.cpp
         src/renderer.cpp
-        src/renderhelp.cpp)
+        src/renderhelp.cpp src/controls.cpp)
 
 
 ################################################################################

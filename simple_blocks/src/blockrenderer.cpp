@@ -7,7 +7,6 @@
 #include "constants.h"
 #include "nvpm.h"
 
-#include <bd/geo/quad.h>
 #include <bd/util/ordinal.h>
 #include <glm/gtx/string_cast.hpp>
 //#include <bd/log/logger.h>
@@ -16,7 +15,7 @@ namespace subvol
 {
 
 BlockRenderer::BlockRenderer()
-  : BlockRenderer(0, nullptr, nullptr, nullptr, nullptr, nullptr)
+  : BlockRenderer(0, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr)
 {}
 
 
@@ -26,7 +25,8 @@ BlockRenderer::BlockRenderer(int numSlices,
                              std::shared_ptr<bd::ShaderProgram> wireframeShader,
                              std::vector<bd::Block *> *blocks,
                              std::shared_ptr<bd::VertexArrayObject> blocksVAO,
-                             std::shared_ptr<bd::VertexArrayObject> bboxVAO)
+                             std::shared_ptr<bd::VertexArrayObject> bboxVAO,
+                             std::shared_ptr<bd::VertexArrayObject> axisVao)
   : Renderer()
     , m_numSlicesPerBlock{ numSlices }
     , m_tfuncScaleValue{ 1.0f }
@@ -54,7 +54,7 @@ bool BlockRenderer::init()
   m_volumeShader->bind();
 
   if (m_colorMapTexture == nullptr)
-    setTFuncTexture(*ColorMap::getDefaultMapTexture("RAINBOW"));
+    setTFuncTexture(ColorMapManager::getMapTextureByName("RAINBOW"));
 
   m_volumeShader->setUniform(VOLUME_SAMPLER_UNIFORM_STR, BLOCK_TEXTURE_UNIT);
   m_volumeShader->setUniform(TRANSF_SAMPLER_UNIFORM_STR, TRANSF_TEXTURE_UNIT);
@@ -140,8 +140,8 @@ BlockRenderer::drawSlices(int baseVertex)
   gl_check(glDrawElementsBaseVertex(GL_TRIANGLE_STRIP,
                                     ELEMENTS_PER_QUAD * m_numSlicesPerBlock, // count
                                     GL_UNSIGNED_SHORT,                       // type
-                                    0,
-                                    baseVertex));
+                                    0,                                       // element offset
+                                    baseVertex));                            // vertex offset
   // End NVPM work profiling.
   perf_workEnd();
 
@@ -173,13 +173,9 @@ BlockRenderer::drawNonEmptyBlocks_Forward()
   perf_frameBegin();
 
   for (auto *b : *m_blocks) {
-
     setWorldMatrix(b->transform());
     b->texture().bind(BLOCK_TEXTURE_UNIT);
-
-
     drawSlices(baseVertex);
-
   }
 
   // End the NVPM profiling frame.
@@ -221,28 +217,29 @@ BlockRenderer::computeBaseVertexFromViewDir()
   }
 
   // Compute base vertex VBO offset.
+  int const elements_per_vertex{ 4 };
   int baseVertex{ 0 };
   switch (newSelected) {
     case SliceSet::YZ:
       if (isPos) {
         baseVertex = 0;
       } else {
-        baseVertex = 1 * bd::Quad::vert_element_size * m_numSlicesPerBlock;
+        baseVertex = 1 * elements_per_vertex * m_numSlicesPerBlock;
       }
       break;
     case SliceSet::XZ:
       if (isPos) {
-        baseVertex = 2 * bd::Quad::vert_element_size * m_numSlicesPerBlock;
+        baseVertex = 2 * elements_per_vertex * m_numSlicesPerBlock;
       } else {
-        baseVertex = 3 * bd::Quad::vert_element_size * m_numSlicesPerBlock;
+        baseVertex = 3 * elements_per_vertex * m_numSlicesPerBlock;
       }
       break;
 
     case SliceSet::XY:
       if (isPos) {
-        baseVertex = 4 * bd::Quad::vert_element_size * m_numSlicesPerBlock;
+        baseVertex = 4 * elements_per_vertex * m_numSlicesPerBlock;
       } else {
-        baseVertex = 5 * bd::Quad::vert_element_size * m_numSlicesPerBlock;
+        baseVertex = 5 * elements_per_vertex * m_numSlicesPerBlock;
       }
       break;
 

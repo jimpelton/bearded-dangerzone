@@ -76,6 +76,11 @@ void Renderer::setFov(float fov)
 }
 
 
+float Renderer::getFov() const
+{
+  return m_fov;
+}
+
 void Renderer::setClearColor(glm::vec3 const &color)
 {
   m_clearColor = color;

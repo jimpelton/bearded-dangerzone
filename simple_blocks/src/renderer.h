@@ -11,6 +11,8 @@
 namespace subvol
 {
 
+
+
 class Camera
 {
 public:
@@ -73,7 +75,10 @@ public:
 
 //  void setFarClip(float far);
 
+  /// \brief Set FOV, expressed in radians.
+  /// \note Updates world-view-projection matrix
   void setFov(float fov);
+  float getFov() const;
 
   void setClearColor(glm::vec3 const &color);
   glm::vec3 const& getClearColor() const;
