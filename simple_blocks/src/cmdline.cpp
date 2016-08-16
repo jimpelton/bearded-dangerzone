@@ -89,6 +89,13 @@ try {
   // print blocks
   TCLAP::SwitchArg printBlocksArg("", "print-blocks", "Print blocks into to stdout.", cmd, false);
 
+  TCLAP::ValueArg<int> screenWidthArg("", "screen-width", "Width of the window", false, 1280,
+                                              "int");
+  cmd.add(screenWidthArg);
+
+  TCLAP::ValueArg<int> screenHeightArg("", "screen-height", "Height of the window", false, 720,
+                                      "int");
+  cmd.add(screenHeightArg);
 
   cmd.parse(argc, argv);
 
@@ -110,6 +117,8 @@ try {
   opts.cameraPos = initialCameraPosArg.getValue();
   opts.perfOutPath = perfOutPathArg.getValue();
   opts.perfMode = perfMode.getValue();
+  opts.windowWidth = screenWidthArg.getValue();
+  opts.windowHeight = screenHeightArg.getValue();
 
   return static_cast<int>(cmd.getArgList().size());
 
@@ -121,18 +130,19 @@ try {
 
 
 void printThem(CommandLineOptions &opts) {
-  std::cout <<
-  "File path: " << opts.rawFilePath << "\n"
-      "Transfer function: " << opts.tfuncPath << "\n"
-      "Dat file: " << opts.datFilePath << "\n"
-      "Perf out file: " << opts.perfOutPath << "\n"
-      "Perf mode: " << opts.perfMode << "\n"
-      "Data Type: " << opts.dataType << "\n"
-      "Vol dims (w X h X d): " << opts.vol_w << " X " << opts.vol_h << " X " << opts.vol_d << "\n"
-      "Num blocks (x X y X z): " << opts.numblk_x << " X " << opts.numblk_y << " X " << opts.numblk_z << "\n"
-      "Num Slices: " << opts.num_slices << "\n"
-      "Threshold (min-max): " << opts.tmin << " - " << opts.tmax << "\n"
-      "Print blocks: " << (opts.printBlocks ? "True" : "False") <<
+  std::cout
+    << "File path: " << opts.rawFilePath
+    << "\nTransfer function: " << opts.tfuncPath
+    << "\nDat file: " << opts.datFilePath
+    << "\nPerf out file: " << opts.perfOutPath
+    << "\nPerf mode: " << opts.perfMode
+    << "\nData Type: " << opts.dataType
+    << "\nVol dims (w X h X d): " << opts.vol_w << " X " << opts.vol_h << " X " << opts.vol_d
+    << "\nNum blocks (x X y X z): " << opts.numblk_x << " X " << opts.numblk_y << " X " << opts.numblk_z
+    << "\nNum Slices: " << opts.num_slices
+    << "\nThreshold (min-max): " << opts.tmin << " - " << opts.tmax
+    << "\nPrint blocks: " << (opts.printBlocks ? "True" : "False")
+    << "\nWindow dims: " << opts.windowWidth << " X " << opts.windowHeight <<
   std::endl;
 }
 

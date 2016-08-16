@@ -27,16 +27,20 @@ public:
 
   /// \brief Get the texture of colormap with name.
   /// \throws std::out_of_range if name is not a default colormap
+  static bd::Texture const & getMapTextureByName(std::string const &name) ;
+
+  /// \brief Get the next color map Texture in the circular queue.
   static bd::Texture const &
-  getMapTextureByName(std::string const &name) ;
+  getNextMapTexture();
 
   /// \brief Get the strings of the names of each color map in the
   /// list of maps.
   static std::vector<std::string>
   getMapNameStrings();
 
+
   /// \brief Load a .1dt format transfer function
-  /// This is the type of 1D transfer function exported by ImageVis3D
+  /// \note This is the type of 1D transfer function exported by ImageVis3D
   static void
   load_1dt(std::string const &funcName, std::string const &filename); //TODO: error handling in load_1dt
 
@@ -48,6 +52,7 @@ private:
   interpolateTexels(std::vector<glm::vec4> * texels,
                     std::vector<glm::vec4> const &map);
 
+  /// \brief Create tfunc texture and put it in the colormap map.
   static void
   do_generateTransferFunctionTexture(std::string const &name,
                                      std::vector<glm::vec4> const &func);
@@ -79,6 +84,8 @@ private:
 
   /// \brief Holds the textures generated.
   static std::unordered_map<std::string, bd::Texture const *> s_textures;
+  static std::vector<std::string const *> s_colorMapNames;
+  static int s_currentMapName;
 
 }; // class ColorMapManager
 

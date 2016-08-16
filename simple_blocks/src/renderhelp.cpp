@@ -2,10 +2,14 @@
 // Created by Jim Pelton on 8/1/16.
 //
 
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
+
 #include "renderhelp.h"
 #include "renderer.h"
+#include "controls.h"
+#include "timing.h"
 
-#include <GL/glew.h>
 
 #include <bd/log/logger.h>
 #include <bd/log/gl_log.h>
@@ -15,9 +19,83 @@
 
 namespace subvol
 {
+namespace renderhelp
+{
+
+namespace
+{
+
+void
+s_error_callback(int error, const char *description)
+{
+  bd::Err() << "GLFW ERROR: code " << error << " msg: " << description;
+}
+
+}
+
+///////////////////////////////////////////////////////////////////////////////
+GLFWwindow *
+initGLContext(int screenWidth, int screenHeight)
+{
+  bd::Info() << "Initializing GLFW.";
+  if (!glfwInit()) {
+    bd::Err() << "could not start GLFW3";
+    return nullptr;
+  }
+
+  glfwSetErrorCallback(s_error_callback);
+  glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
+
+// number of samples to use for multi sampling
+//glfwWindowHint(GLFW_SAMPLES, 4);
+
+#ifdef __APPLE__
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+#else
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+#endif
+
+  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+  glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+
+  GLFWwindow *window{ glfwCreateWindow(screenWidth, screenHeight, "Blocks",
+                                       nullptr, nullptr) };
+
+  if (!window) {
+    bd::Err() << "ERROR: could not open window with GLFW3";
+    glfwTerminate();
+    return nullptr;
+  }
+
+  glfwMakeContextCurrent(window);
+
+  glewExperimental = GL_TRUE;
+  GLenum error{ glewInit() };
+  if (error) {
+    bd::Err() << "Could not initGLContext glew " << glewGetErrorString(error);
+    return nullptr;
+  }
+
+  glfwSwapInterval(1); // 0 = no vertical sync.
+
+#ifndef __APPLE__
+  bd::subscribe_debug_callbacks();
+#endif
+
+// Generate OpenGL queries for frame times.
+  subvol::timing::genQueries();
+
+  bd::checkForAndLogGlError(__FILE__, __FUNCTION__, __LINE__);
+
+  return window;
+} // initGLContext()
 
 
-void setInitialGLState()
+///////////////////////////////////////////////////////////////////////////////
+void
+setInitialGLState()
 {
   bd::Info() << "Initializing gl state.";
   gl_check(glClearColor(0.15f, 0.15f, 0.15f, 0.0f));
@@ -34,7 +112,40 @@ void setInitialGLState()
 
   gl_check(glEnable(GL_PRIMITIVE_RESTART));
   gl_check(glPrimitiveRestartIndex(0xFFFF));
+}
 
+///////////////////////////////////////////////////////////////////////////////
+void
+initializeControls(GLFWwindow *window, std::shared_ptr<BlockRenderer> renderer)
+{
+  Controls::initialize(std::move(renderer));
+
+  glfwSetCursorPosCallback(window, &Controls::s_cursorpos_callback);
+  glfwSetWindowSizeCallback(window, &Controls::s_window_size_callback);
+  glfwSetKeyCallback(window, &Controls::s_keyboard_callback);
+  glfwSetScrollCallback(window, &Controls::s_scrollwheel_callback);
+  glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
+
+}
+///////////////////////////////////////////////////////////////////////////////
+void
+loop(GLFWwindow *window, BlockRenderer *renderer)
+{
+  assert(window != nullptr && "window was passed as nullptr in loop()");
+  bd::Info() << "About to enter render loop.";
+
+  do {
+    subvol::timing::startCpuTime();
+//    subvol::timing::startGpuTimerQuery();
+    renderer->drawNonEmptyBlocks();
+    glfwSwapBuffers(window);
+//    subvol::timing::endGpuTimerQuery();
+    glfwPollEvents();
+    subvol::timing::endCpuTime();
+  } while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
+    glfwWindowShouldClose(window) == 0);
+
+  bd::Info() << "Render loop exited.";
 }
 
 
@@ -45,5 +156,5 @@ void setInitialGLState()
 //  camera->setUp({ 0, 1, 0 });
 //  renderer->setViewMatrix(camera->createViewMatrix());
 //}
-
+} // namespace renderhelp
 } // namespace subvol

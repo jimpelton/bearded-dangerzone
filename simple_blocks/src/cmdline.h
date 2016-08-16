@@ -43,6 +43,10 @@ struct CommandLineOptions
   std::string perfOutPath;
   // quit program when perf tests are completed.
   bool perfMode;
+  // screen width
+  int windowWidth;
+  // screen height
+  int windowHeight;
 };
 
 

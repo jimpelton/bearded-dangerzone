@@ -8,6 +8,7 @@
 #include <bd/log/logger.h>
 
 #include <fstream>
+#include <algorithm>
 
 using bd::Err;
 using bd::Info;
@@ -140,7 +141,42 @@ const std::vector<glm::vec4> ColorMapManager::INVERSE_SEISMIC {
 
 
 std::unordered_map<std::string, bd::Texture const *> ColorMapManager::s_textures;
+std::vector<std::string const *> ColorMapManager::s_colorMapNames;
+int ColorMapManager::s_currentMapName{ 0 };
 
+
+
+/* static */
+const bd::Texture &
+ColorMapManager::getMapTextureByName(std::string const &name)
+{
+  const bd::Texture *rval{ nullptr };
+  try{
+    rval = s_textures.at(name);
+
+    s_currentMapName = std::find_if(s_colorMapNames.begin(), s_colorMapNames.end(),
+                                    [&name] (std::string const *s)
+                                    {
+                                      return name == *s;
+                                    } ) - s_colorMapNames.begin();
+
+  } catch (std::out_of_range e) {
+    Err() << name << " is not a colormap.";
+    throw e;
+  }
+  return *rval;
+}
+
+bd::Texture const &
+ColorMapManager::getNextMapTexture()
+{
+  s_currentMapName += 1;
+  if (s_currentMapName >= s_colorMapNames.size()) {
+    s_currentMapName = 0;
+  }
+  std::string const * name{ s_colorMapNames[s_currentMapName] };
+  return *(s_textures.find(*name)->second);
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -158,16 +194,6 @@ ColorMapManager::getMapNameStrings()
 void
 ColorMapManager::generateDefaultTransferFunctionTextures()
 {
-//  std::vector<glm::vec4> texels;
-//  texels.resize(4096);
-//  size_t texelElements{ texels.size() * 4 };
-
-//  for(auto it : s_mapPtrs) {
-//    interpolateTexels(&texels, *(it.second));
-//    float *textureData{ reinterpret_cast<float*>(texels.data()) };
-
-//  } // for
-
   do_generateTransferFunctionTexture("FULL_RAINBOW", FULL_RAINBOW);
   do_generateTransferFunctionTexture("INVERSE_FULL_RAINBOW", INVERSE_FULL_RAINBOW);
 
@@ -189,23 +215,15 @@ ColorMapManager::generateDefaultTransferFunctionTextures()
   do_generateTransferFunctionTexture("SEISMIC", SEISMIC);
   do_generateTransferFunctionTexture("INVERSE_SEISMIC", INVERSE_SEISMIC);
 
+  for(auto &pair : s_textures) {
+    s_colorMapNames.push_back(&pair.first);
+  }
+
+
   Info() << "Generated " << s_textures.size() << " built-in colormaps.";
 
 }
 
-/* static */
-const bd::Texture &
-ColorMapManager::getMapTextureByName(std::string const &name)
-{
-  const bd::Texture *rval{ nullptr };
-  try{
-    rval = s_textures.at(name);
-  } catch (std::out_of_range e) {
-    Err() << name << " is not a colormap.";
-    throw e;
-  }
-  return *rval;
-}
 
 void
 ColorMapManager::load_1dt(std::string const &funcName, std::string const &filename)
@@ -237,6 +255,9 @@ ColorMapManager::load_1dt(std::string const &funcName, std::string const &filena
   file.close();
 
   do_generateTransferFunctionTexture(funcName, rgba);
+  std::string const * name{ &s_textures.find(funcName)->first };
+  s_colorMapNames.push_back(name);
+
 }
 
 /* static */

@@ -6,21 +6,39 @@
 #define SUBVOL_RENDERHELP_H
 
 
-#include <glm/fwd.hpp>
+#include <GLFW/glfw3.h>
+
+#include <glm/glm.hpp>
+#include <memory>
 
 namespace subvol
 {
+
 class Renderer;
 class Camera;
+class Controls;
+class BlockRenderer;
 
-extern Renderer* renderer;
+glm::vec3 const g_backgroundColors[2]{
+  { 0.15, 0.15, 0.15 },
+  { 1.0,  1.0,  1.0 }
+};
 
-void setInitialGLState();
+namespace renderhelp
+{
 
-/// \brief Set the camera at \c eye, looking at (0,0,0), with up vector (0,1,0).
-//void setDefaultView(glm::vec3 const &eye);
+GLFWwindow *
+initGLContext(int screenWidth, int screenHeight);
 
+void
+setInitialGLState();
 
+void
+initializeControls(GLFWwindow *, std::shared_ptr<BlockRenderer>);
+
+void
+loop(GLFWwindow *, BlockRenderer *);
+} // namespace renderhelp
 } // namespace subvol
 
 

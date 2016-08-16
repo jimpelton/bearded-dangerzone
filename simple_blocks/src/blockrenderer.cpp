@@ -2,6 +2,9 @@
 // Created by jim on 10/22/15.
 //
 
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
+
 #include "blockrenderer.h"
 #include "colormap.h"
 #include "constants.h"
@@ -9,6 +12,7 @@
 
 #include <bd/util/ordinal.h>
 #include <glm/gtx/string_cast.hpp>
+#include <bd/geo/axis.h>
 //#include <bd/log/logger.h>
 
 namespace subvol
@@ -36,8 +40,9 @@ BlockRenderer::BlockRenderer(int numSlices,
     , m_wireframeShader{ std::move(wireframeShader) }
     , m_blocks{ blocks }
     , m_colorMapTexture{ nullptr }
-    , m_quadsVao{ blocksVAO }
-    , m_boxesVao{ bboxVAO }
+    , m_quadsVao{ std::move(blocksVAO) }
+    , m_boxesVao{ std::move(bboxVAO) }
+    , m_axisVao{ std::move(axisVao) }
 {
 
 }
@@ -52,18 +57,18 @@ BlockRenderer::~BlockRenderer()
 bool BlockRenderer::init()
 {
   m_volumeShader->bind();
-
-  if (m_colorMapTexture == nullptr)
-    setTFuncTexture(ColorMapManager::getMapTextureByName("RAINBOW"));
-
   m_volumeShader->setUniform(VOLUME_SAMPLER_UNIFORM_STR, BLOCK_TEXTURE_UNIT);
   m_volumeShader->setUniform(TRANSF_SAMPLER_UNIFORM_STR, TRANSF_TEXTURE_UNIT);
   m_volumeShader->setUniform(VOLUME_TRANSF_UNIFORM_STR, 1.0f);
+
+  if (m_colorMapTexture == nullptr)
+    setTFuncTexture(ColorMapManager::getMapTextureByName("RAINBOW"));
 
   return false;
 }
 
 
+///////////////////////////////////////////////////////////////////////////////
 void
 BlockRenderer::setTFuncTexture(bd::Texture const &tfunc)
 {
@@ -80,14 +85,7 @@ void BlockRenderer::setTfuncScaleValue(float val)
 }
 
 
-
-
-////////////////////////////////////////////////////////////////////////////////
-//void BlockRenderer::setNumSlices(const int n) {
-//  m_numSlicesPerBlock = n;
-//}
-
-
+///////////////////////////////////////////////////////////////////////////////
 void
 BlockRenderer::setBackgroundColor(const glm::vec3 &c)
 {
@@ -96,36 +94,27 @@ BlockRenderer::setBackgroundColor(const glm::vec3 &c)
 }
 
 
+///////////////////////////////////////////////////////////////////////////////
+void
+BlockRenderer::shouldDrawNonEmptyBoundingBoxes(bool b)
+{
+  m_drawNonEmptyBoundingBoxes = b;
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////
 void BlockRenderer::drawNonEmptyBoundingBoxes()
 {
-
-  m_wireframeShader->bind();
+//  m_wireframeShader->bind();
   m_boxesVao->bind();
-
   for (auto *b : *m_blocks) {
-
     setWorldMatrix(b->transform());
-
     m_wireframeShader->setUniform(WIREFRAME_MVP_MATRIX_UNIFORM_STR,
                                   getWorldViewProjectionMatrix());
-
-    gl_check(glDrawElements(GL_LINE_LOOP,
-                            4,
-                            GL_UNSIGNED_SHORT,
-                            (GLvoid *) 0));
-
-    gl_check(glDrawElements(GL_LINE_LOOP,
-                            4,
-                            GL_UNSIGNED_SHORT,
-                            (GLvoid *) (4 * sizeof(GLushort))));
-
-    gl_check(glDrawElements(GL_LINES,
-                            8,
-                            GL_UNSIGNED_SHORT,
-                            (GLvoid *) (8 * sizeof(GLushort))));
+    gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, (GLvoid *) 0));
+    gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, (GLvoid *) (4 * sizeof(GLushort))));
+    gl_check(glDrawElements(GL_LINES, 8, GL_UNSIGNED_SHORT, (GLvoid *) (8 * sizeof(GLushort))));
   }
-
 }
 
 
@@ -133,8 +122,6 @@ void BlockRenderer::drawNonEmptyBoundingBoxes()
 void
 BlockRenderer::drawSlices(int baseVertex)
 {
-  m_volumeShader->setUniform(VOLUME_MVP_MATRIX_UNIFORM_STR, getWorldViewProjectionMatrix());
-  m_volumeShader->setUniform(VOLUME_TRANSF_UNIFORM_STR, m_tfuncScaleValue);
   // Begin NVPM work profiling
   perf_workBegin();
   gl_check(glDrawElementsBaseVertex(GL_TRIANGLE_STRIP,
@@ -145,7 +132,6 @@ BlockRenderer::drawSlices(int baseVertex)
   // End NVPM work profiling.
   perf_workEnd();
 
-//  gl_check(glEnable(GL_DEPTH_TEST));
 }
 
 
@@ -153,21 +139,13 @@ BlockRenderer::drawSlices(int baseVertex)
 void
 BlockRenderer::drawNonEmptyBlocks_Forward()
 {
-  // Sort the blocks by their distance from the camera.
-  // The origin of each block is used.
-  glm::vec3 const eye{ getCamera().getEye() };
-  std::sort(m_blocks->begin(), m_blocks->end(),
-            [&eye](bd::Block *a, bd::Block *b) {
-              float a_dist = glm::distance(eye, a->origin());
-              float b_dist = glm::distance(eye, b->origin());
-              return a_dist > b_dist;
-            });
-
-  if (m_drawNonEmptyBoundingBoxes) {
-    drawNonEmptyBoundingBoxes();
-  }
   // Compute the SliceSet and offset into the vertex buffer of that slice set.
   GLint const baseVertex{ computeBaseVertexFromViewDir() };
+
+  m_quadsVao->bind();
+  m_volumeShader->bind();
+  m_colorMapTexture->bind(TRANSF_TEXTURE_UNIT);
+  m_volumeShader->setUniform(VOLUME_TRANSF_UNIFORM_STR, m_tfuncScaleValue);
 
   // Start an NVPM profiling frame
   perf_frameBegin();
@@ -175,6 +153,7 @@ BlockRenderer::drawNonEmptyBlocks_Forward()
   for (auto *b : *m_blocks) {
     setWorldMatrix(b->transform());
     b->texture().bind(BLOCK_TEXTURE_UNIT);
+    m_volumeShader->setUniform(VOLUME_MVP_MATRIX_UNIFORM_STR, getWorldViewProjectionMatrix());
     drawSlices(baseVertex);
   }
 
@@ -188,9 +167,31 @@ BlockRenderer::drawNonEmptyBlocks_Forward()
 void
 BlockRenderer::drawNonEmptyBlocks()
 {
-  m_quadsVao->bind();
-  m_volumeShader->bind();
-  m_colorMapTexture->bind(TRANSF_TEXTURE_UNIT);
+  // Sort the blocks by their distance from the camera.
+  // The origin of each block is used.
+  glm::vec3 const eye{ getCamera().getEye() };
+  std::sort(m_blocks->begin(), m_blocks->end(),
+            [&eye](bd::Block *a, bd::Block *b) {
+              float a_dist = glm::distance(eye, a->origin());
+              float b_dist = glm::distance(eye, b->origin());
+              return a_dist > b_dist;
+            });
+
+
+  gl_check(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+
+  setWorldMatrix(glm::mat4{ 1.0f });
+  m_axisVao->bind();
+  m_wireframeShader->bind();
+  m_wireframeShader->setUniform("mvp", getWorldViewProjectionMatrix());
+  gl_check(glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(bd::CoordinateAxis::verts.size())));
+//  g_wireframeShader->unbind();
+  m_axisVao->unbind();
+
+
+  if (m_drawNonEmptyBoundingBoxes)
+    drawNonEmptyBoundingBoxes();
+
   drawNonEmptyBlocks_Forward();
 }
 
@@ -257,24 +258,5 @@ BlockRenderer::computeBaseVertexFromViewDir()
   return baseVertex;
 }
 
-//void
-//BlockRenderer::setInitialGLState()
-//{
-//  bd::Info() << "Initializing gl state.";
-//  gl_check(glClearColor(0.15f, 0.15f, 0.15f, 0.0f));
-//
-////  gl_check(glEnable(GL_CULL_FACE));
-////  gl_check(glCullFace(GL_FRONT));
-//  gl_check(glDisable(GL_CULL_FACE));
-//
-//  gl_check(glEnable(GL_DEPTH_TEST));
-//  gl_check(glDepthFunc(GL_LESS));
-//
-//  gl_check(glEnable(GL_BLEND));
-//  gl_check(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
-//
-//  gl_check(glEnable(GL_PRIMITIVE_RESTART));
-//  gl_check(glPrimitiveRestartIndex(0xFFFF));
-//}
 
 } // namespace subvol

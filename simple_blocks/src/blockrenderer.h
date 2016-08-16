@@ -5,11 +5,10 @@
 #ifndef blockrenderer_h__
 #define blockrenderer_h__
 
+
 #include "sliceset.h"
 #include "renderer.h"
 
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
 
 #include <bd/graphics/shader.h>
 #include <bd/graphics/texture.h>
@@ -42,32 +41,23 @@ public:
 
   virtual ~BlockRenderer();
 
-
-  //////////////////////////////////////////////////////////////////////////////
-  /// \brief Draw each non-empty block.
-  void drawNonEmptyBlocks();
-
-
-  //////////////////////////////////////////////////////////////////////////////
-  /// \brief Draw wireframe bounding boxes around the blocks.
-  /// \param[in] vp View projection matrix.
-  void drawNonEmptyBoundingBoxes();
-
-
-  //////////////////////////////////////////////////////////////////////////////
   bool init();
-
 
   /// \brief Set the transfer function texture.
   void setTFuncTexture(bd::Texture const& tfunc);
 
-
-  //////////////////////////////////////////////////////////////////////////////
   void setTfuncScaleValue(float val);
 
-
-  //////////////////////////////////////////////////////////////////////////////
   void setBackgroundColor(glm::vec3 const &c);
+
+  void shouldDrawNonEmptyBoundingBoxes(bool b);
+
+  /// \brief Draw each non-empty block.
+  void drawNonEmptyBlocks();
+
+  /// \brief Draw wireframe bounding boxes around the blocks.
+  /// \param[in] vp View projection matrix.
+  void drawNonEmptyBoundingBoxes();
 
 
 private:

@@ -47,15 +47,7 @@
 #include "nvpm.h"
 
 
-
-
-
-///////////////////////////////////////////////////////////////////////////////
-// Geometry  /  VAOs
-///////////////////////////////////////////////////////////////////////////////
-
-
-bd::CoordinateAxis g_axis; ///< The coordinate axis lines.
+std::shared_ptr<bd::CoordinateAxis> g_axis{ }; ///< The coordinate axis lines.
 std::shared_ptr<subvol::BlockRenderer> g_renderer{};
 std::shared_ptr<bd::ShaderProgram> g_wireframeShader{};
 std::shared_ptr<bd::ShaderProgram> g_volumeShader{};
@@ -64,324 +56,12 @@ std::shared_ptr<bd::VertexArrayObject> g_boxVao{};
 std::shared_ptr<bd::VertexArrayObject> g_quadVao{};
 std::shared_ptr<subvol::Controls> g_controls{};
 
-float g_scaleValue{ 1.0f }; ///< Transfer function scaler value.
-int g_screenWidth{ 1000 };
-int g_screenHeight{ 1000 };
-
-
-
-bool g_toggleBlockBoxes{ false }; ///< Draw bboxes around blocks.
-bool g_toggleWireFrame{ false };  ///< Draw quads as wireframe.
-
-glm::vec3 const g_backgroundColors[2]{
-  { 0.15, 0.15, 0.15 },
-  { 1.0,  1.0,  1.0 }
-};
-int g_currentBackgroundColor{ 0 }; ///< Toggle between dark and light background.
-
-//TODO: bool g_toggleVolumeBox{ false };
-
-
-///////////////////////////////////////////////////////////////////////////////
-//  Miscellaneous  radness
-///////////////////////////////////////////////////////////////////////////////
-
-
-
-void glfw_cursorpos_callback(GLFWwindow *window, double x, double y);
-
-void glfw_keyboard_callback(GLFWwindow *window, int key, int scancode,
-                            int action, int mods);
-
-void glfw_error_callback(int error, const char *description);
-
-void glfw_window_size_callback(GLFWwindow *window, int width, int height);
-
-void glfw_scrollwheel_callback(GLFWwindow *window, double xoff, double yoff);
-
-void loop(GLFWwindow *window);
 
 void cleanup();
+void printBlocks(bd::BlockCollection *bcol);
+void setCameraPosPreset(unsigned cameraPos);
+void printNvPmApiCounters(const char *perfOutPath);
 
-/************************************************************************/
-/* G L F W     C A L L B A C K S                                        */
-/************************************************************************/
-void glfw_error_callback(int error, const char *description)
-{
-  bd::Err() << "GLFW ERROR: code " << error << " msg: " << description;
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-void glfw_keyboard_callback(GLFWwindow *window, int key, int scancode,
-                            int action, int mods)
-{
-
-  // on key press
-  if (action == GLFW_PRESS) {
-
-    switch (key) {
-
-//      case GLFW_KEY_0:
-//        setCameraPosPreset(0);
-//        break;
-//
-//      case GLFW_KEY_1:
-//        setCameraPosPreset(1);
-//        break;
-//
-//      case GLFW_KEY_2:
-//        setCameraPosPreset(2);
-//        break;
-//
-//      case GLFW_KEY_3:
-//        setCameraPosPreset(3);
-//        break;
-
-      case GLFW_KEY_W:
-        g_toggleWireFrame = !g_toggleWireFrame;
-        break;
-
-      case GLFW_KEY_B:
-        g_toggleBlockBoxes = !g_toggleBlockBoxes;
-        std::cout << "Toggle bounding boxes.\n";
-        break;
-
-      case GLFW_KEY_Q:
-        g_currentBackgroundColor ^= 1;
-        std::cout << "Background color: "
-                  << (g_currentBackgroundColor == 0 ? "Dark" : "Light")
-                  << '\n';
-        g_renderer->setBackgroundColor(g_backgroundColors[g_currentBackgroundColor]);
-        break;
-
-      default:
-        break;
-    } // switch
-  }
-
-  // while holding key down.
-  if (action != GLFW_RELEASE) {
-
-    switch (key) {
-
-      // Positive transfer function scaling
-      case GLFW_KEY_PERIOD:
-        if (mods & GLFW_MOD_SHIFT) {
-          g_scaleValue += 0.1f;
-        } else if (mods & GLFW_MOD_CONTROL) {
-          g_scaleValue += 0.001f;
-        } else if (mods & GLFW_MOD_ALT) {
-          g_scaleValue += 0.0001f;
-        } else {
-          g_scaleValue += 0.01f;
-        }
-
-        g_renderer->setTfuncScaleValue(g_scaleValue);
-        std::cout << "Transfer function scaler: " << g_scaleValue << std::endl;
-        break;
-
-        // Negative transfer function scaling
-      case GLFW_KEY_COMMA:
-        if (mods & GLFW_MOD_SHIFT) {
-          g_scaleValue -= 0.1f;
-        } else if (mods & GLFW_MOD_CONTROL) {
-          g_scaleValue -= 0.001f;
-        } else if (mods & GLFW_MOD_ALT) {
-          g_scaleValue -= 0.0001f;
-        } else {
-          g_scaleValue -= 0.01f;
-        }
-
-        g_renderer->setTfuncScaleValue(g_scaleValue);
-        std::cout << "Transfer function scaler: " << g_scaleValue << std::endl;
-        break;
-
-      default:
-        break;
-    } // switch
-  }
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-void glfw_window_size_callback(GLFWwindow *window, int width, int height)
-{
-  g_screenWidth = width;
-  g_screenHeight = height;
-  g_renderer->resize(width, height);
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-void glfw_cursorpos_callback(GLFWwindow *window, double x, double y)
-{
-  glm::vec2 cpos(std::floor(x), std::floor(y));
-  if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
-
-    glm::vec2 delta(cpos - g_controls->getCursor().pos);
-    subvol::Camera &cam{ g_renderer->getCamera() };
-
-    // rotate around camera right
-    glm::mat4 const pitch{ glm::rotate(glm::mat4{ 1.0f },
-                                       glm::radians(-delta.y),
-                                       cam.getRight()) };
-
-    // Concat pitch with rotation around camera up vector
-    glm::mat4 const rotation{ glm::rotate(pitch,
-                                          glm::radians(-delta.x),
-                                          cam.getUp()) };
-
-    // Give the camera new eye and up
-    cam.setEye(glm::vec3{ rotation * glm::vec4{ cam.getEye(), 1 }});
-    cam.setUp(glm::vec3{ rotation * glm::vec4{ cam.getUp(), 1 }});
-
-    g_renderer->setViewMatrix(cam.createViewMatrix());
-    glm::vec3 f{ glm::normalize(cam.getLookAt() - cam.getEye()) };
-    std::cout << "\rView dir: "
-              << f.x << ", " << f.y << ", " << f.z
-              << std::flush;
-  }
-
-  g_controls->getCursor().pos = cpos;
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-void glfw_scrollwheel_callback(GLFWwindow *window, double xoff, double yoff)
-{
-  // 1.75 scales the vertical motion of the scroll wheel so changing the
-  // field of view isn't so slow.
-  float fov = static_cast<float>(g_renderer->getFov() + (yoff * 1.75f));
-
-  if (fov < 1 || fov > 120)
-    return;
-
-  std::cout << "\rfov: " << fov << std::flush;
-  g_renderer->setFov(glm::radians(fov));
-}
-
-
-/************************************************************************/
-/*     D R A W I N'    S T U F F                                        */
-/************************************************************************/
-
-
-///////////////////////////////////////////////////////////////////////////////
-void draw()
-{
-  gl_check(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
-
-  ////////  Axis    /////////////////////////////////////////
-  g_axisVao->bind();
-  g_wireframeShader->bind();
-  g_renderer->setWorldMatrix(glm::mat4{ 1.0f });
-  g_wireframeShader->setUniform("mvp", g_renderer->getWorldViewProjectionMatrix());
-  gl_check( glDrawArrays(GL_LINES,
-                         0,
-                         static_cast<GLsizei>(bd::CoordinateAxis::verts.size())) );
-  g_wireframeShader->unbind();
-  g_axisVao->unbind();
-
-  ////////  BBoxes  /////////////////////////////////////////
-  if (g_toggleBlockBoxes) {
-    g_renderer->drawNonEmptyBoundingBoxes();
-  }
-
-  //////// Quad Geo (drawNonEmptyBlocks)  /////////////////////
-  g_renderer->drawNonEmptyBlocks();
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-void
-loop(GLFWwindow *window)
-{
-  assert(window != nullptr && "window was passed as nullptr in loop()");
-  bd::Info() << "About to enter render loop.";
-
-  do {
-    startCpuTime();
-//    startGpuTimerQuery();
-    draw();
-    glfwSwapBuffers(window);
-//    endGpuTimerQuery();
-    glfwPollEvents();
-    endCpuTime();
-  } while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
-    glfwWindowShouldClose(window) == 0);
-
-  bd::Info() << "Render loop exited.";
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-//   I N I T I A L I Z A T I O N
-///////////////////////////////////////////////////////////////////////////////
-
-/////////////////////////////////////////////////////////////////////////////////
-GLFWwindow *initGLContext()
-{
-  bd::Info() << "Initializing GLFW.";
-  if (!glfwInit()) {
-    bd::Err() << "could not start GLFW3";
-    return nullptr;
-  }
-
-  glfwSetErrorCallback(glfw_error_callback);
-  glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
-
-  // number of samples to use for multi sampling
-  //glfwWindowHint(GLFW_SAMPLES, 4);
-
-#ifdef __APPLE__
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
-#else
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-#endif
-
-  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-  glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-
-  GLFWwindow *window{ glfwCreateWindow(g_screenWidth, g_screenHeight, "Blocks",
-                                       nullptr, nullptr) };
-
-  if (!window) {
-    bd::Err() << "ERROR: could not open window with GLFW3";
-    glfwTerminate();
-    return nullptr;
-  }
-
-  glfwSetCursorPosCallback(window, glfw_cursorpos_callback);
-  glfwSetWindowSizeCallback(window, glfw_window_size_callback);
-  glfwSetKeyCallback(window, glfw_keyboard_callback);
-  glfwSetScrollCallback(window, glfw_scrollwheel_callback);
-
-  glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
-  glfwMakeContextCurrent(window);
-
-  glewExperimental = GL_TRUE;
-  GLenum error{ glewInit() };
-  if (error) {
-    bd::Err() << "Could not initGLContext glew " << glewGetErrorString(error);
-    return nullptr;
-  }
-
-  glfwSwapInterval(1); // 0 = no vertical sync.
-
-#ifndef __APPLE__
-  bd::subscribe_debug_callbacks();
-#endif
-
-  // Generate OpenGL queries for frame times.
-  genQueries();
-
-  bd::checkForAndLogGlError(__FILE__, __FUNCTION__, __LINE__);
-
-  return window;
-}
 
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -409,21 +89,6 @@ void printBlocks(bd::BlockCollection *bcol)
   }
 }
 
-
-/////////////////////////////////////////////////////////////////////////////////
-void printTimes(std::ostream &str)
-{
-  double gputime_ms = getTotalGPUTime_NonEmptyBlocks() * 1.0e-6;
-  double cputime_ms = getTotalElapsedCPUFrameTime() * 1.0e-3;
-
-  str <<
-      "frames_rendered: " << getTotalFramesRendered() << " frames\n"
-        "gpu_ft_total_nonempty: " << gputime_ms << "ms\n"
-        "gpu_ft_avg_nonempty: " << (gputime_ms / getTotalFramesRendered()) << "ms\n"
-        "cpu_ft_total: " << cputime_ms << "ms\n"
-        "cpu_ft_avg: " << (cputime_ms / getTotalFramesRendered()) << "ms"
-      << std::endl;
-}
 
 
 /// \brief Set camera orientation to along X, Y, or Z axis
@@ -461,20 +126,20 @@ void printNvPmApiCounters(const char *perfOutPath = "")
 {
   if (std::strlen(perfOutPath) == 0) {
     perf_printCounters(std::cout);
-    printTimes(std::cout);
+    subvol::timing::printTimes(std::cout);
   }
   else {
     std::ofstream outStream(perfOutPath);
     if (outStream.is_open()) {
       perf_printCounters(outStream);
-      printTimes(outStream);
+      subvol::timing::printTimes(outStream);
     }
     else {
       bd::Err() <<
                 "Could not open " << perfOutPath << " for performance counter output. "
                   "Using stdout instead.";
       perf_printCounters(std::cout);
-      printTimes(std::cout);
+      subvol::timing::printTimes(std::cout);
     }
   }
 }
@@ -494,6 +159,10 @@ int main(int argc, const char *argv[])
   // the CommandLineOptions struct.
   std::shared_ptr<bd::IndexFile> indexFile{
     bd::IndexFile::fromBinaryIndexFile(clo.indexFilePath) };
+  if (indexFile == nullptr) {
+    bd::Err() << "Could open the index file.";
+    return 1;
+  }
 
   // Since the IndexFileHeader contains most of the options needed to
   // render the volume, we copy those over into the CommandLineOptions struct.
@@ -508,12 +177,13 @@ int main(int argc, const char *argv[])
   subvol::printThem(clo);
 
   // Initialize OpenGL and GLFW and generate our transfer function textures.
-  GLFWwindow *window{ initGLContext() };
+  GLFWwindow *window{ subvol::renderhelp::initGLContext(clo.windowWidth,
+                                                        clo.windowHeight) };
   if (window == nullptr) {
     bd::Err() << "Could not initialize GLFW, exiting.";
     return 1;
   }
-  subvol::setInitialGLState();
+  subvol::renderhelp::setInitialGLState();
   subvol::ColorMapManager::generateDefaultTransferFunctionTextures();
 
 
@@ -539,11 +209,13 @@ int main(int argc, const char *argv[])
                      { 0.5f, 0.5f, 0.5f },
                      { clo.num_slices, clo.num_slices, clo.num_slices });
 
+
   // coordinate axis
   bd::Dbg() << "Generating coordinate axis VAO";
   g_axisVao = std::make_shared<bd::VertexArrayObject>();
   g_axisVao->create();
   subvol::genAxisVao(*g_axisVao);
+
 
   // bounding boxes
   bd::Dbg() << "Generating bounding box VAO";
@@ -562,6 +234,7 @@ int main(int argc, const char *argv[])
     return 1;
   }
 
+
   // Volume shader
   g_volumeShader = std::make_shared<bd::ShaderProgram>();
   GLuint volumeProgramId{
@@ -572,19 +245,25 @@ int main(int argc, const char *argv[])
     return 1;
   }
 
+  //TODO: move renderer init into initGLContext().
   g_renderer =
     std::make_shared<subvol::BlockRenderer>(int(clo.num_slices),
                                             g_volumeShader, g_wireframeShader,
                                             &blockCollection->nonEmptyBlocks(),
-                                            g_quadVao, g_boxVao);
+                                            g_quadVao, g_boxVao, g_axisVao);
 
-  g_renderer->resize(g_screenWidth, g_screenHeight);
+  g_renderer->resize(clo.windowWidth, clo.windowHeight);
   g_renderer->getCamera().setEye({ 0, 0, 2 });
   g_renderer->getCamera().setLookAt({ 0, 0, 0 });
   g_renderer->getCamera().setUp({ 0, 1, 0 });
   g_renderer->setViewMatrix(g_renderer->getCamera().createViewMatrix());
-//  g_renderer->setTFuncTexture(*subvol::ColorMapManager::getMapTextureByName("FULL_RAINBOW"));
-  g_renderer->setTfuncScaleValue(g_scaleValue);
+
+  if (! clo.tfuncPath.empty()) {
+    subvol::ColorMapManager::load_1dt("USER", clo.tfuncPath);
+  }
+  g_renderer->setTFuncTexture(subvol::ColorMapManager::getMapTextureByName("USER"));
+//  m_renderer->setTFuncTexture(*subvol::ColorMapManager::getMapTextureByName("FULL_RAINBOW"));
+//  g_renderer->setTfuncScaleValue(g_scaleValue);
   g_renderer->init();
 
 //  setCameraPosPreset(clo.cameraPos);
@@ -592,8 +271,8 @@ int main(int argc, const char *argv[])
   //// NV Perf Thing ////
   perf_initNvPm();
   perf_initMode(clo.perfMode);
-
-  loop(window);
+  subvol::renderhelp::initializeControls(window, g_renderer);
+  subvol::renderhelp::loop(window, g_renderer.get());
 
   printNvPmApiCounters(clo.perfOutPath.c_str());
   cleanup();
