@@ -16,7 +16,10 @@ Controls::Controls()
 //  , m_tfuncNames{ }
     , m_renderer{ nullptr }
     , m_showBlockBoxes{ false }
+    , m_shouldUseLighting{ false }
     , m_scaleValue{ 1.0f }
+    , m_nShiney{ 1.0f }
+    , m_LightVector{ 2.0f, 2.0f, 2.0f }
 {
 
 }
@@ -31,7 +34,9 @@ Controls::initialize(std::shared_ptr<BlockRenderer> renderer)
     s_instance = new Controls();
 
   assert(renderer != nullptr && "Passed nullptr as argument to initialize");
-  getInstance().m_renderer = std::move(renderer);
+  Controls &inst{ getInstance() };
+  inst.m_shouldUseLighting = renderer->getShouldUseLighting();
+  inst.m_renderer = std::move(renderer);
 }
 
 /* static */
@@ -48,12 +53,14 @@ Controls::getInstance()
   return *s_instance;
 }
 
+
 void
 Controls::s_cursorpos_callback(GLFWwindow *window, double x, double y)
 {
   assert(s_instance != nullptr);
   s_instance->cursorpos_callback(window, x, y);
 }
+
 
 void
 Controls::s_keyboard_callback(GLFWwindow *window, int key, int scancode, int action, int mods)
@@ -62,12 +69,14 @@ Controls::s_keyboard_callback(GLFWwindow *window, int key, int scancode, int act
   s_instance->keyboard_callback(key, scancode, action, mods);
 }
 
+
 void
 Controls::s_window_size_callback(GLFWwindow *window, int width, int height)
 {
   assert(s_instance != nullptr);
   s_instance->window_size_callback(width, height);
 }
+
 
 void
 Controls::s_scrollwheel_callback(GLFWwindow *window, double xoff, double yoff)
@@ -146,6 +155,12 @@ Controls::keyboard_callback(int key, int scancode, int action, int mods)
         m_renderer->shouldDrawNonEmptyBoundingBoxes(m_showBlockBoxes);
         break;
 
+//      case GLFW_KEY_L:
+//        m_shouldUseLighting = !m_shouldUseLighting;
+//        std::cout << "Use lighting: " << m_shouldUseLighting;
+//        m_renderer->setShouldUseLighting(m_shouldUseLighting);
+//        break;
+
       case GLFW_KEY_Q:
         m_currentBackgroundColor ^= 1;
         std::cout << "Background color: "
@@ -155,7 +170,7 @@ Controls::keyboard_callback(int key, int scancode, int action, int mods)
         break;
 
       case GLFW_KEY_T:
-        m_renderer->setTFuncTexture(ColorMapManager::getNextMapTexture());
+        m_renderer->setColorMapTexture(ColorMapManager::getNextMapTexture());
       default:
         break;
 
@@ -179,7 +194,7 @@ Controls::keyboard_callback(int key, int scancode, int action, int mods)
           m_scaleValue += 0.01f;
         }
 
-        m_renderer->setTfuncScaleValue(m_scaleValue);
+        m_renderer->setColorMapScaleValue(m_scaleValue);
         std::cout << "Transfer function scaler: " << m_scaleValue << std::endl;
         break;
 
@@ -195,10 +210,17 @@ Controls::keyboard_callback(int key, int scancode, int action, int mods)
           m_scaleValue -= 0.01f;
         }
 
-        m_renderer->setTfuncScaleValue(m_scaleValue);
+        m_renderer->setColorMapScaleValue(m_scaleValue);
         std::cout << "Transfer function scaler: " << m_scaleValue << std::endl;
         break;
 
+        // n_shiney
+      case GLFW_KEY_Y:
+        if (mods & GLFW_MOD_SHIFT) {
+          m_nShiney -= 1.0f;
+        } else {
+          m_nShiney += 1.0f;
+        }
       default:
         break;
     } // switch

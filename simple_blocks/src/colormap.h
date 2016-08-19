@@ -33,6 +33,10 @@ public:
   static bd::Texture const &
   getNextMapTexture();
 
+  /// \brief Get the previous color map Texture in the circular queue.
+  static bd::Texture const &
+  getPrevMapTexture();
+
   /// \brief Get the strings of the names of each color map in the
   /// list of maps.
   static std::vector<std::string>
@@ -41,7 +45,9 @@ public:
 
   /// \brief Load a .1dt format transfer function
   /// \note This is the type of 1D transfer function exported by ImageVis3D
-  static void
+  /// \return false if the transfer function is malformed or has more than 8192 knots.
+  /// \throws std::ifstream::failure if there is an error opening/reading/closing the file.
+  static bool
   load_1dt(std::string const &funcName, std::string const &filename); //TODO: error handling in load_1dt
 
 
@@ -53,7 +59,8 @@ private:
                     std::vector<glm::vec4> const &map);
 
   /// \brief Create tfunc texture and put it in the colormap map.
-  static void
+  /// \return true on success, false otherwise.
+  static bool
   do_generateTransferFunctionTexture(std::string const &name,
                                      std::vector<glm::vec4> const &func);
 
@@ -85,7 +92,7 @@ private:
   /// \brief Holds the textures generated.
   static std::unordered_map<std::string, bd::Texture const *> s_textures;
   static std::vector<std::string const *> s_colorMapNames;
-  static int s_currentMapName;
+  static int s_currentMapNameIdx;
 
 }; // class ColorMapManager
 

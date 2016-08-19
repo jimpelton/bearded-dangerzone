@@ -56,8 +56,11 @@ private:
   std::shared_ptr<BlockRenderer> m_renderer;
 
   bool m_showBlockBoxes;
+  bool m_shouldUseLighting;
   int m_currentBackgroundColor;
   float m_scaleValue;
+  float m_nShiney;
+  glm::vec3 m_LightVector;
 
 };
 

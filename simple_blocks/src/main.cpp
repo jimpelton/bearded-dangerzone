@@ -47,19 +47,19 @@
 #include "nvpm.h"
 
 
-std::shared_ptr<bd::CoordinateAxis> g_axis{ }; ///< The coordinate axis lines.
-std::shared_ptr<subvol::BlockRenderer> g_renderer{};
-std::shared_ptr<bd::ShaderProgram> g_wireframeShader{};
-std::shared_ptr<bd::ShaderProgram> g_volumeShader{};
-std::shared_ptr<bd::VertexArrayObject> g_axisVao{};
-std::shared_ptr<bd::VertexArrayObject> g_boxVao{};
-std::shared_ptr<bd::VertexArrayObject> g_quadVao{};
-std::shared_ptr<subvol::Controls> g_controls{};
+std::shared_ptr<bd::CoordinateAxis> g_axis{ nullptr }; ///< The coordinate axis lines.
+std::shared_ptr<subvol::BlockRenderer> g_renderer{ nullptr };
+std::shared_ptr<bd::ShaderProgram> g_wireframeShader{ nullptr };
+std::shared_ptr<bd::ShaderProgram> g_volumeShader{ nullptr };
+std::shared_ptr<bd::ShaderProgram> g_volumeShaderLighting{ nullptr };
+std::shared_ptr<bd::VertexArrayObject> g_axisVao{ nullptr };
+std::shared_ptr<bd::VertexArrayObject> g_boxVao{ nullptr };
+std::shared_ptr<bd::VertexArrayObject> g_quadVao{ nullptr };
+std::shared_ptr<subvol::Controls> g_controls{ nullptr };
 
 
 void cleanup();
 void printBlocks(bd::BlockCollection *bcol);
-void setCameraPosPreset(unsigned cameraPos);
 void printNvPmApiCounters(const char *perfOutPath);
 
 
@@ -86,61 +86,6 @@ void printBlocks(bd::BlockCollection *bcol)
   } else {
     bd::Err() << "Could not print blocks because blocks.txt couldn't be created "
       "in the current working directory.";
-  }
-}
-
-
-
-/// \brief Set camera orientation to along X, Y, or Z axis
-void setCameraPosPreset(unsigned cameraPos)
-{
-  glm::quat r;
-  switch (cameraPos) {
-    case 3:
-      break;
-    case 2:
-      //put camera at { 2.0f, 0.0f, 0.0f  } (view along positive X axis)
-      r = glm::rotate(r, -1.0f * glm::half_pi<float>(), Y_AXIS);
-      //g_camera.rotateTo(Y_AXIS);
-      break;
-    case 1:
-      //put camera at { 0.0f, 2.0f, 0.0f } (view along positive Y axis)
-      r = glm::rotate(r, glm::half_pi<float>(), X_AXIS);
-      //g_camera.rotateTo(X_AXIS);
-      break;
-    case 0:
-    default:
-      //put camera at oblique positive quadrant.
-      // no rotation needed, this is default cam location.
-      r = glm::rotate(r, glm::pi<float>(), Y_AXIS) *
-        glm::rotate(r, glm::pi<float>() / 4.0f, X_AXIS);
-
-      //g_camera.rotateTo(Z_AXIS);
-      break;
-  }
-}
-
-/// \brief print counters from NvPmApi to file \c perfOutPath, or to \c stdout
-///  if no path is provided.
-void printNvPmApiCounters(const char *perfOutPath = "")
-{
-  if (std::strlen(perfOutPath) == 0) {
-    perf_printCounters(std::cout);
-    subvol::timing::printTimes(std::cout);
-  }
-  else {
-    std::ofstream outStream(perfOutPath);
-    if (outStream.is_open()) {
-      perf_printCounters(outStream);
-      subvol::timing::printTimes(outStream);
-    }
-    else {
-      bd::Err() <<
-                "Could not open " << perfOutPath << " for performance counter output. "
-                  "Using stdout instead.";
-      perf_printCounters(std::cout);
-      subvol::timing::printTimes(std::cout);
-    }
   }
 }
 
@@ -226,10 +171,10 @@ int main(int argc, const char *argv[])
 
   // Wireframe Shader
   g_wireframeShader = std::make_shared<bd::ShaderProgram>();
-  GLuint wireframeProgramId{
+  GLuint programId {
     g_wireframeShader->linkProgram("shaders/vert_vertexcolor_passthrough.glsl",
                                    "shaders/frag_vertcolor.glsl") };
-  if (wireframeProgramId == 0) {
+  if (programId == 0) {
     bd::Err() << "Error building passthrough shader, program id was 0.";
     return 1;
   }
@@ -237,34 +182,53 @@ int main(int argc, const char *argv[])
 
   // Volume shader
   g_volumeShader = std::make_shared<bd::ShaderProgram>();
-  GLuint volumeProgramId{
+  programId =
     g_volumeShader->linkProgram("shaders/vert_vertexcolor_passthrough.glsl",
-                                "shaders/frag_volumesampler_noshading.glsl") };
-  if (volumeProgramId == 0) {
-    bd::Err() << "Error building volume sampling shader, program id was 0.";
+                                "shaders/frag_volumesampler_noshading.glsl");
+  if (programId == 0) {
+    bd::Err() << "Error building volume shader, program id was 0.";
     return 1;
   }
+
+
+  // Volume shader with Lighting
+//  g_volumeShaderLighting = std::make_shared<bd::ShaderProgram>();
+//  programId =
+//    g_volumeShaderLighting->linkProgram("shaders/vert_vertexcolor_passthrough.glsl",
+//                                        "shaders/frag_shading_otfgrads.glsl");
+//  if (programId == 0) {
+//    bd::Err() << "Error building volume lighting shader, program id was 0.";
+//    return 1;
+//  }
 
   //TODO: move renderer init into initGLContext().
   g_renderer =
     std::make_shared<subvol::BlockRenderer>(int(clo.num_slices),
-                                            g_volumeShader, g_wireframeShader,
+                                            g_volumeShader,
+                                            g_wireframeShader,
+//                                            g_volumeShaderLighting,
                                             &blockCollection->nonEmptyBlocks(),
                                             g_quadVao, g_boxVao, g_axisVao);
-
   g_renderer->resize(clo.windowWidth, clo.windowHeight);
   g_renderer->getCamera().setEye({ 0, 0, 2 });
   g_renderer->getCamera().setLookAt({ 0, 0, 0 });
   g_renderer->getCamera().setUp({ 0, 1, 0 });
   g_renderer->setViewMatrix(g_renderer->getCamera().createViewMatrix());
 
+
+
+  // Load a user defined transfer function if it was provided on the CL.
   if (! clo.tfuncPath.empty()) {
-    subvol::ColorMapManager::load_1dt("USER", clo.tfuncPath);
+    try {
+      if (! subvol::ColorMapManager::load_1dt("USER", clo.tfuncPath)) {
+        bd::Err() << "Transfer function was malformed: too many knots. The function won't be available.";
+      } else {
+        g_renderer->setColorMapTexture(subvol::ColorMapManager::getMapTextureByName("USER"));
+      }
+    } catch (std::ifstream::failure e) {
+      bd::Err() << "Error reading user defined transfer function file. The function won't be available.";
+    }
   }
-  g_renderer->setTFuncTexture(subvol::ColorMapManager::getMapTextureByName("USER"));
-//  m_renderer->setTFuncTexture(*subvol::ColorMapManager::getMapTextureByName("FULL_RAINBOW"));
-//  g_renderer->setTfuncScaleValue(g_scaleValue);
-  g_renderer->init();
 
 //  setCameraPosPreset(clo.cameraPos);
 
@@ -274,7 +238,7 @@ int main(int argc, const char *argv[])
   subvol::renderhelp::initializeControls(window, g_renderer);
   subvol::renderhelp::loop(window, g_renderer.get());
 
-  printNvPmApiCounters(clo.perfOutPath.c_str());
+//  printNvPmApiCounters(clo.perfOutPath.c_str());
   cleanup();
 
   return 0;

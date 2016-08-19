@@ -114,6 +114,7 @@ setInitialGLState()
   gl_check(glPrimitiveRestartIndex(0xFFFF));
 }
 
+
 ///////////////////////////////////////////////////////////////////////////////
 void
 initializeControls(GLFWwindow *window, std::shared_ptr<BlockRenderer> renderer)
@@ -127,6 +128,8 @@ initializeControls(GLFWwindow *window, std::shared_ptr<BlockRenderer> renderer)
   glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
 
 }
+
+
 ///////////////////////////////////////////////////////////////////////////////
 void
 loop(GLFWwindow *window, BlockRenderer *renderer)
@@ -137,7 +140,7 @@ loop(GLFWwindow *window, BlockRenderer *renderer)
   do {
     subvol::timing::startCpuTime();
 //    subvol::timing::startGpuTimerQuery();
-    renderer->drawNonEmptyBlocks();
+    renderer->draw();
     glfwSwapBuffers(window);
 //    subvol::timing::endGpuTimerQuery();
     glfwPollEvents();
@@ -148,6 +151,37 @@ loop(GLFWwindow *window, BlockRenderer *renderer)
   bd::Info() << "Render loop exited.";
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+//void
+//setCameraPosPreset(unsigned int cameraPos)
+//{
+//
+//  glm::quat r;
+//  switch (cameraPos) {
+//    case 3:
+//      break;
+//    case 2:
+//      //put camera at { 2.0f, 0.0f, 0.0f  } (view along positive X axis)
+//      r = glm::rotate(r, -1.0f * glm::half_pi<float>(), Y_AXIS);
+//      //g_camera.rotateTo(Y_AXIS);
+//      break;
+//    case 1:
+//      //put camera at { 0.0f, 2.0f, 0.0f } (view along positive Y axis)
+//      r = glm::rotate(r, glm::half_pi<float>(), X_AXIS);
+//      //g_camera.rotateTo(X_AXIS);
+//      break;
+//    case 0:
+//    default:
+//      //put camera at oblique positive quadrant.
+//      // no rotation needed, this is default cam location.
+//      r = glm::rotate(r, glm::pi<float>(), Y_AXIS) *
+//        glm::rotate(r, glm::pi<float>() / 4.0f, X_AXIS);
+//
+//      //g_camera.rotateTo(Z_AXIS);
+//      break;
+//  }
+//}
 
 //void setDefaultView(glm::vec3 const &eye)
 //{

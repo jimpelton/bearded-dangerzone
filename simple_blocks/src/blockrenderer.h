@@ -32,6 +32,7 @@ public:
   //////////////////////////////////////////////////////////////////////////////
   BlockRenderer(int numSlices,
                 std::shared_ptr<bd::ShaderProgram> volumeShader,
+//                std::shared_ptr<bd::ShaderProgram> volumeShaderLighting,
                 std::shared_ptr<bd::ShaderProgram> wireframeShader,
                 std::vector<bd::Block*>* blocks,
                 std::shared_ptr<bd::VertexArrayObject> blocksVAO,
@@ -40,20 +41,26 @@ public:
 
 
   virtual ~BlockRenderer();
-
+private:
   bool init();
-
+public:
   /// \brief Set the transfer function texture.
-  void setTFuncTexture(bd::Texture const& tfunc);
+  void setColorMapTexture(bd::Texture const &tfunc);
 
-  void setTfuncScaleValue(float val);
+  void setColorMapScaleValue(float val);
 
+  void setShaderNShiney(float n);
+  void setShaderLightPos(glm::vec3 const &L);
+//  void setShaderViewVec(glm::vec3 const &V);
+  void setShaderMaterial(glm::vec3 const &M);
   void setBackgroundColor(glm::vec3 const &c);
+  void setShouldUseLighting(bool b);
+  bool getShouldUseLighting() const;
 
   void shouldDrawNonEmptyBoundingBoxes(bool b);
 
   /// \brief Draw each non-empty block.
-  void drawNonEmptyBlocks();
+  void draw();
 
   /// \brief Draw wireframe bounding boxes around the blocks.
   /// \param[in] vp View projection matrix.
@@ -66,6 +73,7 @@ private:
   /// \brief Disable GL_DEPTH_TEST and draw transparent slices
   void drawSlices(int baseVertex);
 
+  void drawAxis();
 
   //////////////////////////////////////////////////////////////////////////////
   /// \brief Loop through the blocks and draw each one
@@ -81,7 +89,7 @@ private:
   //////////////////////////////////////////////////////////////////////////////
   /// \brief Compute the base vertex offset for the slices vertex buffer based
   ///        off the largest component of \c viewdir.
-  int computeBaseVertexFromViewDir();
+  int computeBaseVertexFromViewDir(glm::vec3 const &viewdir);
 
 
 private:
@@ -89,16 +97,23 @@ private:
   int m_numSlicesPerBlock;            ///< Number of slices per block
   float m_tfuncScaleValue;            ///< Transfer function scaling value
   bool m_drawNonEmptyBoundingBoxes;   ///< True to draw bounding boxes.
+  bool m_shouldUseLighting;           ///< True to use Phong lighting shader.
   glm::vec3 m_backgroundColor;        ///< Current background color.
+
+  bd::ShaderProgram *m_currentShader;
 
   SliceSet m_selectedSliceSet;
   std::shared_ptr<bd::ShaderProgram> m_volumeShader;
+  std::shared_ptr<bd::ShaderProgram> m_volumeShaderLighting;
   std::shared_ptr<bd::ShaderProgram> m_wireframeShader;
   std::vector<bd::Block*> *m_blocks;
   bd::Texture const* m_colorMapTexture; ///< Transfer function texture
   std::shared_ptr<bd::VertexArrayObject> m_quadsVao;    ///< Quad geometry verts
   std::shared_ptr<bd::VertexArrayObject> m_boxesVao;    ///< bounding box wireframe verts
   std::shared_ptr<bd::VertexArrayObject> m_axisVao;
+
+
+
 };
 
 } // namepsace subvol

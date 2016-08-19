@@ -26,6 +26,7 @@ BlockRenderer::BlockRenderer()
 ////////////////////////////////////////////////////////////////////////////////
 BlockRenderer::BlockRenderer(int numSlices,
                              std::shared_ptr<bd::ShaderProgram> volumeShader,
+//                             std::shared_ptr<bd::ShaderProgram> volumeShaderLighting,
                              std::shared_ptr<bd::ShaderProgram> wireframeShader,
                              std::vector<bd::Block *> *blocks,
                              std::shared_ptr<bd::VertexArrayObject> blocksVAO,
@@ -35,8 +36,11 @@ BlockRenderer::BlockRenderer(int numSlices,
     , m_numSlicesPerBlock{ numSlices }
     , m_tfuncScaleValue{ 1.0f }
     , m_drawNonEmptyBoundingBoxes{ false }
+    , m_shouldUseLighting{ false }
     , m_backgroundColor{ 0.0f }
+    , m_currentShader{ nullptr }
     , m_volumeShader{ std::move(volumeShader) }
+//    , m_volumeShaderLighting{ std::move(volumeShaderLighting) }
     , m_wireframeShader{ std::move(wireframeShader) }
     , m_blocks{ blocks }
     , m_colorMapTexture{ nullptr }
@@ -44,7 +48,7 @@ BlockRenderer::BlockRenderer(int numSlices,
     , m_boxesVao{ std::move(bboxVAO) }
     , m_axisVao{ std::move(axisVao) }
 {
-
+  init();
 }
 
 
@@ -54,34 +58,46 @@ BlockRenderer::~BlockRenderer()
 
 
 ////////////////////////////////////////////////////////////////////////////////
-bool BlockRenderer::init()
+bool
+BlockRenderer::init()
 {
-  m_volumeShader->bind();
+//  m_volumeShader->bind();
   m_volumeShader->setUniform(VOLUME_SAMPLER_UNIFORM_STR, BLOCK_TEXTURE_UNIT);
   m_volumeShader->setUniform(TRANSF_SAMPLER_UNIFORM_STR, TRANSF_TEXTURE_UNIT);
   m_volumeShader->setUniform(VOLUME_TRANSF_UNIFORM_STR, 1.0f);
+//  m_currentShader = m_volumeShader.get();
+
+//  m_volumeShaderLighting->setUniform(VOLUME_SAMPLER_UNIFORM_STR, BLOCK_TEXTURE_UNIT);
+//  m_volumeShaderLighting->setUniform(TRANSF_SAMPLER_UNIFORM_STR, TRANSF_TEXTURE_UNIT);
+//  m_volumeShaderLighting->setUniform(VOLUME_TRANSF_UNIFORM_STR, 1.0f);
+//  setShaderLightPos({ 1.0f, 1.0f, 1.0f });
+//  setShaderNShiney(1.0f);
+//  setShaderMaterial({ 1.0f, 1.0f, 1.0f });
+  setShouldUseLighting(m_shouldUseLighting);
 
   if (m_colorMapTexture == nullptr)
-    setTFuncTexture(ColorMapManager::getMapTextureByName("RAINBOW"));
+    setColorMapTexture(ColorMapManager::getMapTextureByName("RAINBOW"));
 
-  return false;
+  return true;
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 void
-BlockRenderer::setTFuncTexture(bd::Texture const &tfunc)
+BlockRenderer::setColorMapTexture(bd::Texture const &tfunc)
 {
   // bind tfunc to the transfer texture unit.
   tfunc.bind(TRANSF_TEXTURE_UNIT);
   m_colorMapTexture = &tfunc;
+//  m_colorMapTexture->bind(TRANSF_TEXTURE_UNIT);
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void BlockRenderer::setTfuncScaleValue(float val)
+void BlockRenderer::setColorMapScaleValue(float val)
 {
   m_tfuncScaleValue = val;
+  m_currentShader->setUniform(VOLUME_TRANSF_UNIFORM_STR, m_tfuncScaleValue);
 }
 
 
@@ -96,6 +112,59 @@ BlockRenderer::setBackgroundColor(const glm::vec3 &c)
 
 ///////////////////////////////////////////////////////////////////////////////
 void
+BlockRenderer::setShouldUseLighting(bool b)
+{
+  if (b) {
+    m_currentShader = m_volumeShaderLighting.get();
+    m_currentShader->setUniform(VOLUME_TRANSF_UNIFORM_STR, m_tfuncScaleValue);
+    bd::Dbg() << "Use lighting: true";
+  } else {
+    m_currentShader = m_volumeShader.get();
+    m_currentShader->setUniform(VOLUME_TRANSF_UNIFORM_STR, m_tfuncScaleValue);
+    bd::Dbg() << "Use lighting: false";
+  }
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+bool
+BlockRenderer::getShouldUseLighting() const
+{
+  return m_shouldUseLighting;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+void
+BlockRenderer::setShaderNShiney(float n)
+{
+  m_volumeShaderLighting->setUniform(LIGHTING_N_SHINEY_UNIFORM_STR, n);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+void
+BlockRenderer::setShaderLightPos(glm::vec3 const &L)
+{
+  m_volumeShaderLighting->setUniform(LIGHTING_LIGHT_POS_UNIFORM_STR, L);
+}
+
+//void
+//BlockRenderer::setShaderViewVec(glm::vec3 const &V)
+//{
+//  m_volumeShaderLighting->setUniform("V", V);
+//}
+
+
+///////////////////////////////////////////////////////////////////////////////
+void
+BlockRenderer::setShaderMaterial(glm::vec3 const &M)
+{
+  m_volumeShaderLighting->setUniform(LIGHTING_MAT_UNIFORM_STR, M);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void
 BlockRenderer::shouldDrawNonEmptyBoundingBoxes(bool b)
 {
   m_drawNonEmptyBoundingBoxes = b;
@@ -105,7 +174,7 @@ BlockRenderer::shouldDrawNonEmptyBoundingBoxes(bool b)
 ////////////////////////////////////////////////////////////////////////////////
 void BlockRenderer::drawNonEmptyBoundingBoxes()
 {
-//  m_wireframeShader->bind();
+  m_wireframeShader->bind();
   m_boxesVao->bind();
   for (auto *b : *m_blocks) {
     setWorldMatrix(b->transform());
@@ -115,6 +184,8 @@ void BlockRenderer::drawNonEmptyBoundingBoxes()
     gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, (GLvoid *) (4 * sizeof(GLushort))));
     gl_check(glDrawElements(GL_LINES, 8, GL_UNSIGNED_SHORT, (GLvoid *) (8 * sizeof(GLushort))));
   }
+//  m_boxesVao->unbind();
+//  m_wireframeShader->unbind();
 }
 
 
@@ -135,17 +206,33 @@ BlockRenderer::drawSlices(int baseVertex)
 }
 
 
+///////////////////////////////////////////////////////////////////////////////
+void
+BlockRenderer::drawAxis()
+{
+  m_wireframeShader->bind();
+  m_axisVao->bind();
+  m_wireframeShader->setUniform("mvp", getWorldViewProjectionMatrix());
+  gl_check(glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(bd::CoordinateAxis::verts.size())));
+//  m_axisVao->unbind();
+//  m_wireframeShader->unbind();
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////
 void
 BlockRenderer::drawNonEmptyBlocks_Forward()
 {
   // Compute the SliceSet and offset into the vertex buffer of that slice set.
-  GLint const baseVertex{ computeBaseVertexFromViewDir() };
+  glm::vec3 const viewdir{ glm::normalize(getCamera().getLookAt() - getCamera().getEye()) };
+  GLint const baseVertex{ computeBaseVertexFromViewDir(viewdir) };
+
+  m_currentShader->bind();
+  if (m_shouldUseLighting) {
+    m_currentShader->setUniform(LIGHTING_VIEW_DIR_SHINEY_UNIFORM_STR, viewdir);
+  }
 
   m_quadsVao->bind();
-  m_volumeShader->bind();
-  m_colorMapTexture->bind(TRANSF_TEXTURE_UNIT);
-  m_volumeShader->setUniform(VOLUME_TRANSF_UNIFORM_STR, m_tfuncScaleValue);
 
   // Start an NVPM profiling frame
   perf_frameBegin();
@@ -153,19 +240,21 @@ BlockRenderer::drawNonEmptyBlocks_Forward()
   for (auto *b : *m_blocks) {
     setWorldMatrix(b->transform());
     b->texture().bind(BLOCK_TEXTURE_UNIT);
-    m_volumeShader->setUniform(VOLUME_MVP_MATRIX_UNIFORM_STR, getWorldViewProjectionMatrix());
+    m_currentShader->setUniform(VOLUME_MVP_MATRIX_UNIFORM_STR, getWorldViewProjectionMatrix());
     drawSlices(baseVertex);
   }
 
   // End the NVPM profiling frame.
   perf_frameEnd();
-
+//  m_quadsVao->unbind();
+//  m_currentShader->unbind();
 }
+
 
 
 ////////////////////////////////////////////////////////////////////////////////
 void
-BlockRenderer::drawNonEmptyBlocks()
+BlockRenderer::draw()
 {
   // Sort the blocks by their distance from the camera.
   // The origin of each block is used.
@@ -181,26 +270,18 @@ BlockRenderer::drawNonEmptyBlocks()
   gl_check(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
   setWorldMatrix(glm::mat4{ 1.0f });
-  m_axisVao->bind();
-  m_wireframeShader->bind();
-  m_wireframeShader->setUniform("mvp", getWorldViewProjectionMatrix());
-  gl_check(glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(bd::CoordinateAxis::verts.size())));
-//  g_wireframeShader->unbind();
-  m_axisVao->unbind();
-
-
-  if (m_drawNonEmptyBoundingBoxes)
+  drawAxis();
+  if (m_drawNonEmptyBoundingBoxes) {
     drawNonEmptyBoundingBoxes();
-
+  }
   drawNonEmptyBlocks_Forward();
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
 int
-BlockRenderer::computeBaseVertexFromViewDir()
+BlockRenderer::computeBaseVertexFromViewDir(glm::vec3 const &viewdir)
 {
-  glm::vec3 const viewdir{ glm::normalize(getCamera().getLookAt() - getCamera().getEye()) };
   glm::vec3 const absViewDir{ glm::abs(viewdir) };
 
   SliceSet newSelected{ SliceSet::YZ };

@@ -22,6 +22,11 @@ extern const int TRANSF_TEXTURE_UNIT; // = 1;
 extern const char *VOLUME_SAMPLER_UNIFORM_STR;
 extern const char *TRANSF_SAMPLER_UNIFORM_STR;
 
+extern const char *LIGHTING_N_SHINEY_UNIFORM_STR; //= "n";
+extern const char *LIGHTING_LIGHT_POS_UNIFORM_STR; // = "L";
+extern const char *LIGHTING_VIEW_DIR_SHINEY_UNIFORM_STR; // = "V";
+extern const char *LIGHTING_MAT_UNIFORM_STR; // = "mat";
+
 //  const int BLOCK_TEXTURE_SAMPLER_UNIFORM = 0;
 //  const int TRANSF_TEXTURE_SAMPLER_UNIFORM = 1;
 

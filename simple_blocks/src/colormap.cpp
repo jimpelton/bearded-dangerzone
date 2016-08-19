@@ -142,7 +142,7 @@ const std::vector<glm::vec4> ColorMapManager::INVERSE_SEISMIC {
 
 std::unordered_map<std::string, bd::Texture const *> ColorMapManager::s_textures;
 std::vector<std::string const *> ColorMapManager::s_colorMapNames;
-int ColorMapManager::s_currentMapName{ 0 };
+int ColorMapManager::s_currentMapNameIdx{ 0 };
 
 
 
@@ -154,7 +154,7 @@ ColorMapManager::getMapTextureByName(std::string const &name)
   try{
     rval = s_textures.at(name);
 
-    s_currentMapName = std::find_if(s_colorMapNames.begin(), s_colorMapNames.end(),
+    s_currentMapNameIdx = std::find_if(s_colorMapNames.begin(), s_colorMapNames.end(),
                                     [&name] (std::string const *s)
                                     {
                                       return name == *s;
@@ -170,16 +170,27 @@ ColorMapManager::getMapTextureByName(std::string const &name)
 bd::Texture const &
 ColorMapManager::getNextMapTexture()
 {
-  s_currentMapName += 1;
-  if (s_currentMapName >= s_colorMapNames.size()) {
-    s_currentMapName = 0;
+  s_currentMapNameIdx += 1;
+  if (s_currentMapNameIdx >= s_colorMapNames.size()) {
+    s_currentMapNameIdx = 0;
   }
-  std::string const * name{ s_colorMapNames[s_currentMapName] };
+  std::string const * name{ s_colorMapNames[s_currentMapNameIdx] };
   return *(s_textures.find(*name)->second);
 }
 
 
-///////////////////////////////////////////////////////////////////////////////
+bd::Texture const &
+ColorMapManager::getPrevMapTexture()
+{
+  s_currentMapNameIdx -= 1;
+  if (s_currentMapNameIdx < 0) {
+    s_currentMapNameIdx = int(s_colorMapNames.size())-1;
+  }
+  std::string const * name{ s_colorMapNames[s_currentMapNameIdx] };
+  return *(s_textures.find(*name)->second);
+}
+
+
 std::vector<std::string>
 ColorMapManager::getMapNameStrings()
 {
@@ -225,39 +236,53 @@ ColorMapManager::generateDefaultTransferFunctionTextures()
 }
 
 
-void
+bool
 ColorMapManager::load_1dt(std::string const &funcName, std::string const &filename)
 {
   bd::Dbg() << "Reading 1dt formatted transfer function file and generating texture.";
 
-  std::ifstream file(filename.c_str(), std::ifstream::in);
-  if (!file.is_open()) {
-    bd::Err() << "Can't open tfunc file: " << filename;
-  }
-
-
-  size_t lineNum{ 0 }, numKnots{ 0 };
-  file >> numKnots; // number of entries/lines in the 1dt file.
-  lineNum++;
-  if (numKnots > 8192) {
-    bd::Err() << "The 1dt transfer function has " << numKnots
-              << " knots but max allowed is 8192)."
-                "Skipping loading the transfer function file.";
-  }
-
-  // read rest of file consisting of rgba colors
+  size_t lineNum{ 0 };
+  size_t numKnots{ 0 };
   std::vector<glm::vec4> rgba;
-  float r, g, b, a;
-  while (lineNum < numKnots && file >> r >> g >> b >> a) {
-    rgba.push_back(glm::vec4{ r, g, b, a });
+
+  std::ifstream file;
+  file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+
+  try {
+    file.open(filename.c_str(), std::ifstream::in);
+    if (!file.is_open()) {
+      bd::Err() << "Can't open tfunc file: " << filename;
+    }
+    file >> numKnots; // number of entries/lines in the 1dt file.
     lineNum++;
+
+    if (numKnots > 8192) {
+      bd::Err() << "The 1dt transfer function has " << numKnots
+                << " knots but max allowed is 8192)."
+                  "Skipping loading the transfer function file.";
+      return false;
+    }
+
+    // read rest of file consisting of rgba colors
+    float r, g, b, a;
+    while (lineNum < numKnots && file >> r >> g >> b >> a) {
+      rgba.push_back(glm::vec4{ r, g, b, a });
+      lineNum++;
+    }
+    file.close();
+
+  } catch (std::ifstream::failure e) {
+//    bd::Err() << "Can't open tfunc file: " << filename
+//              << "\n\t Reason: " << e.what();
+    throw e;
   }
-  file.close();
+
+
 
   do_generateTransferFunctionTexture(funcName, rgba);
   std::string const * name{ &s_textures.find(funcName)->first };
   s_colorMapNames.push_back(name);
-
+  return true;
 }
 
 /* static */
@@ -295,11 +320,12 @@ ColorMapManager::interpolateTexels(std::vector< glm::vec4 > * texels,
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void
+bool
 ColorMapManager::do_generateTransferFunctionTexture(
   std::string const &name,
   std::vector<glm::vec4> const &func)
 {
+  bool success{ true };
 
   float const *textureData{ reinterpret_cast<float const*>(func.data()) };
   size_t numElements{ func.size() * 4};         // 4 elements in glm::vec4
@@ -314,11 +340,13 @@ ColorMapManager::do_generateTransferFunctionTexture(
     Err() << "The texture for colormap " << name << " could not be created.";
     delete t;
     t = nullptr;
+    success = false;
   } else {
     s_textures[name] = t;
-    bd::Info() << "Added " << name << " colormap texture.";
+    Info() << "Added " << name << " colormap texture.";
   }
 
+  return success;
 }
 
 /* static */
