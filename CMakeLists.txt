@@ -31,7 +31,23 @@ endif()
 set(CRUFT_RELEASE_LIBRARIES ${${CRUFT_RELEASE_LIBRARIES}} CACHE FILEPATH "Cruft library file (crufterly.a).")
 
 
+#### Intel TBB Library ##################################################
+if(NOT DEFINED TBB_INCLUDE_DIR)
+    set(TBB_INCLUDE_DIR)
+endif()
+set(TBB_INCLUDE_DIR ${${TBB_INCLUDE_DIR}} CACHE PATH "Cruft includes directory path")
 
+if(NOT DEFINED TBB_DEBUG_LIBRARIES)
+    set(TBB_DEBUG_LIBRARIES)
+endif()
+set(TBB_DEBUG_LIBRARIES ${${TBB_DEBUG_LIBRARIES}} CACHE FILEPATH "Cruft library file (.a,.dylib,.lib).")
+
+if(NOT DEFINED TBB_RELEASE_LIBRARIES)
+    set(TBB_RELEASE_LIBRARIES)
+endif()
+set(TBB_RELEASE_LIBRARIES ${${TBB_RELEASE_LIBRARIES}} CACHE FILEPATH "Cruft library file (.a,.dylib,.lib).")
+
+#############################################################################
 if (UNIX)
     set(CMAKE_CXX_FLAGS
             "${CMAKE_CXX_FLAGS} \

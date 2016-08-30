@@ -62,8 +62,9 @@ if (USE_NVPMAPI)
     include_directories("${NVPMAPI_INCLUDE_DIR}")
 endif(USE_NVPMAPI)
 
-include_directories("${CRUFT_INCLUDE_DIR}")
-include_directories("${THIRDPARTY_DIR}/tclap/include")
+include_directories("${CRUFT_INCLUDE_DIR}"
+        "${TBB_INCLUDE_DIR}"
+        "${THIRDPARTY_DIR}/tclap/include")
 
 
 ################################################################################
@@ -72,6 +73,7 @@ set(simple_blocks_HEADERS
         src/axis_enum.h
         src/blockrenderer.h
         src/cmdline.h
+        src/controls.h
         src/create_vao.h
         src/nvpm.h
         src/sliceset.h
@@ -79,11 +81,12 @@ set(simple_blocks_HEADERS
         src/constants.h
         src/colormap.h
         src/renderer.h
-        src/renderhelp.h src/controls.h)
+        src/renderhelp.h )
 
 set(simple_blocks_SOURCES
         src/main.cpp
         src/cmdline.cpp
+        src/controls.cpp
         src/create_vao.cpp
         src/sliceset.cpp
         src/timing.cpp
@@ -91,7 +94,7 @@ set(simple_blocks_SOURCES
         src/colormap.cpp
         src/constants.cpp
         src/renderer.cpp
-        src/renderhelp.cpp src/controls.cpp)
+        src/renderhelp.cpp )
 
 
 ################################################################################
@@ -104,9 +107,9 @@ target_link_libraries(simple_blocks
         ${GLEW_LIBRARIES}
         debug ${CRUFT_DEBUG_LIBRARIES}
         optimized ${CRUFT_RELEASE_LIBRARIES}
+        debug ${TBB_DEBUG_LIBRARIES}
+        optimized ${TBB_RELEASE_LIBRARIES}
         ${NVTOOLSEXT_LIB}
-        /usr/lib/libtbb.so
-#    /usr/local/lib/libtbb.dylib
 )
 
 
