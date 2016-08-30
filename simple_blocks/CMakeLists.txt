@@ -117,4 +117,12 @@ add_custom_command(TARGET simple_blocks POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_CURRENT_SOURCE_DIR}/shaders $<TARGET_FILE_DIR:simple_blocks>/shaders)
 
-install(TARGETS simple_blocks RUNTIME DESTINATION ${BIN_DIR})
+install(TARGETS simple_blocks RUNTIME DESTINATION "bin/")
+
+if (UNIX)
+    add_custom_target(install_${PROJECT_NAME}
+            make install
+            DEPENDS ${PROJECT_NAME}
+            COMMENT "Installing ${PROJECT_NAME}"
+            )
+endif()
