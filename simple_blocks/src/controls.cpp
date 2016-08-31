@@ -17,9 +17,10 @@ Controls::Controls()
     , m_renderer{ nullptr }
     , m_showBlockBoxes{ false }
     , m_shouldUseLighting{ false }
+    , m_currentBackgroundColor{ 0 }
     , m_scaleValue{ 1.0f }
     , m_nShiney{ 1.0f }
-    , m_LightVector{ 2.0f, 2.0f, 2.0f }
+    , m_LightVector{ 1.0f, 1.0f, 1.0f }
 {
 
 }
@@ -155,11 +156,11 @@ Controls::keyboard_callback(int key, int scancode, int action, int mods)
         m_renderer->shouldDrawNonEmptyBoundingBoxes(m_showBlockBoxes);
         break;
 
-//      case GLFW_KEY_L:
-//        m_shouldUseLighting = !m_shouldUseLighting;
-//        std::cout << "Use lighting: " << m_shouldUseLighting;
-//        m_renderer->setShouldUseLighting(m_shouldUseLighting);
-//        break;
+      case GLFW_KEY_L:
+        m_shouldUseLighting = !m_shouldUseLighting;
+        m_renderer->setShouldUseLighting(m_shouldUseLighting);
+        std::cout << "Use lighting: " << m_shouldUseLighting << '\n';
+        break;
 
       case GLFW_KEY_Q:
         m_currentBackgroundColor ^= 1;
@@ -215,12 +216,52 @@ Controls::keyboard_callback(int key, int scancode, int action, int mods)
         break;
 
         // n_shiney
-      case GLFW_KEY_Y:
+      case GLFW_KEY_N:
         if (mods & GLFW_MOD_SHIFT) {
-          m_nShiney -= 1.0f;
+          m_nShiney -= 0.01f;
         } else {
-          m_nShiney += 1.0f;
+          m_nShiney += 0.01f;
         }
+        m_renderer->setShaderNShiney(m_nShiney);
+        std::cout << "N shiney: " << m_nShiney << std::endl;
+        break;
+
+      case GLFW_KEY_UP:
+        if (mods & GLFW_MOD_SHIFT) {
+          m_LightVector.z += 0.1f;
+        } else {
+          m_LightVector.y += 0.1f;
+        }
+        m_renderer->setShaderLightPos(glm::normalize(m_LightVector));
+        std::cout << "Light position: " << m_LightVector.x << ", " << m_LightVector.y << ", "
+                  << m_LightVector.z << '\n';
+        break;
+
+      case GLFW_KEY_LEFT:
+        m_LightVector.x += 0.1f;
+        m_renderer->setShaderLightPos(glm::normalize(m_LightVector));
+        std::cout << "Light position: " << m_LightVector.x << ", " << m_LightVector.y << ", "
+                  << m_LightVector.z << '\n';
+        break;
+
+      case GLFW_KEY_RIGHT:
+        m_LightVector.x -= 0.1f;
+        m_renderer->setShaderLightPos(glm::normalize(m_LightVector));
+        std::cout << "Light position: " << m_LightVector.x << ", " << m_LightVector.y << ", "
+                  << m_LightVector.z << '\n';
+        break;
+
+      case GLFW_KEY_DOWN:
+        if (mods & GLFW_MOD_SHIFT) {
+          m_LightVector.z -= 0.1f;
+        } else {
+          m_LightVector.y -= 0.1f;
+        }
+        m_renderer->setShaderLightPos(glm::normalize(m_LightVector));
+        std::cout << "Light position: " << m_LightVector.x << ", " << m_LightVector.y << ", "
+                  << m_LightVector.z << '\n';
+        break;
+
       default:
         break;
     } // switch

@@ -189,24 +189,26 @@ int main(int argc, const char *argv[])
     bd::Err() << "Error building volume shader, program id was 0.";
     return 1;
   }
+  g_volumeShader->unbind();
 
 
   // Volume shader with Lighting
-//  g_volumeShaderLighting = std::make_shared<bd::ShaderProgram>();
-//  programId =
-//    g_volumeShaderLighting->linkProgram("shaders/vert_vertexcolor_passthrough.glsl",
-//                                        "shaders/frag_shading_otfgrads.glsl");
-//  if (programId == 0) {
-//    bd::Err() << "Error building volume lighting shader, program id was 0.";
-//    return 1;
-//  }
+  g_volumeShaderLighting = std::make_shared<bd::ShaderProgram>();
+  programId =
+    g_volumeShaderLighting->linkProgram("shaders/vert_vertexcolor_passthrough.glsl",
+                                        "shaders/frag_shading_otfgrads.glsl");
+  if (programId == 0) {
+    bd::Err() << "Error building volume lighting shader, program id was 0.";
+    return 1;
+  }
+  g_volumeShaderLighting->unbind();
 
   //TODO: move renderer init into initGLContext().
   g_renderer =
     std::make_shared<subvol::BlockRenderer>(int(clo.num_slices),
                                             g_volumeShader,
+                                            g_volumeShaderLighting,
                                             g_wireframeShader,
-//                                            g_volumeShaderLighting,
                                             &blockCollection->nonEmptyBlocks(),
                                             g_quadVao, g_boxVao, g_axisVao);
   g_renderer->resize(clo.windowWidth, clo.windowHeight);
@@ -214,7 +216,6 @@ int main(int argc, const char *argv[])
   g_renderer->getCamera().setLookAt({ 0, 0, 0 });
   g_renderer->getCamera().setUp({ 0, 1, 0 });
   g_renderer->setViewMatrix(g_renderer->getCamera().createViewMatrix());
-
 
 
   // Load a user defined transfer function if it was provided on the CL.

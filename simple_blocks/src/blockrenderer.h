@@ -32,7 +32,7 @@ public:
   //////////////////////////////////////////////////////////////////////////////
   BlockRenderer(int numSlices,
                 std::shared_ptr<bd::ShaderProgram> volumeShader,
-//                std::shared_ptr<bd::ShaderProgram> volumeShaderLighting,
+                std::shared_ptr<bd::ShaderProgram> volumeShaderLighting,
                 std::shared_ptr<bd::ShaderProgram> wireframeShader,
                 std::vector<bd::Block*>* blocks,
                 std::shared_ptr<bd::VertexArrayObject> blocksVAO,

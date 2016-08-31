@@ -277,9 +277,8 @@ ColorMapManager::load_1dt(std::string const &funcName, std::string const &filena
     throw e;
   }
 
-
-
   do_generateTransferFunctionTexture(funcName, rgba);
+
   std::string const * name{ &s_textures.find(funcName)->first };
   s_colorMapNames.push_back(name);
   return true;

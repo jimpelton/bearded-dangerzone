@@ -19,14 +19,14 @@ namespace subvol
 {
 
 BlockRenderer::BlockRenderer()
-  : BlockRenderer(0, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr)
+  : BlockRenderer(0, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr)
 {}
 
 
 ////////////////////////////////////////////////////////////////////////////////
 BlockRenderer::BlockRenderer(int numSlices,
                              std::shared_ptr<bd::ShaderProgram> volumeShader,
-//                             std::shared_ptr<bd::ShaderProgram> volumeShaderLighting,
+                             std::shared_ptr<bd::ShaderProgram> volumeShaderLighting,
                              std::shared_ptr<bd::ShaderProgram> wireframeShader,
                              std::vector<bd::Block *> *blocks,
                              std::shared_ptr<bd::VertexArrayObject> blocksVAO,
@@ -40,7 +40,7 @@ BlockRenderer::BlockRenderer(int numSlices,
     , m_backgroundColor{ 0.0f }
     , m_currentShader{ nullptr }
     , m_volumeShader{ std::move(volumeShader) }
-//    , m_volumeShaderLighting{ std::move(volumeShaderLighting) }
+    , m_volumeShaderLighting{ std::move(volumeShaderLighting) }
     , m_wireframeShader{ std::move(wireframeShader) }
     , m_blocks{ blocks }
     , m_colorMapTexture{ nullptr }
@@ -61,22 +61,25 @@ BlockRenderer::~BlockRenderer()
 bool
 BlockRenderer::init()
 {
-//  m_volumeShader->bind();
+  m_volumeShader->bind();
   m_volumeShader->setUniform(VOLUME_SAMPLER_UNIFORM_STR, BLOCK_TEXTURE_UNIT);
   m_volumeShader->setUniform(TRANSF_SAMPLER_UNIFORM_STR, TRANSF_TEXTURE_UNIT);
-  m_volumeShader->setUniform(VOLUME_TRANSF_UNIFORM_STR, 1.0f);
-//  m_currentShader = m_volumeShader.get();
+  m_volumeShader->setUniform(VOLUME_TRANSF_SCALER_UNIFORM_STR, 1.0f);
 
-//  m_volumeShaderLighting->setUniform(VOLUME_SAMPLER_UNIFORM_STR, BLOCK_TEXTURE_UNIT);
-//  m_volumeShaderLighting->setUniform(TRANSF_SAMPLER_UNIFORM_STR, TRANSF_TEXTURE_UNIT);
-//  m_volumeShaderLighting->setUniform(VOLUME_TRANSF_UNIFORM_STR, 1.0f);
-//  setShaderLightPos({ 1.0f, 1.0f, 1.0f });
-//  setShaderNShiney(1.0f);
-//  setShaderMaterial({ 1.0f, 1.0f, 1.0f });
+  m_volumeShaderLighting->bind();
+  m_volumeShaderLighting->setUniform(VOLUME_SAMPLER_UNIFORM_STR, BLOCK_TEXTURE_UNIT);
+  m_volumeShaderLighting->setUniform(TRANSF_SAMPLER_UNIFORM_STR, TRANSF_TEXTURE_UNIT);
+  m_volumeShaderLighting->setUniform(VOLUME_TRANSF_SCALER_UNIFORM_STR, 1.0f);
+  setShaderLightPos(glm::normalize(glm::vec3{ 1.0f, 1.0f, 1.0f }));
+  setShaderNShiney(1.0f);
+  setShaderMaterial({ 1.0f, 1.0f, 1.0f });
+
+  // sets m_currentShader depending on m_shouldUseLighting.
   setShouldUseLighting(m_shouldUseLighting);
 
+
   if (m_colorMapTexture == nullptr)
-    setColorMapTexture(ColorMapManager::getMapTextureByName("RAINBOW"));
+    setColorMapTexture(ColorMapManager::getMapTextureByName("WHITE_TO_BLACK"));
 
   return true;
 }
@@ -97,7 +100,7 @@ BlockRenderer::setColorMapTexture(bd::Texture const &tfunc)
 void BlockRenderer::setColorMapScaleValue(float val)
 {
   m_tfuncScaleValue = val;
-  m_currentShader->setUniform(VOLUME_TRANSF_UNIFORM_STR, m_tfuncScaleValue);
+  m_currentShader->setUniform(VOLUME_TRANSF_SCALER_UNIFORM_STR, m_tfuncScaleValue);
 }
 
 
@@ -115,14 +118,17 @@ void
 BlockRenderer::setShouldUseLighting(bool b)
 {
   if (b) {
+    m_currentShader->unbind();
     m_currentShader = m_volumeShaderLighting.get();
-    m_currentShader->setUniform(VOLUME_TRANSF_UNIFORM_STR, m_tfuncScaleValue);
-    bd::Dbg() << "Use lighting: true";
+    m_currentShader->bind();
+    m_currentShader->setUniform(VOLUME_TRANSF_SCALER_UNIFORM_STR, m_tfuncScaleValue);
   } else {
+    m_currentShader->unbind();
     m_currentShader = m_volumeShader.get();
-    m_currentShader->setUniform(VOLUME_TRANSF_UNIFORM_STR, m_tfuncScaleValue);
-    bd::Dbg() << "Use lighting: false";
+    m_currentShader->bind();
+    m_currentShader->setUniform(VOLUME_TRANSF_SCALER_UNIFORM_STR, m_tfuncScaleValue);
   }
+  m_shouldUseLighting = b;
 }
 
 
@@ -172,7 +178,8 @@ BlockRenderer::shouldDrawNonEmptyBoundingBoxes(bool b)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void BlockRenderer::drawNonEmptyBoundingBoxes()
+void
+BlockRenderer::drawNonEmptyBoundingBoxes()
 {
   m_wireframeShader->bind();
   m_boxesVao->bind();
@@ -229,7 +236,7 @@ BlockRenderer::drawNonEmptyBlocks_Forward()
 
   m_currentShader->bind();
   if (m_shouldUseLighting) {
-    m_currentShader->setUniform(LIGHTING_VIEW_DIR_SHINEY_UNIFORM_STR, viewdir);
+    m_currentShader->setUniform(LIGHTING_VIEW_DIR_UNIFORM_STR, viewdir);
   }
 
   m_quadsVao->bind();
