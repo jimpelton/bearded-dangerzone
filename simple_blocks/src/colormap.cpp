@@ -141,7 +141,9 @@ const std::vector<glm::vec4> ColorMapManager::INVERSE_SEISMIC {
 
 
 std::unordered_map<std::string, bd::Texture const *> ColorMapManager::s_textures;
+
 std::vector<std::string const *> ColorMapManager::s_colorMapNames;
+
 int ColorMapManager::s_currentMapNameIdx{ 0 };
 
 
@@ -273,6 +275,7 @@ ColorMapManager::load_1dt(std::string const &funcName, std::string const &filena
     file.close();
   if (lineNum < numKnots) {
     bd::Err() << "Malformed color transfer function";
+
     return false;
   }
 

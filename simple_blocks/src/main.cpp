@@ -89,11 +89,12 @@ void printBlocks(bd::BlockCollection *bcol)
   }
 }
 
-
+using subvol::ColorMapManager;
+using subvol::CommandLineOptions;
 /////////////////////////////////////////////////////////////////////////////////
 int main(int argc, const char *argv[])
 {
-  subvol::CommandLineOptions clo;
+  CommandLineOptions clo;
   if (subvol::parseThem(argc, argv, clo) == 0) {
     std::cout << "No arguments provided.\nPlease use -h for usage info."
               << std::endl;
@@ -129,7 +130,7 @@ int main(int argc, const char *argv[])
     return 1;
   }
   subvol::renderhelp::setInitialGLState();
-  subvol::ColorMapManager::generateDefaultTransferFunctionTextures();
+  ColorMapManager::generateDefaultTransferFunctionTextures();
 
 
   // Setup the block collection and give up ownership of the index file.
@@ -217,17 +218,22 @@ int main(int argc, const char *argv[])
   g_renderer->getCamera().setUp({ 0, 1, 0 });
   g_renderer->setViewMatrix(g_renderer->getCamera().createViewMatrix());
 
-
   // Load a user defined transfer function if it was provided on the CL.
   if (! clo.tfuncPath.empty()) {
     try {
-      if (! subvol::ColorMapManager::load_1dt("USER", clo.tfuncPath)) {
-        bd::Err() << "Transfer function was malformed: too many knots. The function won't be available.";
+      if (! ColorMapManager::load_1dt("USER", clo.tfuncPath)) {
+        bd::Err() << "Transfer function was malformed. "
+            "The function won't be available.";
+        g_renderer->setColorMapTexture(
+            ColorMapManager::getMapTextureByName(
+              ColorMapManager::getCurrentMapName()));
       } else {
-        g_renderer->setColorMapTexture(subvol::ColorMapManager::getMapTextureByName("USER"));
+        g_renderer->setColorMapTexture(
+            ColorMapManager::getMapTextureByName("USER"));
       }
     } catch (std::ifstream::failure e) {
-      bd::Err() << "Error reading user defined transfer function file. The function won't be available.";
+      bd::Err() << "Error reading user defined transfer function file. "
+          "The function won't be available.";
     }
   }
 
