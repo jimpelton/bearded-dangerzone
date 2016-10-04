@@ -246,12 +246,13 @@ ColorMapManager::load_1dt(std::string const &funcName, std::string const &filena
   std::vector<glm::vec4> rgba;
 
   std::ifstream file;
-  file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+  //file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
 
-  try {
+//  try {
     file.open(filename.c_str(), std::ifstream::in);
     if (!file.is_open()) {
       bd::Err() << "Can't open tfunc file: " << filename;
+      return false;
     }
     file >> numKnots; // number of entries/lines in the 1dt file.
     lineNum++;
@@ -270,12 +271,16 @@ ColorMapManager::load_1dt(std::string const &funcName, std::string const &filena
       lineNum++;
     }
     file.close();
+  if (lineNum < numKnots) {
+    bd::Err() << "Malformed color transfer function";
+    return false;
+  }
 
-  } catch (std::ifstream::failure e) {
+//  } catch (std::ifstream::failure e) {
 //    bd::Err() << "Can't open tfunc file: " << filename
 //              << "\n\t Reason: " << e.what();
-    throw e;
-  }
+//    throw e;
+//  }
 
   do_generateTransferFunctionTexture(funcName, rgba);
 
@@ -353,6 +358,13 @@ glm::vec4
 ColorMapManager::lerp(glm::vec4 x, glm::vec4 y, float a)
 {
   return x * (1.0f - a) + y * a;
+}
+
+
+std::string const &
+ColorMapManager::getCurrentMapName()
+{
+  return *s_colorMapNames[s_currentMapNameIdx];
 }
 
 } // namespace subvol

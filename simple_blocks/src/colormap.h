@@ -42,6 +42,9 @@ public:
   static std::vector<std::string>
   getMapNameStrings();
 
+  static std::string const &
+  getCurrentMapName();
+
 
   /// \brief Load a .1dt format transfer function
   /// \note This is the type of 1D transfer function exported by ImageVis3D
