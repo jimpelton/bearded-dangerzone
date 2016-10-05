@@ -152,7 +152,7 @@ Controls::keyboard_callback(int key, int scancode, int action, int mods)
 
       case GLFW_KEY_B:
         m_showBlockBoxes = !m_showBlockBoxes;
-        std::cout << "Show bounding boxes: " << m_showBlockBoxes << "\n";
+        std::cout << "Show bounding boxes: " << m_showBlockBoxes << '\n';
         m_renderer->shouldDrawNonEmptyBoundingBoxes(m_showBlockBoxes);
         break;
 
@@ -172,6 +172,7 @@ Controls::keyboard_callback(int key, int scancode, int action, int mods)
 
       case GLFW_KEY_T:
         m_renderer->setColorMapTexture(ColorMapManager::getNextMapTexture());
+      std::cout << "Colormap: " << ColorMapManager::getCurrentMapName() << '\n';
       default:
         break;
 
