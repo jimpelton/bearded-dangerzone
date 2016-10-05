@@ -20,13 +20,13 @@ namespace subvol
 // r, g, b, scalar
 
 const std::vector<glm::vec4> ColorMapManager::FULL_RAINBOW {
-    glm::vec4{ 0.51f, 0.93f , 0.00f, 0.93f},
-    glm::vec4{ 0.00f, 0.40f , 0.16f, 0.40f},
-    glm::vec4{ 0.00f, 1.00f , 0.33f, 0.00f},
-    glm::vec4{ 1.00f, 0.00f , 0.50f, 0.00f},
-    glm::vec4{ 1.00f, 0.00f , 0.66f, 1.00f},
-    glm::vec4{ 0.50f, 0.00f , 0.83f, 1.00f},
-    glm::vec4{ 0.00f, 0.00f , 1.00f, 1.00f}
+    glm::vec4{ 0.51f, 0.93f, 0.93f, 0.00f},
+    glm::vec4{ 0.00f, 0.40f, 0.40f, 0.16f},
+    glm::vec4{ 0.00f, 1.00f, 0.00f, 0.33f},
+    glm::vec4{ 1.00f, 0.00f, 0.00f, 0.50f},
+    glm::vec4{ 1.00f, 0.00f, 1.00f, 0.66f},
+    glm::vec4{ 0.50f, 0.00f, 1.00f, 0.83f},
+    glm::vec4{ 0.00f, 0.00f, 1.00f, 1.00f}
 };
 
 const std::vector<glm::vec4> ColorMapManager::INVERSE_FULL_RAINBOW {
@@ -154,11 +154,11 @@ ColorMapManager::getMapTextureByName(std::string const &name)
   try{
     rval = s_textures.at(name);
 
-    s_currentMapNameIdx = std::find_if(s_colorMapNames.begin(), s_colorMapNames.end(),
-                                    [&name] (std::string const *s)
-                                    {
-                                      return name == *s;
-                                    } ) - s_colorMapNames.begin();
+    s_currentMapNameIdx =
+        std::find_if(s_colorMapNames.begin(),
+                     s_colorMapNames.end(),
+                     [&name] (std::string const *s) {
+                       return name == *s; } ) - s_colorMapNames.begin();
 
   } catch (std::out_of_range e) {
     Err() << name << " is not a colormap.";
