@@ -25,9 +25,6 @@ try {
   TCLAP::ValueArg<std::string> tfuncArg("u", "tfunc", "Path to transfer function file.", false, "", "string");
   cmd.add(tfuncArg);
 
-  // dat file
-  TCLAP::ValueArg<std::string> datFilePath("d", "dat-file", "Path to .dat file.", false, "", "string");
-  cmd.add(datFilePath);
 
   // index file path
   TCLAP::ValueArg<std::string> indexFilePath("", "index-file", "Path to index file.", false, "", "string");
@@ -67,7 +64,7 @@ try {
 
 
   // threshold min/max
-  TCLAP::ValueArg<float> tmin("", "tmin", "Thresh min", false, std::numeric_limits<float>::min(), "float");
+  TCLAP::ValueArg<float> tmin("", "tmin", "Thresh min", false, std::numeric_limits<float>::lowest(), "float");
   cmd.add(tmin);
 
   TCLAP::ValueArg<float> tmax("", "tmax", "Thresh max", false, std::numeric_limits<float>::max(), "float");
@@ -101,7 +98,6 @@ try {
 
   opts.rawFilePath = fileArg.getValue();
   opts.tfuncPath = tfuncArg.getValue();
-  opts.datFilePath = datFilePath.getValue();
   opts.indexFilePath = indexFilePath.getValue();
   opts.dataType = dataTypeArg.getValue();
   opts.printBlocks = printBlocksArg.getValue();
@@ -133,7 +129,6 @@ void printThem(CommandLineOptions &opts) {
   std::cout
     << "File path: " << opts.rawFilePath
     << "\nTransfer function: " << opts.tfuncPath
-    << "\nDat file: " << opts.datFilePath
     << "\nPerf out file: " << opts.perfOutPath
     << "\nPerf mode: " << opts.perfMode
     << "\nData Type: " << opts.dataType
