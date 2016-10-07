@@ -79,7 +79,7 @@ BlockRenderer::init()
 
 
   if (m_colorMapTexture == nullptr)
-    setColorMapTexture(ColorMapManager::getMapTextureByName("WHITE_TO_BLACK"));
+    setColorMapTexture(ColorMapManager::getMapByName("WHITE_TO_BLACK").getTexture());
 
   return true;
 }

@@ -63,6 +63,8 @@ void printBlocks(bd::BlockCollection *bcol);
 void printNvPmApiCounters(const char *perfOutPath);
 
 
+using subvol::ColorMapManager;
+using subvol::CommandLineOptions;
 
 /////////////////////////////////////////////////////////////////////////////////
 void cleanup()
@@ -89,25 +91,17 @@ void printBlocks(bd::BlockCollection *bcol)
   }
 }
 
-using subvol::ColorMapManager;
-using subvol::CommandLineOptions;
-/////////////////////////////////////////////////////////////////////////////////
-int main(int argc, const char *argv[])
-{
-  CommandLineOptions clo;
-  if (subvol::parseThem(argc, argv, clo) == 0) {
-    std::cout << "No arguments provided.\nPlease use -h for usage info."
-              << std::endl;
-    return 1;
-  }
 
+std::shared_ptr<bd::IndexFile>
+openIndexFileUpdateCommandLineOptions(subvol::CommandLineOptions &clo)
+{
   // Read the index file to get values from it that we need to populate
   // the CommandLineOptions struct.
   std::shared_ptr<bd::IndexFile> indexFile{
-    bd::IndexFile::fromBinaryIndexFile(clo.indexFilePath) };
+      bd::IndexFile::fromBinaryIndexFile(clo.indexFilePath) };
   if (indexFile == nullptr) {
     bd::Err() << "Could open the index file.";
-    return 1;
+    return nullptr;
   }
 
   // Since the IndexFileHeader contains most of the options needed to
@@ -120,6 +114,35 @@ int main(int argc, const char *argv[])
   clo.numblk_y = indexFile->getHeader().numblocks[1];
   clo.numblk_z = indexFile->getHeader().numblocks[2];
   clo.dataType = bd::to_string(bd::IndexFileHeader::getType(indexFile->getHeader()));
+
+  return indexFile;
+}
+
+/////////////////////////////////////////////////////////////////////////////////
+int main(int argc, const char *argv[])
+{
+  CommandLineOptions clo;
+  if (subvol::parseThem(argc, argv, clo) == 0) {
+    std::cout << "No arguments provided.\nPlease use -h for usage info."
+              << std::endl;
+    return 1;
+  }
+
+  bd::BlockCollection *blockCollection{ new bd::BlockCollection() };
+
+  if (! clo.indexFilePath.empty()) {
+    std::shared_ptr<bd::IndexFile>
+        indexFile = openIndexFileUpdateCommandLineOptions(clo);
+    if (indexFile == nullptr) {
+      // Setup the block collection and give shared ownership of the index file.
+      bd::Err() << "Couldn't open provided index file path: " << clo.indexFilePath;
+      return 1;
+    }
+    blockCollection->initBlocksFromIndexFile(std::move(indexFile));
+  } else {
+    bd::Err() << "Provide an index file path.";
+  }
+
   subvol::printThem(clo);
 
   // Initialize OpenGL and GLFW and generate our transfer function textures.
@@ -133,9 +156,6 @@ int main(int argc, const char *argv[])
   ColorMapManager::generateDefaultTransferFunctionTextures();
 
 
-  // Setup the block collection and give up ownership of the index file.
-  bd::BlockCollection *blockCollection{ new bd::BlockCollection() };
-  blockCollection->initBlocksFromIndexFile(std::move(indexFile));
 
   // This lambda is used by the BlockCollection to filter the blocks by
   // the block average voxel value.
@@ -220,17 +240,25 @@ int main(int argc, const char *argv[])
 
   // Load a user defined transfer function if it was provided on the CL.
   if (! clo.tfuncPath.empty()) {
+
     try {
-      if (! ColorMapManager::load_1dt("USER", clo.tfuncPath)) {
-        bd::Err() << "Transfer function was malformed. "
-            "The function won't be available.";
+
+      if (! ColorMapManager::load1DT("USER", clo.tfuncPath)) {
+        bd::Err() << "Transfer function was malformed. The function won't be available.";
+
         g_renderer->setColorMapTexture(
-            ColorMapManager::getMapTextureByName(
-              ColorMapManager::getCurrentMapName()));
+            ColorMapManager::getMapByName(
+                ColorMapManager::getCurrentMapName())
+                .getTexture());
+
       } else {
+
         g_renderer->setColorMapTexture(
-            ColorMapManager::getMapTextureByName("USER"));
+            ColorMapManager::getMapByName("USER")
+                .getTexture());
+
       }
+
     } catch (std::ifstream::failure e) {
       bd::Err() << "Error reading user defined transfer function file. "
           "The function won't be available.";

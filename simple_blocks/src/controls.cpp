@@ -171,8 +171,12 @@ Controls::keyboard_callback(int key, int scancode, int action, int mods)
         break;
 
       case GLFW_KEY_T:
-        m_renderer->setColorMapTexture(ColorMapManager::getNextMapTexture());
-      std::cout << "Colormap: " << ColorMapManager::getCurrentMapName() << '\n';
+        if (mods & GLFW_MOD_SHIFT) {
+          m_renderer->setColorMapTexture(ColorMapManager::getPrevMap().getTexture());
+        } else {
+          m_renderer->setColorMapTexture(ColorMapManager::getNextMap().getTexture());
+        }
+        std::cout << "Colormap: " << ColorMapManager::getCurrentMapName() << '\n';
       default:
         break;
 
