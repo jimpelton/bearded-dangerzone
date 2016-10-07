@@ -142,12 +142,11 @@ int main(int argc, const char *argv[])
   } else {
     bd::Err() << "Provide an index file path.";
   }
-
   subvol::printThem(clo);
 
   // Initialize OpenGL and GLFW and generate our transfer function textures.
-  GLFWwindow *window{ subvol::renderhelp::initGLContext(clo.windowWidth,
-                                                        clo.windowHeight) };
+  GLFWwindow *window{ nullptr };
+  window = subvol::renderhelp::initGLContext(clo.windowWidth, clo.windowHeight);
   if (window == nullptr) {
     bd::Err() << "Could not initialize GLFW, exiting.";
     return 1;
@@ -163,6 +162,10 @@ int main(int argc, const char *argv[])
     return b->avg() < clo.tmin || b->avg() > clo.tmax;
   };
   blockCollection->filterBlocks(isEmpty);
+  if (blockCollection->nonEmptyBlocks().size() == 0) {
+    bd::Info() << "All blocks where filtered out... exiting";
+    return 1;
+  }
   blockCollection->initBlockTextures(clo.rawFilePath);
 
   // 2d slices

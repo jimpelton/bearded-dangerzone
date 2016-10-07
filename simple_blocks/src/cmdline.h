@@ -11,8 +11,6 @@ struct CommandLineOptions
   std::string rawFilePath;
   // transfer function file path
   std::string tfuncPath;
-  // for .dat descriptor file (currently unimplemented)
-  std::string datFilePath;
   // index file path
   std::string indexFilePath;
   // volume data type
