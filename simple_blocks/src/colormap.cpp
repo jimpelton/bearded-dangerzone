@@ -6,7 +6,6 @@
 #include "colormap.h"
 
 #include <bd/log/logger.h>
-#include <bd/volume/transferfunction.h>
 
 #include <fstream>
 #include <algorithm>
@@ -79,7 +78,7 @@ ColorMap::load(std::string const &funcName,
     std::set<double> scalars;
 
     for (auto &k : otf.getKnotsVector()) {
-      scalars.insert(k.scalar);
+      scalars.insert(k.s);
     }
 
     for (auto &k : ctf.getKnotsVector()) {
@@ -191,6 +190,19 @@ ColorMap::generateColorMapTexture(std::string const &name,
 //  }
 
   return success;
+}
+
+std::string
+ColorMap::to_string() const
+{
+  std::stringstream ss;
+  ss << "{Name: " << m_name
+     << ", CTF: " << m_ctf << ", OTF: " << m_otf;
+
+  ss << '}';
+
+  return ss.str();
+
 }
 
 
@@ -445,7 +457,7 @@ ColorMapManager::loadColorMap(std::string const &funcName,
                               std::string const &opacityFilePath)
 {
   bd::Info()
-      << "Creating colormap: " << funcName << ','
+      << "Creating colormap from transfer functions: " << funcName << ','
       << " Color tf: " << colorFilePath << ','
       << " Opacity tf: " << opacityFilePath;
 
