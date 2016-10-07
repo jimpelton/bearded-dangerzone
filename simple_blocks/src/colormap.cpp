@@ -194,6 +194,12 @@ ColorMap::generateColorMapTexture(std::string const &name,
 }
 
 
+std::string
+ColorMap::to_string() const
+{
+
+}
+
 
 /**********************************************************************************
  *  ColorMapManager Implementation
