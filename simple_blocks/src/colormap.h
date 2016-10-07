@@ -6,12 +6,13 @@
 #define SUBVOL_COLORMAPS_H
 
 #include <bd/graphics/texture.h>
+#include <bd/volume/transferfunction.h>
+#include <bd/util/color.h>
 
 #include <glm/glm.hpp>
 
 #include <vector>
 #include <unordered_map>
-#include <bd/volume/transferfunction.h>
 
 
 namespace subvol
@@ -84,6 +85,8 @@ public:
   void
   setName(std::string const &name);
 
+  std::string
+  to_string() const;
 
 private:
 
@@ -102,7 +105,8 @@ private:
 
 }; // class ColorMap
 
-
+std::ostream &
+operator<<(std::ostream &os, subvol::ColorMap const &c);
 
 
 /**********************************************************************************
@@ -113,7 +117,6 @@ private:
 
 class ColorMapManager
 {
-
 public:
 
   /// \brief Generate the set of predefined transfer functions.
