@@ -7,9 +7,12 @@
 
 #include <bd/log/logger.h>
 
+#include <glm/gtx/string_cast.hpp>
+
 #include <fstream>
 #include <algorithm>
 #include <set>
+
 
 using bd::Err;
 using bd::Info;
@@ -59,14 +62,20 @@ ColorMap::~ColorMap()
 bool
 ColorMap::loadFromKnots(std::string const &name, std::vector<glm::vec4> const &knots)
 {
-  return generateColorMapTexture(name, knots);
+  if (! generateColorMapTexture(name, knots)) {
+    return false;
+  }
+
+  m_knots = knots;
+  return true;
+
 }
 
 
 bool
-ColorMap::load(std::string const &funcName,
-               std::string const &colorTF,
-               std::string const &opacityTF)
+ColorMap::loadFromTFFiles(std::string const &funcName,
+                          std::string const &colorTF,
+                          std::string const &opacityTF)
 {
   try {
     bd::ColorTransferFunction ctf;
@@ -92,10 +101,14 @@ ColorMap::load(std::string const &funcName,
       knots.push_back({ color.r, color.g, color.b, opacity });
     }
 
+
+    if (!generateColorMapTexture(funcName, knots)) {
+      return false;
+    }
+
     m_ctf = ctf;
     m_otf = otf;
-
-    generateColorMapTexture(funcName, knots);
+    m_knots = knots;
 
   }
   catch (std::exception e) {
@@ -105,6 +118,7 @@ ColorMap::load(std::string const &funcName,
   }
 
   return true;
+
 }
 
 
@@ -184,10 +198,6 @@ ColorMap::generateColorMapTexture(std::string const &name,
     Err() << "The texture for colormap " << name << " could not be created.";
     success = false;
   }
-//  } else {
-////    s_textures[name] = t;
-////    Info() << "Added " << name << " colormap texture.";
-//  }
 
   return success;
 }
@@ -196,21 +206,28 @@ std::string
 ColorMap::to_string() const
 {
   std::stringstream ss;
-  ss << "{Name: " << m_name
-     << ", CTF: " << m_ctf << ", OTF: " << m_otf;
+  if (m_knots.size() != 0) {
+
+    ss << "{Name: " << m_name
+        << "Knots: {";
+    for (size_t i{ 0 }; i < m_knots.size()-1; ++i) {
+      ss << glm::to_string(m_knots[i]) << ", ";
+    }
+    ss << glm::to_string(*(m_knots.end()-1)) << "}";
+
+  }
+//  else {
+//
+//    std::stringstream ss;
+//    ss << ", CTF: " << m_ctf << ", OTF: " << m_otf;
+//
+//  }
 
   ss << '}';
-
   return ss.str();
-
 }
 
 
-std::string
-ColorMap::to_string() const
-{
-
-}
 
 
 /**********************************************************************************
@@ -462,7 +479,7 @@ ColorMapManager::loadColorMap(std::string const &funcName,
       << " Opacity tf: " << opacityFilePath;
 
   ColorMap c;
-  bool success = c.load(funcName, colorFilePath, opacityFilePath);
+  bool success = c.loadFromTFFiles(funcName, colorFilePath, opacityFilePath);
   if (!success) {
     return false;
   }

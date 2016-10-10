@@ -49,9 +49,9 @@ public:
 
 
   bool
-  load(std::string const &funcName,
-       std::string const &colorTF,
-       std::string const &opacityTF);
+  loadFromTFFiles(std::string const &funcName,
+                  std::string const &colorTF,
+                  std::string const &opacityTF);
 
 
   bd::ColorTransferFunction const &
@@ -88,8 +88,6 @@ public:
   std::string
   to_string() const;
 
-  std::string
-  to_string() const;
 
 private:
 
@@ -103,6 +101,7 @@ private:
 
   bd::ColorTransferFunction m_ctf;
   bd::OpacityTransferFunction m_otf;
+  std::vector<glm::vec4> m_knots;
   bd::Texture m_texture;
   std::string m_name;
 
