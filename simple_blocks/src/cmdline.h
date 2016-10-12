@@ -7,43 +7,47 @@ namespace subvol
 {
 struct CommandLineOptions
 {
-  // raw file path
+  /// raw file path
   std::string rawFilePath;
-  // transfer function file path
+  /// transfer function file path
   std::string tfuncPath;
-  // index file path
+  /// opacity transfer function path
+  std::string opacityTFuncPath;
+  /// color transfer function path
+  std::string colorTFuncPath;
+  /// index file path
   std::string indexFilePath;
-  // volume data type
+  /// volume data type
   std::string dataType;
-  // true if block data should be dumped to file
+  /// true if block data should be dumped to file
   bool printBlocks;
-  // number of blocks X
+  /// number of blocks X
   size_t numblk_x;
-  // number of blocks Y
+  /// number of blocks Y
   size_t numblk_y;
-  // number of blocks Z
+  /// number of blocks Z
   size_t numblk_z;
-  // slices per block
+  /// slices per block
   unsigned int num_slices;
-  // vol width
+  /// vol width
   size_t vol_w;
-  // vol height
+  /// vol height
   size_t vol_h;
-  // vol depth
+  /// vol depth
   size_t vol_d;
-  // threshold max
+  /// threshold max
   float tmax;
-  // threshold minimum
+  /// threshold minimum
   float tmin;
-  // initial camera position
+  /// initial camera position
   unsigned int cameraPos;
-  // path to output file for performance counter values
+  /// path to output file for performance counter values
   std::string perfOutPath;
-  // quit program when perf tests are completed.
+  /// quit program when perf tests are completed.
   bool perfMode;
-  // screen width
+  /// screen width
   int windowWidth;
-  // screen height
+  /// screen height
   int windowHeight;
 };
 

@@ -39,6 +39,7 @@ initializeControls(GLFWwindow *, std::shared_ptr<BlockRenderer>);
 void
 loop(GLFWwindow *, BlockRenderer *);
 
+
 //void
 //setCameraPosPreset(unsigned int cameraPos);
 

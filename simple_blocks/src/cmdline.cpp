@@ -8,9 +8,10 @@
 namespace subvol
 {
 
-
-int parseThem(int argc, const char *argv[], CommandLineOptions &opts)
-try {
+int
+parseThem(int argc, const char *argv[], CommandLineOptions &opts)
+try
+{
   if (argc == 1) {
     return 0;
   }
@@ -18,23 +19,50 @@ try {
   TCLAP::CmdLine cmd("Simple Blocks blocking volume render experiment.", ' ');
 
   // volume data file
-  TCLAP::ValueArg<std::string> fileArg("f", "file", "Path to data file.", false, "", "string");
+  TCLAP::ValueArg<std::string>
+      fileArg("f", "file", "Path to data file.", false, "", "string");
   cmd.add(fileArg);
 
   // transfer function file
-  TCLAP::ValueArg<std::string> tfuncArg("u", "tfunc", "Path to transfer function file.", false, "", "string");
+  TCLAP::ValueArg<std::string>
+      tfuncArg("u", "tfunc", "Path to transfer function file.", false, "", "string");
   cmd.add(tfuncArg);
 
 
+  // opacity transfer function file
+  TCLAP::ValueArg<std::string> opacityTFArg("",
+                                      "otf",
+                                      "Path to the opacity transfer function."
+                                                "Takes precende over --tf"
+                                                " and must be used with --ctf.",
+                                      false,
+                                      "",
+                                      "string");
+  cmd.add(opacityTFArg);
+
+
+  // color transfer function file
+  TCLAP::ValueArg<std::string> colorTFArg("",
+                                      "ctf",
+                                      "Path to the color transfer function. "
+                                              "Takes precedencd over --tf"
+                                              " and must be used with --otf.",
+                                      false,
+                                      "",
+                                      "string");
+  cmd.add(colorTFArg);
+
   // index file path
-  TCLAP::ValueArg<std::string> indexFilePath("", "index-file", "Path to index file.", false, "", "string");
+  TCLAP::ValueArg<std::string>
+      indexFilePath("", "index-file", "Path to index file.", false, "", "string");
   cmd.add(indexFilePath);
 
   // volume data type
-  std::vector<std::string> dataTypes{"float", "ushort", "uchar"};
+  std::vector<std::string> dataTypes{ "float", "ushort", "uchar" };
   TCLAP::ValuesConstraint<std::string> dataTypeAllowValues(dataTypes);
-  TCLAP::ValueArg<std::string> dataTypeArg("t", "type", "Data type (float, ushort, uchar).", false, "",
-                                           &dataTypeAllowValues);;
+  TCLAP::ValueArg<std::string>
+      dataTypeArg("t", "type", "Data type (float, ushort, uchar).", false, "",
+                  &dataTypeAllowValues);;
   cmd.add(dataTypeArg);
 
 
@@ -59,45 +87,61 @@ try {
   TCLAP::ValueArg<size_t> zBlocksArg("", "nbz", "Num blocks z dim", false, 1, "uint");
   cmd.add(zBlocksArg);
 
-  TCLAP::ValueArg<unsigned int> numSlicesArg("s", "num-slices", "Num slices per block", false, 1, "uint");
+  TCLAP::ValueArg<unsigned int>
+      numSlicesArg("s", "num-slices", "Num slices per block", false, 1, "uint");
   cmd.add(numSlicesArg);
 
 
   // threshold min/max
-  TCLAP::ValueArg<float> tmin("", "tmin", "Thresh min", false, std::numeric_limits<float>::lowest(), "float");
+  TCLAP::ValueArg<float> tmin("",
+                              "tmin",
+                              "Thresh min",
+                              false,
+                              std::numeric_limits<float>::lowest(), "float");
   cmd.add(tmin);
 
-  TCLAP::ValueArg<float> tmax("", "tmax", "Thresh max", false, std::numeric_limits<float>::max(), "float");
+  TCLAP::ValueArg<float>
+      tmax("", "tmax", "Thresh max", false, std::numeric_limits<float>::max(), "float");
   cmd.add(tmax);
 
-  TCLAP::ValueArg<unsigned int> initialCameraPosArg("c", "camera-pos", "Initial camera position (z=0, y=1, x=2)", false,
-                                                    0, "uint");
+  TCLAP::ValueArg<unsigned int> initialCameraPosArg
+      ("c", "camera-pos", "Initial camera position (z=0, y=1, x=2)", false,
+       0, "uint");
   cmd.add(initialCameraPosArg);
 
 
   // perf output file path
-  TCLAP::ValueArg<std::string> perfOutPathArg("", "perf-out-file", "Print performance metrics to file.", false, "",
-                                              "string");
+  TCLAP::ValueArg<std::string>
+      perfOutPathArg("", "perf-out-file", "Print performance metrics to file.", false, "",
+                     "string");
   cmd.add(perfOutPathArg);
 
   // perf mode (exit on when done with performance test)
-  TCLAP::SwitchArg perfMode("p", "perf-mode", "Exit as soon as performance test is done.", cmd, false);
+  TCLAP::SwitchArg perfMode("p",
+                            "perf-mode",
+                            "Exit as soon as performance test is done.",
+                            cmd, false);
 
   // print blocks
-  TCLAP::SwitchArg printBlocksArg("", "print-blocks", "Print blocks into to stdout.", cmd, false);
+  TCLAP::SwitchArg
+      printBlocksArg("", "print-blocks", "Print blocks into to stdout.", cmd, false);
 
-  TCLAP::ValueArg<int> screenWidthArg("", "screen-width", "Width of the window", false, 1280,
-                                              "int");
+  TCLAP::ValueArg<int>
+      screenWidthArg("", "screen-width", "Width of the window", false, 1280,
+                     "int");
   cmd.add(screenWidthArg);
 
-  TCLAP::ValueArg<int> screenHeightArg("", "screen-height", "Height of the window", false, 720,
-                                      "int");
+  TCLAP::ValueArg<int>
+      screenHeightArg("", "screen-height", "Height of the window", false, 720,
+                      "int");
   cmd.add(screenHeightArg);
 
   cmd.parse(argc, argv);
 
   opts.rawFilePath = fileArg.getValue();
   opts.tfuncPath = tfuncArg.getValue();
+  opts.opacityTFuncPath = opacityTFArg.getValue();
+  opts.colorTFuncPath = colorTFArg.getValue();
   opts.indexFilePath = indexFilePath.getValue();
   opts.dataType = dataTypeArg.getValue();
   opts.printBlocks = printBlocksArg.getValue();
@@ -120,25 +164,29 @@ try {
 
 } catch (TCLAP::ArgException &e) {
   std::cout << "Error parsing command line args: " << e.error() << " for argument "
-  << e.argId() << std::endl;
+            << e.argId() << std::endl;
   return 0;
 }
 
 
-void printThem(CommandLineOptions &opts) {
+void
+printThem(CommandLineOptions &opts)
+{
   std::cout
-    << "File path: " << opts.rawFilePath
-    << "\nTransfer function: " << opts.tfuncPath
-    << "\nPerf out file: " << opts.perfOutPath
-    << "\nPerf mode: " << opts.perfMode
-    << "\nData Type: " << opts.dataType
-    << "\nVol dims (w X h X d): " << opts.vol_w << " X " << opts.vol_h << " X " << opts.vol_d
-    << "\nNum blocks (x X y X z): " << opts.numblk_x << " X " << opts.numblk_y << " X " << opts.numblk_z
-    << "\nNum Slices: " << opts.num_slices
-    << "\nThreshold (min-max): " << opts.tmin << " - " << opts.tmax
-    << "\nPrint blocks: " << (opts.printBlocks ? "True" : "False")
-    << "\nWindow dims: " << opts.windowWidth << " X " << opts.windowHeight <<
-  std::endl;
+      << "File path: " << opts.rawFilePath
+      << "\nTransfer function: " << opts.tfuncPath
+      << "\nPerf out file: " << opts.perfOutPath
+      << "\nPerf mode: " << opts.perfMode
+      << "\nData Type: " << opts.dataType
+      << "\nVol dims (w X h X d): " << opts.vol_w << " X " << opts.vol_h << " X "
+      << opts.vol_d
+      << "\nNum blocks (x X y X z): " << opts.numblk_x << " X " << opts.numblk_y << " X "
+      << opts.numblk_z
+      << "\nNum Slices: " << opts.num_slices
+      << "\nThreshold (min-max): " << opts.tmin << " - " << opts.tmax
+      << "\nPrint blocks: " << ( opts.printBlocks ? "True" : "False" )
+      << "\nWindow dims: " << opts.windowWidth << " X " << opts.windowHeight <<
+      std::endl;
 }
 
 } // namespace subvol

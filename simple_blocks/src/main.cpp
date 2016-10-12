@@ -91,18 +91,23 @@ void printBlocks(bd::BlockCollection *bcol)
   }
 }
 
-
 std::shared_ptr<bd::IndexFile>
-openIndexFileUpdateCommandLineOptions(subvol::CommandLineOptions &clo)
-{
+openIndexFile(subvol::CommandLineOptions const &clo){
   // Read the index file to get values from it that we need to populate
   // the CommandLineOptions struct.
   std::shared_ptr<bd::IndexFile> indexFile{
       bd::IndexFile::fromBinaryIndexFile(clo.indexFilePath) };
   if (indexFile == nullptr) {
     bd::Err() << "Could open the index file.";
-    return nullptr;
   }
+
+  return indexFile;
+}
+
+void
+updateCommandLineOptionsFromIndexFile(subvol::CommandLineOptions &clo,
+                                      std::shared_ptr<bd::IndexFile> const &indexFile)
+{
 
   // Since the IndexFileHeader contains most of the options needed to
   // render the volume, we copy those over into the CommandLineOptions struct.
@@ -115,8 +120,64 @@ openIndexFileUpdateCommandLineOptions(subvol::CommandLineOptions &clo)
   clo.numblk_z = indexFile->getHeader().numblocks[2];
   clo.dataType = bd::to_string(bd::IndexFileHeader::getType(indexFile->getHeader()));
 
-  return indexFile;
 }
+
+void
+checkColorMapLoaded(bool loaded, std::string const &name,
+                    subvol::BlockRenderer &renderer)
+{
+
+  if (loaded) {
+
+
+    // The 1dt color map was loaded so, give it to the renderer.
+    renderer.setColorMapTexture(
+        ColorMapManager::getMapByName(name).getTexture());
+
+
+  } else {
+
+
+    bd::Err() << "Transfer function was malformed. The function won't be available.";
+    renderer.setColorMapTexture(
+        ColorMapManager::getMapByName(
+            ColorMapManager::getCurrentMapName()).getTexture());
+
+
+  }
+
+}
+
+bool
+initializeTransferFunctions(subvol::CommandLineOptions const &clo,
+                            subvol::BlockRenderer &renderer)
+{
+
+  ColorMapManager::generateDefaultTransferFunctionTextures();
+
+  bool loaded{ false };
+  try {
+
+    // if both color and opacity files are given... load those tfuncs
+    if( ! (clo.colorTFuncPath.empty() || clo.opacityTFuncPath.empty()) ) {
+
+      loaded = ColorMapManager::loadColorMap("USER",
+                                             clo.colorTFuncPath,
+                                             clo.opacityTFuncPath);
+
+    } else if (! clo.tfuncPath.empty()) {
+
+      loaded = ColorMapManager::load1DT("USER", clo.tfuncPath);
+
+    }
+  } catch (std::ifstream::failure e) {
+    bd::Err() << "Error reading user defined transfer function file(s). "
+        "The function won't be available.";
+  }
+  checkColorMapLoaded(loaded, "USER", renderer);
+  return loaded;
+}
+
 
 /////////////////////////////////////////////////////////////////////////////////
 int main(int argc, const char *argv[])
@@ -128,21 +189,32 @@ int main(int argc, const char *argv[])
     return 1;
   }
 
+
+  if (clo.indexFilePath.empty()) {
+    bd::Err() << "Provide an index file path.";
+    return 1;
+  }
+
+
   bd::BlockCollection *blockCollection{ new bd::BlockCollection() };
 
-  if (! clo.indexFilePath.empty()) {
-    std::shared_ptr<bd::IndexFile>
-        indexFile = openIndexFileUpdateCommandLineOptions(clo);
+
+  // Open the index file if possible, then setup the BlockCollection
+  // and give away ownership of the index file to the BlockCollection.
+  {
+    std::shared_ptr<bd::IndexFile> indexFile{ openIndexFile(clo) };
     if (indexFile == nullptr) {
-      // Setup the block collection and give shared ownership of the index file.
       bd::Err() << "Couldn't open provided index file path: " << clo.indexFilePath;
       return 1;
     }
+    updateCommandLineOptionsFromIndexFile(clo, indexFile);
+
     blockCollection->initBlocksFromIndexFile(std::move(indexFile));
-  } else {
-    bd::Err() << "Provide an index file path.";
   }
+
+
   subvol::printThem(clo);
+
 
   // Initialize OpenGL and GLFW and generate our transfer function textures.
   GLFWwindow *window{ nullptr };
@@ -151,8 +223,10 @@ int main(int argc, const char *argv[])
     bd::Err() << "Could not initialize GLFW, exiting.";
     return 1;
   }
+
+
   subvol::renderhelp::setInitialGLState();
-  ColorMapManager::generateDefaultTransferFunctionTextures();
+
 
 
 
@@ -241,38 +315,14 @@ int main(int argc, const char *argv[])
   g_renderer->getCamera().setUp({ 0, 1, 0 });
   g_renderer->setViewMatrix(g_renderer->getCamera().createViewMatrix());
 
-  // Load a user defined transfer function if it was provided on the CL.
-  if (! clo.tfuncPath.empty()) {
-
-    try {
-
-      if (! ColorMapManager::load1DT("USER", clo.tfuncPath)) {
-        bd::Err() << "Transfer function was malformed. The function won't be available.";
-
-        g_renderer->setColorMapTexture(
-            ColorMapManager::getMapByName(
-                ColorMapManager::getCurrentMapName())
-                .getTexture());
-
-      } else {
-
-        g_renderer->setColorMapTexture(
-            ColorMapManager::getMapByName("USER")
-                .getTexture());
-
-      }
-
-    } catch (std::ifstream::failure e) {
-      bd::Err() << "Error reading user defined transfer function file. "
-          "The function won't be available.";
-    }
-  }
+  initializeTransferFunctions(clo, *g_renderer);
 
 //  setCameraPosPreset(clo.cameraPos);
 
   //// NV Perf Thing ////
   perf_initNvPm();
   perf_initMode(clo.perfMode);
+
   subvol::renderhelp::initializeControls(window, g_renderer);
   subvol::renderhelp::loop(window, g_renderer.get());
 
