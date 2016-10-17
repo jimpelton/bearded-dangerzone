@@ -94,6 +94,7 @@ ColorMap::loadFromTFFiles(std::string const &funcName,
       scalars.insert(k.s);
     }
 
+
     std::vector<glm::vec4> knots;
     for (auto &k : scalars) {
       double opacity{ otf.interpolate(k) };
@@ -109,6 +110,7 @@ ColorMap::loadFromTFFiles(std::string const &funcName,
     m_ctf = ctf;
     m_otf = otf;
     m_knots = knots;
+    m_name = funcName;
 
   }
   catch (std::exception e) {
@@ -479,13 +481,15 @@ ColorMapManager::loadColorMap(std::string const &funcName,
       << " Opacity tf: " << opacityFilePath;
 
   ColorMap c;
+
   bool success = c.loadFromTFFiles(funcName, colorFilePath, opacityFilePath);
-  if (!success) {
-    return false;
+
+  if (success) {
+    s_maps["USER"] = c;
+    s_colorMapNames.push_back( &s_maps.find("USER")->first );
   }
 
-
-  return false;
+  return success;
 }
 
 

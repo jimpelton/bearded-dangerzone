@@ -180,7 +180,7 @@ Controls::keyboard_callback(int key, int scancode, int action, int mods)
                     << m_scaleValue
                     << "\n\t"
                     << ColorMapManager::getMapByName(
-                        ColorMapManager::getCurrentMapName()).to_string();
+                        ColorMapManager::getCurrentMapName()).to_string() << std::endl;
         }
         else {
           m_renderer->setColorMapTexture(ColorMapManager::getNextMap().getTexture());

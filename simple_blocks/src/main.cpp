@@ -232,14 +232,17 @@ int main(int argc, const char *argv[])
 
   // This lambda is used by the BlockCollection to filter the blocks by
   // the block average voxel value.
-  auto isEmpty = [&](bd::Block const *b) -> bool {
-    return b->avg() < clo.tmin || b->avg() > clo.tmax;
-  };
-  blockCollection->filterBlocks(isEmpty);
+//  auto isEmpty = [&](bd::Block const *b) -> bool {
+//    return b->avg() < clo.tmin || b->avg() > clo.tmax;
+//    return b->empty();
+//  };
+//  blockCollection->filterBlocks(isEmpty);
   if (blockCollection->nonEmptyBlocks().size() == 0) {
     bd::Info() << "All blocks where filtered out... exiting";
     return 1;
   }
+  bd::Info() << blockCollection->nonEmptyBlocks().size()
+             << " non-empty blocks in index file.";
   blockCollection->initBlockTextures(clo.rawFilePath);
 
   // 2d slices
@@ -316,6 +319,9 @@ int main(int argc, const char *argv[])
   g_renderer->setViewMatrix(g_renderer->getCamera().createViewMatrix());
 
   initializeTransferFunctions(clo, *g_renderer);
+  g_renderer->setColorMapTexture(
+      ColorMapManager::getMapByName(
+          ColorMapManager::getCurrentMapName() ).getTexture() );
 
 //  setCameraPosPreset(clo.cameraPos);
 
