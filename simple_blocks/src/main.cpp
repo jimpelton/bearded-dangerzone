@@ -210,25 +210,8 @@ int main(int argc, const char *argv[])
     updateCommandLineOptionsFromIndexFile(clo, indexFile);
 
     blockCollection->initBlocksFromIndexFile(std::move(indexFile));
+
   }
-
-
-  subvol::printThem(clo);
-
-
-  // Initialize OpenGL and GLFW and generate our transfer function textures.
-  GLFWwindow *window{ nullptr };
-  window = subvol::renderhelp::initGLContext(clo.windowWidth, clo.windowHeight);
-  if (window == nullptr) {
-    bd::Err() << "Could not initialize GLFW, exiting.";
-    return 1;
-  }
-
-
-  subvol::renderhelp::setInitialGLState();
-
-
-
 
   // This lambda is used by the BlockCollection to filter the blocks by
   // the block average voxel value.
@@ -243,7 +226,21 @@ int main(int argc, const char *argv[])
   }
   bd::Info() << blockCollection->nonEmptyBlocks().size()
              << " non-empty blocks in index file.";
-  blockCollection->initBlockTextures(clo.rawFilePath);
+
+
+  subvol::printThem(clo);
+
+
+  // Initialize OpenGL and GLFW and generate our transfer function textures.
+  GLFWwindow *window{ nullptr };
+  window = subvol::renderhelp::initGLContext(clo.windowWidth, clo.windowHeight);
+  if (window == nullptr) {
+    bd::Err() << "Could not initialize GLFW, exiting.";
+    return 1;
+  }
+  subvol::renderhelp::setInitialGLState();
+
+
 
   // 2d slices
   g_quadVao = std::make_shared<bd::VertexArrayObject>();
@@ -304,7 +301,6 @@ int main(int argc, const char *argv[])
   }
   g_volumeShaderLighting->unbind();
 
-  //TODO: move renderer init into initGLContext().
   g_renderer =
     std::make_shared<subvol::BlockRenderer>(int(clo.num_slices),
                                             g_volumeShader,
@@ -318,6 +314,7 @@ int main(int argc, const char *argv[])
   g_renderer->getCamera().setUp({ 0, 1, 0 });
   g_renderer->setViewMatrix(g_renderer->getCamera().createViewMatrix());
 
+  blockCollection->initBlockTextures(clo.rawFilePath);
   initializeTransferFunctions(clo, *g_renderer);
   g_renderer->setColorMapTexture(
       ColorMapManager::getMapByName(
