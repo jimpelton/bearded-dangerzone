@@ -1,6 +1,7 @@
-#ifndef cmdline_h__
-#define cmdline_h__
+#ifndef subvol_cmdline_h
+#define subvol_cmdline_h
 
+#include <tclap/CmdLine.h>
 #include <string>
 
 namespace subvol
@@ -35,10 +36,14 @@ struct CommandLineOptions
   size_t vol_h;
   /// vol depth
   size_t vol_d;
+  /// block rov threshold max
+  double blockThreshold_Max;
+  /// block rov threshold minimum
+  double blockThreshold_Min;
   /// threshold max
-  float tmax;
+//  float tmax;
   /// threshold minimum
-  float tmin;
+//  float tmin;
   /// initial camera position
   unsigned int cameraPos;
   /// path to output file for performance counter values
@@ -61,10 +66,10 @@ struct CommandLineOptions
 ///
 /// \returns 0 on parse failure, non-zero if the parse was successful.
 ///////////////////////////////////////////////////////////////////////////////
-int parseThem(int argc, const char* argv[], CommandLineOptions& opts);
+int parseThem(int argc, const char* argv[], TCLAP::CmdLine &cmd, CommandLineOptions& opts);
 
 
 void printThem(CommandLineOptions&);
 } // namespace subvol
 
-#endif // cmdline_h__
+#endif // subvol_cmdline_h

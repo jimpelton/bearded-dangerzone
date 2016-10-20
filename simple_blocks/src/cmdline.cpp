@@ -1,6 +1,5 @@
 #include "cmdline.h"
 
-#include <tclap/CmdLine.h>
 
 #include <iostream>
 #include <string>
@@ -9,14 +8,13 @@ namespace subvol
 {
 
 int
-parseThem(int argc, const char *argv[], CommandLineOptions &opts)
+parseThem(int argc, const char *argv[], TCLAP::CmdLine &cmd, CommandLineOptions &opts)
 try
 {
   if (argc == 1) {
     return 0;
   }
 
-  TCLAP::CmdLine cmd("Simple Blocks blocking volume render experiment.", ' ');
 
   // volume data file
   TCLAP::ValueArg<std::string>
@@ -92,27 +90,43 @@ try
   cmd.add(numSlicesArg);
 
 
-  // threshold min/max
-  TCLAP::ValueArg<float> tmin("",
-                              "tmin",
-                              "Thresh min",
-                              false,
-                              std::numeric_limits<float>::lowest(), "float");
-  cmd.add(tmin);
+  // ROV threshold min/max
+  TCLAP::ValueArg<double>
+      blockThreshold_Min_Arg("",
+                             "block-rov-min",
+                             "Ratio of visibility min value",
+                             false,
+                             std::numeric_limits<double>::lowest(), "dbl prec. float");
+  cmd.add(blockThreshold_Min_Arg);
 
-  TCLAP::ValueArg<float>
-      tmax("", "tmax", "Thresh max", false, std::numeric_limits<float>::max(), "float");
-  cmd.add(tmax);
 
-  TCLAP::ValueArg<unsigned int> initialCameraPosArg
-      ("c", "camera-pos", "Initial camera position (z=0, y=1, x=2)", false,
-       0, "uint");
+  TCLAP::ValueArg<double>
+      blockThreshold_Max_Arg("",
+                            "block-rov-max",
+                            "Ratio of visibility max value",
+                            false,
+                            std::numeric_limits<double>::max(),
+                            "dbl prec. float");
+  cmd.add(blockThreshold_Max_Arg);
+
+
+  TCLAP::ValueArg<unsigned int>
+      initialCameraPosArg("c",
+                          "camera-pos",
+                          "Initial camera position (z=0, y=1, x=2)",
+                          false,
+                          0,
+                          "uint");
   cmd.add(initialCameraPosArg);
 
 
   // perf output file path
   TCLAP::ValueArg<std::string>
-      perfOutPathArg("", "perf-out-file", "Print performance metrics to file.", false, "",
+      perfOutPathArg("",
+                     "perf-out-file",
+                     "Print performance metrics to file.",
+                     false,
+                     "",
                      "string");
   cmd.add(perfOutPathArg);
 
@@ -152,8 +166,8 @@ try
   opts.numblk_y = yBlocksArg.getValue();
   opts.numblk_z = zBlocksArg.getValue();
   opts.num_slices = numSlicesArg.getValue();
-  opts.tmin = tmin.getValue();
-  opts.tmax = tmax.getValue();
+  opts.blockThreshold_Min = blockThreshold_Min_Arg.getValue();
+  opts.blockThreshold_Max = blockThreshold_Max_Arg.getValue();
   opts.cameraPos = initialCameraPosArg.getValue();
   opts.perfOutPath = perfOutPathArg.getValue();
   opts.perfMode = perfMode.getValue();
@@ -183,10 +197,11 @@ printThem(CommandLineOptions &opts)
       << "\nNum blocks (x X y X z): " << opts.numblk_x << " X " << opts.numblk_y << " X "
       << opts.numblk_z
       << "\nNum Slices: " << opts.num_slices
-      << "\nThreshold (min-max): " << opts.tmin << " - " << opts.tmax
+      << "\nBlock Threshold (min-max): " << opts.blockThreshold_Min << " - "
+      << opts.blockThreshold_Max
       << "\nPrint blocks: " << ( opts.printBlocks ? "True" : "False" )
-      << "\nWindow dims: " << opts.windowWidth << " X " << opts.windowHeight <<
-      std::endl;
+      << "\nWindow dims: " << opts.windowWidth << " X " << opts.windowHeight
+      << std::endl;
 }
 
 } // namespace subvol

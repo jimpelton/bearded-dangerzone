@@ -182,8 +182,9 @@ initializeTransferFunctions(subvol::CommandLineOptions const &clo,
 /////////////////////////////////////////////////////////////////////////////////
 int main(int argc, const char *argv[])
 {
+  TCLAP::CmdLine cmd("Simple Blocks blocking volume render experiment.", ' ');
   CommandLineOptions clo;
-  if (subvol::parseThem(argc, argv, clo) == 0) {
+  if (subvol::parseThem(argc, argv, cmd, clo) == 0) {
     std::cout << "No arguments provided.\nPlease use -h for usage info."
               << std::endl;
     return 1;
@@ -210,16 +211,15 @@ int main(int argc, const char *argv[])
     updateCommandLineOptionsFromIndexFile(clo, indexFile);
 
     blockCollection->initBlocksFromIndexFile(std::move(indexFile));
+    // filter blocks in the index file that are within ROV thresholds
+    blockCollection->filterBlocks(
+        [&clo](bd::Block const &b) {
+          return b.fileBlock().rov >= clo.blockThreshold_Min &&
+              b.fileBlock().rov <= clo.blockThreshold_Max;
+        });
+  } // scope
 
-  }
 
-  // This lambda is used by the BlockCollection to filter the blocks by
-  // the block average voxel value.
-//  auto isEmpty = [&](bd::Block const *b) -> bool {
-//    return b->avg() < clo.tmin || b->avg() > clo.tmax;
-//    return b->empty();
-//  };
-//  blockCollection->filterBlocks(isEmpty);
   if (blockCollection->nonEmptyBlocks().size() == 0) {
     bd::Info() << "All blocks where filtered out... exiting";
     return 1;
