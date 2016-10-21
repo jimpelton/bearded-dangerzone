@@ -1,5 +1,5 @@
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
+//#include <GL/glew.h>
+//#include <GLFW/glfw3.h>
 
 // local includes
 #include "cmdline.h"
@@ -13,41 +13,26 @@
 #include "controls.h"
 
 // BD lib
-#include <bd/geo/axis.h>
 #include <bd/graphics/shader.h>
 #include <bd/graphics/vertexarrayobject.h>
 #include <bd/log/logger.h>
-#include <bd/log/gl_log.h>
-//#include <bd/volume/block.h>
 #include <bd/volume/blockcollection.h>
-#include <bd/util/util.h>
-#include <bd/util/ordinal.h>
 #include <bd/io/indexfile.h>
-
-// GLM
-#include <glm/glm.hpp>
-#include <glm/gtc/constants.hpp>
-#include <glm/gtx/string_cast.hpp>
 
 // STL and STD lib
 #include <string>
-#include <vector>
-#include <array>
-
 #include <fstream>
 #include <iostream>
 #include <ostream>
 
 #include <memory>
-#include <chrono>
 
-#include <cstring>
 
 // profiling
 #include "nvpm.h"
 
 
-std::shared_ptr<bd::CoordinateAxis> g_axis{ nullptr }; ///< The coordinate axis lines.
+//std::shared_ptr<bd::CoordinateAxis> g_axis{ nullptr }; ///< The coordinate axis lines.
 std::shared_ptr<subvol::BlockRenderer> g_renderer{ nullptr };
 std::shared_ptr<bd::ShaderProgram> g_wireframeShader{ nullptr };
 std::shared_ptr<bd::ShaderProgram> g_volumeShader{ nullptr };
@@ -55,7 +40,7 @@ std::shared_ptr<bd::ShaderProgram> g_volumeShaderLighting{ nullptr };
 std::shared_ptr<bd::VertexArrayObject> g_axisVao{ nullptr };
 std::shared_ptr<bd::VertexArrayObject> g_boxVao{ nullptr };
 std::shared_ptr<bd::VertexArrayObject> g_quadVao{ nullptr };
-std::shared_ptr<subvol::Controls> g_controls{ nullptr };
+//std::shared_ptr<subvol::Controls> g_controls{ nullptr };
 
 
 void cleanup();
@@ -66,15 +51,20 @@ void printNvPmApiCounters(const char *perfOutPath);
 using subvol::ColorMapManager;
 using subvol::CommandLineOptions;
 
+namespace subvol
+{
+
 /////////////////////////////////////////////////////////////////////////////////
-void cleanup()
+void
+cleanup()
 {
   glfwTerminate();
 }
 
 
 /////////////////////////////////////////////////////////////////////////////////
-void printBlocks(bd::BlockCollection *bcol)
+void
+printBlocks(bd::BlockCollection *bcol)
 {
   std::ofstream block_file("blocks.txt", std::ofstream::trunc);
 
@@ -87,12 +77,14 @@ void printBlocks(bd::BlockCollection *bcol)
     block_file.close();
   } else {
     bd::Err() << "Could not print blocks because blocks.txt couldn't be created "
-      "in the current working directory.";
+        "in the current working directory.";
   }
 }
 
+
 std::shared_ptr<bd::IndexFile>
-openIndexFile(subvol::CommandLineOptions const &clo){
+openIndexFile(subvol::CommandLineOptions const &clo)
+{
   // Read the index file to get values from it that we need to populate
   // the CommandLineOptions struct.
   std::shared_ptr<bd::IndexFile> indexFile{
@@ -103,6 +95,7 @@ openIndexFile(subvol::CommandLineOptions const &clo){
 
   return indexFile;
 }
+
 
 void
 updateCommandLineOptionsFromIndexFile(subvol::CommandLineOptions &clo,
@@ -122,6 +115,7 @@ updateCommandLineOptionsFromIndexFile(subvol::CommandLineOptions &clo,
 
 }
 
+
 void
 checkColorMapLoaded(bool loaded, std::string const &name,
                     subvol::BlockRenderer &renderer)
@@ -137,7 +131,6 @@ checkColorMapLoaded(bool loaded, std::string const &name,
 
   } else {
 
-
     bd::Err() << "Transfer function was malformed. The function won't be available.";
     renderer.setColorMapTexture(
         ColorMapManager::getMapByName(
@@ -147,6 +140,7 @@ checkColorMapLoaded(bool loaded, std::string const &name,
   }
 
 }
+
 
 bool
 initializeTransferFunctions(subvol::CommandLineOptions const &clo,
@@ -159,18 +153,19 @@ initializeTransferFunctions(subvol::CommandLineOptions const &clo,
   try {
 
     // if both color and opacity files are given... load those tfuncs
-    if( ! (clo.colorTFuncPath.empty() || clo.opacityTFuncPath.empty()) ) {
+    if (!( clo.colorTFuncPath.empty() || clo.opacityTFuncPath.empty())) {
 
       loaded = ColorMapManager::loadColorMap("USER",
                                              clo.colorTFuncPath,
                                              clo.opacityTFuncPath);
 
-    } else if (! clo.tfuncPath.empty()) {
+    } else if (!clo.tfuncPath.empty()) {
 
       loaded = ColorMapManager::load1DT("USER", clo.tfuncPath);
 
     }
-  } catch (std::ifstream::failure e) {
+  }
+  catch (std::ifstream::failure e) {
     bd::Err() << "Error reading user defined transfer function file(s). "
         "The function won't be available.";
   }
@@ -179,24 +174,9 @@ initializeTransferFunctions(subvol::CommandLineOptions const &clo,
 }
 
 
-/////////////////////////////////////////////////////////////////////////////////
-int main(int argc, const char *argv[])
+int
+run_subvol(subvol::CommandLineOptions &clo)
 {
-  TCLAP::CmdLine cmd("Simple Blocks blocking volume render experiment.", ' ');
-  CommandLineOptions clo;
-  if (subvol::parseThem(argc, argv, cmd, clo) == 0) {
-    std::cout << "No arguments provided.\nPlease use -h for usage info."
-              << std::endl;
-    return 1;
-  }
-
-
-  if (clo.indexFilePath.empty()) {
-    bd::Err() << "Provide an index file path.";
-    return 1;
-  }
-
-
   bd::BlockCollection *blockCollection{ new bd::BlockCollection() };
 
 
@@ -226,7 +206,6 @@ int main(int argc, const char *argv[])
   }
   bd::Info() << blockCollection->nonEmptyBlocks().size()
              << " non-empty blocks in index file.";
-
 
   subvol::printThem(clo);
 
@@ -269,9 +248,9 @@ int main(int argc, const char *argv[])
 
   // Wireframe Shader
   g_wireframeShader = std::make_shared<bd::ShaderProgram>();
-  GLuint programId {
-    g_wireframeShader->linkProgram("shaders/vert_vertexcolor_passthrough.glsl",
-                                   "shaders/frag_vertcolor.glsl") };
+  GLuint programId{
+      g_wireframeShader->linkProgram("shaders/vert_vertexcolor_passthrough.glsl",
+                                     "shaders/frag_vertcolor.glsl") };
   if (programId == 0) {
     bd::Err() << "Error building passthrough shader, program id was 0.";
     return 1;
@@ -281,8 +260,8 @@ int main(int argc, const char *argv[])
   // Volume shader
   g_volumeShader = std::make_shared<bd::ShaderProgram>();
   programId =
-    g_volumeShader->linkProgram("shaders/vert_vertexcolor_passthrough.glsl",
-                                "shaders/frag_volumesampler_noshading.glsl");
+      g_volumeShader->linkProgram("shaders/vert_vertexcolor_passthrough.glsl",
+                                  "shaders/frag_volumesampler_noshading.glsl");
   if (programId == 0) {
     bd::Err() << "Error building volume shader, program id was 0.";
     return 1;
@@ -293,8 +272,8 @@ int main(int argc, const char *argv[])
   // Volume shader with Lighting
   g_volumeShaderLighting = std::make_shared<bd::ShaderProgram>();
   programId =
-    g_volumeShaderLighting->linkProgram("shaders/vert_vertexcolor_passthrough.glsl",
-                                        "shaders/frag_shading_otfgrads.glsl");
+      g_volumeShaderLighting->linkProgram("shaders/vert_vertexcolor_passthrough.glsl",
+                                          "shaders/frag_shading_otfgrads.glsl");
   if (programId == 0) {
     bd::Err() << "Error building volume lighting shader, program id was 0.";
     return 1;
@@ -302,12 +281,12 @@ int main(int argc, const char *argv[])
   g_volumeShaderLighting->unbind();
 
   g_renderer =
-    std::make_shared<subvol::BlockRenderer>(int(clo.num_slices),
-                                            g_volumeShader,
-                                            g_volumeShaderLighting,
-                                            g_wireframeShader,
-                                            &blockCollection->nonEmptyBlocks(),
-                                            g_quadVao, g_boxVao, g_axisVao);
+      std::make_shared<subvol::BlockRenderer>(int(clo.num_slices),
+                                              g_volumeShader,
+                                              g_volumeShaderLighting,
+                                              g_wireframeShader,
+                                              &blockCollection->nonEmptyBlocks(),
+                                              g_quadVao, g_boxVao, g_axisVao);
   g_renderer->resize(clo.windowWidth, clo.windowHeight);
   g_renderer->getCamera().setEye({ 0, 0, 2 });
   g_renderer->getCamera().setLookAt({ 0, 0, 0 });
@@ -318,7 +297,7 @@ int main(int argc, const char *argv[])
   initializeTransferFunctions(clo, *g_renderer);
   g_renderer->setColorMapTexture(
       ColorMapManager::getMapByName(
-          ColorMapManager::getCurrentMapName() ).getTexture() );
+          ColorMapManager::getCurrentMapName()).getTexture());
 
 //  setCameraPosPreset(clo.cameraPos);
 
@@ -329,8 +308,42 @@ int main(int argc, const char *argv[])
   subvol::renderhelp::initializeControls(window, g_renderer);
   subvol::renderhelp::loop(window, g_renderer.get());
 
+  return 0;
+
+} // run_subvol
+
+} // namespace subvol
+
+
+/////////////////////////////////////////////////////////////////////////////////
+int main(int argc, const char *argv[])
+{
+  TCLAP::CmdLine cmd("Simple Blocks blocking volume render experiment.", ' ');
+  subvol::CommandLineOptions clo;
+  if (subvol::parseThem(argc, argv, cmd, clo) == 0) {
+    std::cout << "No arguments provided.\nPlease use -h for usage info."
+              << std::endl;
+    return 1;
+  }
+
+
+  if (clo.indexFilePath.empty()) {
+    bd::Err() << "Provide an index file path.";
+    return 1;
+  }
+
+  std::future<int> returned = std::async(std::launch::async,
+                                         [&clo]() {
+                                           return subvol::run_subvol(clo);
+                                         });
+
+  std::cout << "Waiting..." << std::endl;
+  returned.wait();
+  std::cout << "subvol exiting: " << returned.get() << std::endl;
+//  subvol::run_subvol(clo);
+
 //  printNvPmApiCounters(clo.perfOutPath.c_str());
-  cleanup();
+  subvol::cleanup();
 
   return 0;
 }
