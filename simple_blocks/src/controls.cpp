@@ -150,17 +150,20 @@ Controls::keyboard_callback(int key, int scancode, int action, int mods)
 //        g_toggleWireFrame = !g_toggleWireFrame;
 //        break;
 
+
       case GLFW_KEY_B:
         m_showBlockBoxes = !m_showBlockBoxes;
         std::cout << "Show bounding boxes: " << m_showBlockBoxes << '\n';
         m_renderer->shouldDrawNonEmptyBoundingBoxes(m_showBlockBoxes);
         break;
 
+
       case GLFW_KEY_L:
         m_shouldUseLighting = !m_shouldUseLighting;
         m_renderer->setShouldUseLighting(m_shouldUseLighting);
         std::cout << "Use lighting: " << m_shouldUseLighting << '\n';
         break;
+
 
       case GLFW_KEY_Q:
         m_currentBackgroundColor ^= 1;
@@ -170,11 +173,13 @@ Controls::keyboard_callback(int key, int scancode, int action, int mods)
         m_renderer->setBackgroundColor(g_backgroundColors[m_currentBackgroundColor]);
         break;
 
+
       case GLFW_KEY_T:
         if (mods & GLFW_MOD_SHIFT) {
           m_renderer->setColorMapTexture(ColorMapManager::getPrevMap().getTexture());
           std::cout << "\nColormap: " << ColorMapManager::getCurrentMapName() << '\n';
         }
+
         else if (mods & GLFW_MOD_ALT) {
           std::cout << "\n Current map: \n\t Scaling value: "
                     << m_scaleValue
@@ -182,10 +187,13 @@ Controls::keyboard_callback(int key, int scancode, int action, int mods)
                     << ColorMapManager::getMapByName(
                         ColorMapManager::getCurrentMapName()).to_string() << std::endl;
         }
+
         else {
           m_renderer->setColorMapTexture(ColorMapManager::getNextMap().getTexture());
           std::cout << "\nColormap: " << ColorMapManager::getCurrentMapName() << '\n';
         }
+
+
       default:
         break;
 
@@ -201,17 +209,24 @@ Controls::keyboard_callback(int key, int scancode, int action, int mods)
       case GLFW_KEY_PERIOD:
         if (mods & GLFW_MOD_SHIFT) {
           m_scaleValue += 0.1f;
-        } else if (mods & GLFW_MOD_CONTROL) {
+        }
+
+        else if (mods & GLFW_MOD_CONTROL) {
           m_scaleValue += 0.001f;
-        } else if (mods & GLFW_MOD_ALT) {
+        }
+
+        else if (mods & GLFW_MOD_ALT) {
           m_scaleValue += 0.0001f;
-        } else {
+        }
+
+        else {
           m_scaleValue += 0.01f;
         }
 
         m_renderer->setColorMapScaleValue(m_scaleValue);
         std::cout << "Transfer function scaler: " << m_scaleValue << std::endl;
         break;
+
 
         // Negative transfer function scaling
       case GLFW_KEY_COMMA:
@@ -229,27 +244,36 @@ Controls::keyboard_callback(int key, int scancode, int action, int mods)
         std::cout << "Transfer function scaler: " << m_scaleValue << std::endl;
         break;
 
+
         // n_shiney
       case GLFW_KEY_N:
         if (mods & GLFW_MOD_SHIFT) {
           m_nShiney -= 0.01f;
-        } else {
+        }
+
+        else {
           m_nShiney += 0.01f;
         }
+
         m_renderer->setShaderNShiney(m_nShiney);
         std::cout << "N shiney: " << m_nShiney << std::endl;
         break;
 
+
       case GLFW_KEY_UP:
         if (mods & GLFW_MOD_SHIFT) {
           m_LightVector.z += 0.1f;
-        } else {
+        }
+
+        else {
           m_LightVector.y += 0.1f;
         }
+
         m_renderer->setShaderLightPos(glm::normalize(m_LightVector));
         std::cout << "Light position: " << m_LightVector.x << ", " << m_LightVector.y << ", "
                   << m_LightVector.z << '\n';
         break;
+
 
       case GLFW_KEY_LEFT:
         m_LightVector.x += 0.1f;
@@ -258,6 +282,7 @@ Controls::keyboard_callback(int key, int scancode, int action, int mods)
                   << m_LightVector.z << '\n';
         break;
 
+
       case GLFW_KEY_RIGHT:
         m_LightVector.x -= 0.1f;
         m_renderer->setShaderLightPos(glm::normalize(m_LightVector));
@@ -265,12 +290,16 @@ Controls::keyboard_callback(int key, int scancode, int action, int mods)
                   << m_LightVector.z << '\n';
         break;
 
+
       case GLFW_KEY_DOWN:
         if (mods & GLFW_MOD_SHIFT) {
           m_LightVector.z -= 0.1f;
-        } else {
+        }
+
+        else {
           m_LightVector.y -= 0.1f;
         }
+
         m_renderer->setShaderLightPos(glm::normalize(m_LightVector));
         std::cout << "Light position: " << m_LightVector.x << ", " << m_LightVector.y << ", "
                   << m_LightVector.z << '\n';

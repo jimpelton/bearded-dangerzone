@@ -66,6 +66,11 @@ include_directories("${CRUFT_INCLUDE_DIR}"
         "${TBB_INCLUDE_DIR}"
         "${THIRDPARTY_DIR}/tclap/include")
 
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+set(CMAKE_AUTOMOC ON)
+
+find_package(Qt5Widgets)
+find_package(Qt5Gui)
 
 ################################################################################
 # Sources
@@ -74,6 +79,7 @@ set(simple_blocks_HEADERS
         src/blockrenderer.h
         src/cmdline.h
         src/controls.h
+        src/controlpanel.h
         src/create_vao.h
         src/nvpm.h
         src/sliceset.h
@@ -87,6 +93,7 @@ set(simple_blocks_SOURCES
         src/main.cpp
         src/cmdline.cpp
         src/controls.cpp
+        src/controlpanel.cpp
         src/create_vao.cpp
         src/sliceset.cpp
         src/timing.cpp
@@ -110,7 +117,8 @@ target_link_libraries(simple_blocks
         debug ${TBB_DEBUG_LIBRARIES}
         optimized ${TBB_RELEASE_LIBRARIES}
         ${NVTOOLSEXT_LIB}
-)
+        Qt5::Widgets
+        Qt5::Core)
 
 
 

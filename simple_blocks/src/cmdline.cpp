@@ -8,7 +8,7 @@ namespace subvol
 {
 
 int
-parseThem(int argc, const char *argv[], TCLAP::CmdLine &cmd, CommandLineOptions &opts)
+parseThem(int argc, char *argv[], TCLAP::CmdLine &cmd, CommandLineOptions &opts)
 try
 {
   if (argc == 1) {

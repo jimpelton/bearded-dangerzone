@@ -29,7 +29,6 @@ public:
   BlockRenderer();
 
 
-  //////////////////////////////////////////////////////////////////////////////
   BlockRenderer(int numSlices,
                 std::shared_ptr<bd::ShaderProgram> volumeShader,
                 std::shared_ptr<bd::ShaderProgram> volumeShaderLighting,
@@ -41,8 +40,11 @@ public:
 
 
   virtual ~BlockRenderer();
+
+
 private:
   bool init();
+
 public:
   /// \brief Set the transfer function texture.
   void setColorMapTexture(bd::Texture const &tfunc);
@@ -51,9 +53,12 @@ public:
 
   void setShaderNShiney(float n);
   void setShaderLightPos(glm::vec3 const &L);
+
 //  void setShaderViewVec(glm::vec3 const &V);
   void setShaderMaterial(glm::vec3 const &M);
+
   void setBackgroundColor(glm::vec3 const &c);
+
   void setShouldUseLighting(bool b);
   bool getShouldUseLighting() const;
 
@@ -69,24 +74,16 @@ public:
 
 private:
 
-  //////////////////////////////////////////////////////////////////////////////
   /// \brief Disable GL_DEPTH_TEST and draw transparent slices
   void drawSlices(int baseVertex);
 
+  /// \brief Draw the coordinate axis.
   void drawAxis();
 
-  //////////////////////////////////////////////////////////////////////////////
   /// \brief Loop through the blocks and draw each one
   void drawNonEmptyBlocks_Forward();
 
-//  void setInitialGLState();
 
-  //////////////////////////////////////////////////////////////////////////////
-  /// \brief Determine the viewing direction and draw the blocks in proper
-  ///        order.
-
-
-  //////////////////////////////////////////////////////////////////////////////
   /// \brief Compute the base vertex offset for the slices vertex buffer based
   ///        off the largest component of \c viewdir.
   int computeBaseVertexFromViewDir(glm::vec3 const &viewdir);
@@ -106,7 +103,7 @@ private:
   std::shared_ptr<bd::ShaderProgram> m_volumeShader;
   std::shared_ptr<bd::ShaderProgram> m_volumeShaderLighting;
   std::shared_ptr<bd::ShaderProgram> m_wireframeShader;
-  std::vector<bd::Block*> *m_blocks;
+  std::vector<bd::Block*> *m_blocks;  ///< Non-empty blocks to draw.
   bd::Texture const* m_colorMapTexture; ///< Transfer function texture
   std::shared_ptr<bd::VertexArrayObject> m_quadsVao;    ///< Quad geometry verts
   std::shared_ptr<bd::VertexArrayObject> m_boxesVao;    ///< bounding box wireframe verts

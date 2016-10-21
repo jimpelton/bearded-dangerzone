@@ -263,9 +263,12 @@ BlockRenderer::drawNonEmptyBlocks_Forward()
 void
 BlockRenderer::draw()
 {
+  // We need to draw in reverse-visibility order (painters algorithm!)
+  // so the transparency looks correct.
   // Sort the blocks by their distance from the camera.
   // The origin of each block is used.
   glm::vec3 const eye{ getCamera().getEye() };
+
   std::sort(m_blocks->begin(), m_blocks->end(),
             [&eye](bd::Block *a, bd::Block *b) {
               float a_dist = glm::distance(eye, a->origin());
@@ -274,13 +277,19 @@ BlockRenderer::draw()
             });
 
 
+  // forces recalculation of view matrix.
+  setWorldMatrix(glm::mat4{ 1.0f });
+
+
   gl_check(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
-  setWorldMatrix(glm::mat4{ 1.0f });
+
   drawAxis();
+
   if (m_drawNonEmptyBoundingBoxes) {
     drawNonEmptyBoundingBoxes();
   }
+
   drawNonEmptyBlocks_Forward();
 }
 
@@ -290,25 +299,29 @@ int
 BlockRenderer::computeBaseVertexFromViewDir(glm::vec3 const &viewdir)
 {
   glm::vec3 const absViewDir{ glm::abs(viewdir) };
-
   SliceSet newSelected{ SliceSet::YZ };
   bool isPos{ viewdir.x > 0 };
   float longest{ absViewDir.x };
 
+  // find longest component in view vector.
   if (absViewDir.y > longest) {
     newSelected = SliceSet::XZ;
     isPos = viewdir.y > 0;
     longest = absViewDir.y;
   }
+
   if (absViewDir.z > longest) {
     newSelected = SliceSet::XY;
     isPos = viewdir.z > 0;
   }
 
+
   // Compute base vertex VBO offset.
   int const elements_per_vertex{ 4 };
   int baseVertex{ 0 };
+
   switch (newSelected) {
+
     case SliceSet::YZ:
       if (isPos) {
         baseVertex = 0;
@@ -316,6 +329,7 @@ BlockRenderer::computeBaseVertexFromViewDir(glm::vec3 const &viewdir)
         baseVertex = 1 * elements_per_vertex * m_numSlicesPerBlock;
       }
       break;
+
     case SliceSet::XZ:
       if (isPos) {
         baseVertex = 2 * elements_per_vertex * m_numSlicesPerBlock;

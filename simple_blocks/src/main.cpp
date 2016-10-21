@@ -11,6 +11,7 @@
 #include "colormap.h"
 #include "renderhelp.h"
 #include "controls.h"
+#include "controlpanel.h"
 
 // BD lib
 #include <bd/graphics/shader.h>
@@ -18,6 +19,9 @@
 #include <bd/log/logger.h>
 #include <bd/volume/blockcollection.h>
 #include <bd/io/indexfile.h>
+
+
+#include <QApplication>
 
 // STL and STD lib
 #include <string>
@@ -82,6 +86,7 @@ printBlocks(bd::BlockCollection *bcol)
 }
 
 
+/////////////////////////////////////////////////////////////////////////////////
 std::shared_ptr<bd::IndexFile>
 openIndexFile(subvol::CommandLineOptions const &clo)
 {
@@ -97,6 +102,7 @@ openIndexFile(subvol::CommandLineOptions const &clo)
 }
 
 
+/////////////////////////////////////////////////////////////////////////////////
 void
 updateCommandLineOptionsFromIndexFile(subvol::CommandLineOptions &clo,
                                       std::shared_ptr<bd::IndexFile> const &indexFile)
@@ -116,6 +122,7 @@ updateCommandLineOptionsFromIndexFile(subvol::CommandLineOptions &clo,
 }
 
 
+/////////////////////////////////////////////////////////////////////////////////
 void
 checkColorMapLoaded(bool loaded, std::string const &name,
                     subvol::BlockRenderer &renderer)
@@ -142,6 +149,7 @@ checkColorMapLoaded(bool loaded, std::string const &name,
 }
 
 
+/////////////////////////////////////////////////////////////////////////////////
 bool
 initializeTransferFunctions(subvol::CommandLineOptions const &clo,
                             subvol::BlockRenderer &renderer)
@@ -174,6 +182,7 @@ initializeTransferFunctions(subvol::CommandLineOptions const &clo,
 }
 
 
+/////////////////////////////////////////////////////////////////////////////////
 int
 run_subvol(subvol::CommandLineOptions &clo)
 {
@@ -197,7 +206,7 @@ run_subvol(subvol::CommandLineOptions &clo)
           return b.fileBlock().rov >= clo.blockThreshold_Min &&
               b.fileBlock().rov <= clo.blockThreshold_Max;
         });
-  } // scope
+  }
 
 
   if (blockCollection->nonEmptyBlocks().size() == 0) {
@@ -316,7 +325,7 @@ run_subvol(subvol::CommandLineOptions &clo)
 
 
 /////////////////////////////////////////////////////////////////////////////////
-int main(int argc, const char *argv[])
+int main(int argc, char *argv[])
 {
   TCLAP::CmdLine cmd("Simple Blocks blocking volume render experiment.", ' ');
   subvol::CommandLineOptions clo;
@@ -332,15 +341,25 @@ int main(int argc, const char *argv[])
     return 1;
   }
 
-  std::future<int> returned = std::async(std::launch::async,
-                                         [&clo]() {
-                                           return subvol::run_subvol(clo);
-                                         });
+
+  // start renderer on separate thread.
+  std::future<int>
+      returned = std::async(std::launch::async,
+                            [&clo]() {
+                              return subvol::run_subvol(clo);
+                            });
+
+  QApplication a(argc, argv);
+  subvol::ControlPanel panel;
+  panel.setGlobalMin(0);
+  panel.setGlobalMax(0.5);
+  panel.show();
+
+  a.exec();
 
   std::cout << "Waiting..." << std::endl;
   returned.wait();
   std::cout << "subvol exiting: " << returned.get() << std::endl;
-//  subvol::run_subvol(clo);
 
 //  printNvPmApiCounters(clo.perfOutPath.c_str());
   subvol::cleanup();

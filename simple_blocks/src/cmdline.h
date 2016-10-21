@@ -66,7 +66,7 @@ struct CommandLineOptions
 ///
 /// \returns 0 on parse failure, non-zero if the parse was successful.
 ///////////////////////////////////////////////////////////////////////////////
-int parseThem(int argc, const char* argv[], TCLAP::CmdLine &cmd, CommandLineOptions& opts);
+int parseThem(int argc,  char* argv[], TCLAP::CmdLine &cmd, CommandLineOptions& opts);
 
 
 void printThem(CommandLineOptions&);
