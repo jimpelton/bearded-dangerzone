@@ -42,7 +42,7 @@ public slots:
   handle_valueChanged_max(int maxSliderValue);
 
 private:
-  double m_scale;
+  int m_numberOfSliderIncrements;
   double m_minFloat;
   double m_maxFloat;
 
