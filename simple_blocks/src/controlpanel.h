@@ -5,10 +5,13 @@
 #ifndef SUBVOL_CONTROLPANEL_H
 #define SUBVOL_CONTROLPANEL_H
 
+#include "blockrenderer.h"
+
 #include <QWidget>
 
 class QSlider;
 class QLabel;
+class QDoubleSpinBox;
 
 namespace subvol
 {
@@ -19,15 +22,15 @@ class ControlPanel
   Q_OBJECT
 
 public:
-  explicit ControlPanel(QWidget *parent = 0);
-
+  explicit ControlPanel(BlockRenderer *renderer, QWidget *parent = 0);
 
   ~ControlPanel();
 
   void
-  setGlobalMin(double);
+  setGlobalRange(double, double newMax);
+
   void
-  setGlobalMax(double);
+  setMinMax(double min, double max);
 
 signals:
   void
@@ -40,20 +43,40 @@ public slots:
   handle_valueChanged_min(int minSliderValue);
   void
   handle_valueChanged_max(int maxSliderValue);
+//  void
+//  handle_spinBox_valueChanged_min(double minValue);
+//  void
+//  handle_spinBox_valueChanged_max(double maxValue);
+  void
+  handle_sliderPressed();
+  void
+  handle_sliderReleased();
 
 private:
+  int
+  floatToSliderValue(double value);
+
+  double
+  sliderValueToFloat(int value);
+
   int m_numberOfSliderIncrements;
-  double m_minFloat;
-  double m_maxFloat;
+  double m_incrementDelta;
+  double m_currentMinFloat;
+  double m_currentMaxFloat;
+  double m_globalMin;
+  double m_globalMax;
 
   QSlider *m_minSlider;
   QSlider *m_maxSlider;
 
-  QLabel *m_globalMin_Label;
-  QLabel *m_globalMax_Label;
+//  QDoubleSpinBox *m_currentMin_SpinBox;
+//  QDoubleSpinBox *m_currentMax_SpinBox;
   QLabel *m_currentMin_Label;
   QLabel *m_currentMax_Label;
+  QLabel *m_globalMin_Label;
+  QLabel *m_globalMax_Label;
 
+  BlockRenderer *m_renderer;
 
 };
 

@@ -44,8 +44,11 @@ std::shared_ptr<bd::ShaderProgram> g_volumeShaderLighting{ nullptr };
 std::shared_ptr<bd::VertexArrayObject> g_axisVao{ nullptr };
 std::shared_ptr<bd::VertexArrayObject> g_boxVao{ nullptr };
 std::shared_ptr<bd::VertexArrayObject> g_quadVao{ nullptr };
+bd::BlockCollection *g_blockCollection{ nullptr };
 //std::shared_ptr<subvol::Controls> g_controls{ nullptr };
+bool renderInitComplete{ false };
 
+double g_rovMin, g_rovMax;
 
 void cleanup();
 void printBlocks(bd::BlockCollection *bcol);
@@ -111,6 +114,29 @@ updateCommandLineOptionsFromIndexFile(subvol::CommandLineOptions &clo,
   // Since the IndexFileHeader contains most of the options needed to
   // render the volume, we copy those over into the CommandLineOptions struct.
   // Without an index file these options are provided via argv anyway.
+
+  // Clamp clo.blockThreshold_Min/Max to the min/max values of
+  // the blocks in indexfile.
+  double min{ std::numeric_limits<double>::lowest() };
+  double max{ std::numeric_limits<double>::lowest() };
+
+
+  auto minmaxE = std::minmax_element(indexFile->getBlocks().begin(),
+                        indexFile->getBlocks().end(),
+                        [](bd::FileBlock const & lhs, bd::FileBlock const & rhs) -> bool {
+                          return lhs.rov < rhs.rov;
+                        } );
+
+  g_rovMin = min = (*minmaxE.first).rov;
+  g_rovMax = max = (*minmaxE.second).rov;
+
+  if (clo.blockThreshold_Min < min) {
+    clo.blockThreshold_Min = min;
+  }
+  if (clo.blockThreshold_Max > max) {
+    clo.blockThreshold_Max = max;
+  }
+
   clo.vol_w = indexFile->getHeader().volume_extent[0];
   clo.vol_h = indexFile->getHeader().volume_extent[1];
   clo.vol_d = indexFile->getHeader().volume_extent[2];
@@ -187,7 +213,7 @@ int
 run_subvol(subvol::CommandLineOptions &clo)
 {
   bd::BlockCollection *blockCollection{ new bd::BlockCollection() };
-
+//  g_blockCollection = blockCollection;
 
   // Open the index file if possible, then setup the BlockCollection
   // and give away ownership of the index file to the BlockCollection.
@@ -301,6 +327,7 @@ run_subvol(subvol::CommandLineOptions &clo)
   g_renderer->getCamera().setLookAt({ 0, 0, 0 });
   g_renderer->getCamera().setUp({ 0, 1, 0 });
   g_renderer->setViewMatrix(g_renderer->getCamera().createViewMatrix());
+  g_renderer->setROVRange(clo.blockThreshold_Min, clo.blockThreshold_Max);
 
   blockCollection->initBlockTextures(clo.rawFilePath);
   initializeTransferFunctions(clo, *g_renderer);
@@ -315,6 +342,7 @@ run_subvol(subvol::CommandLineOptions &clo)
   perf_initMode(clo.perfMode);
 
   subvol::renderhelp::initializeControls(window, g_renderer);
+  renderInitComplete = true;
   subvol::renderhelp::loop(window, g_renderer.get());
 
   return 0;
@@ -349,10 +377,14 @@ int main(int argc, char *argv[])
                               return subvol::run_subvol(clo);
                             });
 
+  //TODO: use semaphore
+  while(renderInitComplete == false);
+
   QApplication a(argc, argv);
-  subvol::ControlPanel panel;
-  panel.setGlobalMin(0);
-  panel.setGlobalMax(0.5);
+  subvol::ControlPanel panel(g_renderer.get());
+
+  panel.setGlobalRange(g_rovMin, g_rovMax);
+  panel.setMinMax(clo.blockThreshold_Min, clo.blockThreshold_Max);
   panel.show();
 
   a.exec();

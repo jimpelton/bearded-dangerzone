@@ -19,8 +19,9 @@ namespace subvol
 {
 
 BlockRenderer::BlockRenderer()
-  : BlockRenderer(0, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr)
-{}
+    : BlockRenderer(0, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr)
+{
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -32,29 +33,35 @@ BlockRenderer::BlockRenderer(int numSlices,
                              std::shared_ptr<bd::VertexArrayObject> blocksVAO,
                              std::shared_ptr<bd::VertexArrayObject> bboxVAO,
                              std::shared_ptr<bd::VertexArrayObject> axisVao)
-  : Renderer()
+    : Renderer()
     , m_numSlicesPerBlock{ numSlices }
     , m_tfuncScaleValue{ 1.0f }
     , m_drawNonEmptyBoundingBoxes{ false }
+    , m_drawNonEmptySlices{ true }
+    , m_ROVChanged{ false }
     , m_shouldUseLighting{ false }
     , m_backgroundColor{ 0.0f }
     , m_currentShader{ nullptr }
     , m_volumeShader{ std::move(volumeShader) }
     , m_volumeShaderLighting{ std::move(volumeShaderLighting) }
     , m_wireframeShader{ std::move(wireframeShader) }
-    , m_blocks{ blocks }
     , m_colorMapTexture{ nullptr }
     , m_quadsVao{ std::move(blocksVAO) }
     , m_boxesVao{ std::move(bboxVAO) }
     , m_axisVao{ std::move(axisVao) }
+    , m_rov_min{ 0.0 }
+    , m_rov_max{ 0.0 }
+    , m_blocks{ blocks }
 {
+  m_blocksToDraw.reserve(blocks->size());
   init();
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
 BlockRenderer::~BlockRenderer()
-{}
+{
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -76,7 +83,7 @@ BlockRenderer::init()
 
   // sets m_currentShader depending on m_shouldUseLighting.
   setShouldUseLighting(m_shouldUseLighting);
-
+  filterBlocksByROV();
 
 //  if (m_colorMapTexture == nullptr)
 //    setColorMapTexture(ColorMapManager::getMapByName("WHITE_TO_BLACK").getTexture());
@@ -97,7 +104,8 @@ BlockRenderer::setColorMapTexture(bd::Texture const &tfunc)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void BlockRenderer::setColorMapScaleValue(float val)
+void
+BlockRenderer::setColorMapScaleValue(float val)
 {
   m_tfuncScaleValue = val;
   m_currentShader->setUniform(VOLUME_TRANSF_SCALER_UNIFORM_STR, m_tfuncScaleValue);
@@ -169,13 +177,21 @@ BlockRenderer::setShaderMaterial(glm::vec3 const &M)
   m_volumeShaderLighting->setUniform(LIGHTING_MAT_UNIFORM_STR, M);
 }
 
+
 ///////////////////////////////////////////////////////////////////////////////
 void
-BlockRenderer::shouldDrawNonEmptyBoundingBoxes(bool b)
+BlockRenderer::setDrawNonEmptyBoundingBoxes(bool b)
 {
   m_drawNonEmptyBoundingBoxes = b;
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+void
+BlockRenderer::setDrawNonEmptySlices(bool b)
+{
+  m_drawNonEmptySlices = b;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 void
@@ -183,16 +199,64 @@ BlockRenderer::drawNonEmptyBoundingBoxes()
 {
   m_wireframeShader->bind();
   m_boxesVao->bind();
-  for (auto *b : *m_blocks) {
+  for (auto *b : m_blocksToDraw) {
     setWorldMatrix(b->transform());
     m_wireframeShader->setUniform(WIREFRAME_MVP_MATRIX_UNIFORM_STR,
                                   getWorldViewProjectionMatrix());
     gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, (GLvoid *) 0));
-    gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, (GLvoid *) (4 * sizeof(GLushort))));
-    gl_check(glDrawElements(GL_LINES, 8, GL_UNSIGNED_SHORT, (GLvoid *) (8 * sizeof(GLushort))));
+    gl_check(glDrawElements(GL_LINE_LOOP,
+                            4,
+                            GL_UNSIGNED_SHORT,
+                            (GLvoid *) ( 4 * sizeof(GLushort))));
+    gl_check(glDrawElements(GL_LINES,
+                            8,
+                            GL_UNSIGNED_SHORT,
+                            (GLvoid *) ( 8 * sizeof(GLushort))));
   }
 //  m_boxesVao->unbind();
 //  m_wireframeShader->unbind();
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+void
+BlockRenderer::setROVRange(double min, double max)
+{
+  m_rov_min = min;
+  m_rov_max = max;
+  m_ROVChanged = true;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+void
+BlockRenderer::draw()
+{
+  // We need to draw in reverse-visibility order (painters algorithm!)
+  // so the transparency looks correct.
+
+  if(m_ROVChanged) {
+    filterBlocksByROV();
+  }
+
+  sortBlocks();
+
+
+  // Side effect: recalculation of world-view-projection matrix.
+  setWorldMatrix(glm::mat4{ 1.0f });
+
+  gl_check(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+
+  drawAxis();
+
+  if (m_drawNonEmptyBoundingBoxes) {
+    drawNonEmptyBoundingBoxes();
+  }
+
+  if (m_drawNonEmptySlices) {
+    drawNonEmptyBlocks_Forward();
+  }
+
 }
 
 
@@ -202,25 +266,28 @@ BlockRenderer::drawSlices(int baseVertex)
 {
   // Begin NVPM work profiling
   perf_workBegin();
-  gl_check(glDrawElementsBaseVertex(GL_TRIANGLE_STRIP,
-                                    ELEMENTS_PER_QUAD * m_numSlicesPerBlock, // count
-                                    GL_UNSIGNED_SHORT,                       // type
-                                    0,                                       // element offset
-                                    baseVertex));                            // vertex offset
+  gl_check(
+      glDrawElementsBaseVertex(GL_TRIANGLE_STRIP,
+                               ELEMENTS_PER_QUAD * m_numSlicesPerBlock, // count
+                               GL_UNSIGNED_SHORT,                       // type
+                               0,                                       // element offset
+                               baseVertex));                            // vertex offset
   // End NVPM work profiling.
   perf_workEnd();
 
 }
 
 
-///////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 void
 BlockRenderer::drawAxis()
 {
   m_wireframeShader->bind();
   m_axisVao->bind();
   m_wireframeShader->setUniform("mvp", getWorldViewProjectionMatrix());
-  gl_check(glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(bd::CoordinateAxis::verts.size())));
+  gl_check(glDrawArrays(GL_LINES,
+                        0,
+                        static_cast<GLsizei>(bd::CoordinateAxis::verts.size())));
 //  m_axisVao->unbind();
 //  m_wireframeShader->unbind();
 }
@@ -231,8 +298,11 @@ void
 BlockRenderer::drawNonEmptyBlocks_Forward()
 {
   // Compute the SliceSet and offset into the vertex buffer of that slice set.
-  glm::vec3 const viewdir{ glm::normalize(getCamera().getLookAt() - getCamera().getEye()) };
-  GLint const baseVertex{ computeBaseVertexFromViewDir(viewdir) };
+  glm::vec3 const
+      viewdir{ glm::normalize(getCamera().getLookAt() - getCamera().getEye()) };
+
+  GLint const
+      baseVertex{ computeBaseVertexFromViewDir(viewdir) };
 
   m_currentShader->bind();
   if (m_shouldUseLighting) {
@@ -244,53 +314,21 @@ BlockRenderer::drawNonEmptyBlocks_Forward()
   // Start an NVPM profiling frame
   perf_frameBegin();
 
-  for (auto *b : *m_blocks) {
+  for (auto *b : m_blocksToDraw) {
+
     setWorldMatrix(b->transform());
     b->texture().bind(BLOCK_TEXTURE_UNIT);
-    m_currentShader->setUniform(VOLUME_MVP_MATRIX_UNIFORM_STR, getWorldViewProjectionMatrix());
+    m_currentShader->setUniform(VOLUME_MVP_MATRIX_UNIFORM_STR,
+                                getWorldViewProjectionMatrix());
+
     drawSlices(baseVertex);
+
   }
 
   // End the NVPM profiling frame.
   perf_frameEnd();
 //  m_quadsVao->unbind();
 //  m_currentShader->unbind();
-}
-
-
-
-////////////////////////////////////////////////////////////////////////////////
-void
-BlockRenderer::draw()
-{
-  // We need to draw in reverse-visibility order (painters algorithm!)
-  // so the transparency looks correct.
-  // Sort the blocks by their distance from the camera.
-  // The origin of each block is used.
-  glm::vec3 const eye{ getCamera().getEye() };
-
-  std::sort(m_blocks->begin(), m_blocks->end(),
-            [&eye](bd::Block *a, bd::Block *b) {
-              float a_dist = glm::distance(eye, a->origin());
-              float b_dist = glm::distance(eye, b->origin());
-              return a_dist > b_dist;
-            });
-
-
-  // forces recalculation of view matrix.
-  setWorldMatrix(glm::mat4{ 1.0f });
-
-
-  gl_check(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
-
-
-  drawAxis();
-
-  if (m_drawNonEmptyBoundingBoxes) {
-    drawNonEmptyBoundingBoxes();
-  }
-
-  drawNonEmptyBlocks_Forward();
 }
 
 
@@ -351,7 +389,7 @@ BlockRenderer::computeBaseVertexFromViewDir(glm::vec3 const &viewdir)
   }
 
   if (newSelected != m_selectedSliceSet) {
-    std::cout << " Switched slice set: " << (isPos ? '+' : '-') <<
+    std::cout << " Switched slice set: " << ( isPos ? '+' : '-' ) <<
               newSelected << " Base vertex: " << baseVertex << '\n';
   }
 
@@ -360,5 +398,34 @@ BlockRenderer::computeBaseVertexFromViewDir(glm::vec3 const &viewdir)
   return baseVertex;
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+void
+BlockRenderer::sortBlocks()
+{
+  glm::vec3 const eye{ getCamera().getEye() };
+
+  // Sort the blocks by their distance from the camera.
+  // The origin of each block is used.
+  std::sort(m_blocksToDraw.begin(), m_blocksToDraw.end(),
+            [&eye](bd::Block *a, bd::Block *b) {
+              float a_dist = glm::distance(eye, a->origin());
+              float b_dist = glm::distance(eye, b->origin());
+              return a_dist > b_dist;
+            });
+}
+
+void
+BlockRenderer::filterBlocksByROV()
+{
+  m_ROVChanged = false;
+  m_blocksToDraw.clear();
+  for(auto *b : *m_blocks) {
+    double rov{ b->fileBlock().rov };
+    if (rov >= m_rov_min && rov <= m_rov_max) {
+      m_blocksToDraw.push_back(b);
+    }
+  }
+}
 
 } // namespace subvol

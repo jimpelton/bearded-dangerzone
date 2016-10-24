@@ -154,7 +154,7 @@ Controls::keyboard_callback(int key, int scancode, int action, int mods)
       case GLFW_KEY_B:
         m_showBlockBoxes = !m_showBlockBoxes;
         std::cout << "Show bounding boxes: " << m_showBlockBoxes << '\n';
-        m_renderer->shouldDrawNonEmptyBoundingBoxes(m_showBlockBoxes);
+        m_renderer->setDrawNonEmptyBoundingBoxes(m_showBlockBoxes);
         break;
 
 
