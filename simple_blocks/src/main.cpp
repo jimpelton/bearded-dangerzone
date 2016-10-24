@@ -121,8 +121,8 @@ updateCommandLineOptionsFromIndexFile(subvol::CommandLineOptions &clo,
   double max{ std::numeric_limits<double>::lowest() };
 
 
-  auto minmaxE = std::minmax_element(indexFile->getBlocks().begin(),
-                        indexFile->getBlocks().end(),
+  auto minmaxE = std::minmax_element(indexFile->getFileBlocks().begin(),
+                        indexFile->getFileBlocks().end(),
                         [](bd::FileBlock const & lhs, bd::FileBlock const & rhs) -> bool {
                           return lhs.rov < rhs.rov;
                         } );
@@ -209,7 +209,7 @@ initializeTransferFunctions(subvol::CommandLineOptions const &clo,
 
 
 /////////////////////////////////////////////////////////////////////////////////
-int
+GLFWwindow *
 run_subvol(subvol::CommandLineOptions &clo)
 {
   bd::BlockCollection *blockCollection{ new bd::BlockCollection() };
@@ -221,7 +221,7 @@ run_subvol(subvol::CommandLineOptions &clo)
     std::shared_ptr<bd::IndexFile> indexFile{ openIndexFile(clo) };
     if (indexFile == nullptr) {
       bd::Err() << "Couldn't open provided index file path: " << clo.indexFilePath;
-      return 1;
+      return nullptr;
     }
     updateCommandLineOptionsFromIndexFile(clo, indexFile);
 
@@ -237,7 +237,7 @@ run_subvol(subvol::CommandLineOptions &clo)
 
   if (blockCollection->nonEmptyBlocks().size() == 0) {
     bd::Info() << "All blocks where filtered out... exiting";
-    return 1;
+    return nullptr;
   }
   bd::Info() << blockCollection->nonEmptyBlocks().size()
              << " non-empty blocks in index file.";
@@ -250,7 +250,7 @@ run_subvol(subvol::CommandLineOptions &clo)
   window = subvol::renderhelp::initGLContext(clo.windowWidth, clo.windowHeight);
   if (window == nullptr) {
     bd::Err() << "Could not initialize GLFW, exiting.";
-    return 1;
+    return nullptr;
   }
   subvol::renderhelp::setInitialGLState();
 
@@ -288,7 +288,7 @@ run_subvol(subvol::CommandLineOptions &clo)
                                      "shaders/frag_vertcolor.glsl") };
   if (programId == 0) {
     bd::Err() << "Error building passthrough shader, program id was 0.";
-    return 1;
+    return nullptr;
   }
 
 
@@ -299,7 +299,7 @@ run_subvol(subvol::CommandLineOptions &clo)
                                   "shaders/frag_volumesampler_noshading.glsl");
   if (programId == 0) {
     bd::Err() << "Error building volume shader, program id was 0.";
-    return 1;
+    return nullptr;
   }
   g_volumeShader->unbind();
 
@@ -311,7 +311,7 @@ run_subvol(subvol::CommandLineOptions &clo)
                                           "shaders/frag_shading_otfgrads.glsl");
   if (programId == 0) {
     bd::Err() << "Error building volume lighting shader, program id was 0.";
-    return 1;
+    return nullptr;
   }
   g_volumeShaderLighting->unbind();
 
@@ -343,9 +343,8 @@ run_subvol(subvol::CommandLineOptions &clo)
 
   subvol::renderhelp::initializeControls(window, g_renderer);
   renderInitComplete = true;
-  subvol::renderhelp::loop(window, g_renderer.get());
 
-  return 0;
+  return window;
 
 } // run_subvol
 
@@ -371,25 +370,32 @@ int main(int argc, char *argv[])
 
 
   // start renderer on separate thread.
-  std::future<int>
-      returned = std::async(std::launch::async,
-                            [&clo]() {
-                              return subvol::run_subvol(clo);
-                            });
+//  std::future<int>
+//      returned = std::async(std::launch::async,
+//                            [&clo]() {
+//                              return subvol::run_subvol(clo);
+//                            });
+
+  GLFWwindow * window = subvol::run_subvol(clo);
 
   //TODO: use semaphore
-  while(renderInitComplete == false);
 
-  QApplication a(argc, argv);
-  subvol::ControlPanel panel(g_renderer.get());
+  std::future<int>
+      returned = std::async(std::launch::async,
+                            [&]() {
+                              QApplication a(argc, argv);
+                              subvol::ControlPanel panel(g_renderer.get());
 
-  panel.setGlobalRange(g_rovMin, g_rovMax);
-  panel.setMinMax(clo.blockThreshold_Min, clo.blockThreshold_Max);
-  panel.show();
+                              panel.setGlobalRange(g_rovMin, g_rovMax);
+                              panel.setMinMax(clo.blockThreshold_Min, clo.blockThreshold_Max);
+                              panel.show();
 
-  a.exec();
+                              return a.exec();
+                            });
 
-  std::cout << "Waiting..." << std::endl;
+  subvol::renderhelp::loop(window, g_renderer.get());
+
+  std::cout << "Waiting for GUI to close..." << std::endl;
   returned.wait();
   std::cout << "subvol exiting: " << returned.get() << std::endl;
 
