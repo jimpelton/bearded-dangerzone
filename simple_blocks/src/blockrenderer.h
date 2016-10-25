@@ -32,7 +32,7 @@ public:
                 std::shared_ptr<bd::ShaderProgram> volumeShader,
                 std::shared_ptr<bd::ShaderProgram> volumeShaderLighting,
                 std::shared_ptr<bd::ShaderProgram> wireframeShader,
-                std::vector<bd::Block *> *blocks,
+                std::shared_ptr<bd::BlockCollection> blockCollection,
                 std::shared_ptr<bd::VertexArrayObject> blocksVAO,
                 std::shared_ptr<bd::VertexArrayObject> bboxVAO,
                 std::shared_ptr<bd::VertexArrayObject> axisVao);
@@ -85,6 +85,12 @@ public:
   setDrawNonEmptyBoundingBoxes(bool b);
 
   void
+  setROVChanging(bool b);
+
+  void
+  setIsRotating(bool b);
+
+  void
   setDrawNonEmptySlices(bool b);
 
 
@@ -134,27 +140,31 @@ private:
 
   int m_numSlicesPerBlock;            ///< Number of slices per block
   float m_tfuncScaleValue;            ///< Transfer function scaling value
+  double m_rov_min;
+  double m_rov_max;
   bool m_drawNonEmptyBoundingBoxes;   ///< True to draw bounding boxes.
   bool m_drawNonEmptySlices;
-  bool m_ROVChanged;
+  bool m_ROVRangeChanged;
+  bool m_ROVChanging; ///< Show bounding boxes if rov is changing.
   bool m_shouldUseLighting;           ///< True to use Phong lighting shader.
   glm::vec3 m_backgroundColor;        ///< Current background color.
 
+  bd::Texture const *m_colorMapTexture; ///< Transfer function texture
   bd::ShaderProgram *m_currentShader;
 
   SliceSet m_selectedSliceSet;
+
   std::shared_ptr<bd::ShaderProgram> m_volumeShader;
   std::shared_ptr<bd::ShaderProgram> m_volumeShaderLighting;
   std::shared_ptr<bd::ShaderProgram> m_wireframeShader;
-  bd::Texture const *m_colorMapTexture; ///< Transfer function texture
   std::shared_ptr<bd::VertexArrayObject> m_quadsVao;    ///< Quad geometry verts
   std::shared_ptr<bd::VertexArrayObject> m_boxesVao;    ///< bounding box wireframe verts
   std::shared_ptr<bd::VertexArrayObject> m_axisVao;
+  std::shared_ptr<bd::BlockCollection> m_collection;
 
-  double m_rov_min;
-  double m_rov_max;
   std::vector<bd::Block *> m_blocksToDraw;  ///< Non-empty blocks to draw.
   std::vector<bd::Block *> *m_blocks;       ///< All the blocks!
+
 
 };
 

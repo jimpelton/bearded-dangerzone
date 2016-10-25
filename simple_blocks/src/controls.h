@@ -38,12 +38,15 @@ public:
   static void s_keyboard_callback(GLFWwindow *, int key, int scancode, int action, int mods);
   static void s_window_size_callback(GLFWwindow *, int width, int height);
   static void s_scrollwheel_callback(GLFWwindow *, double xoff, double yoff);
+  static void s_mousebutton_callback(GLFWwindow *, int button, int action, int mods);
+
 
 
   void cursorpos_callback(GLFWwindow *window, double x, double y);
   void keyboard_callback(int key, int scancode, int action, int mods);
   void window_size_callback(int width, int height);
   void scrollwheel_callback(double xoff, double yoff);
+  void mousebutton_callback(GLFWwindow *, int button, int action, int mods);
 
   Cursor & getCursor();
 

@@ -88,33 +88,51 @@ Controls::s_scrollwheel_callback(GLFWwindow *window, double xoff, double yoff)
 
 
 void
+Controls::s_mousebutton_callback(GLFWwindow *window, int button, int action, int mods)
+{
+  assert(s_instance != nullptr);
+  s_instance->mousebutton_callback(window, button, action, mods);
+}
+
+
+void
 Controls::cursorpos_callback(GLFWwindow *window, double x, double y)
 {
   glm::vec2 cpos(std::floor(x), std::floor(y));
-  if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+  int press{ glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) };
+
+
+  if (press == GLFW_PRESS) {
 
     glm::vec2 delta(cpos - m_cursor.pos);
+
     subvol::Camera &cam{ m_renderer->getCamera() };
+
 
     // rotate around camera right
     glm::mat4 const pitch{ glm::rotate(glm::mat4{ 1.0f },
                                        glm::radians(-delta.y),
                                        cam.getRight()) };
 
+
     // Concat pitch with rotation around camera up vector
     glm::mat4 const rotation{ glm::rotate(pitch,
                                           glm::radians(-delta.x),
                                           cam.getUp()) };
 
+
     // Give the camera new eye and up
     cam.setEye(glm::vec3{ rotation * glm::vec4{ cam.getEye(), 1 }});
     cam.setUp(glm::vec3{  rotation * glm::vec4{ cam.getUp(), 1 }});
+
 
     m_renderer->setViewMatrix(cam.createViewMatrix());
     glm::vec3 f{ glm::normalize(cam.getLookAt() - cam.getEye()) };
     std::cout << "\rView dir: "
               << f.x << ", " << f.y << ", " << f.z
               << std::flush;
+
+
   }
 
   m_cursor.pos = cpos;
@@ -330,6 +348,14 @@ void Controls::scrollwheel_callback(double xoff, double yoff)
 
   std::cout << "\rfov: " << fov << std::flush;
   m_renderer->setFov(glm::radians(fov));
+}
+
+
+void
+Controls::mousebutton_callback(GLFWwindow *window, int button, int action, int mods)
+{
+  m_renderer->setIsRotating(
+      glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS);
 }
 
 

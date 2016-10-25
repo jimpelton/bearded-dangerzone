@@ -156,12 +156,13 @@ void
 ControlPanel::handle_valueChanged_min(int minSliderValue)
 {
 //  if (m_minSlider->value() != minSliderValue) {
-    m_currentMinFloat = sliderValueToFloat(minSliderValue);
+  m_currentMinFloat = sliderValueToFloat(minSliderValue);
 
-    if (minSliderValue > m_maxSlider->value()) {
-      m_maxSlider->setValue(minSliderValue + 1);
-    }
-    m_currentMin_Label->setText(QString::number(m_currentMinFloat));
+  if (minSliderValue > m_maxSlider->value()) {
+    m_maxSlider->setValue(minSliderValue + 1);
+  }
+  m_currentMin_Label->setText(QString::number(m_currentMinFloat));
+  m_renderer->setROVRange(m_currentMinFloat, m_currentMaxFloat);
 //    m_currentMin_SpinBox->setValue(m_currentMinFloat);
 //  }
   //TODO: send as min ROV to renderer
@@ -179,6 +180,7 @@ ControlPanel::handle_valueChanged_max(int maxSliderValue)
     }
 
   m_currentMax_Label->setText(QString::number(m_currentMaxFloat));
+  m_renderer->setROVRange(m_currentMinFloat, m_currentMaxFloat);
 
 //    m_currentMax_SpinBox->setValue(maxSliderValue);
 //  }
@@ -218,8 +220,7 @@ void
 ControlPanel::handle_sliderPressed()
 {
   //TODO: disable textures, show bboxes
-  m_renderer->setDrawNonEmptySlices(false);
-  m_renderer->setDrawNonEmptyBoundingBoxes(true);
+  m_renderer->setROVChanging(true);
 }
 
 
@@ -228,9 +229,8 @@ ControlPanel::handle_sliderReleased()
 {
   //TODO: reenable textures, disable bboxes
   std::cout << "\nMin ROV: " << m_currentMinFloat << " Max ROV: " << m_currentMaxFloat << std::endl;
-  m_renderer->setROVRange(m_currentMinFloat, m_currentMaxFloat);
-  m_renderer->setDrawNonEmptySlices(true);
-  m_renderer->setDrawNonEmptyBoundingBoxes(false);
+//  m_renderer->setROVRange(m_currentMinFloat, m_currentMaxFloat);
+  m_renderer->setROVChanging(false);
 }
 
 int

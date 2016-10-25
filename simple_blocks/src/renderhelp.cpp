@@ -54,7 +54,7 @@ initGLContext(int screenWidth, int screenHeight)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
 #else
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
 #endif
 
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -125,6 +125,7 @@ initializeControls(GLFWwindow *window, std::shared_ptr<BlockRenderer> renderer)
   glfwSetWindowSizeCallback(window, &Controls::s_window_size_callback);
   glfwSetKeyCallback(window, &Controls::s_keyboard_callback);
   glfwSetScrollCallback(window, &Controls::s_scrollwheel_callback);
+//  glfwSetMouseButtonCallback(window, &Controls::s_mousebutton_callback);
   glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
 
 }

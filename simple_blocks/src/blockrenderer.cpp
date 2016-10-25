@@ -29,31 +29,40 @@ BlockRenderer::BlockRenderer(int numSlices,
                              std::shared_ptr<bd::ShaderProgram> volumeShader,
                              std::shared_ptr<bd::ShaderProgram> volumeShaderLighting,
                              std::shared_ptr<bd::ShaderProgram> wireframeShader,
-                             std::vector<bd::Block *> *blocks,
+                             std::shared_ptr<bd::BlockCollection> blockCollection,
                              std::shared_ptr<bd::VertexArrayObject> blocksVAO,
                              std::shared_ptr<bd::VertexArrayObject> bboxVAO,
                              std::shared_ptr<bd::VertexArrayObject> axisVao)
     : Renderer()
+
     , m_numSlicesPerBlock{ numSlices }
     , m_tfuncScaleValue{ 1.0f }
+
+    , m_rov_min{ 0.0 }
+    , m_rov_max{ 0.0 }
+
     , m_drawNonEmptyBoundingBoxes{ false }
     , m_drawNonEmptySlices{ true }
-    , m_ROVChanged{ false }
+    , m_ROVRangeChanged{ false }
     , m_shouldUseLighting{ false }
     , m_backgroundColor{ 0.0f }
+
+    , m_colorMapTexture{ nullptr }
     , m_currentShader{ nullptr }
+
     , m_volumeShader{ std::move(volumeShader) }
     , m_volumeShaderLighting{ std::move(volumeShaderLighting) }
     , m_wireframeShader{ std::move(wireframeShader) }
-    , m_colorMapTexture{ nullptr }
     , m_quadsVao{ std::move(blocksVAO) }
     , m_boxesVao{ std::move(bboxVAO) }
     , m_axisVao{ std::move(axisVao) }
-    , m_rov_min{ 0.0 }
-    , m_rov_max{ 0.0 }
-    , m_blocks{ blocks }
+    , m_collection{ std::move(blockCollection) }
+
+    , m_blocksToDraw()
+    , m_blocks{ nullptr }
 {
-  m_blocksToDraw.reserve(blocks->size());
+  m_blocks = &(m_collection->blocks());
+  m_blocksToDraw.reserve(m_collection->blocks().size());
   init();
 }
 
@@ -193,6 +202,20 @@ BlockRenderer::setDrawNonEmptySlices(bool b)
   m_drawNonEmptySlices = b;
 }
 
+
+void
+BlockRenderer::setROVChanging(bool b)
+{
+  m_ROVChanging = b;
+}
+
+
+void
+BlockRenderer::setIsRotating(bool b)
+{
+  m_ROVChanging = b;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 void
 BlockRenderer::drawNonEmptyBoundingBoxes()
@@ -224,7 +247,7 @@ BlockRenderer::setROVRange(double min, double max)
 {
   m_rov_min = min;
   m_rov_max = max;
-  m_ROVChanged = true;
+  m_ROVRangeChanged = true;
 }
 
 
@@ -235,7 +258,7 @@ BlockRenderer::draw()
   // We need to draw in reverse-visibility order (painters algorithm!)
   // so the transparency looks correct.
 
-  if(m_ROVChanged) {
+  if(m_ROVRangeChanged) {
     filterBlocksByROV();
   }
 
@@ -249,11 +272,11 @@ BlockRenderer::draw()
 
   drawAxis();
 
-  if (m_drawNonEmptyBoundingBoxes) {
+  if (m_drawNonEmptyBoundingBoxes || m_ROVChanging) {
     drawNonEmptyBoundingBoxes();
   }
 
-  if (m_drawNonEmptySlices) {
+  if (m_drawNonEmptySlices && !m_ROVChanging) {
     drawNonEmptyBlocks_Forward();
   }
 
@@ -418,7 +441,7 @@ BlockRenderer::sortBlocks()
 void
 BlockRenderer::filterBlocksByROV()
 {
-  m_ROVChanged = false;
+  m_ROVRangeChanged = false;
   m_blocksToDraw.clear();
   for(auto *b : *m_blocks) {
     double rov{ b->fileBlock().rov };

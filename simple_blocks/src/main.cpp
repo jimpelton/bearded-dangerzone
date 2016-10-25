@@ -44,7 +44,7 @@ std::shared_ptr<bd::ShaderProgram> g_volumeShaderLighting{ nullptr };
 std::shared_ptr<bd::VertexArrayObject> g_axisVao{ nullptr };
 std::shared_ptr<bd::VertexArrayObject> g_boxVao{ nullptr };
 std::shared_ptr<bd::VertexArrayObject> g_quadVao{ nullptr };
-bd::BlockCollection *g_blockCollection{ nullptr };
+std::shared_ptr<bd::BlockCollection> g_blockCollection{ nullptr };
 //std::shared_ptr<subvol::Controls> g_controls{ nullptr };
 bool renderInitComplete{ false };
 
@@ -209,52 +209,9 @@ initializeTransferFunctions(subvol::CommandLineOptions const &clo,
 
 
 /////////////////////////////////////////////////////////////////////////////////
-GLFWwindow *
-run_subvol(subvol::CommandLineOptions &clo)
+void
+initializeVertexBuffers(subvol::CommandLineOptions const &clo)
 {
-  bd::BlockCollection *blockCollection{ new bd::BlockCollection() };
-//  g_blockCollection = blockCollection;
-
-  // Open the index file if possible, then setup the BlockCollection
-  // and give away ownership of the index file to the BlockCollection.
-  {
-    std::shared_ptr<bd::IndexFile> indexFile{ openIndexFile(clo) };
-    if (indexFile == nullptr) {
-      bd::Err() << "Couldn't open provided index file path: " << clo.indexFilePath;
-      return nullptr;
-    }
-    updateCommandLineOptionsFromIndexFile(clo, indexFile);
-
-    blockCollection->initBlocksFromIndexFile(std::move(indexFile));
-    // filter blocks in the index file that are within ROV thresholds
-    blockCollection->filterBlocks(
-        [&clo](bd::Block const &b) {
-          return b.fileBlock().rov >= clo.blockThreshold_Min &&
-              b.fileBlock().rov <= clo.blockThreshold_Max;
-        });
-  }
-
-
-  if (blockCollection->nonEmptyBlocks().size() == 0) {
-    bd::Info() << "All blocks where filtered out... exiting";
-    return nullptr;
-  }
-  bd::Info() << blockCollection->nonEmptyBlocks().size()
-             << " non-empty blocks in index file.";
-
-  subvol::printThem(clo);
-
-
-  // Initialize OpenGL and GLFW and generate our transfer function textures.
-  GLFWwindow *window{ nullptr };
-  window = subvol::renderhelp::initGLContext(clo.windowWidth, clo.windowHeight);
-  if (window == nullptr) {
-    bd::Err() << "Could not initialize GLFW, exiting.";
-    return nullptr;
-  }
-  subvol::renderhelp::setInitialGLState();
-
-
 
   // 2d slices
   g_quadVao = std::make_shared<bd::VertexArrayObject>();
@@ -262,8 +219,10 @@ run_subvol(subvol::CommandLineOptions &clo)
   //TODO: generate quads shaped to the actual volume dimensions.
   bd::Dbg() << "Generating proxy geometry VAO";
   subvol::genQuadVao(*g_quadVao,
-                     { -0.5f, -0.5f, -0.5f },
-                     { 0.5f, 0.5f, 0.5f },
+//                     { -0.5f, -0.5f, -0.5f },
+//                     { 0.5f, 0.5f, 0.5f },
+                     { -1.0f, -1.0f, -1.0f },
+                     { 1.0f, 1.0f, 1.0f },
                      { clo.num_slices, clo.num_slices, clo.num_slices });
 
 
@@ -279,8 +238,13 @@ run_subvol(subvol::CommandLineOptions &clo)
   g_boxVao = std::make_shared<bd::VertexArrayObject>();
   g_boxVao->create();
   subvol::genBoxVao(*g_boxVao);
+}
 
 
+int
+initializeShaders(subvol::CommandLineOptions &clo)
+{
+  int rval = 0b111;
   // Wireframe Shader
   g_wireframeShader = std::make_shared<bd::ShaderProgram>();
   GLuint programId{
@@ -288,7 +252,7 @@ run_subvol(subvol::CommandLineOptions &clo)
                                      "shaders/frag_vertcolor.glsl") };
   if (programId == 0) {
     bd::Err() << "Error building passthrough shader, program id was 0.";
-    return nullptr;
+    rval &= 0b110;
   }
 
 
@@ -299,7 +263,7 @@ run_subvol(subvol::CommandLineOptions &clo)
                                   "shaders/frag_volumesampler_noshading.glsl");
   if (programId == 0) {
     bd::Err() << "Error building volume shader, program id was 0.";
-    return nullptr;
+    rval &= 0b101;
   }
   g_volumeShader->unbind();
 
@@ -311,25 +275,82 @@ run_subvol(subvol::CommandLineOptions &clo)
                                           "shaders/frag_shading_otfgrads.glsl");
   if (programId == 0) {
     bd::Err() << "Error building volume lighting shader, program id was 0.";
-    return nullptr;
+    rval &= 0b011;
   }
   g_volumeShaderLighting->unbind();
+
+  return rval;
+}
+
+/////////////////////////////////////////////////////////////////////////////////
+GLFWwindow *
+run_subvol(subvol::CommandLineOptions &clo)
+{
+//  bd::BlockCollection *blockCollection{ new bd::BlockCollection() };
+  g_blockCollection = std::make_shared<bd::BlockCollection>();
+
+  // Open the index file if possible, then setup the BlockCollection
+  // and give away ownership of the index file to the BlockCollection.
+  {
+    std::shared_ptr<bd::IndexFile> indexFile{ openIndexFile(clo) };
+    if (indexFile == nullptr) {
+      bd::Err() << "Couldn't open provided index file path: " << clo.indexFilePath;
+      return nullptr;
+    }
+    updateCommandLineOptionsFromIndexFile(clo, indexFile);
+
+    g_blockCollection->initBlocksFromIndexFile(std::move(indexFile));
+    // filter blocks in the index file that are within ROV thresholds
+    g_blockCollection->filterBlocks(
+        [&clo](bd::Block const &b) {
+          return b.fileBlock().rov >= clo.blockThreshold_Min &&
+              b.fileBlock().rov <= clo.blockThreshold_Max;
+        });
+  }
+
+
+//  if (blockCollection->nonEmptyBlocks().size() == 0) {
+//    bd::Info() << "All blocks where filtered out... exiting";
+//    return nullptr;
+//  }
+  bd::Info() << g_blockCollection->blocks().size()
+             << " blocks in index file.";
+
+  subvol::printThem(clo);
+
+
+  // Initialize OpenGL and GLFW and generate our transfer function textures.
+  GLFWwindow *window{ nullptr };
+  window = subvol::renderhelp::initGLContext(clo.windowWidth, clo.windowHeight);
+  if (window == nullptr) {
+    bd::Err() << "Could not initialize GLFW, exiting.";
+    return nullptr;
+  }
+  subvol::renderhelp::setInitialGLState();
+
+  subvol::initializeVertexBuffers(clo);
+
+  subvol::initializeShaders(clo);
+
 
   g_renderer =
       std::make_shared<subvol::BlockRenderer>(int(clo.num_slices),
                                               g_volumeShader,
                                               g_volumeShaderLighting,
                                               g_wireframeShader,
-                                              &blockCollection->nonEmptyBlocks(),
-                                              g_quadVao, g_boxVao, g_axisVao);
+                                              g_blockCollection,
+                                              g_quadVao,
+                                              g_boxVao,
+                                              g_axisVao);
   g_renderer->resize(clo.windowWidth, clo.windowHeight);
   g_renderer->getCamera().setEye({ 0, 0, 2 });
   g_renderer->getCamera().setLookAt({ 0, 0, 0 });
   g_renderer->getCamera().setUp({ 0, 1, 0 });
   g_renderer->setViewMatrix(g_renderer->getCamera().createViewMatrix());
   g_renderer->setROVRange(clo.blockThreshold_Min, clo.blockThreshold_Max);
-
-  blockCollection->initBlockTextures(clo.rawFilePath);
+  g_blockCollection->initBlockTextures(clo.rawFilePath);
+  g_renderer->setDrawNonEmptySlices(true);
+  g_renderer->setDrawNonEmptyBoundingBoxes(false);
   initializeTransferFunctions(clo, *g_renderer);
   g_renderer->setColorMapTexture(
       ColorMapManager::getMapByName(
@@ -377,6 +398,10 @@ int main(int argc, char *argv[])
 //                            });
 
   GLFWwindow * window = subvol::run_subvol(clo);
+  if (window == nullptr) {
+    bd::Err() << "Could not initialize GLFW (window could not be created). Exiting...";
+    return 1;
+  }
 
   //TODO: use semaphore
 
