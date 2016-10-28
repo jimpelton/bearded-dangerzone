@@ -67,8 +67,8 @@ ColorMap::loadFromKnots(std::string const &name, std::vector<glm::vec4> const &k
   }
 
   m_knots = knots;
-  return true;
 
+  return true;
 }
 
 
@@ -78,24 +78,32 @@ ColorMap::loadFromTFFiles(std::string const &funcName,
                           std::string const &opacityTF)
 {
   try {
-    bd::ColorTransferFunction ctf;
-    ctf.load(colorTF);
-
-    bd::OpacityTransferFunction otf;
-    otf.load(opacityTF);
+    // Combine the knots for the colorTF and the opacityTF
 
     std::set<double> scalars;
 
-    for (auto &k : otf.getKnotsVector()) {
-      scalars.insert(k.s);
+    bd::ColorTransferFunction ctf;
+    bd::OpacityTransferFunction otf;
+
+    if (! colorTF.empty()) {
+      ctf.load(colorTF);
+
+      for (auto &k : ctf.getKnotsVector()) {
+        scalars.insert(k.s);
+      }
     }
 
-    for (auto &k : ctf.getKnotsVector()) {
-      scalars.insert(k.s);
-    }
+    if (! opacityTF.empty()) {
+      otf.load(opacityTF);
 
+      for (auto &k : otf.getKnotsVector()) {
+        scalars.insert(k.s);
+      }
+
+    }
 
     std::vector<glm::vec4> knots;
+
     for (auto &k : scalars) {
       double opacity{ otf.interpolate(k) };
       bd::Color color{ ctf.interpolate(k) };
@@ -113,7 +121,7 @@ ColorMap::loadFromTFFiles(std::string const &funcName,
     m_name = funcName;
 
   }
-  catch (std::exception e) {
+  catch (std::runtime_error &e) {
     bd::Err() << "Exception encountered when loading user defined colormap: "
         "Name: " << funcName << ". Message was: " << e.what();
     return false;
@@ -184,6 +192,10 @@ bool
 ColorMap::generateColorMapTexture(std::string const &name,
                                   std::vector<glm::vec4> const &func)
 {
+  if (func.size() == 0) {
+    return false;
+  }
+
   bool success{ true };
 
   float const *textureData{ reinterpret_cast<float const *>(func.data()) };
@@ -480,14 +492,16 @@ ColorMapManager::loadColorMap(std::string const &funcName,
       << " Color tf: " << colorFilePath << ','
       << " Opacity tf: " << opacityFilePath;
 
-  ColorMap c;
+  ColorMap &c = newColorMap(funcName);
 
   bool success = c.loadFromTFFiles(funcName, colorFilePath, opacityFilePath);
 
-  if (success) {
-    s_maps["USER"] = c;
-    s_colorMapNames.push_back( &s_maps.find("USER")->first );
+  if (!success) {
+    s_maps.erase(funcName);
+    return false;
   }
+
+  s_colorMapNames.push_back( &s_maps.find("USER")->first );
 
   return success;
 }
@@ -544,6 +558,16 @@ ColorMapManager::load1DT(std::string const &funcName,
   s_colorMapNames.push_back(name);
 
   return true;
+}
+
+/* static */
+ColorMap&
+ColorMapManager::newColorMap(std::string const &funcName)
+{
+  ColorMap c{ funcName, {} };
+  s_maps[funcName] = c;
+
+  return s_maps[funcName];
 }
 
 ///* static */

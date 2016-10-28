@@ -162,9 +162,9 @@ private:
   std::shared_ptr<bd::VertexArrayObject> m_axisVao;
   std::shared_ptr<bd::BlockCollection> m_collection;
 
-  std::vector<bd::Block *> m_blocksToDraw;  ///< Non-empty blocks to draw.
-  std::vector<bd::Block *> *m_blocks;       ///< All the blocks!
 
+  std::vector<bd::Block *> *m_blocksToDraw;  ///< Non-empty blocks to draw.
+  std::vector<bd::Block *> *m_blocks;       ///< All the blocks!
 
 };
 

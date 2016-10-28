@@ -11,7 +11,7 @@ struct CommandLineOptions
   /// raw file path
   std::string rawFilePath;
   /// transfer function file path
-  std::string tfuncPath;
+  std::string tfunc1dtPath;
   /// opacity transfer function path
   std::string opacityTFuncPath;
   /// color transfer function path

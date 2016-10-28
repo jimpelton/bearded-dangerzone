@@ -121,11 +121,12 @@ updateCommandLineOptionsFromIndexFile(subvol::CommandLineOptions &clo,
   double max{ std::numeric_limits<double>::lowest() };
 
 
-  auto minmaxE = std::minmax_element(indexFile->getFileBlocks().begin(),
-                        indexFile->getFileBlocks().end(),
-                        [](bd::FileBlock const & lhs, bd::FileBlock const & rhs) -> bool {
-                          return lhs.rov < rhs.rov;
-                        } );
+  auto minmaxE =
+      std::minmax_element(indexFile->getFileBlocks().begin(),
+                          indexFile->getFileBlocks().end(),
+                          [](bd::FileBlock const & lhs, bd::FileBlock const & rhs) -> bool {
+                            return lhs.rov < rhs.rov;
+                          } );
 
   g_rovMin = min = (*minmaxE.first).rov;
   g_rovMax = max = (*minmaxE.second).rov;
@@ -150,25 +151,21 @@ updateCommandLineOptionsFromIndexFile(subvol::CommandLineOptions &clo,
 
 /////////////////////////////////////////////////////////////////////////////////
 void
-checkColorMapLoaded(bool loaded, std::string const &name,
-                    subvol::BlockRenderer &renderer)
+setRendererInitialTransferFunction(bool loaded, std::string const &name,
+                                   subvol::BlockRenderer &renderer)
 {
 
   if (loaded) {
 
-
-    // The 1dt color map was loaded so, give it to the renderer.
+    // The color map was loaded so, give it to the renderer.
     renderer.setColorMapTexture(
         ColorMapManager::getMapByName(name).getTexture());
 
-
   } else {
 
-    bd::Err() << "Transfer function was malformed. The function won't be available.";
     renderer.setColorMapTexture(
         ColorMapManager::getMapByName(
             ColorMapManager::getCurrentMapName()).getTexture());
-
 
   }
 
@@ -177,33 +174,29 @@ checkColorMapLoaded(bool loaded, std::string const &name,
 
 /////////////////////////////////////////////////////////////////////////////////
 bool
-initializeTransferFunctions(subvol::CommandLineOptions const &clo,
-                            subvol::BlockRenderer &renderer)
+initializeTransferFunctions(subvol::CommandLineOptions const &clo)
 {
 
   ColorMapManager::generateDefaultTransferFunctionTextures();
 
+  // if user transfer function was loaded.
   bool loaded{ false };
   try {
 
-    // if both color and opacity files are given... load those tfuncs
-    if (!( clo.colorTFuncPath.empty() || clo.opacityTFuncPath.empty())) {
-
-      loaded = ColorMapManager::loadColorMap("USER",
-                                             clo.colorTFuncPath,
+    // if at least one of color and opacity files are given... load those tfuncs
+    if ( !clo.colorTFuncPath.empty() || !clo.opacityTFuncPath.empty()) {
+      loaded = ColorMapManager::loadColorMap("USER", clo.colorTFuncPath,
                                              clo.opacityTFuncPath);
-
-    } else if (!clo.tfuncPath.empty()) {
-
-      loaded = ColorMapManager::load1DT("USER", clo.tfuncPath);
-
+    } else if (!clo.tfunc1dtPath.empty()) {
+      loaded = ColorMapManager::load1DT("USER", clo.tfunc1dtPath);
     }
-  }
-  catch (std::ifstream::failure e) {
-    bd::Err() << "Error reading user defined transfer function file(s). "
+
+  } catch (std::ios_base::failure &e) {
+    bd::Warn() << "Error reading user defined transfer function file(s). "
         "The function won't be available.";
   }
-  checkColorMapLoaded(loaded, "USER", renderer);
+
+
   return loaded;
 }
 
@@ -245,6 +238,8 @@ int
 initializeShaders(subvol::CommandLineOptions &clo)
 {
   int rval = 0b111;
+
+
   // Wireframe Shader
   g_wireframeShader = std::make_shared<bd::ShaderProgram>();
   GLuint programId{
@@ -254,6 +249,7 @@ initializeShaders(subvol::CommandLineOptions &clo)
     bd::Err() << "Error building passthrough shader, program id was 0.";
     rval &= 0b110;
   }
+  g_wireframeShader->unbind();
 
 
   // Volume shader
@@ -279,12 +275,13 @@ initializeShaders(subvol::CommandLineOptions &clo)
   }
   g_volumeShaderLighting->unbind();
 
+
   return rval;
 }
 
 /////////////////////////////////////////////////////////////////////////////////
 GLFWwindow *
-run_subvol(subvol::CommandLineOptions &clo)
+init_subvol(subvol::CommandLineOptions &clo)
 {
 //  bd::BlockCollection *blockCollection{ new bd::BlockCollection() };
   g_blockCollection = std::make_shared<bd::BlockCollection>();
@@ -297,15 +294,11 @@ run_subvol(subvol::CommandLineOptions &clo)
       bd::Err() << "Couldn't open provided index file path: " << clo.indexFilePath;
       return nullptr;
     }
+
     updateCommandLineOptionsFromIndexFile(clo, indexFile);
+    subvol::printThem(clo);
 
     g_blockCollection->initBlocksFromIndexFile(std::move(indexFile));
-    // filter blocks in the index file that are within ROV thresholds
-    g_blockCollection->filterBlocks(
-        [&clo](bd::Block const &b) {
-          return b.fileBlock().rov >= clo.blockThreshold_Min &&
-              b.fileBlock().rov <= clo.blockThreshold_Max;
-        });
   }
 
 
@@ -313,10 +306,16 @@ run_subvol(subvol::CommandLineOptions &clo)
 //    bd::Info() << "All blocks where filtered out... exiting";
 //    return nullptr;
 //  }
-  bd::Info() << g_blockCollection->blocks().size()
-             << " blocks in index file.";
 
-  subvol::printThem(clo);
+  // filter blocks in the index file that are within ROV thresholds
+  g_blockCollection->filterBlocks(
+      [&clo](bd::Block const &b) {
+        return b.fileBlock().rov >= clo.blockThreshold_Min &&
+            b.fileBlock().rov <= clo.blockThreshold_Max;
+      });
+
+  bd::Info() << g_blockCollection->blocks().size() << " blocks in index file.";
+
 
 
   // Initialize OpenGL and GLFW and generate our transfer function textures.
@@ -332,6 +331,10 @@ run_subvol(subvol::CommandLineOptions &clo)
 
   subvol::initializeShaders(clo);
 
+  bool loaded = subvol::initializeTransferFunctions(clo);
+
+  g_blockCollection->initBlockTextures(clo.rawFilePath);
+
 
   g_renderer =
       std::make_shared<subvol::BlockRenderer>(int(clo.num_slices),
@@ -342,19 +345,22 @@ run_subvol(subvol::CommandLineOptions &clo)
                                               g_quadVao,
                                               g_boxVao,
                                               g_axisVao);
+
+  setRendererInitialTransferFunction(loaded, "USER", *g_renderer);
+
   g_renderer->resize(clo.windowWidth, clo.windowHeight);
-  g_renderer->getCamera().setEye({ 0, 0, 2 });
+  g_renderer->getCamera().setEye({ 0, 0, 4 });
   g_renderer->getCamera().setLookAt({ 0, 0, 0 });
   g_renderer->getCamera().setUp({ 0, 1, 0 });
   g_renderer->setViewMatrix(g_renderer->getCamera().createViewMatrix());
   g_renderer->setROVRange(clo.blockThreshold_Min, clo.blockThreshold_Max);
-  g_blockCollection->initBlockTextures(clo.rawFilePath);
   g_renderer->setDrawNonEmptySlices(true);
   g_renderer->setDrawNonEmptyBoundingBoxes(false);
-  initializeTransferFunctions(clo, *g_renderer);
-  g_renderer->setColorMapTexture(
-      ColorMapManager::getMapByName(
-          ColorMapManager::getCurrentMapName()).getTexture());
+
+
+//  g_renderer->setColorMapTexture(
+//      ColorMapManager::getMapByName(
+//          ColorMapManager::getCurrentMapName()).getTexture());
 
 //  setCameraPosPreset(clo.cameraPos);
 
@@ -367,7 +373,7 @@ run_subvol(subvol::CommandLineOptions &clo)
 
   return window;
 
-} // run_subvol
+} // init_subvol
 
 } // namespace subvol
 
@@ -390,20 +396,12 @@ int main(int argc, char *argv[])
   }
 
 
-  // start renderer on separate thread.
-//  std::future<int>
-//      returned = std::async(std::launch::async,
-//                            [&clo]() {
-//                              return subvol::run_subvol(clo);
-//                            });
-
-  GLFWwindow * window = subvol::run_subvol(clo);
+  GLFWwindow * window = subvol::init_subvol(clo);
   if (window == nullptr) {
     bd::Err() << "Could not initialize GLFW (window could not be created). Exiting...";
     return 1;
   }
 
-  //TODO: use semaphore
 
   std::future<int>
       returned = std::async(std::launch::async,

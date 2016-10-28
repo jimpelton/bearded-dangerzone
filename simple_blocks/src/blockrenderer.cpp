@@ -18,6 +18,12 @@
 namespace subvol
 {
 
+
+namespace
+{
+}
+
+
 BlockRenderer::BlockRenderer()
     : BlockRenderer(0, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr)
 {
@@ -58,11 +64,12 @@ BlockRenderer::BlockRenderer(int numSlices,
     , m_axisVao{ std::move(axisVao) }
     , m_collection{ std::move(blockCollection) }
 
-    , m_blocksToDraw()
+    , m_blocksToDraw{ nullptr }
     , m_blocks{ nullptr }
 {
   m_blocks = &(m_collection->blocks());
-  m_blocksToDraw.reserve(m_collection->blocks().size());
+  m_blocksToDraw = &(m_collection->nonEmptyBlocks());
+  //m_blocksToDraw.reserve(m_collection->blocks().size());
   init();
 }
 
@@ -222,7 +229,7 @@ BlockRenderer::drawNonEmptyBoundingBoxes()
 {
   m_wireframeShader->bind();
   m_boxesVao->bind();
-  for (auto *b : m_blocksToDraw) {
+  for (auto *b : *m_blocksToDraw) {
     setWorldMatrix(b->transform());
     m_wireframeShader->setUniform(WIREFRAME_MVP_MATRIX_UNIFORM_STR,
                                   getWorldViewProjectionMatrix());
@@ -337,7 +344,7 @@ BlockRenderer::drawNonEmptyBlocks_Forward()
   // Start an NVPM profiling frame
   perf_frameBegin();
 
-  for (auto *b : m_blocksToDraw) {
+  for (auto *b : *m_blocksToDraw) {
 
     setWorldMatrix(b->transform());
     b->texture().bind(BLOCK_TEXTURE_UNIT);
@@ -430,7 +437,7 @@ BlockRenderer::sortBlocks()
 
   // Sort the blocks by their distance from the camera.
   // The origin of each block is used.
-  std::sort(m_blocksToDraw.begin(), m_blocksToDraw.end(),
+  std::sort(m_blocksToDraw->begin(), m_blocksToDraw->end(),
             [&eye](bd::Block *a, bd::Block *b) {
               float a_dist = glm::distance(eye, a->origin());
               float b_dist = glm::distance(eye, b->origin());
@@ -442,13 +449,15 @@ void
 BlockRenderer::filterBlocksByROV()
 {
   m_ROVRangeChanged = false;
-  m_blocksToDraw.clear();
-  for(auto *b : *m_blocks) {
-    double rov{ b->fileBlock().rov };
-    if (rov >= m_rov_min && rov <= m_rov_max) {
-      m_blocksToDraw.push_back(b);
-    }
-  }
+  m_blocksToDraw->clear();
+  m_collection->filterBlocksByROVRange(m_rov_min, m_rov_max);
+
+//  for(auto *b : *m_blocks) {
+//    double rov{ b->fileBlock().rov };
+//    if (rov >= m_rov_min && rov <= m_rov_max) {
+//      m_blocksToDraw->push_back(b);
+//    }
+//  }
 }
 
 } // namespace subvol

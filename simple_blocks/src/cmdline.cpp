@@ -153,7 +153,7 @@ try
   cmd.parse(argc, argv);
 
   opts.rawFilePath = fileArg.getValue();
-  opts.tfuncPath = tfuncArg.getValue();
+  opts.tfunc1dtPath = tfuncArg.getValue();
   opts.opacityTFuncPath = opacityTFArg.getValue();
   opts.colorTFuncPath = colorTFArg.getValue();
   opts.indexFilePath = indexFilePath.getValue();
@@ -188,7 +188,7 @@ printThem(CommandLineOptions &opts)
 {
   std::cout
       << "File path: " << opts.rawFilePath
-      << "\nTransfer function: " << opts.tfuncPath
+      << "\nTransfer function: " << opts.tfunc1dtPath
       << "\nPerf out file: " << opts.perfOutPath
       << "\nPerf mode: " << opts.perfMode
       << "\nData Type: " << opts.dataType
@@ -247,7 +247,7 @@ printThem(CommandLineOptions &opts)
 //
 //    opts.filePath = m_vm["file"].as<std::string>();
 //    opts.printBlocks = m_vm.count("print-blocks") ? true : false;
-//    opts.tfuncPath = m_vm["tfunc"].as<std::string>();
+//    opts.tfunc1dtPath = m_vm["tfunc"].as<std::string>();
 //    opts.type = m_vm["type"].as<std::string>();
 //    opts.w = m_vm["xdim"].as<size_t>();
 //    opts.h = m_vm["ydim"].as<size_t>();
