@@ -212,10 +212,10 @@ initializeVertexBuffers(subvol::CommandLineOptions const &clo)
   //TODO: generate quads shaped to the actual volume dimensions.
   bd::Dbg() << "Generating proxy geometry VAO";
   subvol::genQuadVao(*g_quadVao,
-//                     { -0.5f, -0.5f, -0.5f },
-//                     { 0.5f, 0.5f, 0.5f },
-                     { -1.0f, -1.0f, -1.0f },
-                     { 1.0f, 1.0f, 1.0f },
+                     { -0.5f, -0.5f, -0.5f },
+                     { 0.5f, 0.5f, 0.5f },
+//                     { -1.0f, -1.0f, -1.0f },
+//                     { 1.0f, 1.0f, 1.0f },
                      { clo.num_slices, clo.num_slices, clo.num_slices });
 
 

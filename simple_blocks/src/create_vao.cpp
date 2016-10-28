@@ -175,7 +175,9 @@ genQuadVao(bd::VertexArrayObject &vao, glm::vec3 const &min, glm::vec3 const &ma
 
   vao.addVbo(texbuf, VERTEX_COLOR_ATTR, bd::VertexArrayObject::Usage::Static_Draw);
 
-  // Create element indexes just for x dimension right now
+  // Create element indexes just for x dimension right now.
+  // Since x, y, and z dims have equal number of slices,
+  // we only need one set up elements.
   createElementIdx(elebuf, numSlices.x );
 
   // Element index buffer
