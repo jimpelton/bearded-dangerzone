@@ -11,42 +11,88 @@
 namespace subvol
 {
 
-
-
 class Camera
 {
 public:
   /// \brief Create a camera at (0,0,0), looking at (0,0,-1) with up vector (0,1,0).
-  Camera() : Camera{ {0,0,0}, {0,0,-1}, {0,1,0} } { }
+  Camera()
+      : Camera{{ 0, 0, 0 },
+               { 0, 0, -1 },
+               { 0, 1, 0 }}
+  {
+  }
 
-  Camera(glm::vec3 const& eye, glm::vec3 const& lookAt, glm::vec3 const& up)
+
+  Camera(glm::vec3 const &eye, glm::vec3 const &lookAt, glm::vec3 const &up)
       : m_eye{ eye }
       , m_lookAt{ lookAt }
       , m_up{ up }
-  { }
+  {
+  }
 
-  ~Camera() { }
+
+  ~Camera()
+  {
+  }
 
 
   /// \brief Create right handed view matrix with glm::lookAt().
-  glm::mat4 createViewMatrix() const
+  glm::mat4
+  createViewMatrix() const
   {
     return glm::lookAtRH(m_eye, m_lookAt, m_up);
   };
 
-  glm::vec3 const& getEye() const { return m_eye; }
-  glm::vec3 const& getLookAt() const { return m_lookAt; }
-  glm::vec3 const& getUp() const { return m_up; }
-  glm::vec3 getRight() const
+
+  glm::vec3 const &
+  getEye() const
+  {
+    return m_eye;
+  }
+
+
+  glm::vec3 const &
+  getLookAt() const
+  {
+    return m_lookAt;
+  }
+
+
+  glm::vec3 const &
+  getUp() const
+  {
+    return m_up;
+  }
+
+
+  glm::vec3
+  getRight() const
   {
     glm::vec3 const f = glm::normalize(m_lookAt - m_eye);
     glm::vec3 r = glm::cross(f, m_up);
     return r;
   }
 
-  void setEye(glm::vec3 const& v) { m_eye = v; }
-  void setLookAt(glm::vec3 const& v) { m_lookAt = v; }
-  void setUp(glm::vec3 const& v) { m_up = v; }
+
+  void
+  setEye(glm::vec3 const &v)
+  {
+    m_eye = v;
+  }
+
+
+  void
+  setLookAt(glm::vec3 const &v)
+  {
+    m_lookAt = v;
+  }
+
+
+  void
+  setUp(glm::vec3 const &v)
+  {
+    m_up = v;
+  }
 
 
 private:
@@ -59,17 +105,26 @@ private:
 
 };
 
-
 class Renderer
 {
 
 public:
   Renderer();
+
+
   virtual ~Renderer();
 
-  void resize(unsigned int w, unsigned int h);
-  unsigned int getViewPortWidth() const;
-  unsigned int getViewPortHeight() const;
+
+  void
+  resize(unsigned int w, unsigned int h);
+
+
+  unsigned int
+  getViewPortWidth() const;
+
+
+  unsigned int
+  getViewPortHeight() const;
 
 //  void setNearClip(float near);
 
@@ -77,29 +132,62 @@ public:
 
   /// \brief Set FOV, expressed in radians.
   /// \note Updates world-view-projection matrix
-  void setFov(float fov);
-  float getFov() const;
+  void
+  setFov(float fov);
 
-  void setClearColor(glm::vec3 const &color);
-  glm::vec3 const& getClearColor() const;
 
-  void setWorldMatrix(glm::mat4 const& world);
-  glm::mat4 const& getWorldMatrix() const;
+  float
+  getFov() const;
 
-  void setViewMatrix(glm::mat4 const& view);
-  glm::mat4 const& getViewMatrix() const;
 
-  void setProjectionMatrix(glm::mat4 const& proj);
-  glm::mat4 const& getProjectionMatrix() const;
+  void
+  setClearColor(glm::vec3 const &color);
 
-  glm::mat4 const& getWorldViewProjectionMatrix() const;
 
-  Camera const& getCamera() const;
-  Camera& getCamera();
+  glm::vec3 const &
+  getClearColor() const;
+
+
+  void
+  setWorldMatrix(glm::mat4 const &world);
+
+
+  glm::mat4 const &
+  getWorldMatrix() const;
+
+
+  void
+  setViewMatrix(glm::mat4 const &view);
+
+
+  glm::mat4 const &
+  getViewMatrix() const;
+
+
+  void
+  setProjectionMatrix(glm::mat4 const &proj);
+
+
+  glm::mat4 const &
+  getProjectionMatrix() const;
+
+
+  glm::mat4 const &
+  getWorldViewProjectionMatrix() const;
+
+
+  Camera const &
+  getCamera() const;
+
+
+  Camera &
+  getCamera();
 
 //  void setShader(Shader *s);
 private:
-  void updateProjectionMatrix();
+  void
+  updateProjectionMatrix();
+
 
 private:
   /// Window X pos
@@ -129,7 +217,6 @@ private:
   glm::mat4 m_projMat;
   /// WVP
   glm::mat4 m_wvpMat;
-
 
   Camera m_camera;
 //  bd::Shader *m_shader;
