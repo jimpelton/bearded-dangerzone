@@ -381,6 +381,7 @@ init_subvol(subvol::CommandLineOptions &clo)
 /////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char *argv[])
 {
+  bd::Info() << "Startup";
   TCLAP::CmdLine cmd("Simple Blocks blocking volume render experiment.", ' ');
   subvol::CommandLineOptions clo;
   if (subvol::parseThem(argc, argv, cmd, clo) == 0) {
