@@ -199,7 +199,7 @@ ColorMap::generateColorMapTexture(std::string const &name,
   bool success{ true };
 
   float const *textureData{ reinterpret_cast<float const *>(func.data()) };
-  size_t numElements{ func.size() * 4 };         // 4 elements in glm::vec4
+  size_t numElements{ func.size() /* * 4 */ };         // 4 elements in glm::vec4
 
 
   unsigned int texId{ 0 };
