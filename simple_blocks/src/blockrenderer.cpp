@@ -418,10 +418,12 @@ BlockRenderer::computeBaseVertexFromViewDir(glm::vec3 const &viewdir)
       break;
   }
 
+
   if (newSelected != m_selectedSliceSet) {
     std::cout << " Switched slice set: " << ( isPos ? '+' : '-' ) <<
               newSelected << " Base vertex: " << baseVertex << '\n';
   }
+
 
   m_selectedSliceSet = newSelected;
 
