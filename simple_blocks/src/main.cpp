@@ -28,6 +28,8 @@
 #include <fstream>
 #include <iostream>
 #include <ostream>
+#include <future>
+
 
 #include <memory>
 
@@ -211,11 +213,10 @@ initializeVertexBuffers(subvol::CommandLineOptions const &clo)
   g_quadVao->create();
   //TODO: generate quads shaped to the actual volume dimensions.
   bd::Dbg() << "Generating proxy geometry VAO";
+  
   subvol::genQuadVao(*g_quadVao,
                      { -0.5f, -0.5f, -0.5f },
                      { 0.5f, 0.5f, 0.5f },
-//                     { -1.0f, -1.0f, -1.0f },
-//                     { 1.0f, 1.0f, 1.0f },
                      { clo.num_slices, clo.num_slices, clo.num_slices });
 
 
@@ -288,7 +289,7 @@ init_subvol(subvol::CommandLineOptions &clo)
 
   // Open the index file if possible, then setup the BlockCollection
   // and give away ownership of the index file to the BlockCollection.
-  {
+  
     std::shared_ptr<bd::IndexFile> indexFile{ openIndexFile(clo) };
     if (indexFile == nullptr) {
       bd::Err() << "Couldn't open provided index file path: " << clo.indexFilePath;
@@ -298,14 +299,8 @@ init_subvol(subvol::CommandLineOptions &clo)
     updateCommandLineOptionsFromIndexFile(clo, indexFile);
     subvol::printThem(clo);
 
-    g_blockCollection->initBlocksFromIndexFile(std::move(indexFile));
-  }
-
-
-//  if (blockCollection->nonEmptyBlocks().size() == 0) {
-//    bd::Info() << "All blocks where filtered out... exiting";
-//    return nullptr;
-//  }
+    g_blockCollection->initBlocksFromIndexFile(indexFile);
+  
 
   // filter blocks in the index file that are within ROV thresholds
   g_blockCollection->filterBlocks(
@@ -314,8 +309,8 @@ init_subvol(subvol::CommandLineOptions &clo)
             b.fileBlock().rov <= clo.blockThreshold_Max;
       });
 
-  bd::Info() << g_blockCollection->blocks().size() << " blocks in index file.";
 
+  bd::Info() << g_blockCollection->blocks().size() << " blocks in index file.";
 
 
   // Initialize OpenGL and GLFW and generate our transfer function textures.
@@ -333,7 +328,8 @@ init_subvol(subvol::CommandLineOptions &clo)
 
   bool loaded = subvol::initializeTransferFunctions(clo);
 
-  g_blockCollection->initBlockTextures(clo.rawFilePath);
+  bd::DataType type = bd::IndexFileHeader::getType(indexFile->getHeader());
+  g_blockCollection->initBlockTextures(clo.rawFilePath, type);
 
 
   g_renderer =
@@ -357,10 +353,6 @@ init_subvol(subvol::CommandLineOptions &clo)
   g_renderer->setDrawNonEmptySlices(true);
   g_renderer->setDrawNonEmptyBoundingBoxes(false);
 
-
-//  g_renderer->setColorMapTexture(
-//      ColorMapManager::getMapByName(
-//          ColorMapManager::getCurrentMapName()).getTexture());
 
 //  setCameraPosPreset(clo.cameraPos);
 
