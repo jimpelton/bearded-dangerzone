@@ -119,7 +119,7 @@ updateCommandLineOptionsFromIndexFile(subvol::CommandLineOptions &clo,
 
   // Clamp clo.blockThreshold_Min/Max to the min/max values of
   // the blocks in indexfile.
-  double min{ std::numeric_limits<double>::lowest() };
+  double min{ std::numeric_limits<double>::max() };
   double max{ std::numeric_limits<double>::lowest() };
 
 
@@ -133,6 +133,7 @@ updateCommandLineOptionsFromIndexFile(subvol::CommandLineOptions &clo,
   g_rovMin = min = (*minmaxE.first).rov;
   g_rovMax = max = (*minmaxE.second).rov;
 
+  // Clamp the given block thresholds to the actual.
   if (clo.blockThreshold_Min < min) {
     clo.blockThreshold_Min = min;
   }
@@ -290,16 +291,16 @@ init_subvol(subvol::CommandLineOptions &clo)
   // Open the index file if possible, then setup the BlockCollection
   // and give away ownership of the index file to the BlockCollection.
   
-    std::shared_ptr<bd::IndexFile> indexFile{ openIndexFile(clo) };
-    if (indexFile == nullptr) {
-      bd::Err() << "Couldn't open provided index file path: " << clo.indexFilePath;
-      return nullptr;
-    }
+  std::shared_ptr<bd::IndexFile> indexFile{ openIndexFile(clo) };
+  if (indexFile == nullptr) {
+    bd::Err() << "Couldn't open provided index file path: " << clo.indexFilePath;
+    return nullptr;
+  }
 
-    updateCommandLineOptionsFromIndexFile(clo, indexFile);
-    subvol::printThem(clo);
+  updateCommandLineOptionsFromIndexFile(clo, indexFile);
+  subvol::printThem(clo);
 
-    g_blockCollection->initBlocksFromIndexFile(indexFile);
+  g_blockCollection->initBlocksFromIndexFile(indexFile);
   
 
   // filter blocks in the index file that are within ROV thresholds
