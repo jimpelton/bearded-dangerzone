@@ -8,6 +8,7 @@
 #include <QSlider>
 #include <QVBoxLayout>
 #include <QDoubleSpinBox>
+#include <QFormLayout>
 
 //#include <cassert>
 
@@ -35,35 +36,49 @@ ControlPanel::ControlPanel(BlockRenderer *renderer, QWidget *parent)
   m_maxSlider->setMaximum(m_numberOfSliderIncrements);
   m_maxSlider->setValue(m_numberOfSliderIncrements);
 
-//  m_currentMin_SpinBox = new QDoubleSpinBox();
-//  m_currentMin_SpinBox->setMinimum(0);
-//  m_currentMin_SpinBox->setMaximum(m_numberOfSliderIncrements);
-//  m_currentMin_SpinBox->setValue(0);
-//
-//  m_currentMin_SpinBox = new QDoubleSpinBox();
-//  m_currentMin_SpinBox->setMinimum(m_currentMinFloat);
-//  m_currentMin_SpinBox->setMaximum(m_currentMaxFloat);
-//  m_currentMin_SpinBox->setSingleStep((m_currentMaxFloat - m_currentMinFloat) / m_incrementDelta);
-//  m_currentMin_SpinBox->setValue(m_currentMinFloat);
-//
-//  m_currentMax_SpinBox = new QDoubleSpinBox();
-//  m_currentMax_SpinBox->setMinimum(m_currentMinFloat);
-//  m_currentMax_SpinBox->setMaximum(m_currentMaxFloat);
-//  m_currentMax_SpinBox->setSingleStep((m_currentMaxFloat - m_currentMinFloat) / m_incrementDelta);
-//  m_currentMax_SpinBox->setValue(m_currentMaxFloat);
+  /*m_currentMin_SpinBox = new QDoubleSpinBox();
+  m_currentMin_SpinBox->setMinimum(0);
+  m_currentMin_SpinBox->setMaximum(m_numberOfSliderIncrements);
+  m_currentMin_SpinBox->setValue(0);
+
+  m_currentMin_SpinBox = new QDoubleSpinBox();
+  m_currentMin_SpinBox->setMinimum(m_currentMinFloat);
+  m_currentMin_SpinBox->setMaximum(m_currentMaxFloat);
+  m_currentMin_SpinBox->setSingleStep((m_currentMaxFloat - m_currentMinFloat) / m_incrementDelta);
+  m_currentMin_SpinBox->setValue(m_currentMinFloat);
+
+  m_currentMax_SpinBox = new QDoubleSpinBox();
+  m_currentMax_SpinBox->setMinimum(m_currentMinFloat);
+  m_currentMax_SpinBox->setMaximum(m_currentMaxFloat);
+  m_currentMax_SpinBox->setSingleStep((m_currentMaxFloat - m_currentMinFloat) / m_incrementDelta);
+  m_currentMax_SpinBox->setValue(m_currentMaxFloat);*/
+
+
+  QLabel *blocksShownLabel = new QLabel("Blocks Rendered: ");
+  m_blocksShownValueLabel = new QLabel("0");
+  m_blocksTotalValueLabel = new QLabel("/0");
+  QLabel *compressionRateLabel = new QLabel("Compression: ");
+  m_compressionValueLabel = new QLabel("0%");
 
   m_globalMin_Label = new QLabel("0");
-
   m_globalMax_Label = new QLabel("0");
   m_currentMin_Label = new QLabel("0");
   m_currentMax_Label = new QLabel("0");
+
+  QHBoxLayout *blocksValueBoxLayout = new QHBoxLayout();
+  blocksValueBoxLayout->addWidget(m_blocksShownValueLabel);
+  blocksValueBoxLayout->addWidget(m_blocksTotalValueLabel);
+
+  QFormLayout *formLayout = new QFormLayout();
+  formLayout->addRow(blocksShownLabel, blocksValueBoxLayout);
+  formLayout->addRow(compressionRateLabel, m_compressionValueLabel);
 
   QGridLayout *gridLayout = new QGridLayout();
   gridLayout->addWidget(m_minSlider, 0,0);
   gridLayout->addWidget(m_currentMin_Label, 0, 1);
   gridLayout->addWidget(m_maxSlider, 1,0);
   gridLayout->addWidget(m_currentMax_Label, 1, 1);
-
+  gridLayout->addItem(formLayout, 2, 0, 1, 2);
 
   setLayout(gridLayout);
 
@@ -121,13 +136,6 @@ ControlPanel::setGlobalRange(double newMin, double newMax)
   m_globalMin = newMin;
   m_globalMax = newMax;
 
-//  m_currentMinFloat = newMin;
-//  m_currentMaxFloat = newMax;
-
-//  m_minSlider->setValue(floatToSliderValue(newMin));
-//  m_maxSlider->setValue(floatToSliderValue(newMax));
-
-
   m_globalMin_Label->setText(QString::number(newMin));
   m_globalMax_Label->setText(QString::number(newMax));
 
@@ -137,7 +145,6 @@ ControlPanel::setGlobalRange(double newMin, double newMax)
 //
 //  m_currentMax_SpinBox->setRange(newMin, newMax);
 //  m_currentMax_SpinBox->setValue(newMax);
-
 
 }
 
@@ -165,7 +172,7 @@ ControlPanel::handle_valueChanged_min(int minSliderValue)
   m_renderer->setROVRange(m_currentMinFloat, m_currentMaxFloat);
 //    m_currentMin_SpinBox->setValue(m_currentMinFloat);
 //  }
-  //TODO: send as min ROV to renderer
+  
 }
 
 
@@ -184,7 +191,7 @@ ControlPanel::handle_valueChanged_max(int maxSliderValue)
 
 //    m_currentMax_SpinBox->setValue(maxSliderValue);
 //  }
-  //TODO: send as max ROV to renderer.
+  
 }
 
 
@@ -219,7 +226,6 @@ ControlPanel::handle_valueChanged_max(int maxSliderValue)
 void
 ControlPanel::handle_sliderPressed()
 {
-  //TODO: disable textures, show bboxes
   m_renderer->setROVChanging(true);
 }
 

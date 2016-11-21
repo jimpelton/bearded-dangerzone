@@ -22,7 +22,7 @@ class ControlPanel
   Q_OBJECT
 
 public:
-  explicit ControlPanel(BlockRenderer *renderer, QWidget *parent = 0);
+  explicit ControlPanel(BlockRenderer *renderer, QWidget *parent = nullptr);
 
   ~ControlPanel();
 
@@ -75,6 +75,11 @@ private:
   QLabel *m_currentMax_Label;
   QLabel *m_globalMin_Label;
   QLabel *m_globalMax_Label;
+
+  QLabel *m_blocksShownValueLabel,
+    *m_blocksTotalValueLabel,
+    *m_compressionValueLabel;
+
 
   BlockRenderer *m_renderer;
 
