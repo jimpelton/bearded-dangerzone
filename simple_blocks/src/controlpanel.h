@@ -59,7 +59,12 @@ private:
   double
   sliderValueToFloat(int value);
 
+  void
+  updateShownBlocksLabels();
+
   int m_numberOfSliderIncrements;
+  unsigned long long m_totalBlocks;
+  unsigned long long m_shownBlocks;
   double m_incrementDelta;
   double m_currentMinFloat;
   double m_currentMaxFloat;

@@ -285,12 +285,10 @@ initializeShaders(subvol::CommandLineOptions &clo)
 GLFWwindow *
 init_subvol(subvol::CommandLineOptions &clo)
 {
-//  bd::BlockCollection *blockCollection{ new bd::BlockCollection() };
   g_blockCollection = std::make_shared<bd::BlockCollection>();
 
   // Open the index file if possible, then setup the BlockCollection
   // and give away ownership of the index file to the BlockCollection.
-  
   std::shared_ptr<bd::IndexFile> indexFile{ openIndexFile(clo) };
   if (indexFile == nullptr) {
     bd::Err() << "Couldn't open provided index file path: " << clo.indexFilePath;

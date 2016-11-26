@@ -36,6 +36,8 @@ setInitialGLState();
 void
 initializeControls(GLFWwindow *, std::shared_ptr<BlockRenderer>);
 
+//TODO: move init functions from main to right here!
+
 void
 loop(GLFWwindow *, BlockRenderer *);
 

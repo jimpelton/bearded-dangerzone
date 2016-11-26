@@ -18,6 +18,8 @@ namespace subvol
 ControlPanel::ControlPanel(BlockRenderer *renderer, QWidget *parent)
     : QWidget(parent)
     , m_numberOfSliderIncrements{ 1000 }
+    , m_totalBlocks{ 0 }
+    , m_shownBlocks{ 0 }
     , m_incrementDelta{ 0.0 }
     , m_currentMinFloat{ 0.0 }
     , m_currentMaxFloat{ 0.0 }
@@ -36,34 +38,20 @@ ControlPanel::ControlPanel(BlockRenderer *renderer, QWidget *parent)
   m_maxSlider->setMaximum(m_numberOfSliderIncrements);
   m_maxSlider->setValue(m_numberOfSliderIncrements);
 
-  /*m_currentMin_SpinBox = new QDoubleSpinBox();
-  m_currentMin_SpinBox->setMinimum(0);
-  m_currentMin_SpinBox->setMaximum(m_numberOfSliderIncrements);
-  m_currentMin_SpinBox->setValue(0);
-
-  m_currentMin_SpinBox = new QDoubleSpinBox();
-  m_currentMin_SpinBox->setMinimum(m_currentMinFloat);
-  m_currentMin_SpinBox->setMaximum(m_currentMaxFloat);
-  m_currentMin_SpinBox->setSingleStep((m_currentMaxFloat - m_currentMinFloat) / m_incrementDelta);
-  m_currentMin_SpinBox->setValue(m_currentMinFloat);
-
-  m_currentMax_SpinBox = new QDoubleSpinBox();
-  m_currentMax_SpinBox->setMinimum(m_currentMinFloat);
-  m_currentMax_SpinBox->setMaximum(m_currentMaxFloat);
-  m_currentMax_SpinBox->setSingleStep((m_currentMaxFloat - m_currentMinFloat) / m_incrementDelta);
-  m_currentMax_SpinBox->setValue(m_currentMaxFloat);*/
-
 
   QLabel *blocksShownLabel = new QLabel("Blocks Rendered: ");
-  m_blocksShownValueLabel = new QLabel("0");
-  m_blocksTotalValueLabel = new QLabel("/0");
+  m_totalBlocks = renderer->getNumBlocks();
+  m_shownBlocks = renderer->getNumBlocksShown();
+  m_blocksShownValueLabel = new QLabel(QString::number(m_shownBlocks));
+  m_blocksTotalValueLabel = new QLabel("/" + QString::number(m_totalBlocks));
   QLabel *compressionRateLabel = new QLabel("Compression: ");
-  m_compressionValueLabel = new QLabel("0%");
+  m_compressionValueLabel = new QLabel(QString::number(m_shownBlocks/float(m_totalBlocks)) + "%");
 
   m_globalMin_Label = new QLabel("0");
   m_globalMax_Label = new QLabel("0");
   m_currentMin_Label = new QLabel("0");
   m_currentMax_Label = new QLabel("0");
+
 
   QHBoxLayout *blocksValueBoxLayout = new QHBoxLayout();
   blocksValueBoxLayout->addWidget(m_blocksShownValueLabel);
@@ -87,7 +75,7 @@ ControlPanel::ControlPanel(BlockRenderer *renderer, QWidget *parent)
           this, SLOT(handle_valueChanged_min(int)));
 
   connect(m_minSlider, SIGNAL(sliderPressed()),
-  this, SLOT(handle_sliderPressed()));
+          this, SLOT(handle_sliderPressed()));
 
   connect(m_minSlider, SIGNAL(sliderReleased()),
           this, SLOT(handle_sliderReleased()));
@@ -101,27 +89,13 @@ ControlPanel::ControlPanel(BlockRenderer *renderer, QWidget *parent)
   connect(m_maxSlider, SIGNAL(sliderReleased()),
           this, SLOT(handle_sliderReleased()));
 
-//  connect(m_currentMin_SpinBox, SIGNAL(valueChanged(int)),
-//          this, SLOT(handle_valueChanged_min(int)));
-//
-//  connect(m_currentMax_SpinBox, SIGNAL(valueChanged(int)),
-//          this, SLOT(handle_valueChanged_max(int)));
-
 }
 
 ControlPanel::~ControlPanel()
 {
 }
 
-//void
-//ControlPanel::min_valueChanged(int value)
-//{
-//
-//void
-//ControlPanel::max_valueChanged(int value)
-//{
-//
-//}
+
 
 void
 ControlPanel::setGlobalRange(double newMin, double newMax)
@@ -139,13 +113,6 @@ ControlPanel::setGlobalRange(double newMin, double newMax)
   m_globalMin_Label->setText(QString::number(newMin));
   m_globalMax_Label->setText(QString::number(newMax));
 
-
-//  m_currentMin_SpinBox->setRange(newMin, newMax);
-//  m_currentMin_SpinBox->setValue(newMin);
-//
-//  m_currentMax_SpinBox->setRange(newMin, newMax);
-//  m_currentMax_SpinBox->setValue(newMax);
-
 }
 
 
@@ -162,65 +129,33 @@ ControlPanel::setMinMax(double min, double max)
 void
 ControlPanel::handle_valueChanged_min(int minSliderValue)
 {
-//  if (m_minSlider->value() != minSliderValue) {
   m_currentMinFloat = sliderValueToFloat(minSliderValue);
 
   if (minSliderValue > m_maxSlider->value()) {
     m_maxSlider->setValue(minSliderValue + 1);
   }
+
   m_currentMin_Label->setText(QString::number(m_currentMinFloat));
   m_renderer->setROVRange(m_currentMinFloat, m_currentMaxFloat);
-//    m_currentMin_SpinBox->setValue(m_currentMinFloat);
-//  }
-  
+
+  updateShownBlocksLabels();
 }
 
 
 void
 ControlPanel::handle_valueChanged_max(int maxSliderValue)
 {
-//  if (m_maxSlider->value() != maxSliderValue) {
-    m_currentMaxFloat = sliderValueToFloat(maxSliderValue);
+  m_currentMaxFloat = sliderValueToFloat(maxSliderValue);
 
-    if (maxSliderValue < m_minSlider->value()) {
-      m_minSlider->setValue(maxSliderValue - 1);
-    }
+  if (maxSliderValue < m_minSlider->value()) {
+    m_minSlider->setValue(maxSliderValue - 1);
+  }
 
   m_currentMax_Label->setText(QString::number(m_currentMaxFloat));
   m_renderer->setROVRange(m_currentMinFloat, m_currentMaxFloat);
+  updateShownBlocksLabels();
 
-//    m_currentMax_SpinBox->setValue(maxSliderValue);
-//  }
-  
 }
-
-
-//void
-//ControlPanel::handle_spinBox_valueChanged_min(double minValue)
-//{
-////  if (m_currentMin_SpinBox->value() != minValue) {
-//    m_currentMinFloat = minValue;
-//    double maxSpinBoxValue = m_currentMax_SpinBox->value();
-//    if (minValue > maxSpinBoxValue) {
-//      m_currentMax_SpinBox->setValue(maxSpinBoxValue + m_incrementDelta);
-//    }
-//    m_minSlider->setValue(floatToSliderValue(minValue));
-////  }
-//}
-
-
-//void
-//ControlPanel::handle_spinBox_valueChanged_max(double maxValue)
-//{
-////  if (m_currentMax_SpinBox->value() != maxValue) {
-//    m_currentMaxFloat = maxValue;
-//    double minSpinBoxValue = m_currentMin_SpinBox->value();
-//    if (maxValue < minSpinBoxValue) {
-//      m_currentMin_SpinBox->setValue(minSpinBoxValue - m_incrementDelta);
-//    }
-//    m_maxSlider->setValue(floatToSliderValue(maxValue));
-////  }
-//}
 
 
 void
@@ -233,11 +168,10 @@ ControlPanel::handle_sliderPressed()
 void
 ControlPanel::handle_sliderReleased()
 {
-  //TODO: reenable textures, disable bboxes
   std::cout << "\nMin ROV: " << m_currentMinFloat << " Max ROV: " << m_currentMaxFloat << std::endl;
-//  m_renderer->setROVRange(m_currentMinFloat, m_currentMaxFloat);
   m_renderer->setROVChanging(false);
 }
+
 
 int
 ControlPanel::floatToSliderValue(double value)
@@ -250,6 +184,17 @@ double
 ControlPanel::sliderValueToFloat(int value)
 {
   return m_globalMin + (value * m_incrementDelta);
+}
+
+
+void
+ControlPanel::updateShownBlocksLabels()
+{
+  m_shownBlocks = m_renderer->getNumBlocksShown();
+  m_blocksShownValueLabel->setText(QString::number(m_shownBlocks));
+
+  float p{ (1.0f - m_shownBlocks / float(m_totalBlocks)) * 100.0f };
+  m_compressionValueLabel->setText(QString::asprintf("%f %%", p));
 }
 
 } // namespace subvol

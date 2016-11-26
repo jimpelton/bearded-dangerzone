@@ -70,7 +70,6 @@ BlockRenderer::BlockRenderer(int numSlices,
 {
   m_blocks = &(m_collection->blocks());
   m_blocksToDraw = &(m_collection->nonEmptyBlocks());
-  //m_blocksToDraw.reserve(m_collection->blocks().size());
   init();
 }
 
@@ -211,6 +210,7 @@ BlockRenderer::setDrawNonEmptySlices(bool b)
 }
 
 
+////////////////////////////////////////////////////////////////////////////////
 void
 BlockRenderer::setROVChanging(bool b)
 {
@@ -218,6 +218,7 @@ BlockRenderer::setROVChanging(bool b)
 }
 
 
+////////////////////////////////////////////////////////////////////////////////
 void
 BlockRenderer::setIsRotating(bool b)
 {
@@ -256,6 +257,22 @@ BlockRenderer::setROVRange(double min, double max)
   m_rov_min = min;
   m_rov_max = max;
   m_ROVRangeChanged = true;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+unsigned long long int
+BlockRenderer::getNumBlocks() const
+{
+  return m_collection->blocks().size();
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+unsigned long long int
+BlockRenderer::getNumBlocksShown() const
+{
+  return m_collection->nonEmptyBlocks().size();
 }
 
 

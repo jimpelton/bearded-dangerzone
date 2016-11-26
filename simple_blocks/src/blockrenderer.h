@@ -97,6 +97,13 @@ public:
   void
   setROVRange(double min, double max);
 
+  unsigned long long int
+  getNumBlocks() const;
+
+
+  unsigned long long int
+  getNumBlocksShown() const;
+
 
   /// \brief Draw each non-empty block.
   void
