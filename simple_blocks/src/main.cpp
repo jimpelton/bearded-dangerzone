@@ -141,12 +141,12 @@ updateCommandLineOptionsFromIndexFile(subvol::CommandLineOptions &clo,
     clo.blockThreshold_Max = max;
   }
 
-  clo.vol_w = indexFile->getHeader().volume_extent[0];
-  clo.vol_h = indexFile->getHeader().volume_extent[1];
-  clo.vol_d = indexFile->getHeader().volume_extent[2];
-  clo.numblk_x = indexFile->getHeader().numblocks[0];
-  clo.numblk_y = indexFile->getHeader().numblocks[1];
-  clo.numblk_z = indexFile->getHeader().numblocks[2];
+  clo.vol_w = indexFile->getVolume().voxelDims().x;
+  clo.vol_h = indexFile->getVolume().voxelDims().y;
+  clo.vol_d = indexFile->getVolume().voxelDims().z;
+  clo.numblk_x = indexFile->getVolume().block_count().x;
+  clo.numblk_y = indexFile->getVolume().block_count().y;
+  clo.numblk_z = indexFile->getVolume().block_count().z;
   clo.dataType = bd::to_string(bd::IndexFileHeader::getType(indexFile->getHeader()));
 
 }
@@ -393,6 +393,14 @@ int main(int argc, char *argv[])
     bd::Err() << "Could not initialize GLFW (window could not be created). Exiting...";
     return 1;
   }
+
+  GLint total_mem_kb = 0;
+  glGetIntegerv(0x9048, &total_mem_kb);
+
+  GLint cur_avail_mem_kb = 0;
+  glGetIntegerv(0x9049, &cur_avail_mem_kb);
+
+  std::cout << "Total GPU mem: " << total_mem_kb << ", avail: " << cur_avail_mem_kb << std::endl;
 
 
   std::future<int>
