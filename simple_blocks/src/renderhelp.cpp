@@ -152,6 +152,21 @@ loop(GLFWwindow *window, BlockRenderer *renderer)
   bd::Info() << "Render loop exited.";
 }
 
+void
+queryGPUMemory(int *total, int *avail)
+{
+  GLint total_mem_kb = 0;
+  glGetIntegerv(0x9048, &total_mem_kb);
+
+  *total = total_mem_kb;
+
+  if (avail) {
+    GLint cur_avail_mem_kb = 0;
+    glGetIntegerv(0x9049, &cur_avail_mem_kb);
+    *avail = cur_avail_mem_kb;
+  }
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 //void

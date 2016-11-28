@@ -298,19 +298,6 @@ init_subvol(subvol::CommandLineOptions &clo)
   updateCommandLineOptionsFromIndexFile(clo, indexFile);
   subvol::printThem(clo);
 
-  g_blockCollection->initBlocksFromIndexFile(indexFile);
-  
-
-  // filter blocks in the index file that are within ROV thresholds
-  g_blockCollection->filterBlocks(
-      [&clo](bd::Block const &b) {
-        return b.fileBlock().rov >= clo.blockThreshold_Min &&
-            b.fileBlock().rov <= clo.blockThreshold_Max;
-      });
-
-
-  bd::Info() << g_blockCollection->blocks().size() << " blocks in index file.";
-
 
   // Initialize OpenGL and GLFW and generate our transfer function textures.
   GLFWwindow *window{ nullptr };
@@ -319,14 +306,24 @@ init_subvol(subvol::CommandLineOptions &clo)
     bd::Err() << "Could not initialize GLFW, exiting.";
     return nullptr;
   }
+  bd::Info() << "Open GL initialized.";
+  
+  int totalMemory{ 0 };
+  subvol::renderhelp::queryGPUMemory(&totalMemory);
+  bd::Info() << "GPU memory: " << (totalMemory * 1e-6) << "MB";
+
   subvol::renderhelp::setInitialGLState();
-
   subvol::initializeVertexBuffers(clo);
-
   subvol::initializeShaders(clo);
-
   bool loaded = subvol::initializeTransferFunctions(clo);
 
+  g_blockCollection->initBlocksFromIndexFile(indexFile);
+  bd::Info() << g_blockCollection->blocks().size() << " blocks in index file.";
+
+
+  // filter blocks in the index file that are within ROV thresholds
+  g_blockCollection->filterBlocksByROVRange(clo.blockThreshold_Min,
+                                            clo.blockThreshold_Max);
   bd::DataType type = bd::IndexFileHeader::getType(indexFile->getHeader());
   g_blockCollection->initBlockTextures(clo.rawFilePath, type);
 
@@ -394,13 +391,8 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  GLint total_mem_kb = 0;
-  glGetIntegerv(0x9048, &total_mem_kb);
 
-  GLint cur_avail_mem_kb = 0;
-  glGetIntegerv(0x9049, &cur_avail_mem_kb);
 
-  std::cout << "Total GPU mem: " << total_mem_kb << ", avail: " << cur_avail_mem_kb << std::endl;
 
 
   std::future<int>

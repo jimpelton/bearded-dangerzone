@@ -41,6 +41,10 @@ initializeControls(GLFWwindow *, std::shared_ptr<BlockRenderer>);
 void
 loop(GLFWwindow *, BlockRenderer *);
 
+/// \brief Get the total and avail memory. If no pointer to avail is provided
+/// then just total is returned.
+void
+queryGPUMemory(int *total, int *avail = nullptr);
 
 //void
 //setCameraPosPreset(unsigned int cameraPos);

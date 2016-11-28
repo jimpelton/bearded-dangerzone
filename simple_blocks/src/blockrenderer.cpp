@@ -345,7 +345,9 @@ BlockRenderer::drawAxis()
 void
 BlockRenderer::drawNonEmptyBlocks_Forward()
 {
-  // Compute the SliceSet and offset into the vertex buffer of that slice set.
+  /* Compute the SliceSet and offset into the vertex buffer 
+   * of that slice set. */
+
   glm::vec3 const
       viewdir{ glm::normalize(getCamera().getLookAt() - getCamera().getEye()) };
 
@@ -469,7 +471,6 @@ void
 BlockRenderer::filterBlocksByROV()
 {
   m_ROVRangeChanged = false;
-  m_blocksToDraw->clear();
   m_collection->filterBlocksByROVRange(m_rov_min, m_rov_max);
 
 //  for(auto *b : *m_blocks) {
