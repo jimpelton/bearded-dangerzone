@@ -11,9 +11,9 @@ int
 parseThem(int argc, char *argv[], TCLAP::CmdLine &cmd, CommandLineOptions &opts)
 try
 {
-  if (argc == 1) {
-    return 0;
-  }
+//  if (argc == 1) {
+//    return 0;
+//  }
 
 
   // volume data file

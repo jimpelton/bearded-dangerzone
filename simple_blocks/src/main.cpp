@@ -289,13 +289,18 @@ init_subvol(subvol::CommandLineOptions &clo)
 
   // Open the index file if possible, then setup the BlockCollection
   // and give away ownership of the index file to the BlockCollection.
-  std::shared_ptr<bd::IndexFile> indexFile{ openIndexFile(clo) };
-  if (indexFile == nullptr) {
-    bd::Err() << "Couldn't open provided index file path: " << clo.indexFilePath;
-    return nullptr;
+  std::shared_ptr<bd::IndexFile> indexFile{ std::make_shared<bd::IndexFile>() };
+  if (! clo.indexFilePath.empty())
+  {
+    indexFile =
+      bd::IndexFile::fromBinaryIndexFile(clo.indexFilePath);
+    if (indexFile == nullptr) {
+      bd::Err() << "Couldn't open provided index file path: " << clo.indexFilePath;
+      return nullptr;
+    }
+    updateCommandLineOptionsFromIndexFile(clo, indexFile);
   }
 
-  updateCommandLineOptionsFromIndexFile(clo, indexFile);
   subvol::printThem(clo);
 
 
@@ -310,7 +315,7 @@ init_subvol(subvol::CommandLineOptions &clo)
   
   int totalMemory{ 0 };
   subvol::renderhelp::queryGPUMemory(&totalMemory);
-  bd::Info() << "GPU memory: " << (totalMemory * 1e-6) << "MB";
+  bd::Info() << "GPU memory: " << (totalMemory * 1e-3) << "MB";
 
   subvol::renderhelp::setInitialGLState();
   subvol::initializeVertexBuffers(clo);
@@ -369,31 +374,27 @@ init_subvol(subvol::CommandLineOptions &clo)
 /////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char *argv[])
 {
-  bd::Info() << "Startup";
+  
   TCLAP::CmdLine cmd("Simple Blocks blocking volume render experiment.", ' ');
   subvol::CommandLineOptions clo;
   if (subvol::parseThem(argc, argv, cmd, clo) == 0) {
     std::cout << "No arguments provided.\nPlease use -h for usage info."
               << std::endl;
-    return 1;
+//    return 1;
   }
 
 
-  if (clo.indexFilePath.empty()) {
-    bd::Err() << "Provide an index file path.";
-    return 1;
-  }
+//  if (clo.indexFilePath.empty()) {
+//    bd::Err() << "Provide an index file path.";
+//    return 1;
+//  }
 
 
-  GLFWwindow * window = subvol::init_subvol(clo);
+  GLFWwindow * window{ subvol::init_subvol(clo) };
   if (window == nullptr) {
     bd::Err() << "Could not initialize GLFW (window could not be created). Exiting...";
     return 1;
   }
-
-
-
-
 
   std::future<int>
       returned = std::async(std::launch::async,
