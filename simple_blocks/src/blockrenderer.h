@@ -84,11 +84,14 @@ public:
   void
   setDrawNonEmptyBoundingBoxes(bool b);
 
+
   void
   setROVChanging(bool b);
 
+
   void
   setIsRotating(bool b);
+
 
   void
   setDrawNonEmptySlices(bool b);
@@ -96,6 +99,7 @@ public:
 
   void
   setROVRange(double min, double max);
+
 
   unsigned long long int
   getNumBlocks() const;
@@ -115,6 +119,8 @@ public:
   void
   drawNonEmptyBoundingBoxes();
 
+  void
+  updateCache();
 
 private:
 

@@ -204,54 +204,6 @@ BlockRenderer::setDrawNonEmptyBoundingBoxes(bool b)
 
 ///////////////////////////////////////////////////////////////////////////////
 void
-BlockRenderer::setDrawNonEmptySlices(bool b)
-{
-  m_drawNonEmptySlices = b;
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-void
-BlockRenderer::setROVChanging(bool b)
-{
-  m_ROVChanging = b;
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-void
-BlockRenderer::setIsRotating(bool b)
-{
-  m_ROVChanging = b;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-void
-BlockRenderer::drawNonEmptyBoundingBoxes()
-{
-  m_wireframeShader->bind();
-  m_boxesVao->bind();
-  for (auto *b : *m_blocksToDraw) {
-    setWorldMatrix(b->transform());
-    m_wireframeShader->setUniform(WIREFRAME_MVP_MATRIX_UNIFORM_STR,
-                                  getWorldViewProjectionMatrix());
-    gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, (GLvoid *) 0));
-    gl_check(glDrawElements(GL_LINE_LOOP,
-                            4,
-                            GL_UNSIGNED_SHORT,
-                            (GLvoid *) ( 4 * sizeof(GLushort))));
-    gl_check(glDrawElements(GL_LINES,
-                            8,
-                            GL_UNSIGNED_SHORT,
-                            (GLvoid *) ( 8 * sizeof(GLushort))));
-  }
-//  m_boxesVao->unbind();
-//  m_wireframeShader->unbind();
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-void
 BlockRenderer::setROVRange(double min, double max)
 {
   m_rov_min = min;
@@ -273,6 +225,30 @@ unsigned long long int
 BlockRenderer::getNumBlocksShown() const
 {
   return m_collection->nonEmptyBlocks().size();
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+void
+BlockRenderer::setDrawNonEmptySlices(bool b)
+{
+  m_drawNonEmptySlices = b;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+void
+BlockRenderer::setROVChanging(bool b)
+{
+  m_ROVChanging = b;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+void
+BlockRenderer::setIsRotating(bool b)
+{
+  m_ROVChanging = b;
 }
 
 
@@ -306,6 +282,43 @@ BlockRenderer::draw()
   }
 
 }
+
+
+////////////////////////////////////////////////////////////////////////////////
+void
+BlockRenderer::drawNonEmptyBoundingBoxes()
+{
+  m_wireframeShader->bind();
+  m_boxesVao->bind();
+  for (auto *b : *m_blocksToDraw) {
+    setWorldMatrix(b->transform());
+    m_wireframeShader->setUniform(WIREFRAME_MVP_MATRIX_UNIFORM_STR,
+                                  getWorldViewProjectionMatrix());
+    gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, (GLvoid *) 0));
+    gl_check(glDrawElements(GL_LINE_LOOP,
+                            4,
+                            GL_UNSIGNED_SHORT,
+                            (GLvoid *) ( 4 * sizeof(GLushort))));
+    gl_check(glDrawElements(GL_LINES,
+                            8,
+                            GL_UNSIGNED_SHORT,
+                            (GLvoid *) ( 8 * sizeof(GLushort))));
+  }
+//  m_boxesVao->unbind();
+//  m_wireframeShader->unbind();
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+void
+BlockRenderer::updateCache()
+{
+//  m_collection->updateCache();
+}
+
+
+
+
 
 
 ////////////////////////////////////////////////////////////////////////////////

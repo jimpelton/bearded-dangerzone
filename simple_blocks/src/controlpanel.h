@@ -16,6 +16,7 @@ class QDoubleSpinBox;
 namespace subvol
 {
 
+
 class ControlPanel
     : public QWidget
 {
@@ -78,8 +79,8 @@ private:
 //  QDoubleSpinBox *m_currentMax_SpinBox;
   QLabel *m_currentMin_Label;
   QLabel *m_currentMax_Label;
-  QLabel *m_globalMin_Label;
-  QLabel *m_globalMax_Label;
+//  QLabel *m_globalMin_Label;
+//  QLabel *m_globalMax_Label;
 
   QLabel *m_blocksShownValueLabel,
     *m_blocksTotalValueLabel,

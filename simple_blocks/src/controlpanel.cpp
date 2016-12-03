@@ -3,6 +3,7 @@
 //
 
 #include "controlpanel.h"
+#include "blockrenderer.h"
 
 #include <QLabel>
 #include <QSlider>
@@ -10,7 +11,6 @@
 #include <QDoubleSpinBox>
 #include <QFormLayout>
 
-//#include <cassert>
 
 namespace subvol
 {
@@ -47,8 +47,8 @@ ControlPanel::ControlPanel(BlockRenderer *renderer, QWidget *parent)
   QLabel *compressionRateLabel = new QLabel("Compression: ");
   m_compressionValueLabel = new QLabel(QString::number(m_shownBlocks/float(m_totalBlocks)) + "%");
 
-  m_globalMin_Label = new QLabel("0");
-  m_globalMax_Label = new QLabel("0");
+//  m_globalMin_Label = new QLabel("0");
+//  m_globalMax_Label = new QLabel("0");
   m_currentMin_Label = new QLabel("0");
   m_currentMax_Label = new QLabel("0");
 
@@ -110,8 +110,8 @@ ControlPanel::setGlobalRange(double newMin, double newMax)
   m_globalMin = newMin;
   m_globalMax = newMax;
 
-  m_globalMin_Label->setText(QString::number(newMin));
-  m_globalMax_Label->setText(QString::number(newMax));
+//  m_globalMin_Label->setText(QString::number(newMin));
+//  m_globalMax_Label->setText(QString::number(newMax));
 
 }
 
@@ -170,6 +170,8 @@ ControlPanel::handle_sliderReleased()
 {
   std::cout << "\nMin ROV: " << m_currentMinFloat << " Max ROV: " << m_currentMaxFloat << std::endl;
   m_renderer->setROVChanging(false);
+
+//TODO:  m_renderer->updateCache();
 }
 
 
