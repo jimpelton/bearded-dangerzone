@@ -76,6 +76,8 @@ find_package(Qt5Gui)
 # Sources
 set(simple_blocks_HEADERS
         src/axis_enum.h
+        src/blockcollection.h
+        src/blockloader.h
         src/blockrenderer.h
         src/cmdline.h
         src/controls.h
@@ -91,6 +93,8 @@ set(simple_blocks_HEADERS
 
 set(simple_blocks_SOURCES
         src/main.cpp
+        src/blockcollection.cpp
+        src/blockloader.cpp
         src/cmdline.cpp
         src/controls.cpp
         src/controlpanel.cpp

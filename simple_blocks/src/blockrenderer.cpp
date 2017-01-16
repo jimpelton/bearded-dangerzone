@@ -36,7 +36,7 @@ BlockRenderer::BlockRenderer(int numSlices,
                              std::shared_ptr<bd::ShaderProgram> volumeShader,
                              std::shared_ptr<bd::ShaderProgram> volumeShaderLighting,
                              std::shared_ptr<bd::ShaderProgram> wireframeShader,
-                             std::shared_ptr<bd::BlockCollection> blockCollection,
+                             std::shared_ptr<subvol::BlockCollection> blockCollection,
                              std::shared_ptr<bd::VertexArrayObject> blocksVAO,
                              std::shared_ptr<bd::VertexArrayObject> bboxVAO,
                              std::shared_ptr<bd::VertexArrayObject> axisVao)
@@ -377,10 +377,10 @@ BlockRenderer::drawNonEmptyBlocks_Forward()
   // Start an NVPM profiling frame
   perf_frameBegin();
 
-  for (auto *b : *m_blocksToDraw) {
+  for (bd::Block *b : *m_blocksToDraw) {
 
     setWorldMatrix(b->transform());
-    b->texture().bind(BLOCK_TEXTURE_UNIT);
+    b->texture()->bind(BLOCK_TEXTURE_UNIT);
     m_currentShader->setUniform(VOLUME_MVP_MATRIX_UNIFORM_STR,
                                 getWorldViewProjectionMatrix());
 

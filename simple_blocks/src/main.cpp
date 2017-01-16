@@ -12,12 +12,12 @@
 #include "renderhelp.h"
 #include "controls.h"
 #include "controlpanel.h"
+#include "blockcollection.h"
 
 // BD lib
 #include <bd/graphics/shader.h>
 #include <bd/graphics/vertexarrayobject.h>
 #include <bd/log/logger.h>
-#include <bd/volume/blockcollection.h>
 #include <bd/io/indexfile.h>
 
 
@@ -46,14 +46,14 @@ std::shared_ptr<bd::ShaderProgram> g_volumeShaderLighting{ nullptr };
 std::shared_ptr<bd::VertexArrayObject> g_axisVao{ nullptr };
 std::shared_ptr<bd::VertexArrayObject> g_boxVao{ nullptr };
 std::shared_ptr<bd::VertexArrayObject> g_quadVao{ nullptr };
-std::shared_ptr<bd::BlockCollection> g_blockCollection{ nullptr };
+std::shared_ptr<subvol::BlockCollection> g_blockCollection{ nullptr };
 //std::shared_ptr<subvol::Controls> g_controls{ nullptr };
 bool renderInitComplete{ false };
 
 double g_rovMin, g_rovMax;
 
 void cleanup();
-void printBlocks(bd::BlockCollection *bcol);
+void printBlocks(subvol::BlockCollection *bcol);
 void printNvPmApiCounters(const char *perfOutPath);
 
 
@@ -73,7 +73,7 @@ cleanup()
 
 /////////////////////////////////////////////////////////////////////////////////
 void
-printBlocks(bd::BlockCollection *bcol)
+printBlocks(subvol::BlockCollection *bcol)
 {
   std::ofstream block_file("blocks.txt", std::ofstream::trunc);
 
@@ -285,7 +285,6 @@ initializeShaders(subvol::CommandLineOptions &clo)
 GLFWwindow *
 init_subvol(subvol::CommandLineOptions &clo)
 {
-  g_blockCollection = std::make_shared<bd::BlockCollection>();
 
   // Open the index file if possible, then setup the BlockCollection
   // and give away ownership of the index file to the BlockCollection.
@@ -322,6 +321,7 @@ init_subvol(subvol::CommandLineOptions &clo)
   subvol::initializeShaders(clo);
   bool loaded = subvol::initializeTransferFunctions(clo);
 
+  g_blockCollection = std::make_shared<subvol::BlockCollection>();
   g_blockCollection->initBlocksFromIndexFile(indexFile);
   bd::Info() << g_blockCollection->blocks().size() << " blocks in index file.";
 
@@ -330,7 +330,8 @@ init_subvol(subvol::CommandLineOptions &clo)
   g_blockCollection->filterBlocksByROVRange(clo.blockThreshold_Min,
                                             clo.blockThreshold_Max);
   bd::DataType type = bd::IndexFileHeader::getType(indexFile->getHeader());
-  g_blockCollection->initBlockTextures(clo.rawFilePath, type);
+  //TODO: initialize block textures
+//  g_blockCollection->initBlockTextures(clo.rawFilePath, type);
 
 
   g_renderer =

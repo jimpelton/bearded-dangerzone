@@ -5,12 +5,13 @@
 #ifndef blockrenderer_h__
 #define blockrenderer_h__
 
-#include "sliceset.h"
+#include "blockcollection.h"
 #include "renderer.h"
+#include "sliceset.h"
+
 
 #include <bd/graphics/shader.h>
 #include <bd/graphics/texture.h>
-#include <bd/volume/blockcollection.h>
 #include <bd/graphics/vertexarrayobject.h>
 
 #include <glm/fwd.hpp>
@@ -21,7 +22,7 @@ namespace subvol
 {
 
 class BlockRenderer
-    : public Renderer
+    : public subvol::Renderer
 {
 
 public:
@@ -32,7 +33,7 @@ public:
                 std::shared_ptr<bd::ShaderProgram> volumeShader,
                 std::shared_ptr<bd::ShaderProgram> volumeShaderLighting,
                 std::shared_ptr<bd::ShaderProgram> wireframeShader,
-                std::shared_ptr<bd::BlockCollection> blockCollection,
+                std::shared_ptr<subvol::BlockCollection> blockCollection,
                 std::shared_ptr<bd::VertexArrayObject> blocksVAO,
                 std::shared_ptr<bd::VertexArrayObject> bboxVAO,
                 std::shared_ptr<bd::VertexArrayObject> axisVao);
@@ -173,7 +174,7 @@ private:
   std::shared_ptr<bd::VertexArrayObject> m_quadsVao;    ///< Quad geometry verts
   std::shared_ptr<bd::VertexArrayObject> m_boxesVao;    ///< bounding box wireframe verts
   std::shared_ptr<bd::VertexArrayObject> m_axisVao;
-  std::shared_ptr<bd::BlockCollection> m_collection;
+  std::shared_ptr<subvol::BlockCollection> m_collection;
 
 
   std::vector<bd::Block *> *m_blocksToDraw;  ///< Non-empty blocks to draw.
