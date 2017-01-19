@@ -29,35 +29,36 @@ BlockLoader::~BlockLoader()
 
 }
 
-
-bd::Block *
-removeLastInvisibleBlock(std::list<bd::Block *> &list)
+namespace
 {
-  auto rend = list.rend();
-  std::list<bd::Block *>::reverse_iterator not_vis =
-      std::find_if(list.rbegin(), rend,
-                   [](bd::Block *be) -> bool {
-                     return ( be->status() & bd::Block::VISIBLE ) == 0;
-                   });
 
-  if (not_vis == rend) {
-    // no non-visible blocks in the cpu queue
-    // (only happens if size gpu == size cpu)
-    return nullptr;
+  bd::Block *
+    removeLastInvisibleBlock(std::list<bd::Block *> &list) {
+    auto rend = list.rend();
+    std::list<bd::Block *>::reverse_iterator not_vis =
+      std::find_if(list.rbegin(), rend,
+        [](bd::Block *be) -> bool {
+      return (be->status() & bd::Block::VISIBLE) == 0;
+    });
+
+    if (not_vis == rend) {
+      // no non-visible blocks in the cpu queue
+      // (only happens if size gpu == size cpu)
+      return nullptr;
+    }
+
+    auto byebye = list.erase((not_vis.base()--));
+    return *byebye;
   }
 
-  auto byebye = list.erase(( not_vis.base()-- ));
-  return *byebye;
+
+  bool
+    isInList(bd::Block *b, std::list<bd::Block *> &list) {
+    auto end = list.end();
+    auto found = std::find(list.begin(), end, b);
+    return found != end;
+  }
 }
-
-
-bool
-isInList(bd::Block *b, std::list<bd::Block *> &list) {
-  auto end = list.end();
-  auto found = std::find(list.begin(), end, b);
-  return found != end;
-}
-
 
 int
 BlockLoader::operator()(BLThreadData const &data)
@@ -94,16 +95,20 @@ BlockLoader::operator()(BLThreadData const &data)
           // Cpu full, evict a non-visible block
           bd::Block *notvis{ removeLastInvisibleBlock(cpu_) };
           if (notvis) {
+            // there was a non-visible block in the cpu cache, 
+            // take it's pixel buffer.
             pixData = notvis->pixelData();
             notvis->pixelData(nullptr);
           }
         } else {
+          // the cpu cache is not full, so grab a free buffer.
           pixData = buffers.back();
           buffers.pop_back();
         }
 
         b->pixelData(pixData);
         fillBlockData(b, &raw, data.slabDims[0], data.slabDims[1]);
+        // loaded to memory, so put in cpu cache.
         cpu_.push_front(b);
         // put back to load queue so it can be processed for GPU.
         queueBlock(b);
@@ -128,7 +133,6 @@ BlockLoader::operator()(BLThreadData const &data)
           // gpu cache not full yet, so grab a texture from cache.
           tex = texs.back();
           texs.pop_back();
-
         }
 
         b->texture(tex);
@@ -138,6 +142,8 @@ BlockLoader::operator()(BLThreadData const &data)
     else
     {
       // the block is already in gpu cache
+      // TODO: if block is not gpu resident, push it to loadables...
+      m_loadables.push(b);
     }
   } // while
 
@@ -182,11 +188,14 @@ BlockLoader::queueBlock(bd::Block *b)
 
 
 void 
-BlockLoader::queueAll(std::vector<bd::Block*>& visibleBlocks) 
+BlockLoader::queueAll(std::vector<bd::Block *>& visibleBlocks) 
 {
   std::unique_lock<std::mutex> lock(m_mutex);
-  for (size_t i = 0; i < visibleBlocks.size(); ++i)
-  {
+
+  std::queue<bd::Block *> q;
+  m_loadQueue.swap(q);
+
+  for (size_t i = 0; i < visibleBlocks.size(); ++i) {
     m_loadQueue.push(visibleBlocks[i]);
   }
 

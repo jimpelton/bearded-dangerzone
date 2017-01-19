@@ -90,8 +90,8 @@ public:
   setROVChanging(bool b);
 
 
-  void
-  setIsRotating(bool b);
+  //void
+  //setIsRotating(bool b);
 
 
   void
@@ -152,14 +152,22 @@ private:
   void
   filterBlocksByROV();
 
+
+  void
+    loadSomeBlocks();
+
   int m_numSlicesPerBlock;            ///< Number of slices per block
   float m_tfuncScaleValue;            ///< Transfer function scaling value
   double m_rov_min;
   double m_rov_max;
+
+  uint64_t m_timeOfLastJob;
+
   bool m_drawNonEmptyBoundingBoxes;   ///< True to draw bounding boxes.
   bool m_drawNonEmptySlices;
   bool m_ROVRangeChanged;
   bool m_ROVChanging; ///< Show bounding boxes if rov is changing.
+  bool m_cacheNeedsUpdating;
   bool m_shouldUseLighting;           ///< True to use Phong lighting shader.
   glm::vec3 m_backgroundColor;        ///< Current background color.
 

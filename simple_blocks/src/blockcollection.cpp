@@ -144,12 +144,12 @@ BlockCollection::updateBlockCache()
   m_loader.queueAll(m_nonEmptyBlocks);
 }
 
-
-void
-BlockCollection::getBlocksToLoad(std::vector<bd::Block *> &blocks) 
+Block *
+BlockCollection::nextLoadableBlock()   
 {
-  m_loader.blocksToLoad(blocks);
+  return m_loader.getNextGpuBlock();
 }
+
 
 ///////////////////////////////////////////////////////////////////////////////
 //bool

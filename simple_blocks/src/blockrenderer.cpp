@@ -20,10 +20,7 @@ namespace subvol
 {
 
 
-namespace
-{
-}
-
+#define MAX_MILLIS_SINCE_LAST_JOB 100
 
 BlockRenderer::BlockRenderer()
     : BlockRenderer(0, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr)
@@ -47,10 +44,13 @@ BlockRenderer::BlockRenderer(int numSlices,
 
     , m_rov_min{ 0.0 }
     , m_rov_max{ 0.0 }
+   
+    , m_timeOfLastJob{ 0 }
 
     , m_drawNonEmptyBoundingBoxes{ false }
     , m_drawNonEmptySlices{ true }
     , m_ROVRangeChanged{ false }
+    , m_cacheNeedsUpdating{ true }
     , m_shouldUseLighting{ false }
     , m_backgroundColor{ 0.0f }
 
@@ -234,8 +234,7 @@ BlockRenderer::setDrawNonEmptySlices(bool b)
 {
   m_drawNonEmptySlices = b;
 }
-
-
+ 
 ////////////////////////////////////////////////////////////////////////////////
 void
 BlockRenderer::setROVChanging(bool b)
@@ -245,11 +244,11 @@ BlockRenderer::setROVChanging(bool b)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-void
-BlockRenderer::setIsRotating(bool b)
-{
-  m_ROVChanging = b;
-}
+//void
+//BlockRenderer::setIsRotating(bool b)
+//{
+//  m_ROVChanging = b;
+//}
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -261,8 +260,18 @@ BlockRenderer::draw()
 
   if(m_ROVRangeChanged) {
     filterBlocksByROV();
+    m_ROVRangeChanged = false;
   }
 
+  
+  if (glfwGetTimerValue() - m_timeOfLastJob > MAX_MILLIS_SINCE_LAST_JOB) {
+    // load some blocks to the gpu if any available.
+    loadSomeBlocks();
+    m_timeOfLastJob = glfwGetTimerValue();
+  }
+
+
+  //TODO: only sort if rotated beyond a limit.
   sortBlocks();
 
 
@@ -314,6 +323,7 @@ void
 BlockRenderer::updateCache()
 {
 //  m_collection->updateCache();
+  m_cacheNeedsUpdating = true;
 }
 
 
@@ -483,7 +493,6 @@ BlockRenderer::sortBlocks()
 void
 BlockRenderer::filterBlocksByROV()
 {
-  m_ROVRangeChanged = false;
   m_collection->filterBlocksByROVRange(m_rov_min, m_rov_max);
 
 //  for(auto *b : *m_blocks) {
@@ -493,5 +502,24 @@ BlockRenderer::filterBlocksByROV()
 //    }
 //  }
 }
+
+
+void
+BlockRenderer::loadSomeBlocks()   
+{
+  uint64_t t{ 0 };
+  uint64_t const MAX_JOB_LENGTH_MS = 1000;
+  bd::Block *b{ nullptr };
+  while (t < MAX_JOB_LENGTH_MS && (b = m_collection->nextLoadableBlock())) {
+    uint64_t start{ glfwGetTimerValue() };
+    b->sendToGpu();
+    uint64_t timeToLoadBlock{ glfwGetTime() - start };
+    t += timeToLoadBlock;
+  }
+
+}
+
+
+
 
 } // namespace subvol

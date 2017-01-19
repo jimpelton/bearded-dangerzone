@@ -65,10 +65,8 @@ public:
   void
   updateBlockCache();
 
-
-  //void
-  //  getBlocksToLoad(std::vector<bd::Block *> &blocks);
-
+  Block *
+  nextLoadableBlock();
 
 
   std::vector<bd::Block *> const&

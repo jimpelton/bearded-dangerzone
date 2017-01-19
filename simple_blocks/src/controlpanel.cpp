@@ -171,7 +171,7 @@ ControlPanel::handle_sliderReleased()
   std::cout << "\nMin ROV: " << m_currentMinFloat << " Max ROV: " << m_currentMaxFloat << std::endl;
   m_renderer->setROVChanging(false);
 
-//TODO:  m_renderer->updateCache();
+  m_renderer->updateCache();
 }
 
 
