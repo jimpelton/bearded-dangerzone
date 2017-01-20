@@ -19,17 +19,24 @@ namespace subvol
 
 ///////////////////////////////////////////////////////////////////////////////
 BlockCollection::BlockCollection()
+    : BlockCollection(nullptr)
+{
+}
+
+BlockCollection::BlockCollection(std::unique_ptr<BlockLoader> loader)
     : m_blocks()
     , m_nonEmptyBlocks()
     , m_volume{ }
-//    , m_man{  }
 {
+  m_loader = loader.release();
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 BlockCollection::~BlockCollection()
 {
+  if (m_loader)
+    delete m_loader;
 }
 
 
@@ -83,11 +90,6 @@ BlockCollection::initBlocksFromFileBlocks(std::vector<FileBlock> const &fileBloc
   }
   std::cout << std::endl;
 
-//  std::sort(m_blocks.begin(), m_blocks.end(),
-//            [](Block const *lhs, Block const *rhs) -> bool {
-//              return lhs->fileBlock().rov < rhs->fileBlock().rov;
-//            });
-
 }
 
 
@@ -115,7 +117,6 @@ BlockCollection::filterBlocks(std::function<bool(Block const &)> isEmpty)
 void
 BlockCollection::filterBlocksByROVRange(double rov_min, double rov_max)
 {
-  //TODO: move filterBlocksByROVRange to mem manager.
   m_nonEmptyBlocks.clear();
   
   size_t bytes{ 0 };
@@ -132,7 +133,6 @@ BlockCollection::filterBlocksByROVRange(double rov_min, double rov_max)
     } else {
       b->visible(false);
     }
-
   } // for
 }
 
@@ -141,13 +141,13 @@ BlockCollection::filterBlocksByROVRange(double rov_min, double rov_max)
 void
 BlockCollection::updateBlockCache()
 {
-  m_loader.queueAll(m_nonEmptyBlocks);
+  m_loader->queueAll(m_nonEmptyBlocks);
 }
 
 Block *
 BlockCollection::nextLoadableBlock()   
 {
-  return m_loader.getNextGpuBlock();
+  return m_loader->getNextGpuBlock();
 }
 
 

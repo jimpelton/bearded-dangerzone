@@ -344,8 +344,8 @@ Controls::scrollwheel_callback(double xoff, double yoff)
 void
 Controls::mousebutton_callback(GLFWwindow *window, int button, int action, int mods)
 {
-  m_renderer->setIsRotating(
-      glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS);
+//  m_renderer->setIsRotating(
+//      glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS);
 }
 
 

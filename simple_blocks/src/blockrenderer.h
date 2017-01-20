@@ -120,6 +120,7 @@ public:
   void
   drawNonEmptyBoundingBoxes();
 
+  /// \brief Hint that the block caches should be updated.
   void
   updateCache();
 

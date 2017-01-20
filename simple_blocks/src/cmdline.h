@@ -54,8 +54,14 @@ struct CommandLineOptions
   int windowWidth;
   /// screen height
   int windowHeight;
+  /// gpu mem to use
+  size_t gpuMemoryBytes;
+  /// cpu mem to use
+  size_t mainMemoryBytes;
 };
 
+size_t
+convertToBytes(std::string s);
 
 ///////////////////////////////////////////////////////////////////////////////
 /// \brief Parses command line args and populates \c opts.

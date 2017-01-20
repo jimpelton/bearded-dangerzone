@@ -26,6 +26,7 @@ class BlockCollection
 public:
   BlockCollection();
 
+  BlockCollection(std::unique_ptr<BlockLoader> loader);
 
 //  BlockCollection();
 
@@ -65,7 +66,7 @@ public:
   void
   updateBlockCache();
 
-  Block *
+  bd::Block *
   nextLoadableBlock();
 
 
@@ -98,7 +99,7 @@ private:
 
   bd::Volume m_volume;
 
-  BlockLoader m_loader;
+  BlockLoader *m_loader;
 
 //  BlockMemoryManager *m_man;
 

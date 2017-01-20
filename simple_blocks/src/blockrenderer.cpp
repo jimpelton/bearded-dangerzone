@@ -263,6 +263,11 @@ BlockRenderer::draw()
     m_ROVRangeChanged = false;
   }
 
+  if (m_cacheNeedsUpdating) {
+    m_collection->updateBlockCache();
+    m_cacheNeedsUpdating = false;
+  }
+
   
   if (glfwGetTimerValue() - m_timeOfLastJob > MAX_MILLIS_SINCE_LAST_JOB) {
     // load some blocks to the gpu if any available.
@@ -513,7 +518,7 @@ BlockRenderer::loadSomeBlocks()
   while (t < MAX_JOB_LENGTH_MS && (b = m_collection->nextLoadableBlock())) {
     uint64_t start{ glfwGetTimerValue() };
     b->sendToGpu();
-    uint64_t timeToLoadBlock{ glfwGetTime() - start };
+    uint64_t timeToLoadBlock{ glfwGetTimerValue() - start };
     t += timeToLoadBlock;
   }
 

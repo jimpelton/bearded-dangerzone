@@ -281,6 +281,15 @@ initializeShaders(subvol::CommandLineOptions &clo)
   return rval;
 }
 
+
+void
+initializeMemoryBuffers(std::vector<char*> *buffers, size_t num, size_t bufsize)
+{
+  buffers->resize(num, nullptr);
+  static_assert(false);
+}
+
+
 /////////////////////////////////////////////////////////////////////////////////
 GLFWwindow *
 init_subvol(subvol::CommandLineOptions &clo)
@@ -298,6 +307,9 @@ init_subvol(subvol::CommandLineOptions &clo)
       return nullptr;
     }
     updateCommandLineOptionsFromIndexFile(clo, indexFile);
+  } else {
+    bd::Err() << "No IndexFile provided.";
+    return nullptr;
   }
 
   subvol::printThem(clo);
@@ -316,12 +328,38 @@ init_subvol(subvol::CommandLineOptions &clo)
   subvol::renderhelp::queryGPUMemory(&totalMemory);
   bd::Info() << "GPU memory: " << (totalMemory * 1e-3) << "MB";
 
+  if (clo.gpuMemoryBytes > totalMemory) {
+    bd::Warn() << "Requested gpu memory, " << clo.gpuMemoryBytes
+               << " greater than actual GPU memory, using " << totalMemory << " bytes.";
+    clo.gpuMemoryBytes = (unsigned)totalMemory;
+  }
+
   subvol::renderhelp::setInitialGLState();
   subvol::initializeVertexBuffers(clo);
   subvol::initializeShaders(clo);
   bool loaded = subvol::initializeTransferFunctions(clo);
 
-  g_blockCollection = std::make_shared<subvol::BlockCollection>();
+  std::unique_ptr<BlockLoader> loaderPtr{ new BlockLoader() };
+  BLThreadData tdata;
+  glm::u64vec3 dims = indexFile->getVolume().block_dims();
+  bd::DataType type = bd::IndexFileHeader::getType(indexFile->getHeader());
+  uint64_t blockBytes = dims.x * dims.y * dims.z * bd::to_sizeType(type);
+  if (blockBytes == 0) {
+    bd::Err() << "Blocks have a dimension that is 0, so I can't go on.";
+    return nullptr;
+  }
+  tdata.maxCpuBlocks = clo.mainMemoryBytes / blockBytes;
+  tdata.maxGpuBlocks = clo.gpuMemoryBytes / blockBytes;
+  tdata.slabDims[0] = indexFile->getVolume().voxelDims().x;
+  tdata.slabDims[1] = indexFile->getVolume().voxelDims().y;
+  tdata.filename = clo.rawFilePath;
+  tdata.texs = new std::vector<bd::Texture*>();
+  tdata.buffers = new std::vector<char*>();
+  bd::Texture::GenTextures3d(tdata.maxGpuBlocks, type,
+                             bd::Texture::Format::RED, dims.x, dims.y, dims.z, tdata.texs);
+
+  g_blockCollection =
+      std::make_shared<subvol::BlockCollection>();
   g_blockCollection->initBlocksFromIndexFile(indexFile);
   bd::Info() << g_blockCollection->blocks().size() << " blocks in index file.";
 
@@ -329,7 +367,6 @@ init_subvol(subvol::CommandLineOptions &clo)
   // filter blocks in the index file that are within ROV thresholds
   g_blockCollection->filterBlocksByROVRange(clo.blockThreshold_Min,
                                             clo.blockThreshold_Max);
-  bd::DataType type = bd::IndexFileHeader::getType(indexFile->getHeader());
   //TODO: initialize block textures
 //  g_blockCollection->initBlockTextures(clo.rawFilePath, type);
 

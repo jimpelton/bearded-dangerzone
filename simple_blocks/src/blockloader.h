@@ -18,11 +18,21 @@ namespace subvol
 
 struct BLThreadData
 {
+  BLThreadData()
+      : maxGpuBlocks{0}
+      , maxCpuBlocks{0}
+      , slabDims{0,0}
+      , filename{ }
+      , texs{ nullptr }
+      , buffers{ nullptr } { }
+
   size_t maxGpuBlocks;
   size_t maxCpuBlocks;
   // x, y dims of volume slab
   size_t slabDims[2];
   std::string filename;
+  std::vector<bd::Texture *> *texs;
+  std::vector<char *> *buffers;
 };
 
 /// Threaded load block data from disk. Blocks to load are put into a queue by
@@ -38,7 +48,7 @@ public:
 
 
   int
-  operator()(BLThreadData const &params);
+  operator()(std::unique_ptr<BLThreadData> threadParams);
 
 
   void

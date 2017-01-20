@@ -150,6 +150,14 @@ try
                       "int");
   cmd.add(screenHeightArg);
 
+  TCLAP::ValueArg<std::string>
+      gpuMemoryArg("", "gpu-mem", "Gpu memory to use", false, "512M", "string");
+  cmd.add(gpuMemoryArg);
+
+  TCLAP::ValueArg<std::string>
+      mainMemoryArg("", "main-mem", "Cpu memory to use", false, "1G", "string");
+  cmd.add(mainMemoryArg);
+
   cmd.parse(argc, argv);
 
   opts.rawFilePath = fileArg.getValue();
@@ -173,6 +181,8 @@ try
   opts.perfMode = perfMode.getValue();
   opts.windowWidth = screenWidthArg.getValue();
   opts.windowHeight = screenHeightArg.getValue();
+  opts.gpuMemoryBytes = convertToBytes(gpuMemoryArg.getValue());
+  opts.mainMemoryBytes = convertToBytes(mainMemoryArg.getValue());
 
   return static_cast<int>(cmd.getArgList().size());
 
@@ -182,6 +192,26 @@ try
   return 0;
 }
 
+
+size_t
+convertToBytes(std::string s)
+{
+  size_t multiplier{ 1 };
+  std::string last{ *( s.end() - 1 ) };
+
+  if (last == "K") {
+    multiplier = 1024;
+  } else if (last == "M") {
+    multiplier = 1024 * 1024;
+  } else if (last == "G") {
+    multiplier = 1024 * 1024 * 1024;
+  }
+
+  std::string numPart(s.begin(), s.end() - 1);
+  auto num = stoull(numPart);
+
+  return num * multiplier;
+}
 
 void
 printThem(CommandLineOptions &opts)
@@ -201,6 +231,8 @@ printThem(CommandLineOptions &opts)
       << opts.blockThreshold_Max
       << "\nPrint blocks: " << ( opts.printBlocks ? "True" : "False" )
       << "\nWindow dims: " << opts.windowWidth << " X " << opts.windowHeight
+      << "\nCpu memory: " << opts.mainMemoryBytes
+      << "\nGpu memory: " << opts.gpuMemoryBytes
       << std::endl;
 }
 
