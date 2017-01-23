@@ -18,15 +18,34 @@
 namespace subvol
 {
 
-BlockLoader::BlockLoader()
+BlockLoader::BlockLoader(BLThreadData *threadParams)
+  : m_stopThread{ false }
 {
-
+  dptr = threadParams;
 }
 
+//  BlockLoader::BlockLoader(BlockLoader const&)
+//  {
+//  }
+//
+//  BlockLoader& BlockLoader::operator=(BlockLoader const&)
+//  {
+//  }
+//
+//  BlockLoader& BlockLoader::operator=(BlockLoader const&&)
+//  {
+//  }
 
-BlockLoader::~BlockLoader()
+  BlockLoader::~BlockLoader()
 {
+  if (dptr)
+  {
+    if (dptr->buffers)
+      delete dptr->buffers;
 
+    if (dptr->texs)
+      delete dptr->texs;
+  }
 }
 
 
@@ -65,12 +84,10 @@ isInList(bd::Block *b, std::list<bd::Block *> &list)
 
 
 int
-BlockLoader::operator()(std::unique_ptr<BLThreadData> dptr)
+BlockLoader::operator()()
 {
-  BLThreadData data = *dptr;
-  dptr.reset();
-
-  std::ifstream raw{ data.filename, std::ios::binary };
+  bd::Dbg() << "Load thread started.";
+  std::ifstream raw{ dptr->filename, std::ios::binary };
   if (!raw.is_open()) {
     return -1;
   }
@@ -81,8 +98,12 @@ BlockLoader::operator()(std::unique_ptr<BLThreadData> dptr)
   // (if they are visible).
   std::list<bd::Block *> cpu;
 
-  std::vector<bd::Texture *> *texs = data.texs;
-  std::vector<char *> *buffers = data.buffers;
+  std::vector<bd::Texture *> * const texs = dptr->texs;
+  std::vector<char *> * const buffers = dptr->buffers;
+  size_t const maxGpuBlocks = dptr->maxGpuBlocks;
+  size_t const maxMainBlocks = dptr->maxCpuBlocks;
+  size_t const slabWidth = dptr->slabDims[0];
+  size_t const slabHeight = dptr->slabDims[1];
 
   while (!m_stopThread) {
 
@@ -99,7 +120,7 @@ BlockLoader::operator()(std::unique_ptr<BLThreadData> dptr)
         // Not in CPU, or GPU
         // b must be loaded to CPU.
         char *pixData{ nullptr };
-        if (cpu.size() == data.maxCpuBlocks) {
+        if (cpu.size() == maxMainBlocks) {
           // Cpu full, evict a non-visible block
           bd::Block *notvis{ removeLastInvisibleBlock(cpu) };
           if (notvis) {
@@ -115,18 +136,19 @@ BlockLoader::operator()(std::unique_ptr<BLThreadData> dptr)
         }
 
         b->pixelData(pixData);
-        fillBlockData(b, &raw, data.slabDims[0], data.slabDims[1]);
+        fillBlockData(b, &raw, slabWidth, slabHeight);
         // loaded to memory, so put in cpu cache.
         cpu.push_front(b);
         // put back to load queue so it can be processed for GPU.
         queueBlock(b);
+        bd::Dbg() << "Block " << b->fileBlock().block_index << " ready for texture.";
 
       } // ! cpu list
       else {
         // Is in cpu, but not in GPU
         // Give b a texture so it will be uploaded to GPU
         bd::Texture *tex{ nullptr };
-        if (gpu.size() == data.maxGpuBlocks) {
+        if (gpu.size() == maxGpuBlocks) {
 
           // no textures, evict non-vis from gpu
           bd::Block *notvis{ removeLastInvisibleBlock(gpu) };
@@ -151,6 +173,7 @@ BlockLoader::operator()(std::unique_ptr<BLThreadData> dptr)
       // TODO: if block is not gpu resident, push it to loadables...
       if (b->status() & bd::Block::GPU_WAIT) {
         m_loadables.push(b);
+        bd::Dbg() << "Queued block " << b->fileBlock().block_index << " for gpu upload.";
       }
     }
   } // while

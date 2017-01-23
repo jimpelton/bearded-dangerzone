@@ -23,12 +23,15 @@ BlockCollection::BlockCollection()
 {
 }
 
-BlockCollection::BlockCollection(std::unique_ptr<BlockLoader> loader)
+BlockCollection::BlockCollection(BlockLoader *loader)
     : m_blocks()
     , m_nonEmptyBlocks()
     , m_volume{ }
+    , m_loader{ loader }
 {
-  m_loader = loader.release();
+  m_loaderFuture = 
+    std::async(std::launch::async, 
+      [loader]() -> int { return (*loader)(); });
 }
 
 
@@ -42,11 +45,11 @@ BlockCollection::~BlockCollection()
 
 ///////////////////////////////////////////////////////////////////////////////
 void
-BlockCollection::initBlocksFromIndexFile(std::shared_ptr<IndexFile const> index)
+BlockCollection::initBlocksFromIndexFile(bd::IndexFile const &index)
 {
-  m_volume = index->getVolume();
+  m_volume = index.getVolume();
 
-  initBlocksFromFileBlocks(index->getFileBlocks(),
+  initBlocksFromFileBlocks(index.getFileBlocks(),
                            m_volume.worldDims(),
                            m_volume.block_count());
 
@@ -121,8 +124,10 @@ BlockCollection::filterBlocksByROVRange(double rov_min, double rov_max)
   
   size_t bytes{ 0 };
 
-  for (Block *b : m_blocks) {
-
+  size_t nblk{ m_nonEmptyBlocks.size() };
+  for(size_t i{ 0 }; i < nblk; ++i) {
+    bd::Block *b{ m_nonEmptyBlocks[i] };
+    if (! b->visible()) continue;
     double rov = b->fileBlock().rov;
 
     if (rov >= rov_min && rov <= rov_max) {

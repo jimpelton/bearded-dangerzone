@@ -33,7 +33,7 @@ BlockRenderer::BlockRenderer(int numSlices,
                              std::shared_ptr<bd::ShaderProgram> volumeShader,
                              std::shared_ptr<bd::ShaderProgram> volumeShaderLighting,
                              std::shared_ptr<bd::ShaderProgram> wireframeShader,
-                             std::shared_ptr<subvol::BlockCollection> blockCollection,
+                             subvol::BlockCollection *blockCollection,
                              std::shared_ptr<bd::VertexArrayObject> blocksVAO,
                              std::shared_ptr<bd::VertexArrayObject> bboxVAO,
                              std::shared_ptr<bd::VertexArrayObject> axisVao)
@@ -63,13 +63,14 @@ BlockRenderer::BlockRenderer(int numSlices,
     , m_quadsVao{ std::move(blocksVAO) }
     , m_boxesVao{ std::move(bboxVAO) }
     , m_axisVao{ std::move(axisVao) }
-    , m_collection{ std::move(blockCollection) }
+    , m_collection{ blockCollection }
 
-    , m_blocksToDraw{ nullptr }
+    , m_nonEmptyBlocks{ nullptr }
     , m_blocks{ nullptr }
 {
   m_blocks = &(m_collection->blocks());
-  m_blocksToDraw = &(m_collection->nonEmptyBlocks());
+  m_nonEmptyBlocks = &(m_collection->nonEmptyBlocks());
+  //m_renderableBlocks.reserve(m_collection->blocks().size());
   init();
 }
 
@@ -304,7 +305,9 @@ BlockRenderer::drawNonEmptyBoundingBoxes()
 {
   m_wireframeShader->bind();
   m_boxesVao->bind();
-  for (auto *b : *m_blocksToDraw) {
+  size_t nblk{ m_nonEmptyBlocks->size() };
+  for(size_t i{ 0 }; i < nblk; ++i) {
+    bd::Block *b{ (*m_nonEmptyBlocks)[i] };
     setWorldMatrix(b->transform());
     m_wireframeShader->setUniform(WIREFRAME_MVP_MATRIX_UNIFORM_STR,
                                   getWorldViewProjectionMatrix());
@@ -392,7 +395,10 @@ BlockRenderer::drawNonEmptyBlocks_Forward()
   // Start an NVPM profiling frame
   perf_frameBegin();
 
-  for (bd::Block *b : *m_blocksToDraw) {
+  size_t nblk{ m_nonEmptyBlocks->size() };
+  for(size_t i{ 0 }; i < nblk; ++i) {
+    bd::Block *b{ (*m_nonEmptyBlocks)[i] };
+    if (! b->status() & bd::Block::GPU_RES) continue;
 
     setWorldMatrix(b->transform());
     b->texture()->bind(BLOCK_TEXTURE_UNIT);
@@ -487,7 +493,7 @@ BlockRenderer::sortBlocks()
 
   // Sort the blocks by their distance from the camera.
   // The origin of each block is used.
-  std::sort(m_blocksToDraw->begin(), m_blocksToDraw->end(),
+  std::sort(m_nonEmptyBlocks->begin(), m_nonEmptyBlocks->end(),
             [&eye](bd::Block *a, bd::Block *b) {
               float a_dist = glm::distance(eye, a->origin());
               float b_dist = glm::distance(eye, b->origin());
@@ -503,7 +509,7 @@ BlockRenderer::filterBlocksByROV()
 //  for(auto *b : *m_blocks) {
 //    double rov{ b->fileBlock().rov };
 //    if (rov >= m_rov_min && rov <= m_rov_max) {
-//      m_blocksToDraw->push_back(b);
+//      m_nonEmptyBlocks->push_back(b);
 //    }
 //  }
 }

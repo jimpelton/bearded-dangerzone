@@ -18,30 +18,25 @@
 
 namespace subvol
 {
-class BlockCollection;
-//class BlockMemoryManager;
 
 class BlockCollection
 {
 public:
   BlockCollection();
 
-  BlockCollection(std::unique_ptr<BlockLoader> loader);
-
-//  BlockCollection();
-
+  BlockCollection(BlockLoader *loader);
 
   ~BlockCollection();
 
 
-  BlockCollection(BlockCollection const &) = delete;
+//  BlockCollection(BlockCollection const &) = delete;
 
 
-  BlockCollection(BlockCollection const &&) = delete;
+//  BlockCollection(BlockCollection const &&) = delete;
 
 
   void
-  initBlocksFromIndexFile(std::shared_ptr<bd::IndexFile const> index);
+  initBlocksFromIndexFile(bd::IndexFile const &index);
 
 
   /// \brief Initializes \c blocks from the provided vector of FileBlock.
@@ -101,7 +96,9 @@ private:
 
   BlockLoader *m_loader;
 
-//  BlockMemoryManager *m_man;
+  std::future<int> m_loaderFuture;
+
+  //  BlockMemoryManager *m_man;
 
 }; // BlockCollection
 

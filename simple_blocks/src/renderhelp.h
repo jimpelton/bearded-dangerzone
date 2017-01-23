@@ -8,6 +8,9 @@
 
 #include <GLFW/glfw3.h>
 
+#include "blockcollection.h"
+#include "cmdline.h"
+
 #include <glm/glm.hpp>
 #include <memory>
 
@@ -29,6 +32,12 @@ namespace renderhelp
 
 GLFWwindow *
 initGLContext(int screenWidth, int screenHeight);
+
+
+bool
+initializeBlockCollection(BlockCollection **bc,
+  bd::IndexFile const *indexFile, subvol::CommandLineOptions const &clo);
+
 
 void
 setInitialGLState();

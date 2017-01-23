@@ -41,14 +41,22 @@ class BlockLoader
 {
 public:
 
-  BlockLoader();
+  BlockLoader(BLThreadData *);
 
+//  BlockLoader(BlockLoader const &);
+//  BlockLoader(BlockLoader const &&);
+//  
+//  BlockLoader &
+//    operator=(BlockLoader const &);
+//
+//  BlockLoader &
+//    operator=(BlockLoader const &&);
 
   ~BlockLoader();
 
 
   int
-  operator()(std::unique_ptr<BLThreadData> threadParams);
+  operator()();
 
 
   void
@@ -90,6 +98,8 @@ private:
   std::mutex m_mutex;
 
   std::condition_variable_any m_wait;
+
+  BLThreadData *dptr;
 
 }; // class BlockLoader
 

@@ -33,7 +33,7 @@ public:
                 std::shared_ptr<bd::ShaderProgram> volumeShader,
                 std::shared_ptr<bd::ShaderProgram> volumeShaderLighting,
                 std::shared_ptr<bd::ShaderProgram> wireframeShader,
-                std::shared_ptr<subvol::BlockCollection> blockCollection,
+                subvol::BlockCollection *blockCollection,
                 std::shared_ptr<bd::VertexArrayObject> blocksVAO,
                 std::shared_ptr<bd::VertexArrayObject> bboxVAO,
                 std::shared_ptr<bd::VertexArrayObject> axisVao);
@@ -183,11 +183,12 @@ private:
   std::shared_ptr<bd::VertexArrayObject> m_quadsVao;    ///< Quad geometry verts
   std::shared_ptr<bd::VertexArrayObject> m_boxesVao;    ///< bounding box wireframe verts
   std::shared_ptr<bd::VertexArrayObject> m_axisVao;
-  std::shared_ptr<subvol::BlockCollection> m_collection;
+  subvol::BlockCollection *m_collection;
 
 
-  std::vector<bd::Block *> *m_blocksToDraw;  ///< Non-empty blocks to draw.
+  std::vector<bd::Block *> *m_nonEmptyBlocks;  ///< Non-empty blocks to draw.
   std::vector<bd::Block *> *m_blocks;       ///< All the blocks!
+  //std::vector<bd::Block *> m_renderableBlocks;  ///< Blocks that are on the gpu.
 
 };
 

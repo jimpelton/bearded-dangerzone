@@ -46,9 +46,9 @@ std::shared_ptr<bd::ShaderProgram> g_volumeShaderLighting{ nullptr };
 std::shared_ptr<bd::VertexArrayObject> g_axisVao{ nullptr };
 std::shared_ptr<bd::VertexArrayObject> g_boxVao{ nullptr };
 std::shared_ptr<bd::VertexArrayObject> g_quadVao{ nullptr };
-std::shared_ptr<subvol::BlockCollection> g_blockCollection{ nullptr };
+//std::shared_ptr<subvol::BlockCollection> g_blockCollection{ nullptr };
 //std::shared_ptr<subvol::Controls> g_controls{ nullptr };
-bool renderInitComplete{ false };
+bool g_renderInitComplete{ false };
 
 double g_rovMin, g_rovMax;
 
@@ -282,13 +282,6 @@ initializeShaders(subvol::CommandLineOptions &clo)
 }
 
 
-void
-initializeMemoryBuffers(std::vector<char*> *buffers, size_t num, size_t bufsize)
-{
-  buffers->resize(num, nullptr);
-  static_assert(false);
-}
-
 
 /////////////////////////////////////////////////////////////////////////////////
 GLFWwindow *
@@ -298,8 +291,7 @@ init_subvol(subvol::CommandLineOptions &clo)
   // Open the index file if possible, then setup the BlockCollection
   // and give away ownership of the index file to the BlockCollection.
   std::shared_ptr<bd::IndexFile> indexFile{ std::make_shared<bd::IndexFile>() };
-  if (! clo.indexFilePath.empty())
-  {
+  if (! clo.indexFilePath.empty()) {
     indexFile =
       bd::IndexFile::fromBinaryIndexFile(clo.indexFilePath);
     if (indexFile == nullptr) {
@@ -331,52 +323,26 @@ init_subvol(subvol::CommandLineOptions &clo)
   if (clo.gpuMemoryBytes > totalMemory) {
     bd::Warn() << "Requested gpu memory, " << clo.gpuMemoryBytes
                << " greater than actual GPU memory, using " << totalMemory << " bytes.";
-    clo.gpuMemoryBytes = (unsigned)totalMemory;
+    clo.gpuMemoryBytes = static_cast<size_t>(totalMemory);
   }
 
   subvol::renderhelp::setInitialGLState();
   subvol::initializeVertexBuffers(clo);
   subvol::initializeShaders(clo);
   bool loaded = subvol::initializeTransferFunctions(clo);
-
-  std::unique_ptr<BlockLoader> loaderPtr{ new BlockLoader() };
-  BLThreadData tdata;
-  glm::u64vec3 dims = indexFile->getVolume().block_dims();
-  bd::DataType type = bd::IndexFileHeader::getType(indexFile->getHeader());
-  uint64_t blockBytes = dims.x * dims.y * dims.z * bd::to_sizeType(type);
-  if (blockBytes == 0) {
-    bd::Err() << "Blocks have a dimension that is 0, so I can't go on.";
+  BlockCollection *bc{ nullptr };
+  if (! renderhelp::initializeBlockCollection(&bc, indexFile.get(), clo)) {
+    bd::Err() << "Error initializing block collection.";
     return nullptr;
   }
-  tdata.maxCpuBlocks = clo.mainMemoryBytes / blockBytes;
-  tdata.maxGpuBlocks = clo.gpuMemoryBytes / blockBytes;
-  tdata.slabDims[0] = indexFile->getVolume().voxelDims().x;
-  tdata.slabDims[1] = indexFile->getVolume().voxelDims().y;
-  tdata.filename = clo.rawFilePath;
-  tdata.texs = new std::vector<bd::Texture*>();
-  tdata.buffers = new std::vector<char*>();
-  bd::Texture::GenTextures3d(tdata.maxGpuBlocks, type,
-                             bd::Texture::Format::RED, dims.x, dims.y, dims.z, tdata.texs);
-
-  g_blockCollection =
-      std::make_shared<subvol::BlockCollection>();
-  g_blockCollection->initBlocksFromIndexFile(indexFile);
-  bd::Info() << g_blockCollection->blocks().size() << " blocks in index file.";
-
-
-  // filter blocks in the index file that are within ROV thresholds
-  g_blockCollection->filterBlocksByROVRange(clo.blockThreshold_Min,
-                                            clo.blockThreshold_Max);
-  //TODO: initialize block textures
-//  g_blockCollection->initBlockTextures(clo.rawFilePath, type);
-
+  
 
   g_renderer =
       std::make_shared<subvol::BlockRenderer>(int(clo.num_slices),
                                               g_volumeShader,
                                               g_volumeShaderLighting,
                                               g_wireframeShader,
-                                              g_blockCollection,
+                                              bc,
                                               g_quadVao,
                                               g_boxVao,
                                               g_axisVao);
@@ -400,7 +366,7 @@ init_subvol(subvol::CommandLineOptions &clo)
   perf_initMode(clo.perfMode);
 
   subvol::renderhelp::initializeControls(window, g_renderer);
-  renderInitComplete = true;
+  g_renderInitComplete = true;
 
   return window;
 
@@ -434,6 +400,7 @@ int main(int argc, char *argv[])
     return 1;
   }
 
+  // Start the qt event stuff on a separate thread.
   std::future<int>
       returned = std::async(std::launch::async,
                             [&]() {

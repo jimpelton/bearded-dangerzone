@@ -13,6 +13,7 @@
 
 #include <bd/log/logger.h>
 #include <bd/log/gl_log.h>
+#include "cmdline.h"
 
 //#include <glm/glm.hpp>
 //#include <glm/matrix.hpp>
@@ -31,7 +32,20 @@ s_error_callback(int error, const char *description)
   bd::Err() << "GLFW ERROR: code " << error << " msg: " << description;
 }
 
+void
+initializeMemoryBuffers(std::vector<char *> *buffers, size_t num, size_t sz)
+{
+  buffers->resize(num, nullptr);
+  char *mem{ new char[num*sz] };
+  
+  for (size_t i{ 0 }; i<num; ++i)
+  {
+    char *idx = mem + i * sz;
+    (*buffers)[i] = idx;
+  }
 }
+
+} // namespace
 
 ///////////////////////////////////////////////////////////////////////////////
 GLFWwindow *
@@ -92,6 +106,43 @@ initGLContext(int screenWidth, int screenHeight)
   return window;
 } // initGLContext()
 
+
+bool
+initializeBlockCollection(BlockCollection **bc, 
+  bd::IndexFile const *indexFile,
+  subvol::CommandLineOptions const &clo)
+{
+  BLThreadData *tdata{ new BLThreadData() };
+  glm::u64vec3 dims = indexFile->getVolume().block_dims();
+  bd::DataType type = bd::IndexFileHeader::getType(indexFile->getHeader());
+  uint64_t blockBytes = dims.x * dims.y * dims.z * bd::to_sizeType(type);
+  if (blockBytes == 0) {
+    bd::Err() << "Blocks have a dimension that is 0, so I can't go on.";
+    return false;
+  }
+
+  tdata->maxCpuBlocks = clo.mainMemoryBytes / blockBytes;
+  tdata->maxGpuBlocks = clo.gpuMemoryBytes / blockBytes;
+  tdata->slabDims[0] = indexFile->getVolume().voxelDims().x;
+  tdata->slabDims[1] = indexFile->getVolume().voxelDims().y;
+  tdata->filename = clo.rawFilePath;
+  tdata->texs = new std::vector<bd::Texture*>();
+  tdata->buffers = new std::vector<char*>();
+  bd::Texture::GenTextures3d(tdata->maxGpuBlocks, type,
+                             bd::Texture::Format::RED, dims.x, dims.y, dims.z, tdata->texs);
+  initializeMemoryBuffers(tdata->buffers, tdata->maxCpuBlocks, blockBytes);
+  BlockLoader *loader{ new BlockLoader(tdata) };
+
+  BlockCollection *bc_local{ new BlockCollection(loader) };
+  bc_local->initBlocksFromIndexFile(*indexFile);
+
+  bd::Info() << bc_local->blocks().size() << " blocks in index file.";
+
+  // filter blocks in the index file that are within ROV thresholds
+  bc_local->filterBlocksByROVRange(clo.blockThreshold_Min, clo.blockThreshold_Max);
+  *bc = bc_local;
+  return true;
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 void
