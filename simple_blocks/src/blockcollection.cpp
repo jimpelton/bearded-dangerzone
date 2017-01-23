@@ -124,17 +124,15 @@ BlockCollection::filterBlocksByROVRange(double rov_min, double rov_max)
   
   size_t bytes{ 0 };
 
-  size_t nblk{ m_nonEmptyBlocks.size() };
-  for(size_t i{ 0 }; i < nblk; ++i) {
-    bd::Block *b{ m_nonEmptyBlocks[i] };
-    if (! b->visible()) continue;
+  size_t nBlk{ m_blocks.size() };
+  for(size_t i{ 0 }; i < nBlk; ++i) {
+
+    bd::Block *b{ m_blocks[i] };
     double rov = b->fileBlock().rov;
 
     if (rov >= rov_min && rov <= rov_max) {
-//      bytes += b->fileBlock().data_bytes;
       b->visible(true);
       m_nonEmptyBlocks.push_back(b);
-//      m_man->asyncLoadBlock(b);
     } else {
       b->visible(false);
     }

@@ -20,7 +20,7 @@ namespace subvol
 {
 
 
-#define MAX_MILLIS_SINCE_LAST_JOB 100
+#define MAX_MILLIS_SINCE_LAST_JOB 100000000
 
 BlockRenderer::BlockRenderer()
     : BlockRenderer(0, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr)
@@ -307,7 +307,9 @@ BlockRenderer::drawNonEmptyBoundingBoxes()
   m_boxesVao->bind();
   size_t nblk{ m_nonEmptyBlocks->size() };
   for(size_t i{ 0 }; i < nblk; ++i) {
+
     bd::Block *b{ (*m_nonEmptyBlocks)[i] };
+
     setWorldMatrix(b->transform());
     m_wireframeShader->setUniform(WIREFRAME_MVP_MATRIX_UNIFORM_STR,
                                   getWorldViewProjectionMatrix());
@@ -330,13 +332,8 @@ BlockRenderer::drawNonEmptyBoundingBoxes()
 void
 BlockRenderer::updateCache()
 {
-//  m_collection->updateCache();
   m_cacheNeedsUpdating = true;
 }
-
-
-
-
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -395,10 +392,15 @@ BlockRenderer::drawNonEmptyBlocks_Forward()
   // Start an NVPM profiling frame
   perf_frameBegin();
 
-  size_t nblk{ m_nonEmptyBlocks->size() };
-  for(size_t i{ 0 }; i < nblk; ++i) {
+  size_t nBlk{ m_nonEmptyBlocks->size() };
+
+  for(size_t i{ 0 }; i < nBlk; ++i) {
+
     bd::Block *b{ (*m_nonEmptyBlocks)[i] };
-    if (! b->status() & bd::Block::GPU_RES) continue;
+
+    if (b->status() & ~bd::Block::GPU_RES) {
+      continue;
+    }
 
     setWorldMatrix(b->transform());
     b->texture()->bind(BLOCK_TEXTURE_UNIT);
@@ -521,12 +523,16 @@ BlockRenderer::loadSomeBlocks()
   uint64_t t{ 0 };
   uint64_t const MAX_JOB_LENGTH_MS = 1000;
   bd::Block *b{ nullptr };
+  int i{0};
   while (t < MAX_JOB_LENGTH_MS && (b = m_collection->nextLoadableBlock())) {
     uint64_t start{ glfwGetTimerValue() };
     b->sendToGpu();
     uint64_t timeToLoadBlock{ glfwGetTimerValue() - start };
     t += timeToLoadBlock;
+    ++i;
   }
+
+//  bd::Dbg() << "Loaded " << i << " blocks.";
 
 }
 

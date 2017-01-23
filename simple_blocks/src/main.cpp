@@ -318,7 +318,7 @@ init_subvol(subvol::CommandLineOptions &clo)
   
   int totalMemory{ 0 };
   subvol::renderhelp::queryGPUMemory(&totalMemory);
-  bd::Info() << "GPU memory: " << (totalMemory * 1e-3) << "MB";
+  bd::Info() << "GPU memory: " << (totalMemory * 1e-6) << "MB";
 
   if (clo.gpuMemoryBytes > totalMemory) {
     bd::Warn() << "Requested gpu memory, " << clo.gpuMemoryBytes
@@ -330,13 +330,13 @@ init_subvol(subvol::CommandLineOptions &clo)
   subvol::initializeVertexBuffers(clo);
   subvol::initializeShaders(clo);
   bool loaded = subvol::initializeTransferFunctions(clo);
+
   BlockCollection *bc{ nullptr };
   if (! renderhelp::initializeBlockCollection(&bc, indexFile.get(), clo)) {
     bd::Err() << "Error initializing block collection.";
     return nullptr;
   }
   
-
   g_renderer =
       std::make_shared<subvol::BlockRenderer>(int(clo.num_slices),
                                               g_volumeShader,

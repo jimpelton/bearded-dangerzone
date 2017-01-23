@@ -102,6 +102,7 @@ BlockLoader::operator()()
   std::vector<char *> * const buffers = dptr->buffers;
   size_t const maxGpuBlocks = dptr->maxGpuBlocks;
   size_t const maxMainBlocks = dptr->maxCpuBlocks;
+  size_t const sizeType = dptr->size;
   size_t const slabWidth = dptr->slabDims[0];
   size_t const slabHeight = dptr->slabDims[1];
 
@@ -136,7 +137,7 @@ BlockLoader::operator()()
         }
 
         b->pixelData(pixData);
-        fillBlockData(b, &raw, slabWidth, slabHeight);
+        fillBlockData(b, &raw, sizeType, slabWidth, slabHeight);
         // loaded to memory, so put in cpu cache.
         cpu.push_front(b);
         // put back to load queue so it can be processed for GPU.
@@ -172,7 +173,7 @@ BlockLoader::operator()()
       // the block is already in gpu cache
       // TODO: if block is not gpu resident, push it to loadables...
       if (b->status() & bd::Block::GPU_WAIT) {
-        m_loadables.push(b);
+        pushLoadablesQueue(b);
         bd::Dbg() << "Queued block " << b->fileBlock().block_index << " for gpu upload.";
       }
     }
@@ -215,6 +216,7 @@ BlockLoader::queueBlock(bd::Block *b)
 {
   std::unique_lock<std::mutex> lock(m_mutex);
   m_loadQueue.push(b);
+  m_wait.notify_all();
 }
 
 
@@ -223,6 +225,7 @@ BlockLoader::queueAll(std::vector<bd::Block *> &visibleBlocks)
 {
   std::unique_lock<std::mutex> lock(m_mutex);
 
+  // clear the load queue.
   std::queue<bd::Block *> q;
   m_loadQueue.swap(q);
 
@@ -230,8 +233,7 @@ BlockLoader::queueAll(std::vector<bd::Block *> &visibleBlocks)
     m_loadQueue.push(visibleBlocks[i]);
   }
 
-  lock.release();
-  m_wait.notify_one();
+  m_wait.notify_all();
 }
 
 
@@ -256,9 +258,16 @@ BlockLoader::getNextGpuBlock()
   return b;
 }
 
+void
+BlockLoader::pushLoadablesQueue(bd::Block *b)
+{
+  std::unique_lock<std::mutex> lock(m_loadablesMutex);
+  m_loadables.push(b);
+}
 
 void
-BlockLoader::fillBlockData(bd::Block *b, std::istream *infile, size_t vX, size_t vY) const
+BlockLoader::fillBlockData(bd::Block *b, std::istream *infile,
+                           size_t sizeType, size_t vX, size_t vY) const
 {
   char *blockBuffer{ b->pixelData() };
 
@@ -270,7 +279,7 @@ BlockLoader::fillBlockData(bd::Block *b, std::istream *infile, size_t vX, size_t
   glm::u64vec3 const end{ start + be };
 
   size_t const blockRowLength{ be.x };
-  size_t const sizeType{ to_sizeType(b->texture()->dataType()) };
+  //size_t const sizeType{ to_sizeType(b->texture()->dataType()) };
 
   // byte offset into file to read from
   size_t offset{ b->fileBlock().data_offset };

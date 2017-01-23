@@ -21,6 +21,7 @@ struct BLThreadData
   BLThreadData()
       : maxGpuBlocks{0}
       , maxCpuBlocks{0}
+      , size{ 1 }
       , slabDims{0,0}
       , filename{ }
       , texs{ nullptr }
@@ -28,6 +29,8 @@ struct BLThreadData
 
   size_t maxGpuBlocks;
   size_t maxCpuBlocks;
+  // size of data elements on disk
+  size_t size;
   // x, y dims of volume slab
   size_t slabDims[2];
   std::string filename;
@@ -86,7 +89,10 @@ private:
 
 
   void
-  fillBlockData(bd::Block *b, std::istream *infile, size_t vX, size_t vY) const;
+  pushLoadablesQueue(bd::Block *b);
+
+  void
+  fillBlockData(bd::Block *b, std::istream *infile, size_t szTy, size_t vX, size_t vY) const;
 
 
   std::queue<bd::Block *> m_loadQueue;

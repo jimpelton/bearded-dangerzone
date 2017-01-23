@@ -115,22 +115,37 @@ initializeBlockCollection(BlockCollection **bc,
   BLThreadData *tdata{ new BLThreadData() };
   glm::u64vec3 dims = indexFile->getVolume().block_dims();
   bd::DataType type = bd::IndexFileHeader::getType(indexFile->getHeader());
-  uint64_t blockBytes = dims.x * dims.y * dims.z * bd::to_sizeType(type);
+  size_t sizeType{ bd::to_sizeType(type) };
+  uint64_t blockBytes = dims.x * dims.y * dims.z * sizeType;
+
   if (blockBytes == 0) {
     bd::Err() << "Blocks have a dimension that is 0, so I can't go on.";
     return false;
+  } else {
+    bd::Info() << "Block size (bytes): " << blockBytes;
   }
 
+
   tdata->maxCpuBlocks = clo.mainMemoryBytes / blockBytes;
+  bd::Info() << "Max cpu blocks: " << tdata->maxCpuBlocks;
+
   tdata->maxGpuBlocks = clo.gpuMemoryBytes / blockBytes;
+  bd::Info() << "Max GPU blocks: " << tdata->maxGpuBlocks;
+
+  tdata->size = sizeType;
   tdata->slabDims[0] = indexFile->getVolume().voxelDims().x;
   tdata->slabDims[1] = indexFile->getVolume().voxelDims().y;
   tdata->filename = clo.rawFilePath;
   tdata->texs = new std::vector<bd::Texture*>();
   tdata->buffers = new std::vector<char*>();
+
   bd::Texture::GenTextures3d(tdata->maxGpuBlocks, type,
                              bd::Texture::Format::RED, dims.x, dims.y, dims.z, tdata->texs);
+  bd::Info() << "Generated " << tdata->texs->size() << " textures.";
+
   initializeMemoryBuffers(tdata->buffers, tdata->maxCpuBlocks, blockBytes);
+  bd::Info() << "Generated " << tdata->buffers->size() << " main memory buffers.";
+
   BlockLoader *loader{ new BlockLoader(tdata) };
 
   BlockCollection *bc_local{ new BlockCollection(loader) };
@@ -209,12 +224,12 @@ queryGPUMemory(int *total, int *avail)
   GLint total_mem_kb = 0;
   glGetIntegerv(0x9048, &total_mem_kb);
 
-  *total = total_mem_kb;
+  *total = total_mem_kb * 1024;
 
   if (avail) {
     GLint cur_avail_mem_kb = 0;
     glGetIntegerv(0x9049, &cur_avail_mem_kb);
-    *avail = cur_avail_mem_kb;
+    *avail = cur_avail_mem_kb * 1024;
   }
 }
 
