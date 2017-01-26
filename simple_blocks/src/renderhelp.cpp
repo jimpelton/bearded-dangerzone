@@ -140,8 +140,9 @@ initializeBlockCollection(BlockCollection **bc,
   tdata->buffers = new std::vector<char*>();
 
   bd::Texture::GenTextures3d(tdata->maxGpuBlocks, type,
-                             bd::Texture::Format::RED, dims.x, dims.y, dims.z, tdata->texs);
+                             bd::Texture::Format::R8, dims.x, dims.y, dims.z, tdata->texs);
   bd::Info() << "Generated " << tdata->texs->size() << " textures.";
+
 
   initializeMemoryBuffers(tdata->buffers, tdata->maxCpuBlocks, blockBytes);
   bd::Info() << "Generated " << tdata->buffers->size() << " main memory buffers.";

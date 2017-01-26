@@ -527,6 +527,7 @@ BlockRenderer::loadSomeBlocks()
   while (t < MAX_JOB_LENGTH_MS && (b = m_collection->nextLoadableBlock())) {
     uint64_t start{ glfwGetTimerValue() };
     b->sendToGpu();
+    bd::Dbg() << "Sent " << b->fileBlock().block_index << " to GPU.";
     uint64_t timeToLoadBlock{ glfwGetTimerValue() - start };
     t += timeToLoadBlock;
     ++i;

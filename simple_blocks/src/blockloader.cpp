@@ -114,6 +114,8 @@ BlockLoader::operator()()
     if (!b) {
       continue;
     }
+    bd::Dbg() << "Processing block: " << b->fileBlock().block_index
+              << " Status: " << b->status();
 
     if (!isInList(b, gpu)) {
       // Not in GPU, check the CPU cache
@@ -142,7 +144,8 @@ BlockLoader::operator()()
         cpu.push_front(b);
         // put back to load queue so it can be processed for GPU.
         queueBlock(b);
-        bd::Dbg() << "Block " << b->fileBlock().block_index << " ready for texture.";
+        bd::Dbg() << "Block " << b->fileBlock().block_index
+                  << " (" << b->status() << ") ready for texture.";
 
       } // ! cpu list
       else {
@@ -167,14 +170,20 @@ BlockLoader::operator()()
 
         b->texture(tex);
         gpu.push_front(b);
+        bd::Dbg() << "Block " << b->fileBlock().block_index
+                  << " (" << b->status() << ")  ready for GPU.";
       }
     } // ! gpu list
     else {
       // the block is already in gpu cache
       // TODO: if block is not gpu resident, push it to loadables...
+      bd::Dbg() << "Block " << b->fileBlock().block_index
+                << " (" << b->status() << ") found in gpu cache.";
+
       if (b->status() & bd::Block::GPU_WAIT) {
         pushLoadablesQueue(b);
-        bd::Dbg() << "Queued block " << b->fileBlock().block_index << " for gpu upload.";
+        bd::Dbg() << "Queued block " << b->fileBlock().block_index
+                  << " (" << b->status() << ") for gpu upload.";
       }
     }
   } // while
