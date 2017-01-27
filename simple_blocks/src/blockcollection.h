@@ -50,8 +50,8 @@ public:
                            glm::u64vec3 const &numblocks);
 
 
-  void
-  filterBlocks(std::function<bool(bd::Block const &)> filter);
+//  void
+//  filterBlocks(std::function<bool(bd::Block const &)> filter);
 
 
   void

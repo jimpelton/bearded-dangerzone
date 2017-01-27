@@ -321,7 +321,7 @@ init_subvol(subvol::CommandLineOptions &clo)
   bd::Info() << "GPU memory: " << (totalMemory * 1e-6) << "MB";
 
   if (clo.gpuMemoryBytes > totalMemory) {
-    bd::Warn() << "Requested gpu memory, " << clo.gpuMemoryBytes
+    bd::Warn() << "Requested m_gpu memory, " << clo.gpuMemoryBytes
                << " greater than actual GPU memory, using " << totalMemory << " bytes.";
     clo.gpuMemoryBytes = static_cast<size_t>(totalMemory);
   }

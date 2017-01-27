@@ -97,23 +97,23 @@ BlockCollection::initBlocksFromFileBlocks(std::vector<FileBlock> const &fileBloc
 
 
 ///////////////////////////////////////////////////////////////////////////////
-void
-BlockCollection::filterBlocks(std::function<bool(Block const &)> isEmpty)
-{
-  m_nonEmptyBlocks.clear();
-
-  for (Block *b : m_blocks) {
-    uint64_t idx{ b->fileBlock().block_index };
-
-    if (! isEmpty(*b)) {
-      b->visible(true);
-      m_nonEmptyBlocks.push_back(b);
-//      m_man->asyncLoadBlock(b);
-    } else {
-      b->visible(false);
-    }
-  }
-}
+//void
+//BlockCollection::filterBlocks(std::function<bool(Block const &)> isEmpty)
+//{
+//  m_nonEmptyBlocks.clear();
+//
+//  for (Block *b : m_blocks) {
+//    uint64_t idx{ b->fileBlock().block_index };
+//
+//    if (! isEmpty(*b)) {
+//      b->visible(true);
+//      m_nonEmptyBlocks.push_back(b);
+////      m_man->asyncLoadBlock(b);
+//    } else {
+//      b->visible(false);
+//    }
+//  }
+//}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -122,7 +122,7 @@ BlockCollection::filterBlocksByROVRange(double rov_min, double rov_max)
 {
   m_nonEmptyBlocks.clear();
   
-  size_t bytes{ 0 };
+//  size_t bytes{ 0 };
 
   size_t nBlk{ m_blocks.size() };
   for(size_t i{ 0 }; i < nBlk; ++i) {

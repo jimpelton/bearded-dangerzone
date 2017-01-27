@@ -80,12 +80,20 @@ public:
   bd::Block *
   getNextGpuBlock();
 
+  void
+  pushGpuResBlock(bd::Block *);
 
 private:
 
 
   bd::Block* 
   waitPopLoadQueue();
+
+  bd::Block *
+  removeGpuLastInvisible();
+
+  bool
+  isInGpuList(bd::Block*);
 
 
   void
@@ -95,11 +103,12 @@ private:
   fillBlockData(bd::Block *b, std::istream *infile, size_t szTy, size_t vX, size_t vY) const;
 
 
-  std::queue<bd::Block *> m_loadQueue;
-  std::queue<bd::Block *> m_loadables;
+  std::queue<bd::Block *> m_loadQueue;   ///< Blocks that will be examined for loading.
+  std::queue<bd::Block *> m_loadables;   ///< Blocks with GPU_WAIT status.
+  std::list<bd::Block *> m_gpu;          ///< Blocks with GPU_RES status.
 
   std::atomic_bool m_stopThread;
-
+  std::mutex m_gpuMutex;
   std::mutex m_loadablesMutex;
   std::mutex m_mutex;
 

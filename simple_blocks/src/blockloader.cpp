@@ -64,7 +64,7 @@ removeLastInvisibleBlock(std::list<bd::Block *> &list)
 
   if (not_vis == rend) {
     // no non-visible blocks in the cpu queue
-    // (only happens if size gpu == size cpu)
+    // (only happens if size m_gpu == size cpu)
     return nullptr;
   }
 
@@ -80,8 +80,19 @@ isInList(bd::Block *b, std::list<bd::Block *> &list)
   auto found = std::find(list.begin(), end, b);
   return found != end;
 }
+
+void
+printBar(size_t ticks, char const *prefix)
+{
+//  unsigned char bar[81] = { 255 }; // white space
+  std::cout << '\r' << prefix << " cache: ";
+  for (int i=0; i<ticks; ++i) {
+    std::cout << '.'; //static_cast<char>(178);
+  }
+
 }
 
+} // namespace
 
 int
 BlockLoader::operator()()
@@ -93,7 +104,6 @@ BlockLoader::operator()()
   }
 
   // GPU blocks have valid pixelData ptrs and valid texture ptrs.
-  std::list<bd::Block *> gpu;
   // CPU blocks have valid pixelData ptrs, and may have valid texture ptrs.
   // (if they are visible).
   std::list<bd::Block *> cpu;
@@ -106,18 +116,33 @@ BlockLoader::operator()()
   size_t const slabWidth = dptr->slabDims[0];
   size_t const slabHeight = dptr->slabDims[1];
 
+  int const ticks{ 80 };
+//  size_t const mainBlocksPerTick{ maxMainBlocks / size_t(ticks) };
+//  size_t const gpuBlocksPerTick{ maxGpuBlocks / size_t(ticks) };
+
+  std::cout << std::endl;
+
+
   while (!m_stopThread) {
+
+
+    printBar((cpu.size() / maxMainBlocks) * ticks, "Cpu");
+    std::cout << "\n";
+    printBar((m_gpu.size() / maxGpuBlocks) * ticks, "Gpu");
+    //std::cout << std::endl;
+
 
     // get a block marked as visible
     bd::Block *b{ waitPopLoadQueue() };
 
-    if (!b) {
+    if (!b || !b->visible()) {
       continue;
     }
+
     bd::Dbg() << "Processing block: " << b->fileBlock().block_index
               << " Status: " << b->status();
 
-    if (!isInList(b, gpu)) {
+    if (!isInGpuList(b)) {
       // Not in GPU, check the CPU cache
       if (!isInList(b, cpu)) {
         // Not in CPU, or GPU
@@ -129,8 +154,13 @@ BlockLoader::operator()()
           if (notvis) {
             // there was a non-visible block in the cpu cache, 
             // take it's pixel buffer.
+            bd::Dbg() << "Removed block " << notvis->fileBlock().block_index
+                      << " (" << notvis->status() << ") from CPU cache.";
             pixData = notvis->pixelData();
             notvis->pixelData(nullptr);
+          } else {
+            // we couldn't find a non-visible block
+            continue;
           }
         } else {
           // the cpu cache is not full, so grab a free buffer.
@@ -142,7 +172,7 @@ BlockLoader::operator()()
         fillBlockData(b, &raw, sizeType, slabWidth, slabHeight);
         // loaded to memory, so put in cpu cache.
         cpu.push_front(b);
-        // put back to load queue so it can be processed for GPU.
+        // put back to load queue so it will be processed for GPU.
         queueBlock(b);
         bd::Dbg() << "Block " << b->fileBlock().block_index
                   << " (" << b->status() << ") ready for texture.";
@@ -151,40 +181,40 @@ BlockLoader::operator()()
       else {
         // Is in cpu, but not in GPU
         // Give b a texture so it will be uploaded to GPU
+        bd::Dbg() << "Block " << b->fileBlock().block_index
+                  << " (" << b->status() << ") " "found in CPU cache.";
         bd::Texture *tex{ nullptr };
-        if (gpu.size() == maxGpuBlocks) {
+        if (m_gpu.size() == maxGpuBlocks) {
 
-          // no textures, evict non-vis from gpu
-          bd::Block *notvis{ removeLastInvisibleBlock(gpu) };
+          // no textures, evict non-vis from m_gpu
+          bd::Block *notvis{ removeGpuLastInvisible() };
           if (notvis) {
             // nonvis block found, give it a texture
-            tex = notvis->texture();
-            notvis->texture(nullptr);
+            tex = notvis->removeTexture();
+            bd::Dbg() << "Removed block " << notvis->fileBlock().block_index
+                      << " (" << notvis->status() << ") from GPU cache.";
+          } else {
+            // we couldn't find a non-visible block
+            continue;
           }
-
         } else {
-          // gpu cache not full yet, so grab a texture from cache.
+          // m_gpu cache not full yet, so grab a texture from cache.
           tex = texs->back();
           texs->pop_back();
         }
 
         b->texture(tex);
-        gpu.push_front(b);
-        bd::Dbg() << "Block " << b->fileBlock().block_index
-                  << " (" << b->status() << ")  ready for GPU.";
-      }
-    } // ! gpu list
-    else {
-      // the block is already in gpu cache
-      // TODO: if block is not gpu resident, push it to loadables...
-      bd::Dbg() << "Block " << b->fileBlock().block_index
-                << " (" << b->status() << ") found in gpu cache.";
-
-      if (b->status() & bd::Block::GPU_WAIT) {
         pushLoadablesQueue(b);
         bd::Dbg() << "Queued block " << b->fileBlock().block_index
-                  << " (" << b->status() << ") for gpu upload.";
+                  << " (" << b->status() << ") for GPU upload.";
       }
+    } // ! m_gpu list
+    else {
+      // the block is already in m_gpu cache
+      bd::Dbg() << "Block " << b->fileBlock().block_index
+                << " (" << b->status() << ") " " found in GPU cache.";
+//      if (b->status() & bd::Block::GPU_WAIT) {
+//      }
     }
   } // while
 
@@ -220,6 +250,21 @@ BlockLoader::waitPopLoadQueue()
 }
 
 
+bd::Block *
+BlockLoader::removeGpuLastInvisible()
+{
+  std::unique_lock<std::mutex>(m_gpuMutex);
+  return removeLastInvisibleBlock(m_gpu);
+}
+
+
+bool
+BlockLoader::isInGpuList(bd::Block *b)
+{
+  std::unique_lock<std::mutex>(m_gpuMutex);
+  return isInList(b, m_gpu);
+}
+
 void
 BlockLoader::queueBlock(bd::Block *b)
 {
@@ -237,7 +282,7 @@ BlockLoader::queueAll(std::vector<bd::Block *> &visibleBlocks)
   // clear the load queue.
   std::queue<bd::Block *> q;
   m_loadQueue.swap(q);
-
+  bd::Dbg() << "Queueing " << visibleBlocks.size() << " for loading.";
   for (size_t i = 0; i < visibleBlocks.size(); ++i) {
     m_loadQueue.push(visibleBlocks[i]);
   }
@@ -266,6 +311,16 @@ BlockLoader::getNextGpuBlock()
 
   return b;
 }
+
+void
+BlockLoader::pushGpuResBlock(bd::Block *b)
+{
+  std::unique_lock<std::mutex> lock(m_gpuMutex);
+  m_gpu.push_front(b);
+}
+
+
+
 
 void
 BlockLoader::pushLoadablesQueue(bd::Block *b)

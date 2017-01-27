@@ -265,13 +265,14 @@ BlockRenderer::draw()
   }
 
   if (m_cacheNeedsUpdating) {
+    std::cout << "++++++Updating the block cache++++++" << std::endl;
     m_collection->updateBlockCache();
     m_cacheNeedsUpdating = false;
   }
 
   
   if (glfwGetTimerValue() - m_timeOfLastJob > MAX_MILLIS_SINCE_LAST_JOB) {
-    // load some blocks to the gpu if any available.
+    // load some blocks to the m_gpu if any available.
     loadSomeBlocks();
     m_timeOfLastJob = glfwGetTimerValue();
   }
@@ -521,7 +522,7 @@ void
 BlockRenderer::loadSomeBlocks()   
 {
   uint64_t t{ 0 };
-  uint64_t const MAX_JOB_LENGTH_MS = 1000;
+  uint64_t const MAX_JOB_LENGTH_MS = 1000000;
   bd::Block *b{ nullptr };
   int i{0};
   while (t < MAX_JOB_LENGTH_MS && (b = m_collection->nextLoadableBlock())) {
@@ -533,7 +534,7 @@ BlockRenderer::loadSomeBlocks()
     ++i;
   }
 
-//  bd::Dbg() << "Loaded " << i << " blocks.";
+  bd::Dbg() << "Loaded " << i << " blocks.";
 
 }
 

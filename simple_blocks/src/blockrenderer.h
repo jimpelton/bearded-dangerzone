@@ -188,7 +188,7 @@ private:
 
   std::vector<bd::Block *> *m_nonEmptyBlocks;  ///< Non-empty blocks to draw.
   std::vector<bd::Block *> *m_blocks;       ///< All the blocks!
-  //std::vector<bd::Block *> m_renderableBlocks;  ///< Blocks that are on the gpu.
+  //std::vector<bd::Block *> m_renderableBlocks;  ///< Blocks that are on the m_gpu.
 
 };
 
