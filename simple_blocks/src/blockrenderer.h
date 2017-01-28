@@ -154,9 +154,6 @@ private:
   filterBlocksByROV();
 
 
-  void
-    loadSomeBlocks();
-
   int m_numSlicesPerBlock;            ///< Number of slices per block
   float m_tfuncScaleValue;            ///< Transfer function scaling value
   double m_rov_min;

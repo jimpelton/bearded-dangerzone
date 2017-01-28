@@ -1,4 +1,4 @@
-#include <GL/glew.h>
+#include <GLFW/glfw3.h>
 
 #include "blockcollection.h"
 
@@ -22,6 +22,7 @@ BlockCollection::BlockCollection()
     : BlockCollection(nullptr)
 {
 }
+
 
 BlockCollection::BlockCollection(BlockLoader *loader)
     : m_blocks()
@@ -147,12 +148,44 @@ BlockCollection::updateBlockCache()
   m_loader->queueAll(m_nonEmptyBlocks);
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
 Block *
 BlockCollection::nextLoadableBlock()   
 {
   return m_loader->getNextGpuBlock();
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+void
+BlockCollection::clearLoadQueue()
+{
+  m_loader->clearCache();
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+void
+BlockCollection::loadSomeBlocks()
+{
+  uint64_t t{ 0 };
+  uint64_t const MAX_JOB_LENGTH_MS = 10000000;
+  bd::Block *b{ nullptr };
+  int i{0};
+  while (t < MAX_JOB_LENGTH_MS && (b = nextLoadableBlock())) {
+    uint64_t start{ glfwGetTimerValue() };
+    b->sendToGpu();
+    m_loader->pushGpuResBlock(b);
+    bd::Dbg() << "Sent " << b->fileBlock().block_index << " (" << b->status() << ") to GPU.";
+    uint64_t timeToLoadBlock{ glfwGetTimerValue() - start };
+    t += timeToLoadBlock;
+    ++i;
+  }
+
+//  bd::Dbg() << "Loaded " << i << " blocks.";
+
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 //bool

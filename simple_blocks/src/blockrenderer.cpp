@@ -20,7 +20,7 @@ namespace subvol
 {
 
 
-#define MAX_MILLIS_SINCE_LAST_JOB 100000000
+#define MAX_MILLIS_SINCE_LAST_JOB 1000000000
 
 BlockRenderer::BlockRenderer()
     : BlockRenderer(0, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr)
@@ -241,6 +241,12 @@ void
 BlockRenderer::setROVChanging(bool b)
 {
   m_ROVChanging = b;
+  if (b) {
+    // This should pause the loader thread when it comes back around.
+    m_collection->clearLoadQueue();
+  } else {
+    m_collection->updateBlockCache();
+  }
 }
 
 
@@ -273,7 +279,7 @@ BlockRenderer::draw()
   
   if (glfwGetTimerValue() - m_timeOfLastJob > MAX_MILLIS_SINCE_LAST_JOB) {
     // load some blocks to the m_gpu if any available.
-    loadSomeBlocks();
+    m_collection->loadSomeBlocks();
     m_timeOfLastJob = glfwGetTimerValue();
   }
 
@@ -518,25 +524,6 @@ BlockRenderer::filterBlocksByROV()
 }
 
 
-void
-BlockRenderer::loadSomeBlocks()   
-{
-  uint64_t t{ 0 };
-  uint64_t const MAX_JOB_LENGTH_MS = 1000000;
-  bd::Block *b{ nullptr };
-  int i{0};
-  while (t < MAX_JOB_LENGTH_MS && (b = m_collection->nextLoadableBlock())) {
-    uint64_t start{ glfwGetTimerValue() };
-    b->sendToGpu();
-    bd::Dbg() << "Sent " << b->fileBlock().block_index << " to GPU.";
-    uint64_t timeToLoadBlock{ glfwGetTimerValue() - start };
-    t += timeToLoadBlock;
-    ++i;
-  }
-
-  bd::Dbg() << "Loaded " << i << " blocks.";
-
-}
 
 
 

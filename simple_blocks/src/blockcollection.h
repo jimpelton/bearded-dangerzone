@@ -64,6 +64,12 @@ public:
   bd::Block *
   nextLoadableBlock();
 
+  void
+  clearLoadQueue();
+
+
+  void
+  loadSomeBlocks();
 
   std::vector<bd::Block *> const&
   blocks() const;

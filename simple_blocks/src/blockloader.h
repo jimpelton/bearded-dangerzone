@@ -83,6 +83,10 @@ public:
   void
   pushGpuResBlock(bd::Block *);
 
+
+  void
+  clearCache();
+
 private:
 
 

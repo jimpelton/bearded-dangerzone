@@ -126,10 +126,9 @@ BlockLoader::operator()()
   while (!m_stopThread) {
 
 
-    printBar((cpu.size() / maxMainBlocks) * ticks, "Cpu");
-    std::cout << "\n";
-    printBar((m_gpu.size() / maxGpuBlocks) * ticks, "Gpu");
-    //std::cout << std::endl;
+//    printBar((cpu.size() / maxMainBlocks) * ticks, "Cpu");
+//    printBar((m_gpu.size() / maxGpuBlocks) * ticks, "Gpu");
+//    std::cout << std::endl;
 
 
     // get a block marked as visible
@@ -139,8 +138,8 @@ BlockLoader::operator()()
       continue;
     }
 
-    bd::Dbg() << "Processing block: " << b->fileBlock().block_index
-              << " Status: " << b->status();
+    bd::Dbg() << "Processing block " << b->fileBlock().block_index
+              << " (" << b->status() << ")";
 
     if (!isInGpuList(b)) {
       // Not in GPU, check the CPU cache
@@ -216,6 +215,10 @@ BlockLoader::operator()()
 //      if (b->status() & bd::Block::GPU_WAIT) {
 //      }
     }
+
+    std::cout << "Cpu: " << cpu.size() << "/" << maxMainBlocks << "\n"
+              << "Gpu: " << m_gpu.size() << "/" << maxGpuBlocks << std::endl;
+
   } // while
 
   raw.close();
@@ -319,6 +322,14 @@ BlockLoader::pushGpuResBlock(bd::Block *b)
   m_gpu.push_front(b);
 }
 
+
+void
+BlockLoader::clearCache()
+{
+  std::unique_lock<std::mutex> lock(m_mutex);
+  std::queue<bd::Block *> q;
+  m_loadQueue.swap(q);
+}
 
 
 
