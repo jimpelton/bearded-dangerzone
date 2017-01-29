@@ -7,6 +7,7 @@
 
 #include <bd/volume/block.h>
 #include <bd/datastructure/blockingqueue.h>
+#include <bd/volume/volume.h>
 
 #include <string>
 #include <atomic>
@@ -33,9 +34,11 @@ struct BLThreadData
   size_t size;
   // x, y dims of volume slab
   size_t slabDims[2];
+
   std::string filename;
   std::vector<bd::Texture *> *texs;
   std::vector<char *> *buffers;
+
 };
 
 /// Threaded load block data from disk. Blocks to load are put into a queue by
@@ -44,7 +47,7 @@ class BlockLoader
 {
 public:
 
-  BlockLoader(BLThreadData *);
+  BlockLoader(BLThreadData *, bd::Volume const &);
 
 //  BlockLoader(BlockLoader const &);
 //  BlockLoader(BlockLoader const &&);
@@ -119,6 +122,9 @@ private:
   std::condition_variable_any m_wait;
 
   BLThreadData *dptr;
+
+  double m_volMin;
+  double m_volDiff;                  ///< diff = volMax - volMin
 
 }; // class BlockLoader
 

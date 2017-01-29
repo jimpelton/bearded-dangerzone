@@ -18,10 +18,15 @@
 namespace subvol
 {
 
-BlockLoader::BlockLoader(BLThreadData *threadParams)
+BlockLoader::BlockLoader(BLThreadData *threadParams, bd::Volume const &volume)
   : m_stopThread{ false }
+  , m_volMin{ }
+  , m_volDiff{ }
 {
   dptr = threadParams;
+  m_volMin = volume.min();
+  m_volDiff = volume.max() - volume.min();
+  
 }
 
 //  BlockLoader::BlockLoader(BlockLoader const&)
@@ -375,6 +380,14 @@ BlockLoader::fillBlockData(bd::Block *b, std::istream *infile,
       offset *= sizeType;
     }
   }
+
+  float *float_buf = reinterpret_cast<float *>(b->pixelData());
+  uint64_t buf_len{ be.x * be.y * be.z };
+  //Normalize the data prior to generating the texture.
+  for (size_t idx{ 0 }; idx < buf_len; ++idx) {
+    float_buf[idx] = (blockBuffer[idx] - m_volMin) / m_volDiff;
+  }
+
 }
 
 } // namespace bd

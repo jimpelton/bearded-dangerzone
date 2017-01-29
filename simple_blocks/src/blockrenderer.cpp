@@ -20,7 +20,7 @@ namespace subvol
 {
 
 
-#define MAX_MILLIS_SINCE_LAST_JOB 1000000000
+#define MAX_MILLIS_SINCE_LAST_JOB 10000000
 
 BlockRenderer::BlockRenderer()
     : BlockRenderer(0, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr)
