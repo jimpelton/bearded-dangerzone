@@ -112,26 +112,22 @@ initializeBlockCollection(BlockCollection **bc,
   bd::IndexFile const *indexFile,
   subvol::CommandLineOptions const &clo)
 {
-  BLThreadData *tdata{ new BLThreadData() };
   glm::u64vec3 dims = indexFile->getVolume().block_dims();
   bd::DataType type = bd::IndexFileHeader::getType(indexFile->getHeader());
   size_t sizeType{ bd::to_sizeType(type) };
-  uint64_t blockBytes = dims.x * dims.y * dims.z * sizeType;
+  uint64_t blockBytes = dims.x * dims.y * dims.z * sizeof(float);
 
   if (blockBytes == 0) {
     bd::Err() << "Blocks have a dimension that is 0, so I can't go on.";
     return false;
   } else {
-    bd::Info() << "Block size (bytes): " << blockBytes;
+    bd::Info() << "Block texture size (bytes): " << blockBytes;
   }
 
 
+  BLThreadData *tdata{ new BLThreadData() };
   tdata->maxCpuBlocks = clo.mainMemoryBytes / blockBytes;
-  bd::Info() << "Max cpu blocks: " << tdata->maxCpuBlocks;
-
   tdata->maxGpuBlocks = clo.gpuMemoryBytes / blockBytes;
-  bd::Info() << "Max GPU blocks: " << tdata->maxGpuBlocks;
-
   tdata->size = sizeType;
   tdata->slabDims[0] = indexFile->getVolume().voxelDims().x;
   tdata->slabDims[1] = indexFile->getVolume().voxelDims().y;
@@ -139,15 +135,18 @@ initializeBlockCollection(BlockCollection **bc,
   tdata->texs = new std::vector<bd::Texture*>();
   tdata->buffers = new std::vector<char*>();
 
+  bd::Info() << "Max cpu blocks: " << tdata->maxCpuBlocks;
+  bd::Info() << "Max GPU blocks: " << tdata->maxGpuBlocks;
+
   bd::Texture::GenTextures3d(tdata->maxGpuBlocks, type,
-                             bd::Texture::Format::RED, dims.x, dims.y, dims.z, tdata->texs);
+                             bd::Texture::Format::R8, dims.x, dims.y, dims.z, tdata->texs);
   bd::Info() << "Generated " << tdata->texs->size() << " textures.";
 
 
   initializeMemoryBuffers(tdata->buffers, tdata->maxCpuBlocks, blockBytes);
   bd::Info() << "Generated " << tdata->buffers->size() << " main memory buffers.";
 
-  BlockLoader *loader{ new BlockLoader(tdata) };
+  BlockLoader *loader{ new BlockLoader(tdata, indexFile->getVolume()) };
 
   BlockCollection *bc_local{ new BlockCollection(loader) };
   bc_local->initBlocksFromIndexFile(*indexFile);

@@ -349,7 +349,6 @@ void
 BlockLoader::fillBlockData(bd::Block *b, std::istream *infile,
                            size_t sizeType, size_t vX, size_t vY) const
 {
-  char *blockBuffer{ b->pixelData() };
 
   // block's dimensions in voxels
   glm::u64vec3 const be{ b->voxel_extent() };
@@ -364,16 +363,19 @@ BlockLoader::fillBlockData(bd::Block *b, std::istream *infile,
   // byte offset into file to read from
   size_t offset{ b->fileBlock().data_offset };
 
+  uint64_t const buf_len{ be.x * be.y * be.z };
+  char * const disk_buf{ new char[buf_len] }; 
+  char *temp = disk_buf;
   // Loop through rows and slabs of volume reading rows of voxels into memory.
-  for (auto slab = start.z; slab < end.z; ++slab) {
-    for (auto row = start.y; row < end.y; ++row) {
+  for (uint64_t slab = start.z; slab < end.z; ++slab) {
+    for (uint64_t row = start.y; row < end.y; ++row) {
 
       // seek to start of row
       infile->seekg(offset);
 
       // read the bytes of current row
-      infile->read(blockBuffer, blockRowLength * sizeType);
-      blockBuffer += blockRowLength;
+      infile->read(temp, blockRowLength * sizeType);
+      temp += blockRowLength;
 
       // offset of next row
       offset = bd::to1D(start.x, row + 1, slab, vX, vY);
@@ -381,12 +383,13 @@ BlockLoader::fillBlockData(bd::Block *b, std::istream *infile,
     }
   }
 
-  float *float_buf = reinterpret_cast<float *>(b->pixelData());
-  uint64_t buf_len{ be.x * be.y * be.z };
+  float * const pixelData = reinterpret_cast<float *>(b->pixelData());
   //Normalize the data prior to generating the texture.
   for (size_t idx{ 0 }; idx < buf_len; ++idx) {
-    float_buf[idx] = (blockBuffer[idx] - m_volMin) / m_volDiff;
+    pixelData[idx] = (disk_buf[idx] - m_volMin) / m_volDiff;
   }
+
+  delete [] disk_buf;
 
 }
 
