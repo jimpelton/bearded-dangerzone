@@ -96,7 +96,6 @@ printBar(size_t ticks, char const *prefix)
   for (int i=0; i<ticks; ++i) {
     std::cout << '.'; //static_cast<char>(178);
   }
-
 }
 
 
@@ -125,21 +124,8 @@ BlockLoader::operator()()
   size_t const slabWidth = dptr->slabDims[0];
   size_t const slabHeight = dptr->slabDims[1];
 
-  int const ticks{ 80 };
-//  size_t const mainBlocksPerTick{ maxMainBlocks / size_t(ticks) };
-//  size_t const gpuBlocksPerTick{ maxGpuBlocks / size_t(ticks) };
-
-  std::cout << std::endl;
-
 
   while (!m_stopThread) {
-
-
-//    printBar((cpu.size() / maxMainBlocks) * ticks, "Cpu");
-//    printBar((m_gpu.size() / maxGpuBlocks) * ticks, "Gpu");
-//    std::cout << std::endl;
-
-
     // get a block marked as visible
     bd::Block *b{ waitPopLoadQueue() };
 
@@ -159,7 +145,7 @@ BlockLoader::operator()()
         // Not in CPU, or GPU
         // b must be loaded to CPU.
         char *pixData{ nullptr };
-        if (cpu.size() == maxMainBlocks) {
+        if (cpu.size() == maxMainBlocks || buffers->size() == 0) {
           // Cpu full, evict a non-visible block
           bd::Block *notvis{ removeLastInvisibleBlock(cpu) };
           if (notvis) {
@@ -267,8 +253,8 @@ BlockLoader::waitPopLoadQueue()
     return nullptr;
   }
 
-  bd::Block *b{ m_loadQueue.front() };
-  m_loadQueue.pop_front();
+  bd::Block *b{ m_loadQueue.back() };
+  m_loadQueue.pop_back();
 
   return b;
 }
@@ -307,7 +293,7 @@ void
 BlockLoader::queueBlockAtFront(bd::Block *b)
 {
   std::unique_lock<std::mutex> lock(m_mutex);
-  m_loadQueue.push_front(b);
+  m_loadQueue.push_back(b);
   m_wait.notify_all();
 }
 
@@ -325,6 +311,16 @@ BlockLoader::queueAll(std::vector<bd::Block *> &visibleBlocks)
   for (size_t i = 0; i < visibleBlocks.size(); ++i) {
     m_loadQueue.push_back(visibleBlocks[i]);
   }
+
+  std::sort(m_loadQueue.begin(), m_loadQueue.end(),
+            [](bd::Block *lhs, bd::Block *rhs) -> bool {
+              return lhs->fileBlock().rov > rhs->fileBlock().rov;
+            });
+
+//  std::sort(m_loadQueue.begin(), m_loadQueue.end(),
+//            [](bd::Block *lhs, bd::Block *rhs) -> bool {
+//              return lhs->fileBlock().block_index > rhs->fileBlock().block_index;
+//            });
 
   m_wait.notify_all();
 }
