@@ -405,16 +405,14 @@ BlockRenderer::drawNonEmptyBlocks_Forward()
 
     bd::Block *b{ (*m_nonEmptyBlocks)[i] };
 
-    if (b->status() & ~bd::Block::GPU_RES) {
-      continue;
+    if (b->status() & bd::Block::GPU_RES) {
+      setWorldMatrix(b->transform());
+      b->texture()->bind(BLOCK_TEXTURE_UNIT);
+      m_currentShader->setUniform(VOLUME_MVP_MATRIX_UNIFORM_STR,
+        getWorldViewProjectionMatrix());
+
+      drawSlices(baseVertex);
     }
-
-    setWorldMatrix(b->transform());
-    b->texture()->bind(BLOCK_TEXTURE_UNIT);
-    m_currentShader->setUniform(VOLUME_MVP_MATRIX_UNIFORM_STR,
-                                getWorldViewProjectionMatrix());
-
-    drawSlices(baseVertex);
 
   }
 

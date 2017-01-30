@@ -99,6 +99,11 @@ private:
   bd::Block *
   removeGpuLastInvisible();
 
+  bd::Block *
+  removeGpuBlockReverse(bd::Block *);
+
+ 
+
   bool
   isInGpuList(bd::Block*);
 
