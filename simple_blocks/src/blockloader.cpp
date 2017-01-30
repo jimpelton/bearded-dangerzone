@@ -177,7 +177,7 @@ BlockLoader::operator()()
         // loaded to memory, so put in cpu cache.
         cpu.push_front(b);
         // put back to load queue so it will be processed for GPU.
-        queueBlock(b);
+        queueBlockAtFront(b);
         bd::Dbg() << "Block " << b->fileBlock().block_index
                   << " (" << b->status() << ") ready for texture.";
 
@@ -221,8 +221,13 @@ BlockLoader::operator()()
 //      }
     }
 
-    std::cout << "Cpu: " << cpu.size() << "/" << maxMainBlocks << "\n"
-              << "Gpu: " << m_gpu.size() << "/" << maxGpuBlocks << std::endl;
+    std::cout <<
+              "Cpu: " << cpu.size() << "/" << maxMainBlocks << "\n"
+                  "Gpu: " << m_gpu.size() << "/" << maxGpuBlocks << "\n"
+                  "LdQ: " << m_loadQueue.size() << "\n"
+                  "Ldb: " << m_loadables.size() << "\n"
+                  "Tex: " << texs->size() << "\n"
+                  "Buf: " << buffers->size() << std::endl;
 
   } // while
 
@@ -252,7 +257,7 @@ BlockLoader::waitPopLoadQueue()
   }
 
   bd::Block *b{ m_loadQueue.front() };
-  m_loadQueue.pop();
+  m_loadQueue.pop_front();
 
   return b;
 }
@@ -274,10 +279,10 @@ BlockLoader::isInGpuList(bd::Block *b)
 }
 
 void
-BlockLoader::queueBlock(bd::Block *b)
+BlockLoader::queueBlockAtFront(bd::Block *b)
 {
   std::unique_lock<std::mutex> lock(m_mutex);
-  m_loadQueue.push(b);
+  m_loadQueue.push_front(b);
   m_wait.notify_all();
 }
 
@@ -288,11 +293,12 @@ BlockLoader::queueAll(std::vector<bd::Block *> &visibleBlocks)
   std::unique_lock<std::mutex> lock(m_mutex);
 
   // clear the load queue.
-  std::queue<bd::Block *> q;
-  m_loadQueue.swap(q);
+//  std::queue<bd::Block *> q;
+//  m_loadQueue.swap(q);
+  m_loadQueue.clear();
   bd::Dbg() << "Queueing " << visibleBlocks.size() << " for loading.";
   for (size_t i = 0; i < visibleBlocks.size(); ++i) {
-    m_loadQueue.push(visibleBlocks[i]);
+    m_loadQueue.push_back(visibleBlocks[i]);
   }
 
   m_wait.notify_all();
@@ -324,7 +330,7 @@ void
 BlockLoader::pushGpuResBlock(bd::Block *b)
 {
   std::unique_lock<std::mutex> lock(m_gpuMutex);
-  m_gpu.push_front(b);
+  m_gpu.push_back(b);
 }
 
 
@@ -332,8 +338,9 @@ void
 BlockLoader::clearCache()
 {
   std::unique_lock<std::mutex> lock(m_mutex);
-  std::queue<bd::Block *> q;
-  m_loadQueue.swap(q);
+  m_loadQueue.clear();
+//  std::queue<bd::Block *> q;
+//  m_loadQueue.swap(q);
 }
 
 

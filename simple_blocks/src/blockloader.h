@@ -70,7 +70,7 @@ public:
 
   
   void
-  queueBlock(bd::Block *block);
+  queueBlockAtFront(bd::Block *block);
 
 
   /// \brief Enqueue the provided blocks for loading.
@@ -110,7 +110,7 @@ private:
   fillBlockData(bd::Block *b, std::istream *infile, size_t szTy, size_t vX, size_t vY) const;
 
 
-  std::queue<bd::Block *> m_loadQueue;   ///< Blocks that will be examined for loading.
+  std::list<bd::Block *> m_loadQueue;   ///< Blocks that will be examined for loading.
   std::queue<bd::Block *> m_loadables;   ///< Blocks with GPU_WAIT status.
   std::list<bd::Block *> m_gpu;          ///< Blocks with GPU_RES status.
 

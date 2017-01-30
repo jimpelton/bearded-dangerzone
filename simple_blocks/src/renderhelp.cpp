@@ -138,8 +138,12 @@ initializeBlockCollection(BlockCollection **bc,
   bd::Info() << "Max cpu blocks: " << tdata->maxCpuBlocks;
   bd::Info() << "Max GPU blocks: " << tdata->maxGpuBlocks;
 
-  bd::Texture::GenTextures3d(tdata->maxGpuBlocks, type,
-                             bd::Texture::Format::R8, dims.x, dims.y, dims.z, tdata->texs);
+  bd::Texture::GenTextures3d(tdata->maxGpuBlocks,
+                             bd::DataType::Float,
+                             bd::Texture::Format::R32F,
+                             bd::Texture::Format::RED,
+                             dims.x, dims.y, dims.z,
+                             tdata->texs);
   bd::Info() << "Generated " << tdata->texs->size() << " textures.";
 
 
