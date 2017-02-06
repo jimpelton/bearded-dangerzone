@@ -4,53 +4,47 @@
 
 #include "blockloader.h"
 
-#include <bd/volume/block.h>
 #include <bd/graphics/texture.h>
 #include <bd/log/logger.h>
 #include <bd/util/util.h>
 
-#include <list>
-#include <vector>
 #include <algorithm>
 #include <fstream>
-#include <queue>
+#include <bd/volume/block.h>
+#include <hdf5_hl.h>
 
 namespace subvol
 {
 
 BlockLoader::BlockLoader(BLThreadData *threadParams, bd::Volume const &volume)
   : m_stopThread{ false }
-  , m_volMin{ }
-  , m_volDiff{ }
+  , m_gpuEmpty{ }
+  , m_gpu{ }
+  , m_mainEmpty{ }
+  , m_main{ }
+  , m_maxGpuBlocks{ threadParams->maxGpuBlocks }
+  , m_maxMainBlocks{ threadParams->maxCpuBlocks }
+  , m_sizeType{ threadParams->size }
+  , m_slabWidth{ threadParams->slabDims[0] }
+  , m_slabHeight{ threadParams->slabDims[1] }
+  , m_volMin{ volume.min() }
+  , m_volDiff{ volume.max() - volume.min() }
 {
-  dptr = threadParams;
-  m_volMin = volume.min();
-  m_volDiff = volume.max() - volume.min();
-  
+//  m_volMin = volume.min();
+//  m_volDiff = volume.max() - volume.min();
 }
 
-//  BlockLoader::BlockLoader(BlockLoader const&)
-//  {
-//  }
-//
-//  BlockLoader& BlockLoader::operator=(BlockLoader const&)
-//  {
-//  }
-//
-//  BlockLoader& BlockLoader::operator=(BlockLoader const&&)
-//  {
-//  }
 
-  BlockLoader::~BlockLoader()
+BlockLoader::~BlockLoader()
 {
-  if (dptr)
-  {
-    if (dptr->buffers)
-      delete dptr->buffers;
-
-    if (dptr->texs)
-      delete dptr->texs;
-  }
+//  if (dptr)
+//  {
+//    if (dptr->buffers)
+//      delete dptr->buffers;
+//
+//    if (dptr->texs)
+//      delete dptr->texs;
+//  }
 }
 
 
@@ -102,6 +96,37 @@ printBar(size_t ticks, char const *prefix)
 
 } // namespace
 
+using block_type = typename bd::Block;
+
+void
+BlockLoader::fileWithBufferFromEmptyBlock(block_type *b)
+{
+  block_type *empty = m_mainEmpty.front();
+  m_mainEmpty.pop();
+
+  auto index = empty->fileBlock().block_index;
+
+  // evict empty from m_main.
+  auto it = m_main.find(index);
+  assert(it != m_main.end());
+  m_main.erase(it);
+
+  bd::Texture *t = nullptr;
+  auto gpuIt = m_gpu.find(index);
+  assert(gpuIt != m_gpu.end());
+  m_gpu.erase(index);
+
+
+  char *pixels = empty->pixelData();
+  empty->pixelData(nullptr);
+  assert(pixels != nullptr);
+  b->pixelData(pixels);
+
+  fillBlockData(b, &m_raw, m_sizeType, m_slabWidth, m_slabHeight);
+  m_main.insert(std::make_pair(b->fileBlock().block_index, b));
+}
+
+
 int
 BlockLoader::operator()()
 {
@@ -114,15 +139,9 @@ BlockLoader::operator()()
   // GPU blocks have valid pixelData ptrs and valid texture ptrs.
   // CPU blocks have valid pixelData ptrs, and may have valid texture ptrs.
   // (if they are visible).
-  std::list<bd::Block *> cpu;
 
-  std::vector<bd::Texture *> * const texs = dptr->texs;
-  std::vector<char *> * const buffers = dptr->buffers;
-  size_t const maxGpuBlocks = dptr->maxGpuBlocks;
-  size_t const maxMainBlocks = dptr->maxCpuBlocks;
-  size_t const sizeType = dptr->size;
-  size_t const slabWidth = dptr->slabDims[0];
-  size_t const slabHeight = dptr->slabDims[1];
+//  std::vector<bd::Texture *> * const texs = dptr->texs;
+//  std::vector<char *> * const buffers = dptr->buffers;
 
 
   while (!m_stopThread) {
@@ -139,9 +158,43 @@ BlockLoader::operator()()
     bd::Dbg() << "Processing block " << b->fileBlock().block_index
               << " (" << b->status() << ")";
 
-    if (!isInGpuList(b)) {
+
+
+    decltype(b->fileBlock().block_index)
+        idx{ b->fileBlock().block_index };
+
+    // First we load the block: If the block is not in memory at all we must load it to
+    // main memory. find a spot for it.
+    // First, check to see if there are any free blocks on the gpu. If there are,
+    // then there are also free blocks on the cpu. We must remove the empty block
+    // from both empties lists, remove it from both non-empties lists and then
+    // put our non-empty block in both visible lists.
+
+    if (m_gpu.find(idx) == m_gpu.end()) {
+      if (m_main.find(idx) == m_main.end()) {
+        if (m_gpuEmpty.size() > 0) {
+
+          // get an empty block and fill, remove from cpu empty as well
+        } else if (m_mainEmpty.size() > 0) {
+          // put it in the cpu anyway
+        }
+        assert(m_mainEmpty.size() > 0);
+        fileWithBufferFromEmptyBlock(b);
+        queueBlockAtFront(b);
+      }
+    } else {
+        // is in main & not gpu
+      pushLoadablesQueue(b);
+    }
+
+
+
+
+
+//////////////////////////////////////////////////////////
+    {
       // Not in GPU, check the CPU cache
-      if (!isInList(b, cpu)) {
+      if (!m_main.exists(idx)) {
         // Not in CPU, or GPU
         // b must be loaded to CPU.
         char *pixData{ nullptr };
