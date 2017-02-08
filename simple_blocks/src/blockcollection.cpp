@@ -30,9 +30,9 @@ BlockCollection::BlockCollection(BlockLoader *loader)
     , m_volume{ }
     , m_loader{ loader }
 {
-  m_loaderFuture = 
-    std::async(std::launch::async, 
-      [loader]() -> int { return (*loader)(); });
+  m_loaderFuture =
+      std::async(std::launch::async,
+                 [loader]() -> int { return (*loader)(); });
 }
 
 
@@ -53,6 +53,7 @@ BlockCollection::initBlocksFromIndexFile(bd::IndexFile const &index)
   initBlocksFromFileBlocks(index.getFileBlocks(),
                            m_volume.worldDims(),
                            m_volume.block_count());
+
 
 }
 
@@ -147,7 +148,7 @@ BlockCollection::filterBlocksByROVRange(double rov_min, double rov_max)
 void
 BlockCollection::updateBlockCache()
 {
-  m_loader->queueAll(m_nonEmptyBlocks,);
+  m_loader->queueAll(m_nonEmptyBlocks, m_emptyBlocks);
 }
 
 

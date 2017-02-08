@@ -28,6 +28,7 @@ BlockLoader::BlockLoader(BLThreadData *threadParams, bd::Volume const &volume)
   , m_slabHeight{ threadParams->slabDims[1] }
   , m_volMin{ volume.min() }
   , m_volDiff{ volume.max() - volume.min() }
+  , m_fileName{ threadParams->filename }
 {
 //  m_volMin = volume.min();
 //  m_volDiff = volume.max() - volume.min();
@@ -95,42 +96,41 @@ printBar(size_t ticks, char const *prefix)
 
 } // namespace
 
-using block_type = typename bd::Block;
 
-void
-BlockLoader::fileWithBufferFromEmptyBlock(block_type *b)
-{
-  block_type *empty = m_mainEmpty.front();
-  m_mainEmpty.pop();
-
-  auto index = empty->fileBlock().block_index;
-
-  // evict empty from m_main.
-  auto it = m_main.find(index);
-  assert(it != m_main.end());
-  m_main.erase(it);
-
-  bd::Texture *t = nullptr;
-  auto gpuIt = m_gpu.find(index);
-  assert(gpuIt != m_gpu.end());
-  m_gpu.erase(index);
-
-
-  char *pixels = empty->pixelData();
-  empty->pixelData(nullptr);
-  assert(pixels != nullptr);
-  b->pixelData(pixels);
-
-  fillBlockData(b, &m_raw, m_sizeType, m_slabWidth, m_slabHeight);
-  m_main.insert(std::make_pair(b->fileBlock().block_index, b));
-}
+//void
+//BlockLoader::fileWithBufferFromEmptyBlock(bd::Block *b)
+//{
+//  block_type *empty = m_mainEmpty.front();
+//  m_mainEmpty.pop();
+//
+//  auto index = empty->fileBlock().block_index;
+//
+//  // evict empty from m_main.
+//  auto it = m_main.find(index);
+//  assert(it != m_main.end());
+//  m_main.erase(it);
+//
+//  bd::Texture *t = nullptr;
+//  auto gpuIt = m_gpu.find(index);
+//  assert(gpuIt != m_gpu.end());
+//  m_gpu.erase(index);
+//
+//
+//  char *pixels = empty->pixelData();
+//  empty->pixelData(nullptr);
+//  assert(pixels != nullptr);
+//  b->pixelData(pixels);
+//
+//  fillBlockData(b, &m_raw, m_sizeType, m_slabWidth, m_slabHeight);
+//  m_main.insert(std::make_pair(b->fileBlock().block_index, b));
+//}
 
 
 int
-BlockLoader::operator()(std::string const &filename)
+BlockLoader::operator()()
 {
   bd::Dbg() << "Load thread started.";
-  std::ifstream raw{ filename, std::ios::binary };
+  std::ifstream raw{ m_fileName, std::ios::binary };
   if (!raw.is_open()) {
     return -1;
   }
@@ -152,135 +152,25 @@ BlockLoader::operator()(std::string const &filename)
       continue;
     }
 
-    if (!b->visible()) {
-      handleEmptyBlock(b);
-    } 
-    else
-    {
-      handleVisibleBlocks(b);
-    }
+//    if (!b->visible()) {
+//      handleEmptyBlock(b);
+//    }
+//    else
+//    {
+//      handleVisibleBlock(b);
+//    }
 
-    bd::Dbg() << "Processing block " << b->fileBlock().block_index
+    bd::Dbg() << "Loading block " << b->fileBlock().block_index
               << " (" << b->status() << ")";
 
+    fillBlockData(b, &raw, m_sizeType, m_slabWidth, m_slabHeight);
 
-    auto idx{ b->fileBlock().block_index };
-
-    // First we load the block: If the block is not in memory at all we must load it to
-    // main memory. find a spot for it.
-    // First, check to see if there are any free blocks on the gpu. If there are,
-    // then there are also free blocks on the cpu. We must remove the empty block
-    // from both empties lists, remove it from both non-empties lists and then
-    // put our non-empty block in both visible lists.
-
-    if (m_gpu.find(idx) == m_gpu.end()) {
-      if (m_main.find(idx) == m_main.end()) {
-        if (m_gpuEmpty.size() > 0) {
-          
-          // get an empty block and fill, remove from cpu empty as well
-        } else if (m_mainEmpty.size() > 0) {
-          // put it in the cpu anyway
-        }
-        assert(m_mainEmpty.size() > 0);
-        fileWithBufferFromEmptyBlock(b);
-        queueBlockAtFront(b);
-      }
-    } else {
-        // is in main & not gpu
-      pushLoadablesQueue(b);
-    }
-
-
-
-
-
-//////////////////////////////////////////////////////////
-    {
-      // Not in GPU, check the CPU cache
-      if (!m_main.exists(idx)) {
-        // Not in CPU, or GPU
-        // b must be loaded to CPU.
-        char *pixData{ nullptr };
-        if (cpu.size() == maxMainBlocks || buffers->size() == 0) {
-          // Cpu full, evict a non-visible block
-          bd::Block *notvis{ removeLastInvisibleBlock(cpu) };
-          if (notvis) {
-            // there was a non-visible block in the cpu cache, 
-            // take it's pixel buffer.
-            bd::Dbg() << "Removed block " << notvis->fileBlock().block_index
-              << " (" << notvis->status() << ") from CPU cache.";
-            pixData = notvis->pixelData();
-            notvis->pixelData(nullptr);
-          }
-        } else {
-          // the cpu cache is not full, so grab a free buffer.
-          if (buffers->size() > 0) {
-            pixData = buffers->back();
-            buffers->pop_back();
-          }
-        }
-
-        if (pixData) {
-          b->pixelData(pixData);
-          fillBlockData(b, &raw, sizeType, slabWidth, slabHeight);
-          // loaded to memory, so put in cpu cache.
-          cpu.push_front(b);
-          // put back to load queue so it will be processed for GPU.
-          queueBlockAtFront(b);
-          bd::Dbg() << "Block " << b->fileBlock().block_index
-            << " (" << b->status() << ") ready for texture.";
-        }
-
-      } // ! cpu list
-      else {
-        // Is in cpu, but not in GPU
-        // Give b a texture so it will be uploaded to GPU
-        bd::Dbg() << "Block " << b->fileBlock().block_index
-                  << " (" << b->status() << ") " "found in CPU cache.";
-        bd::Texture *tex{ nullptr };
-        
-        if (m_gpu.size() == maxGpuBlocks || texs->size() == 0) {
-
-          // no textures, evict non-vis from m_gpu
-          bd::Block *notvis{ removeGpuLastInvisible() };
-          if (notvis) {
-            // nonvis block found, give it a texture
-            tex = notvis->removeTexture();
-            bd::Dbg() << "Removed block " << notvis->fileBlock().block_index
-                      << " (" << notvis->status() << ") from GPU cache.";
-          }
-
-        } else {
-          // m_gpu cache not full yet, so grab a texture from cache.
-          if (texs->size() > 0) {
-            tex = texs->back();
-            texs->pop_back();
-          }
-        }
-
-        if (tex) {
-          b->texture(tex);
-          pushLoadablesQueue(b);
-          bd::Dbg() << "Queued block " << b->fileBlock().block_index
-            << " (" << b->status() << ") for GPU upload.";
-        }
-      }
-    } // ! m_gpu list
-    else {
-      // the block is already in m_gpu cache
-      bd::Dbg() << "Block " << b->fileBlock().block_index
-                << " (" << b->status() << ") " " found in GPU cache.";
-//      if (b->status() & bd::Block::GPU_WAIT) {
-//      }
-    }
-
-    std::cout <<
-              "Cpu: " << cpu.size() << "/" << maxMainBlocks << "\n"
-                  "Gpu: " << m_gpu.size() << "/" << maxGpuBlocks << "\n"
-                  "LdQ: " << m_loadQueue.size() << "\n"
-                  "Ldb: " << m_loadables.size() << "\n"
-                  "Tex: " << texs->size() << "\n"
-                  "Buf: " << buffers->size() << std::endl;
+    std::cout << "Cpu: " << m_main.size() << "/" << m_maxMainBlocks << "\n"
+        "Gpu: " << m_gpu.size() << "/" << m_maxGpuBlocks << "\n"
+        "LdQ: " << m_loadQueue.size() << "\n"
+        "Ldb: " << m_loadables.size() << "\n";
+//                  "Tex: " << texs->size() << "\n"
+//                  "Buf: " << buffers->size() << std::endl;
 
   } // while
 
@@ -316,36 +206,48 @@ BlockLoader::waitPopLoadQueue()
 }
 
 
-bd::Block *
-BlockLoader::removeGpuLastInvisible()
-{
-  std::unique_lock<std::mutex>(m_gpuMutex);
-  return removeLastInvisibleBlock(m_gpu);
-}
+//bd::Block *
+//BlockLoader::removeGpuLastInvisible()
+//{
+//  std::unique_lock<std::mutex>(m_gpuMutex);
+//  return removeLastInvisibleBlock(m_gpu);
+//}
 
 
-bd::Block *
-BlockLoader::removeGpuBlockReverse(bd::Block *b)
-{
-  std::unique_lock<std::mutex>(m_gpuMutex);
-  auto found = std::find(m_gpu.begin(), m_gpu.end(), b);
-  if (found == m_gpu.end()) {
-    return nullptr;
-  }
-  
-  m_gpu.erase(found);
-  return *found;
-}
+//bd::Block *
+//BlockLoader::removeGpuBlockReverse(bd::Block *b)
+//{
+//  std::unique_lock<std::mutex>(m_gpuMutex);
+//  auto found = std::find(m_gpu.begin(), m_gpu.end(), b);
+//  if (found == m_gpu.end()) {
+//    return nullptr;
+//  }
+//
+//  m_gpu.erase(found);
+//  return *found;
+//}
 
 
 void
 BlockLoader::handleEmptyBlock(bd::Block *b)
 {
-
   auto idx = b->index();
   if (m_gpu.find(idx) != m_gpu.end())
   {
-    m_gpuEmpty.put(b);
+    // if it is in gpu, then it better be in main.
+    assert(m_main.find(idx) != m_main.end());
+    m_gpuEmpty.insert(b);
+    m_mainEmpty.insert(b);
+  } else if (m_main.find(idx) != m_main.end()) {
+    // if it is in main, but not in gpu, then it better not be
+    // in gpu empty.
+    assert(m_gpuEmpty.find(b) == m_gpuEmpty.end());
+    // if it is in main, then put it in main empty
+    m_mainEmpty.insert(b);
+  } else {
+    // it is not in either cpu or main, so remove from empties
+    m_mainEmpty.erase(b);
+    m_gpuEmpty.erase(b);
   }
 }
 
@@ -353,15 +255,61 @@ BlockLoader::handleEmptyBlock(bd::Block *b)
 void
 BlockLoader::handleVisibleBlock(bd::Block *b)
 {
-  
+  auto idx = b->index();
+  if (m_gpu.find(idx) != m_gpu.end()) {
+    // it is in the gpu list already, so nothing needs
+    // to be done to it, it is already on the gpu and ready to
+    // be drawn.
+    assert(m_main.find(idx) != m_main.end());
+    assert(m_mainEmpty.find(b) == m_mainEmpty.end());
+    assert(m_gpuEmpty.find(b) == m_gpuEmpty.end());
+    return;
+  } else if (m_main.find(idx) != m_main.end()) {
+    // if is not in the gpu list, but is in the cpu list
+    bd::Block *empty{ nullptr };
+
+    {
+      auto first = m_gpuEmpty.begin();
+      if (first == m_gpuEmpty.end()) {
+        bd::Dbg() << "Can't load visible block " << idx << " that is already on cpu, no room on GPU";
+        return;
+      }
+
+      empty = { *first };
+      m_gpuEmpty.erase(first);
+      m_mainEmpty.erase(empty);
+      m_gpu.erase(empty->index());
+      assert(m_main.find(empty->index()) != m_main.end());
+    }
+
+    char *pixels{ empty->pixelData() };
+    b->pixelData(pixels);
+
+    bd::Texture *tex{ b->texture() };
+    b->texture(tex);
+    pushLoadablesQueue(b);
+  } else {
+    // not in cpu or gpu.
+    auto first = m_gpuEmpty.begin();
+    if (first == m_gpuEmpty.end()) {
+      bd::Dbg() << "Can't load visible block " << idx << " from disk, no room on Gpu.";
+      return;
+    }
+
+    bd::Block *empty{ *first };
+    m_gpuEmpty.erase(first);
+    m_mainEmpty.erase(empty);
+    m_main.erase(empty->index());
+    queueBlockAtFront(b);
+  }
 }
 
-bool
-BlockLoader::isInGpuList(bd::Block *b)
-{
-  std::unique_lock<std::mutex>(m_gpuMutex);
-  return isInList(b, m_gpu);
-}
+//bool
+//BlockLoader::isInGpuList(bd::Block *b)
+//{
+//  std::unique_lock<std::mutex>(m_gpuMutex);
+//  return isInList(b, m_gpu);
+//}
 
 void
 BlockLoader::queueBlockAtFront(bd::Block *b)
@@ -373,7 +321,7 @@ BlockLoader::queueBlockAtFront(bd::Block *b)
 
 
 void
-BlockLoader::queueAll(std::vector<bd::Block *> &visibleBlocks, 
+BlockLoader::queueAll(std::vector<bd::Block *> &visibleBlocks,
   std::vector<bd::Block*>& nonVisibleBlocks)
 {
   std::unique_lock<std::mutex> lock(m_mutex);
@@ -423,12 +371,12 @@ BlockLoader::getNextGpuBlock()
   return b;
 }
 
-void
-BlockLoader::pushGpuResBlock(bd::Block *b)
-{
-  std::unique_lock<std::mutex> lock(m_gpuMutex);
-  m_gpu.push_back(b);
-}
+//void
+//BlockLoader::pushGpuResBlock(bd::Block *b)
+//{
+//  std::unique_lock<std::mutex> lock(m_gpuMutex);
+//  m_gpu.push_back(b);
+//}
 
 
 void
@@ -498,3 +446,121 @@ BlockLoader::fillBlockData(bd::Block *b, std::istream *infile,
 }
 
 } // namespace bd
+
+
+
+
+
+
+
+
+//    uint64_t idx{ b->fileBlock().block_index };
+//
+//    // First we load the block: If the block is not in memory at all we must load it to
+//    // main memory. find a spot for it.
+//    // First, check to see if there are any free blocks on the gpu. If there are,
+//    // then there are also free blocks on the cpu. We must remove the empty block
+//    // from both empties lists, remove it from both non-empties lists and then
+//    // put our non-empty block in both visible lists.
+//
+//    if (m_gpu.find(idx) == m_gpu.end()) {
+//      if (m_main.find(idx) == m_main.end()) {
+//        if (m_gpuEmpty.size() > 0) {
+//
+//          // get an empty block and fill, remove from cpu empty as well
+//        } else if (m_mainEmpty.size() > 0) {
+//          // put it in the cpu anyway
+//        }
+//        assert(m_mainEmpty.size() > 0);
+//        fileWithBufferFromEmptyBlock(b);
+//        queueBlockAtFront(b);
+//      }
+//    } else {
+//        // is in main & not gpu
+//      pushLoadablesQueue(b);
+//    }
+//
+//
+//
+//
+//
+////////////////////////////////////////////////////////////
+//    {
+//      // Not in GPU, check the CPU cache
+//      if (!m_main.exists(idx)) {
+//        // Not in CPU, or GPU
+//        // b must be loaded to CPU.
+//        char *pixData{ nullptr };
+//        if (cpu.size() == maxMainBlocks || buffers->size() == 0) {
+//          // Cpu full, evict a non-visible block
+//          bd::Block *notvis{ removeLastInvisibleBlock(cpu) };
+//          if (notvis) {
+//            // there was a non-visible block in the cpu cache,
+//            // take it's pixel buffer.
+//            bd::Dbg() << "Removed block " << notvis->fileBlock().block_index
+//              << " (" << notvis->status() << ") from CPU cache.";
+//            pixData = notvis->pixelData();
+//            notvis->pixelData(nullptr);
+//          }
+//        } else {
+//          // the cpu cache is not full, so grab a free buffer.
+//          if (buffers->size() > 0) {
+//            pixData = buffers->back();
+//            buffers->pop_back();
+//          }
+//        }
+//
+//        if (pixData) {
+//          b->pixelData(pixData);
+//          fillBlockData(b, &raw, sizeType, slabWidth, slabHeight);
+//          // loaded to memory, so put in cpu cache.
+//          cpu.push_front(b);
+//          // put back to load queue so it will be processed for GPU.
+//          queueBlockAtFront(b);
+//          bd::Dbg() << "Block " << b->fileBlock().block_index
+//            << " (" << b->status() << ") ready for texture.";
+//        }
+//
+//      } // ! cpu list
+//      else {
+//        // Is in cpu, but not in GPU
+//        // Give b a texture so it will be uploaded to GPU
+//        bd::Dbg() << "Block " << b->fileBlock().block_index
+//                  << " (" << b->status() << ") " "found in CPU cache.";
+//        bd::Texture *tex{ nullptr };
+//
+//        if (m_gpu.size() == maxGpuBlocks || texs->size() == 0) {
+//
+//          // no textures, evict non-vis from m_gpu
+//          bd::Block *notvis{ removeGpuLastInvisible() };
+//          if (notvis) {
+//            // nonvis block found, give it a texture
+//            tex = notvis->removeTexture();
+//            bd::Dbg() << "Removed block " << notvis->fileBlock().block_index
+//                      << " (" << notvis->status() << ") from GPU cache.";
+//          }
+//
+//        } else {
+//          // m_gpu cache not full yet, so grab a texture from cache.
+//          if (texs->size() > 0) {
+//            tex = texs->back();
+//            texs->pop_back();
+//          }
+//        }
+//
+//        if (tex) {
+//          b->texture(tex);
+//          pushLoadablesQueue(b);
+//          bd::Dbg() << "Queued block " << b->fileBlock().block_index
+//            << " (" << b->status() << ") for GPU upload.";
+//        }
+//      }
+//    } // ! m_gpu list
+//    else {
+//      // the block is already in m_gpu cache
+//      bd::Dbg() << "Block " << b->fileBlock().block_index
+//                << " (" << b->status() << ") " " found in GPU cache.";
+////      if (b->status() & bd::Block::GPU_WAIT) {
+////      }
+//    }
+

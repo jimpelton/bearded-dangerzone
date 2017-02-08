@@ -15,6 +15,7 @@
 #include <unordered_map>
 #include <queue>
 #include <condition_variable>
+#include <set>
 
 namespace subvol
 {
@@ -129,7 +130,7 @@ public:
 
 
   int
-  operator()(std::string const &);
+  operator()();
 
 
   void
@@ -142,7 +143,8 @@ public:
 
   /// \brief Enqueue the provided blocks for loading.
   void
-  queueAll(std::vector<bd::Block *> &visibleBlocks, std::vector<bd::Block*>& nonVisibleBlocks);
+  queueAll(std::vector<bd::Block *> &visibleBlocks,
+           std::vector<bd::Block*>& nonVisibleBlocks);
 
 
   /// \brief get the next block that is ready to load to gpu.
@@ -150,8 +152,8 @@ public:
   bd::Block *
   getNextGpuBlock();
 
-  void
-  pushGpuResBlock(bd::Block *);
+//  void
+//  pushGpuResBlock(bd::Block *);
 
 
   void
@@ -163,21 +165,21 @@ private:
   bd::Block* 
   waitPopLoadQueue();
 
-  bd::Block *
-  removeGpuLastInvisible();
+//  bd::Block *
+//  removeGpuLastInvisible();
 
-  bd::Block *
-  removeGpuBlockReverse(bd::Block *);
+//  bd::Block *
+//  removeGpuBlockReverse(bd::Block *);
 
   void 
   handleEmptyBlock(bd::Block *);
 
   void
-  handleVisisbleBlock(bd::Block *);
+  handleVisibleBlock(bd::Block *);
  
 
-  bool
-  isInGpuList(bd::Block*);
+//  bool
+//  isInGpuList(bd::Block*);
 
 
   void
@@ -186,16 +188,16 @@ private:
   void
   fillBlockData(bd::Block *b, std::istream *infile, size_t szTy, size_t vX, size_t vY) const;
 
-  void
-  fileWithBufferFromEmptyBlock(bd::Block *b);
+//  void
+//  fileWithBufferFromEmptyBlock(bd::Block *b);
 
 
   std::vector<bd::Block *> m_loadQueue;   ///< Blocks that will be examined for loading.
   std::queue<bd::Block *> m_loadables;   ///< Blocks with GPU_WAIT status.
 
-  std::queue<uint64_t, bd::Block *> m_gpuEmpty;
+  std::set<bd::Block *> m_gpuEmpty;
   std::unordered_map<uint64_t, bd::Block *> m_gpu;
-  std::queue<bd::Block *> m_mainEmpty;
+  std::set<bd::Block *> m_mainEmpty;
   std::unordered_map<uint64_t, bd::Block *> m_main;
 
 
@@ -218,6 +220,8 @@ private:
 
   double const m_volMin;
   double const m_volDiff;                  ///< diff = volMax - volMin
+
+  std::string m_fileName;
 
 }; // class BlockLoader
 
