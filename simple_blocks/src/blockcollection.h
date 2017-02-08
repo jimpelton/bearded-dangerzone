@@ -97,6 +97,7 @@ private:
 
   std::vector<bd::Block *> m_blocks;
   std::vector<bd::Block *> m_nonEmptyBlocks;
+  std::vector<bd::Block *> m_emptyBlocks;
 
   bd::Volume m_volume;
 

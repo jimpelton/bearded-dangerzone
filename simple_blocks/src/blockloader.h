@@ -129,7 +129,7 @@ public:
 
 
   int
-  operator()();
+  operator()(std::string const &);
 
 
   void
@@ -142,7 +142,7 @@ public:
 
   /// \brief Enqueue the provided blocks for loading.
   void
-  queueAll(std::vector<bd::Block *> &visibleBlocks);
+  queueAll(std::vector<bd::Block *> &visibleBlocks, std::vector<bd::Block*>& nonVisibleBlocks);
 
 
   /// \brief get the next block that is ready to load to gpu.
@@ -169,6 +169,11 @@ private:
   bd::Block *
   removeGpuBlockReverse(bd::Block *);
 
+  void 
+  handleEmptyBlock(bd::Block *);
+
+  void
+  handleVisisbleBlock(bd::Block *);
  
 
   bool
@@ -188,7 +193,7 @@ private:
   std::vector<bd::Block *> m_loadQueue;   ///< Blocks that will be examined for loading.
   std::queue<bd::Block *> m_loadables;   ///< Blocks with GPU_WAIT status.
 
-  lru_cache<uint64_t, bd::Block *> m_gpuEmpty;
+  std::queue<uint64_t, bd::Block *> m_gpuEmpty;
   std::unordered_map<uint64_t, bd::Block *> m_gpu;
   std::queue<bd::Block *> m_mainEmpty;
   std::unordered_map<uint64_t, bd::Block *> m_main;

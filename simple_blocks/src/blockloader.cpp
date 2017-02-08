@@ -11,7 +11,6 @@
 #include <algorithm>
 #include <fstream>
 #include <bd/volume/block.h>
-#include <hdf5_hl.h>
 
 namespace subvol
 {
@@ -128,10 +127,10 @@ BlockLoader::fileWithBufferFromEmptyBlock(block_type *b)
 
 
 int
-BlockLoader::operator()()
+BlockLoader::operator()(std::string const &filename)
 {
   bd::Dbg() << "Load thread started.";
-  std::ifstream raw{ dptr->filename, std::ios::binary };
+  std::ifstream raw{ filename, std::ios::binary };
   if (!raw.is_open()) {
     return -1;
   }
@@ -149,19 +148,23 @@ BlockLoader::operator()()
     bd::Block *b{ waitPopLoadQueue() };
 
     if (!b) {
+      bd::Info() << "Exiting load loop.";
       continue;
     }
-    if (! b->visible()) {
-      continue;
+
+    if (!b->visible()) {
+      handleEmptyBlock(b);
+    } 
+    else
+    {
+      handleVisibleBlocks(b);
     }
 
     bd::Dbg() << "Processing block " << b->fileBlock().block_index
               << " (" << b->status() << ")";
 
 
-
-    decltype(b->fileBlock().block_index)
-        idx{ b->fileBlock().block_index };
+    auto idx{ b->fileBlock().block_index };
 
     // First we load the block: If the block is not in memory at all we must load it to
     // main memory. find a spot for it.
@@ -173,7 +176,7 @@ BlockLoader::operator()()
     if (m_gpu.find(idx) == m_gpu.end()) {
       if (m_main.find(idx) == m_main.end()) {
         if (m_gpuEmpty.size() > 0) {
-
+          
           // get an empty block and fill, remove from cpu empty as well
         } else if (m_mainEmpty.size() > 0) {
           // put it in the cpu anyway
@@ -335,6 +338,24 @@ BlockLoader::removeGpuBlockReverse(bd::Block *b)
 }
 
 
+void
+BlockLoader::handleEmptyBlock(bd::Block *b)
+{
+
+  auto idx = b->index();
+  if (m_gpu.find(idx) != m_gpu.end())
+  {
+    m_gpuEmpty.put(b);
+  }
+}
+
+
+void
+BlockLoader::handleVisibleBlock(bd::Block *b)
+{
+  
+}
+
 bool
 BlockLoader::isInGpuList(bd::Block *b)
 {
@@ -352,14 +373,16 @@ BlockLoader::queueBlockAtFront(bd::Block *b)
 
 
 void
-BlockLoader::queueAll(std::vector<bd::Block *> &visibleBlocks)
+BlockLoader::queueAll(std::vector<bd::Block *> &visibleBlocks, 
+  std::vector<bd::Block*>& nonVisibleBlocks)
 {
   std::unique_lock<std::mutex> lock(m_mutex);
-
-  // clear the load queue.
-//  std::queue<bd::Block *> q;
-//  m_loadQueue.swap(q);
   m_loadQueue.clear();
+
+  for (size_t i{ 0 }; i < nonVisibleBlocks.size(); ++i) {
+    m_loadQueue.push_back(nonVisibleBlocks[i]);
+  }
+
   bd::Dbg() << "Queueing " << visibleBlocks.size() << " for loading.";
   for (size_t i = 0; i < visibleBlocks.size(); ++i) {
     m_loadQueue.push_back(visibleBlocks[i]);

@@ -122,6 +122,7 @@ void
 BlockCollection::filterBlocksByROVRange(double rov_min, double rov_max)
 {
   m_nonEmptyBlocks.clear();
+  m_emptyBlocks.clear();
   
 //  size_t bytes{ 0 };
 
@@ -136,6 +137,7 @@ BlockCollection::filterBlocksByROVRange(double rov_min, double rov_max)
       m_nonEmptyBlocks.push_back(b);
     } else {
       b->visible(false);
+      m_emptyBlocks.push_back(b);
     }
   } // for
 }
@@ -145,7 +147,7 @@ BlockCollection::filterBlocksByROVRange(double rov_min, double rov_max)
 void
 BlockCollection::updateBlockCache()
 {
-  m_loader->queueAll(m_nonEmptyBlocks);
+  m_loader->queueAll(m_nonEmptyBlocks,);
 }
 
 
