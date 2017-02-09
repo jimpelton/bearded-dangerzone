@@ -16,6 +16,7 @@
 #include <queue>
 #include <condition_variable>
 #include <set>
+#include <fstream>
 
 namespace subvol
 {
@@ -125,7 +126,6 @@ public:
   BlockLoader(BLThreadData *, bd::Volume const &);
 
 
-
   ~BlockLoader();
 
 
@@ -138,26 +138,28 @@ public:
 
   
   void
-  queueBlockAtFront(bd::Block *block);
+  queueBlockAtFrontOfLoadQueue(bd::Block *block);
 
 
   /// \brief Enqueue the provided blocks for loading.
+  /// First the non-vis blocks are pushed, then the
+  /// vis blocks.
   void
-  queueAll(std::vector<bd::Block *> &visibleBlocks,
-           std::vector<bd::Block*>& nonVisibleBlocks);
+  queueClassified(std::vector<bd::Block *> const &visible,
+                  std::vector<bd::Block *> const &empty);
 
 
   /// \brief get the next block that is ready to load to gpu.
   /// \returns nullptr if no blocks in queue, or the next loadable block.
   bd::Block *
-  getNextGpuBlock();
+  getNextGpuReadyBlock();
 
-//  void
-//  pushGpuResBlock(bd::Block *);
+  void
+  pushGpuResidentBlock(bd::Block *);
 
 
   void
-  clearCache();
+  clearLoadQueue();
 
 private:
 
@@ -171,19 +173,31 @@ private:
 //  bd::Block *
 //  removeGpuBlockReverse(bd::Block *);
 
+  void
+  swapPixel(bd::Block *src, bd::Block *dest);
+
+
   void 
   handleEmptyBlock(bd::Block *);
 
+
   void
   handleVisibleBlock(bd::Block *);
- 
+
+
+  void
+  handleVisible_NotInGPU_IsInMain(bd::Block *b);
+
+
+  void
+  handleVisible_NotInGPU_NotInMain(bd::Block *b);
 
 //  bool
 //  isInGpuList(bd::Block*);
 
 
   void
-  pushLoadablesQueue(bd::Block *b);
+  pushGPUReadyQueue(bd::Block *b);
 
   void
   fillBlockData(bd::Block *b, std::istream *infile, size_t szTy, size_t vX, size_t vY) const;
@@ -191,21 +205,34 @@ private:
 //  void
 //  fileWithBufferFromEmptyBlock(bd::Block *b);
 
+  /// Blocks that will be examined for loading.
+  std::vector<bd::Block *> m_loadQueue;
 
-  std::vector<bd::Block *> m_loadQueue;   ///< Blocks that will be examined for loading.
-  std::queue<bd::Block *> m_loadables;   ///< Blocks with GPU_WAIT status.
+  ///< Blocks with GPU_WAIT status.
+  std::queue<bd::Block *> m_gpuReadyQueue;
 
+  /// E-resident on gpu
+  /// Also E-resident on CPU
   std::set<bd::Block *> m_gpuEmpty;
+
+  /// NE-resident on gpu.
+  /// Also NE-resident on cpu.
   std::unordered_map<uint64_t, bd::Block *> m_gpu;
+
+  /// E-resident on cpu.
+  /// Could be E-resident on gpu (in gpu empty list).
   std::set<bd::Block *> m_mainEmpty;
+
+  /// NE-resident on cpu.
   std::unordered_map<uint64_t, bd::Block *> m_main;
 
-
+  std::vector<bd::Texture> m_texs;
+  std::vector<char *> m_buffs;
 
   std::atomic_bool m_stopThread;
   std::mutex m_gpuMutex;
-  std::mutex m_loadablesMutex;
-  std::mutex m_mutex;
+  std::mutex m_gpuReadyMutex;
+  std::mutex m_loadQueueMutex;
 
   std::condition_variable_any m_wait;
 
@@ -222,6 +249,7 @@ private:
   double const m_volDiff;                  ///< diff = volMax - volMin
 
   std::string m_fileName;
+  std::ifstream raw;
 
 }; // class BlockLoader
 

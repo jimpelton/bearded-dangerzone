@@ -32,6 +32,10 @@ BlockLoader::BlockLoader(BLThreadData *threadParams, bd::Volume const &volume)
 {
 //  m_volMin = volume.min();
 //  m_volDiff = volume.max() - volume.min();
+
+
+
+
 }
 
 
@@ -51,36 +55,36 @@ BlockLoader::~BlockLoader()
 namespace
 {
 
-bd::Block *
-removeLastInvisibleBlock(std::list<bd::Block *> &list)
-{
-  auto rend = list.end();
-  auto not_vis =
-      std::find_if(list.begin(), rend,
-                   [](bd::Block *be) -> bool {
-                     return ( be->status() & bd::Block::VISIBLE ) == 0;
-                   });
+//bd::Block *
+//removeLastInvisibleBlock(std::list<bd::Block *> &list)
+//{
+//  auto rend = list.end();
+//  auto not_vis =
+//      std::find_if(list.begin(), rend,
+//                   [](bd::Block *be) -> bool {
+//                     return ( be->status() & bd::Block::VISIBLE ) == 0;
+//                   });
+//
+//  if (not_vis == rend) {
+//    // no non-visible blocks in the cpu queue
+//    // (only happens if size m_gpu == size cpu)
+//    return nullptr;
+//  }
+//
+////  std::advance(not_vis, 1);
+////  auto byebye = list.erase( not_vis.base() );
+//  auto byebye = list.erase(not_vis);
+//  return *byebye;
+//}
 
-  if (not_vis == rend) {
-    // no non-visible blocks in the cpu queue
-    // (only happens if size m_gpu == size cpu)
-    return nullptr;
-  }
 
-//  std::advance(not_vis, 1);
-//  auto byebye = list.erase( not_vis.base() );
-  auto byebye = list.erase(not_vis);
-  return *byebye;
-}
-
-
-bool
-isInList(bd::Block *b, std::list<bd::Block *> &list)
-{
-  auto end = list.end();
-  auto found = std::find(list.begin(), end, b);
-  return found != end;
-}
+//bool
+//isInList(bd::Block *b, std::list<bd::Block *> &list)
+//{
+//  auto end = list.end();
+//  auto found = std::find(list.begin(), end, b);
+//  return found != end;
+//}
 
 void
 printBar(size_t ticks, char const *prefix)
@@ -130,14 +134,11 @@ int
 BlockLoader::operator()()
 {
   bd::Dbg() << "Load thread started.";
-  std::ifstream raw{ m_fileName, std::ios::binary };
+  raw.open(m_fileName, std::ios::binary);
   if (!raw.is_open()) {
+    bd::Err() << "The raw file " << m_fileName << " could not be opened.";
     return -1;
   }
-
-  // GPU blocks have valid pixelData ptrs and valid texture ptrs.
-  // CPU blocks have valid pixelData ptrs, and may have valid texture ptrs.
-  // (if they are visible).
 
 //  std::vector<bd::Texture *> * const texs = dptr->texs;
 //  std::vector<char *> * const buffers = dptr->buffers;
@@ -152,23 +153,21 @@ BlockLoader::operator()()
       continue;
     }
 
-//    if (!b->visible()) {
-//      handleEmptyBlock(b);
-//    }
-//    else
-//    {
-//      handleVisibleBlock(b);
-//    }
+    if (!b->visible()) {
+      handleEmptyBlock(b);
+    }
+    else {
+      handleVisibleBlock(b);
+    }
 
     bd::Dbg() << "Loading block " << b->fileBlock().block_index
               << " (" << b->status() << ")";
 
-    fillBlockData(b, &raw, m_sizeType, m_slabWidth, m_slabHeight);
 
     std::cout << "Cpu: " << m_main.size() << "/" << m_maxMainBlocks << "\n"
         "Gpu: " << m_gpu.size() << "/" << m_maxGpuBlocks << "\n"
         "LdQ: " << m_loadQueue.size() << "\n"
-        "Ldb: " << m_loadables.size() << "\n";
+        "Ldb: " << m_gpuReadyQueue.size() << "\n";
 //                  "Tex: " << texs->size() << "\n"
 //                  "Buf: " << buffers->size() << std::endl;
 
@@ -191,9 +190,9 @@ BlockLoader::stop()
 bd::Block *
 BlockLoader::waitPopLoadQueue()
 {
-  std::unique_lock<std::mutex> lock(m_mutex);
+  std::unique_lock<std::mutex> lock(m_loadQueueMutex);
   while (m_loadQueue.size() == 0 && !m_stopThread) {
-    m_wait.wait(m_mutex);
+    m_wait.wait(m_loadQueueMutex);
   }
   if (m_stopThread) {
     return nullptr;
@@ -227,6 +226,16 @@ BlockLoader::waitPopLoadQueue()
 //  return *found;
 //}
 
+void
+BlockLoader::swapPixel(bd::Block *src, bd::Block *dest)
+{
+  assert(src != nullptr);
+  assert(dest != nullptr);
+
+  char *p{ src->pixelData() };
+  src->pixelData(dest->pixelData());
+  dest->pixelData(p);
+}
 
 void
 BlockLoader::handleEmptyBlock(bd::Block *b)
@@ -251,6 +260,72 @@ BlockLoader::handleEmptyBlock(bd::Block *b)
   }
 }
 
+void
+BlockLoader::handleVisible_NotInGPU_IsInMain(bd::Block *b)
+{
+  bd::Block *empty{ nullptr };
+  { // begin scope
+    auto first = m_gpuEmpty.begin();
+    if (first == m_gpuEmpty.end()) {
+      bd::Dbg() << "Can't load visible block " << b->index() << " that is already on cpu, no room on GPU";
+      return;
+    }
+
+    empty = { *first };
+    m_gpuEmpty.erase(first);
+    m_mainEmpty.erase(empty);
+    m_gpu.erase(empty->index());
+    assert(m_main.find(empty->index()) != m_main.end());
+  } // end scope
+
+  char *pixels{ empty->pixelData() };
+  b->pixelData(pixels);
+
+  bd::Texture *tex{ b->texture() };
+  b->texture(tex);
+  pushGPUReadyQueue(b);
+}
+
+
+void
+BlockLoader::handleVisible_NotInGPU_NotInMain(bd::Block *b)
+{
+  bd::Block *empty{ nullptr };
+//  auto first = m_gpuEmpty.begin();
+//  if (first == m_gpuEmpty.end()) {
+//    bd::Dbg() << "Can't load visible block " << b->index() << " from disk, no room on Gpu.";
+//    return;
+//  }
+  if (m_mainEmpty.size() > 0) {
+    auto first = m_mainEmpty.begin();
+
+    assert((*first)->pixelData() != nullptr);
+    assert(b->pixelData() == nullptr);
+    assert(b->texture() == nullptr);
+
+    if ()
+
+
+    swapPixel(*first, b);
+
+    fillBlockData(b, &raw, m_sizeType, m_slabWidth, m_slabHeight);
+
+    m_mainEmpty.erase(first);
+    m_main.erase((*first)->index());
+
+    m_main.insert(std::make_pair(b->index(), b));
+
+  } else {
+    size_t found{ findEmptyBlocks(m_main, m_mainEmpty) };
+    if (found == 0) {
+      bd::Dbg() << "Block " << b->index() << " not loaded into cpu, no free buffers.";
+      return;
+    }
+  }
+
+  queueBlockAtFrontOfLoadQueue(b);
+}
+
 
 void
 BlockLoader::handleVisibleBlock(bd::Block *b)
@@ -266,41 +341,10 @@ BlockLoader::handleVisibleBlock(bd::Block *b)
     return;
   } else if (m_main.find(idx) != m_main.end()) {
     // if is not in the gpu list, but is in the cpu list
-    bd::Block *empty{ nullptr };
-
-    {
-      auto first = m_gpuEmpty.begin();
-      if (first == m_gpuEmpty.end()) {
-        bd::Dbg() << "Can't load visible block " << idx << " that is already on cpu, no room on GPU";
-        return;
-      }
-
-      empty = { *first };
-      m_gpuEmpty.erase(first);
-      m_mainEmpty.erase(empty);
-      m_gpu.erase(empty->index());
-      assert(m_main.find(empty->index()) != m_main.end());
-    }
-
-    char *pixels{ empty->pixelData() };
-    b->pixelData(pixels);
-
-    bd::Texture *tex{ b->texture() };
-    b->texture(tex);
-    pushLoadablesQueue(b);
+    handleVisible_NotInGPU_IsInMain(b);
   } else {
     // not in cpu or gpu.
-    auto first = m_gpuEmpty.begin();
-    if (first == m_gpuEmpty.end()) {
-      bd::Dbg() << "Can't load visible block " << idx << " from disk, no room on Gpu.";
-      return;
-    }
-
-    bd::Block *empty{ *first };
-    m_gpuEmpty.erase(first);
-    m_mainEmpty.erase(empty);
-    m_main.erase(empty->index());
-    queueBlockAtFront(b);
+    handleVisible_NotInGPU_NotInMain(b);
   }
 }
 
@@ -312,34 +356,37 @@ BlockLoader::handleVisibleBlock(bd::Block *b)
 //}
 
 void
-BlockLoader::queueBlockAtFront(bd::Block *b)
+BlockLoader::queueBlockAtFrontOfLoadQueue(bd::Block *b)
 {
-  std::unique_lock<std::mutex> lock(m_mutex);
+  std::unique_lock<std::mutex> lock(m_loadQueueMutex);
   m_loadQueue.push_back(b);
   m_wait.notify_all();
 }
 
 
 void
-BlockLoader::queueAll(std::vector<bd::Block *> &visibleBlocks,
-  std::vector<bd::Block*>& nonVisibleBlocks)
+BlockLoader::queueClassified(std::vector<bd::Block *> const &visible,
+                             std::vector<bd::Block *> const &empty)
 {
-  std::unique_lock<std::mutex> lock(m_mutex);
+  std::unique_lock<std::mutex> lock(m_loadQueueMutex);
   m_loadQueue.clear();
 
-  for (size_t i{ 0 }; i < nonVisibleBlocks.size(); ++i) {
-    m_loadQueue.push_back(nonVisibleBlocks[i]);
-  }
-
-  bd::Dbg() << "Queueing " << visibleBlocks.size() << " for loading.";
-  for (size_t i = 0; i < visibleBlocks.size(); ++i) {
-    m_loadQueue.push_back(visibleBlocks[i]);
+  bd::Dbg() << "Queueing " << visible.size() << " visible blocks for processing.";
+  for (size_t i = 0; i < visible.size(); ++i) {
+    m_loadQueue.push_back(visible[i]);
   }
 
   std::sort(m_loadQueue.begin(), m_loadQueue.end(),
             [](bd::Block *lhs, bd::Block *rhs) -> bool {
               return lhs->fileBlock().rov > rhs->fileBlock().rov;
             });
+
+  bd::Dbg() << "Queueing " << empty.size() << " empty blocks for processing.";
+  for (size_t i{ 0 }; i < empty.size(); ++i) {
+    m_loadQueue.push_back(empty[i]);
+  }
+
+
 
 //  std::sort(m_loadQueue.begin(), m_loadQueue.end(),
 //            [](bd::Block *lhs, bd::Block *rhs) -> bool {
@@ -359,30 +406,31 @@ BlockLoader::queueAll(std::vector<bd::Block *> &visibleBlocks,
 
 
 bd::Block *
-BlockLoader::getNextGpuBlock()
+BlockLoader::getNextGpuReadyBlock()
 {
-  std::unique_lock<std::mutex> lock(m_loadablesMutex);
+  std::unique_lock<std::mutex> lock(m_gpuReadyMutex);
   bd::Block *b{ nullptr };
-  if (m_loadables.size() > 0) {
-    b = m_loadables.front();
-    m_loadables.pop();
+  if (m_gpuReadyQueue.size() > 0) {
+    b = m_gpuReadyQueue.front();
+    m_gpuReadyQueue.pop();
   }
 
   return b;
 }
 
-//void
-//BlockLoader::pushGpuResBlock(bd::Block *b)
-//{
-//  std::unique_lock<std::mutex> lock(m_gpuMutex);
-//  m_gpu.push_back(b);
-//}
+void
+BlockLoader::pushGpuResidentBlock(bd::Block *b)
+{
+  std::unique_lock<std::mutex> lock(m_gpuMutex);
+  assert(m_gpu.find(b->index()) == m_gpu.end());
+  m_gpu.insert(std::make_pair(b->index(), b));
+}
 
 
 void
-BlockLoader::clearCache()
+BlockLoader::clearLoadQueue()
 {
-  std::unique_lock<std::mutex> lock(m_mutex);
+  std::unique_lock<std::mutex> lock(m_loadQueueMutex);
   m_loadQueue.clear();
 //  std::queue<bd::Block *> q;
 //  m_loadQueue.swap(q);
@@ -391,10 +439,10 @@ BlockLoader::clearCache()
 
 
 void
-BlockLoader::pushLoadablesQueue(bd::Block *b)
+BlockLoader::pushGPUReadyQueue(bd::Block *b)
 {
-  std::unique_lock<std::mutex> lock(m_loadablesMutex);
-  m_loadables.push(b);
+  std::unique_lock<std::mutex> lock(m_gpuReadyMutex);
+  m_gpuReadyQueue.push(b);
 }
 
 void

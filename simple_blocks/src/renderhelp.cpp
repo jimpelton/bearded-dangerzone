@@ -153,7 +153,7 @@ initializeBlockCollection(BlockCollection **bc,
   BlockLoader *loader{ new BlockLoader(tdata, indexFile->getVolume()) };
 
   BlockCollection *bc_local{ new BlockCollection(loader) };
-  bc_local->initBlocksFromIndexFile(*indexFile);
+  bc_local->initBlocksFromIndexFile(*indexFile, tdata->texs, tdata->buffers);
 
   bd::Info() << bc_local->blocks().size() << " blocks in index file.";
 

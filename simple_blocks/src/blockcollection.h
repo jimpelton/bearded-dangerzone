@@ -36,7 +36,9 @@ public:
 
 
   void
-  initBlocksFromIndexFile(bd::IndexFile const &index);
+  initBlocksFromIndexFile(bd::IndexFile const &index,
+                          std::vector<bd::Texture *> *texs,
+                          std::vector<char *> *buffers);
 
 
   /// \brief Initializes \c blocks from the provided vector of FileBlock.

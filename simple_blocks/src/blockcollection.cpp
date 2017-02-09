@@ -30,6 +30,7 @@ BlockCollection::BlockCollection(BlockLoader *loader)
     , m_volume{ }
     , m_loader{ loader }
 {
+  // This is probably a bad place for this, I know.
   m_loaderFuture =
       std::async(std::launch::async,
                  [loader]() -> int { return (*loader)(); });
@@ -46,7 +47,9 @@ BlockCollection::~BlockCollection()
 
 ///////////////////////////////////////////////////////////////////////////////
 void
-BlockCollection::initBlocksFromIndexFile(bd::IndexFile const &index)
+BlockCollection::initBlocksFromIndexFile(bd::IndexFile const &index,
+                                         std::vector<bd::Texture *> *texs,
+                                         std::vector<char *> *buffers)
 {
   m_volume = index.getVolume();
 
@@ -54,6 +57,16 @@ BlockCollection::initBlocksFromIndexFile(bd::IndexFile const &index)
                            m_volume.worldDims(),
                            m_volume.block_count());
 
+  for (size_t i{ 0 }; i < m_blocks.size(); ++i) {
+    m_blocks[i]->pixelData((*buffers)[i]);
+  }
+
+  for (size_t i{ 0 }; i < texs->size(); ++i) {
+    m_blocks[i]->texture((*texs)[i]);
+    m_nonEmptyBlocks.push_back(m_blocks[i]);
+  }
+
+  m_loader->queueClassified(m_nonEmptyBlocks, m_emptyBlocks);
 
 }
 
@@ -93,6 +106,7 @@ BlockCollection::initBlocksFromFileBlocks(std::vector<FileBlock> const &fileBloc
       }
     }
   }
+
   std::cout << std::endl;
 
 }
@@ -148,7 +162,7 @@ BlockCollection::filterBlocksByROVRange(double rov_min, double rov_max)
 void
 BlockCollection::updateBlockCache()
 {
-  m_loader->queueAll(m_nonEmptyBlocks, m_emptyBlocks);
+  m_loader->queueClassified(m_nonEmptyBlocks, m_emptyBlocks);
 }
 
 
@@ -156,7 +170,7 @@ BlockCollection::updateBlockCache()
 Block *
 BlockCollection::nextLoadableBlock()   
 {
-  return m_loader->getNextGpuBlock();
+  return m_loader->getNextGpuReadyBlock();
 }
 
 
@@ -164,7 +178,7 @@ BlockCollection::nextLoadableBlock()
 void
 BlockCollection::clearLoadQueue()
 {
-  m_loader->clearCache();
+  m_loader->clearLoadQueue();
 }
 
 
@@ -179,7 +193,7 @@ BlockCollection::loadSomeBlocks()
   while (t < MAX_JOB_LENGTH_MS && (b = nextLoadableBlock())) {
     uint64_t start{ glfwGetTimerValue() };
     b->sendToGpu();
-    m_loader->pushGpuResBlock(b);
+    m_loader->pushGpuResidentBlock(b);
     bd::Dbg() << "Sent " << b->fileBlock().block_index << " (" << b->status() << ") to GPU.";
     uint64_t timeToLoadBlock{ glfwGetTimerValue() - start };
     t += timeToLoadBlock;
