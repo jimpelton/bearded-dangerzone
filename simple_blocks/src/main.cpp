@@ -316,7 +316,7 @@ init_subvol(subvol::CommandLineOptions &clo)
   }
   bd::Info() << "Open GL initialized.";
   
-  int totalMemory{ 0 };
+  int64_t totalMemory{ 0 };
   subvol::renderhelp::queryGPUMemory(&totalMemory);
   bd::Info() << "GPU memory: " << (totalMemory * 1e-6) << "MB";
 

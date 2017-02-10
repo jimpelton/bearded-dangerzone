@@ -7,14 +7,12 @@
 #include <bd/util/util.h>
 #include <bd/io/indexfile.h>
 
-
-
 namespace subvol
 {
 
-  using bd::Block;
-  using bd::IndexFile;
-  using bd::FileBlock;
+using bd::Block;
+using bd::IndexFile;
+using bd::FileBlock;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -33,15 +31,16 @@ BlockCollection::BlockCollection(BlockLoader *loader)
   // This is probably a bad place for this, I know.
   m_loaderFuture =
       std::async(std::launch::async,
-                 [loader]() -> int { return (*loader)(); });
+                 [loader]() -> int { return ( *loader )(); });
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 BlockCollection::~BlockCollection()
 {
-  if (m_loader)
+  if (m_loader) {
     delete m_loader;
+  }
 }
 
 
@@ -57,16 +56,20 @@ BlockCollection::initBlocksFromIndexFile(bd::IndexFile const &index,
                            m_volume.worldDims(),
                            m_volume.block_count());
 
-  for (size_t i{ 0 }; i < m_blocks.size(); ++i) {
-    m_blocks[i]->pixelData((*buffers)[i]);
-  }
 
-  for (size_t i{ 0 }; i < texs->size(); ++i) {
-    m_blocks[i]->texture((*texs)[i]);
-    m_nonEmptyBlocks.push_back(m_blocks[i]);
-  }
 
-  m_loader->queueClassified(m_nonEmptyBlocks, m_emptyBlocks);
+
+
+//  for (size_t i{ 0 }; i < m_blocks.size(); ++i) {
+//    m_blocks[i]->pixelData(( *buffers )[i]);
+//  }
+//
+//  for (size_t i{ 0 }; i < texs->size(); ++i) {
+//    m_blocks[i]->texture(( *texs )[i]);
+//    m_nonEmptyBlocks.push_back(m_blocks[i]);
+//  }
+
+//  m_loader->queueClassified(m_nonEmptyBlocks, m_emptyBlocks);
 
 }
 
@@ -78,18 +81,17 @@ BlockCollection::initBlocksFromFileBlocks(std::vector<FileBlock> const &fileBloc
                                           glm::u64vec3 const &nb)
 {
 
-  if (fileBlocks.size() == 0)
-  {
+  if (fileBlocks.size() == 0) {
     bd::Warn() << "No blocks in list of file blocks to initialize.";
     return;
   }
 
   m_blocks.reserve(fileBlocks.size());
   m_nonEmptyBlocks.reserve(fileBlocks.size());
-  
+
   int every = 0.1f * fileBlocks.size();
   every = every == 0 ? 1 : every;
-  
+
   auto idx = 0ull;
   for (auto k = 0ull; k < nb.z; ++k) {
     for (auto j = 0ull; j < nb.y; ++j) {
@@ -98,7 +100,7 @@ BlockCollection::initBlocksFromFileBlocks(std::vector<FileBlock> const &fileBloc
         if (idx % every == 0) {
           std::cout << "\rCreating block " << idx;
         }
-    
+
         Block *block{ new Block{{ i, j, k }, fileBlocks[idx] }};
         m_blocks.push_back(block);
 
@@ -138,20 +140,20 @@ BlockCollection::filterBlocksByROVRange(double rov_min, double rov_max)
 {
   m_nonEmptyBlocks.clear();
   m_emptyBlocks.clear();
-  
+
 //  size_t bytes{ 0 };
 
   size_t nBlk{ m_blocks.size() };
-  for(size_t i{ 0 }; i < nBlk; ++i) {
+  for (size_t i{ 0 }; i < nBlk; ++i) {
 
     bd::Block *b{ m_blocks[i] };
     double rov = b->fileBlock().rov;
 
     if (rov >= rov_min && rov <= rov_max) {
-      b->visible(true);
+      b->empty(false);
       m_nonEmptyBlocks.push_back(b);
     } else {
-      b->visible(false);
+      b->empty(true);
       m_emptyBlocks.push_back(b);
     }
   } // for
@@ -168,7 +170,7 @@ BlockCollection::updateBlockCache()
 
 ///////////////////////////////////////////////////////////////////////////////
 Block *
-BlockCollection::nextLoadableBlock()   
+BlockCollection::nextLoadableBlock()
 {
   return m_loader->getNextGpuReadyBlock();
 }
@@ -189,12 +191,13 @@ BlockCollection::loadSomeBlocks()
   uint64_t t{ 0 };
   uint64_t const MAX_JOB_LENGTH_MS = 10000000;
   bd::Block *b{ nullptr };
-  int i{0};
-  while (t < MAX_JOB_LENGTH_MS && (b = nextLoadableBlock())) {
+  int i{ 0 };
+  while (t < MAX_JOB_LENGTH_MS && ( b = nextLoadableBlock())) {
     uint64_t start{ glfwGetTimerValue() };
     b->sendToGpu();
     m_loader->pushGpuResidentBlock(b);
-    bd::Dbg() << "Sent " << b->fileBlock().block_index << " (" << b->status() << ") to GPU.";
+    bd::Dbg() << "Sent " << b->fileBlock().block_index
+              << " (" << b->status() << ") to GPU.";
     uint64_t timeToLoadBlock{ glfwGetTimerValue() - start };
     t += timeToLoadBlock;
     ++i;

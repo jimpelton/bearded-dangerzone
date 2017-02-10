@@ -108,9 +108,9 @@ initGLContext(int screenWidth, int screenHeight)
 
 
 bool
-initializeBlockCollection(BlockCollection **bc, 
-  bd::IndexFile const *indexFile,
-  subvol::CommandLineOptions const &clo)
+initializeBlockCollection(BlockCollection **bc,
+                          bd::IndexFile const *indexFile,
+                          subvol::CommandLineOptions const &clo)
 {
   glm::u64vec3 dims = indexFile->getVolume().block_dims();
   bd::DataType type = bd::IndexFileHeader::getType(indexFile->getHeader());
@@ -223,10 +223,10 @@ loop(GLFWwindow *window, BlockRenderer *renderer)
 }
 
 void
-queryGPUMemory(int *total, int *avail)
+queryGPUMemory(int64_t *total, int64_t *avail)
 {
-  GLint total_mem_kb = 0;
-  glGetIntegerv(0x9048, &total_mem_kb);
+  GLint64 total_mem_kb = 0;
+  glGetInteger64v(0x9048, &total_mem_kb);
 
   *total = total_mem_kb * 1024;
 

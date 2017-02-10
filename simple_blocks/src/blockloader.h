@@ -176,6 +176,18 @@ private:
   void
   swapPixel(bd::Block *src, bd::Block *dest);
 
+  void
+  swapTexture(bd::Block *src, bd::Block *dest);
+
+  /// Find empty blocks in the resident blocks map \c r, and update the
+  /// the empty-resident set, er.
+  /// \param r The map to find blocks in.
+  /// \param er The empty-resident set.
+  /// \return Number of empty blocks found.
+  size_t
+  findEmptyBlocks(std::unordered_map<uint64_t, bd::Block*> const &r,
+                  std::set<bd::Block *> &er);
+
 
   void 
   handleEmptyBlock(bd::Block *);
@@ -226,7 +238,10 @@ private:
   /// NE-resident on cpu.
   std::unordered_map<uint64_t, bd::Block *> m_main;
 
-  std::vector<bd::Texture> m_texs;
+  /// Buffer of reserve textures.
+  std::vector<bd::Texture *> m_texs;
+
+  /// Buffer of reserve buffers.
   std::vector<char *> m_buffs;
 
   std::atomic_bool m_stopThread;
