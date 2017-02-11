@@ -298,29 +298,35 @@ BlockLoader::handleEmptyBlock(bd::Block *b)
 void
 BlockLoader::handleVisible_NotInGPU_IsInMain(bd::Block *b)
 {
-  auto emptyBlock = [b,this](decltype(m_mainEmpty) &main_e, decltype(m_gpu) &gpu,
-                        decltype(m_gpuEmpty) &gpu_e)
+  auto stealBlock = [b,this](decltype(m_mainEmpty) &main_e,
+                             decltype(m_gpu) &gpu,
+                             decltype(m_gpuEmpty) &gpu_e) -> void
   {
-    auto emptyIt = main_e.begin();
-    assert((*emptyIt)->pixelData() != nullptr);
-    assert(b->texture() != nullptr);
+    // grab empty gpu block.
+    auto emptyIt = gpu_e.begin();
+    assert(emptyIt != gpu_e.end());
+    bd::Block *eblk{ *emptyIt };
+    assert(eblk->pixelData() != nullptr);
+    assert(eblk->texture() != nullptr);
 
-    bd::Dbg() << "Stealing block " << (*emptyIt)->index() << " texture.";
+    bd::Dbg() << "Stealing block " << eblk->index() << " texture.";
     this->swapTexture(*emptyIt, b);
-    main_e.erase(*emptyIt);
-    gpu.erase((*emptyIt)->index());
+    b->texture(eblk->texture());
+    eblk->texture(nullptr);
+
+    gpu.erase(eblk->index());
+    main_e.erase(eblk);
     gpu_e.erase(emptyIt);
-//    return *emptyIt;
   };
 
   assert(b->pixelData() != nullptr);
 
   if (m_gpuEmpty.size() > 0) {
-    emptyBlock(m_mainEmpty, m_gpu, m_gpuEmpty);
+    stealBlock(m_mainEmpty, m_gpu, m_gpuEmpty);
   } else {
     size_t found{ findEmptyBlocks(m_gpu, m_gpuEmpty) };
     if (found > 0) {
-      emptyBlock(m_mainEmpty, m_gpu, m_gpuEmpty);
+      stealBlock(m_mainEmpty, m_gpu, m_gpuEmpty);
     } else {
       if (m_texs.size() > 0) {
         bd::Texture *tex{ m_texs.back() };
@@ -329,8 +335,14 @@ BlockLoader::handleVisible_NotInGPU_IsInMain(bd::Block *b)
       }
     }
   }
-  assert(b->texture() != nullptr);
-  pushGPUReadyQueue(b);
+//  assert(b->texture() != nullptr);
+  if (b->texture() != nullptr) {
+    pushGPUReadyQueue(b);
+  } else {
+    bd::Dbg() << "Could not add block " << b->index() << " (" << b->status() << ") "
+              << "no free textures or empty blocks available.";
+
+  }
 
 //  bd::Block *empty{ nullptr };
 //  bd::Texture *tex{ nullptr };

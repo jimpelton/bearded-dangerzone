@@ -67,7 +67,7 @@ public:
   nextLoadableBlock();
 
   void
-  clearLoadQueue();
+  pauseLoaderThread();
 
 
   void

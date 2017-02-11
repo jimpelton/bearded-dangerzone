@@ -178,7 +178,7 @@ BlockCollection::nextLoadableBlock()
 
 ///////////////////////////////////////////////////////////////////////////////
 void
-BlockCollection::clearLoadQueue()
+BlockCollection::pauseLoaderThread()
 {
   m_loader->clearLoadQueue();
 }

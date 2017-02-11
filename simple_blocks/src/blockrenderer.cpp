@@ -50,7 +50,7 @@ BlockRenderer::BlockRenderer(int numSlices,
     , m_drawNonEmptyBoundingBoxes{ false }
     , m_drawNonEmptySlices{ true }
     , m_ROVRangeChanged{ false }
-    , m_cacheNeedsUpdating{ true }
+    , m_cacheNeedsUpdating{ false }
     , m_shouldUseLighting{ false }
     , m_backgroundColor{ 0.0f }
 
@@ -210,6 +210,7 @@ BlockRenderer::setROVRange(double min, double max)
   m_rov_min = min;
   m_rov_max = max;
   m_ROVRangeChanged = true;
+
 }
 
 
@@ -242,9 +243,9 @@ BlockRenderer::setROVChanging(bool b)
 {
   m_ROVChanging = b;
   if (b) {
-    // This should pause the loader thread when it comes back around.
-    m_collection->clearLoadQueue();
+    m_collection->pauseLoaderThread();
   } else {
+    // if rov is not changing anymore, then yayy! update with new visible blocks.
     m_collection->updateBlockCache();
   }
 }
@@ -270,11 +271,11 @@ BlockRenderer::draw()
     m_ROVRangeChanged = false;
   }
 
-  if (m_cacheNeedsUpdating) {
-    std::cout << "++++++Updating the block cache++++++" << std::endl;
-    m_collection->updateBlockCache();
-    m_cacheNeedsUpdating = false;
-  }
+//  if (m_cacheNeedsUpdating) {
+//    std::cout << "++++++Updating the block cache++++++" << std::endl;
+//    m_collection->updateBlockCache();
+//    m_cacheNeedsUpdating = false;
+//  }
 
   
   if (glfwGetTimerValue() - m_timeOfLastJob > MAX_MILLIS_SINCE_LAST_JOB) {
@@ -409,7 +410,7 @@ BlockRenderer::drawNonEmptyBlocks_Forward()
       setWorldMatrix(b->transform());
       b->texture()->bind(BLOCK_TEXTURE_UNIT);
       m_currentShader->setUniform(VOLUME_MVP_MATRIX_UNIFORM_STR,
-        getWorldViewProjectionMatrix());
+                                  getWorldViewProjectionMatrix());
 
       drawSlices(baseVertex);
     }
@@ -512,13 +513,6 @@ void
 BlockRenderer::filterBlocksByROV()
 {
   m_collection->filterBlocksByROVRange(m_rov_min, m_rov_max);
-
-//  for(auto *b : *m_blocks) {
-//    double rov{ b->fileBlock().rov };
-//    if (rov >= m_rov_min && rov <= m_rov_max) {
-//      m_nonEmptyBlocks->push_back(b);
-//    }
-//  }
 }
 
 
