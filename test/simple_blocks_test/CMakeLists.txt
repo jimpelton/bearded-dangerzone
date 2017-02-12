@@ -18,11 +18,13 @@ file(GLOB simple_blocks_headers "${simple_blocks_SOURCE_DIR}/src"
     "${simple_blocks_SOURCE_DIR}/src/*.h"
 )
 
+
 set(simple_blocks_test_SOURCE_FILES
     src/simple_blocks_test_main.cpp
     src/simple_blocks_tests.cpp
-    "${simple_blocks_sources}"
-)
+    src/blockloader_test.cpp
+    "${simple_blocks_sources}" )
+
 
 set(simple_blocks_test_HEADER_FILES
     "${simple_blocks_headers}"
@@ -37,6 +39,18 @@ include_directories(
     )
 
 
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+set(CMAKE_AUTOMOC ON)
+
+
+find_package(Qt5Widgets)
+find_package(Qt5Gui)
+
+
+set(CRUFT_RESOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/res")
+add_definitions(-DRESOURCE_FOLDER="${CRUFT_RESOURCE_DIR}")
+
+
 add_executable(simple_blocks_test
     ${simple_blocks_test_HEADER_FILES}
     ${simple_blocks_test_SOURCE_FILES}
@@ -44,13 +58,16 @@ add_executable(simple_blocks_test
 
 
 target_link_libraries(simple_blocks_test
-    ${OPENGL_LIBRARIES}
-    ${GLFW_LIBRARIES}
-    ${GLEW_LIBRARIES}
-    ${Boost_PROGRAM_OPTIONS_LIBRARIES}
-    ${Boost_LIBRARIES}
-    ${CRUFT_LIBRARIES}
-    )
+        ${OPENGL_LIBRARIES}
+        ${GLFW_LIBRARIES}
+        ${GLEW_LIBRARIES}
+        debug ${CRUFT_DEBUG_LIBRARIES}
+        optimized ${CRUFT_RELEASE_LIBRARIES}
+        debug ${TBB_DEBUG_LIBRARIES}
+        optimized ${TBB_RELEASE_LIBRARIES}
+        ${NVTOOLSEXT_LIB}
+        Qt5::Widgets
+        Qt5::Core)
 
 
 install(TARGETS simple_blocks_test RUNTIME DESTINATION ${BIN_DIR})

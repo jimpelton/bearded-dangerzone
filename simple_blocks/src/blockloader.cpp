@@ -298,7 +298,7 @@ BlockLoader::handleEmptyBlock(bd::Block *b)
 void
 BlockLoader::handleVisible_NotInGPU_IsInMain(bd::Block *b)
 {
-  auto stealBlock = [b,this](decltype(m_mainEmpty) &main_e,
+  auto stealBlock = [b](decltype(m_mainEmpty) &main_e,
                              decltype(m_gpu) &gpu,
                              decltype(m_gpuEmpty) &gpu_e) -> void
   {
@@ -310,7 +310,7 @@ BlockLoader::handleVisible_NotInGPU_IsInMain(bd::Block *b)
     assert(eblk->texture() != nullptr);
 
     bd::Dbg() << "Stealing block " << eblk->index() << " texture.";
-    this->swapTexture(*emptyIt, b);
+//    this->swapTexture(*emptyIt, b);
     b->texture(eblk->texture());
     eblk->texture(nullptr);
 

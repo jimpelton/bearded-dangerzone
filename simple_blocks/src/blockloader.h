@@ -176,6 +176,7 @@ private:
   void
   swapPixel(bd::Block *src, bd::Block *dest);
 
+
   void
   swapTexture(bd::Block *src, bd::Block *dest);
 
@@ -210,6 +211,7 @@ private:
 
   void
   pushGPUReadyQueue(bd::Block *b);
+
 
   void
   fillBlockData(bd::Block *b, std::istream *infile, size_t szTy, size_t vX, size_t vY) const;
