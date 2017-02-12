@@ -135,12 +135,10 @@ BlockLoader::operator()()
   bd::Dbg() << "Load thread started.";
   raw.open(m_fileName, std::ios::binary);
   if (!raw.is_open()) {
-    bd::Err() << "The raw file " << m_fileName << " could not be opened. Exiting loader loop.";
+    bd::Err() << "The raw file " << m_fileName
+              << " could not be opened. Exiting loader loop.";
     return -1;
   }
-
-//  std::vector<bd::Texture *> * const texs = dptr->texs;
-//  std::vector<char *> * const buffers = dptr->buffers;
 
 
   while (!m_stopThread) {
@@ -156,18 +154,20 @@ BlockLoader::operator()()
               << " block " << b->index()
               << " (" << b->status() << ").";
 
+
     if (b->empty()) {
       handleEmptyBlock(b);
     } else {
       handleVisibleBlock(b);
     }
 
+
     std::cout << "Cpu: " << m_main.size() << "/" << m_maxMainBlocks << "\n"
         "Gpu: " << m_gpu.size() << "/" << m_maxGpuBlocks << "\n"
         "LdQ: " << m_loadQueue.size() << "\n"
-        "Ldb: " << m_gpuReadyQueue.size() << "\n";
-//                  "Tex: " << texs->size() << "\n"
-//                  "Buf: " << buffers->size() << std::endl;
+        "Ldb: " << m_gpuReadyQueue.size() << "\n"
+        "Buf: " << m_buffs.size() << "\n"
+        "Tex: " << m_texs.size() << std::endl;
 
   } // while
 
@@ -550,7 +550,8 @@ void
 BlockLoader::pushGpuResidentBlock(bd::Block *b)
 {
   std::unique_lock<std::mutex> lock(m_gpuMutex);
-  assert(m_gpu.find(b->index()) == m_gpu.end());
+  assert(m_gpu.find(b->index()) == m_gpu.end() &&
+             ("Block: " + std::to_string(b->index())).c_str());
   m_gpu.insert(std::make_pair(b->index(), b));
 }
 
