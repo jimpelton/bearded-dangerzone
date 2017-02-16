@@ -591,6 +591,7 @@ BlockLoader::fillBlockData(bd::Block *b, std::istream *infile,
   size_t offset{ b->fileBlock().data_offset };
 
   uint64_t const buf_len{ be.x * be.y * be.z };
+  //TODO: support for than char*
   char * const disk_buf{ new char[buf_len] }; 
   char *temp = disk_buf;
   // Loop through rows and slabs of volume reading rows of voxels into memory.
