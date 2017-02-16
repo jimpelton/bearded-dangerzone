@@ -240,19 +240,19 @@ BlockLoader::findEmptyBlocks(std::unordered_map<uint64_t, bd::Block *> const &r,
 }
 
 
-void
-BlockLoader::swapTexture(bd::Block *src, bd::Block *dest)
-{
-  assert(src != nullptr);
-  assert(dest != nullptr);
-  assert(src->texture() != nullptr);
-  assert(dest->texture() == nullptr);
-
-  bd::Texture *p{ src->texture() };
-  src->texture(dest->texture());
-  dest->texture(p);
-
-}
+//void
+//BlockLoader::swapTexture(bd::Block *src, bd::Block *dest)
+//{
+//  assert(src != nullptr);
+//  assert(dest != nullptr);
+//  assert(src->texture() != nullptr);
+//  assert(dest->texture() == nullptr);
+//
+//  bd::Texture *p{ src->texture() };
+//  src->texture(dest->texture());
+//  dest->texture(p);
+//
+//}
 
 ///////////////////////////////////////////////////////////////////////////////
 void
@@ -298,9 +298,9 @@ BlockLoader::handleEmptyBlock(bd::Block *b)
 void
 BlockLoader::handleVisible_NotInGPU_IsInMain(bd::Block *b)
 {
-  auto stealBlock = [b](decltype(m_mainEmpty) &main_e,
-                             decltype(m_gpu) &gpu,
-                             decltype(m_gpuEmpty) &gpu_e) -> void
+  auto stealEmptyBlockTexture = [b](decltype(m_mainEmpty) &main_e,
+                                    decltype(m_gpu) &gpu,
+                                    decltype(m_gpuEmpty) &gpu_e) -> void
   {
     // grab empty gpu block.
     auto emptyIt = gpu_e.begin();
@@ -310,7 +310,6 @@ BlockLoader::handleVisible_NotInGPU_IsInMain(bd::Block *b)
     assert(eblk->texture() != nullptr);
 
     bd::Dbg() << "Stealing block " << eblk->index() << " texture.";
-//    this->swapTexture(*emptyIt, b);
     b->texture(eblk->texture());
     eblk->texture(nullptr);
 
@@ -322,11 +321,11 @@ BlockLoader::handleVisible_NotInGPU_IsInMain(bd::Block *b)
   assert(b->pixelData() != nullptr);
 
   if (m_gpuEmpty.size() > 0) {
-    stealBlock(m_mainEmpty, m_gpu, m_gpuEmpty);
+    stealEmptyBlockTexture(m_mainEmpty, m_gpu, m_gpuEmpty);
   } else {
     size_t found{ findEmptyBlocks(m_gpu, m_gpuEmpty) };
     if (found > 0) {
-      stealBlock(m_mainEmpty, m_gpu, m_gpuEmpty);
+      stealEmptyBlockTexture(m_mainEmpty, m_gpu, m_gpuEmpty);
     } else {
       if (m_texs.size() > 0) {
         bd::Texture *tex{ m_texs.back() };
@@ -388,28 +387,37 @@ BlockLoader::handleVisible_NotInGPU_NotInMain(bd::Block *b)
 //    return;
 //  }
 
+  auto stealEmptyBlockPixelData = [&b,this](decltype(m_mainEmpty) &main_e,
+                                       decltype(m_main) &main) {
 
-  if (m_mainEmpty.size() > 0) {
-    auto emptyIt = m_mainEmpty.begin();
+    auto emptyIt = main_e.begin();
 
     assert((*emptyIt)->pixelData() != nullptr);
     assert(b->pixelData() == nullptr);
     assert(b->texture() == nullptr);
 
-    swapPixel(*emptyIt, b);
+    char *pix{ (*emptyIt)->removePixelData() };
+    b->pixelData(pix);
 
-    fillBlockData(b, &raw, m_sizeType, m_slabWidth, m_slabHeight);
+    fillBlockData(b, &(this->raw), this->m_sizeType, this->m_slabWidth, this->m_slabHeight);
 
-    m_main.erase((*emptyIt)->index());
-    m_mainEmpty.erase(emptyIt);
-    m_main.insert(std::make_pair(b->index(), b));
+    main.erase((*emptyIt)->index());
+    main_e.erase(emptyIt);
+    main.insert(std::make_pair(b->index(), b));
 
+  };
+
+
+  if (m_mainEmpty.size() > 0) {
+    stealEmptyBlockPixelData(m_mainEmpty, m_main);
   } else {
     // If no blocks are e-resident in main's empty list, it is still possible that
     // e-resdient blocks exist in main, but haven't been placed into
     // the empty list.
     size_t found{ findEmptyBlocks(m_main, m_mainEmpty) };
-    if (found == 0) {
+    if (found != 0) {
+      stealEmptyBlockPixelData(m_mainEmpty, m_main);
+    } else {
       // we didn't find any empty blocks, our last ditch effort is to see if we have
       // buffers in the buffer buffer (as is the case with first run).
       if (m_buffs.size() > 0) {
@@ -426,19 +434,6 @@ BlockLoader::handleVisible_NotInGPU_NotInMain(bd::Block *b)
         bd::Dbg() << "Block " << b->index() << " not loaded into cpu, no free buffers.";
         return;
       }
-    } else {
-       auto emptyIt = m_mainEmpty.begin();
-      assert((*emptyIt)->pixelData() != nullptr);
-      assert(b->pixelData() == nullptr);
-      assert(b->texture() == nullptr);
-
-      swapPixel(*emptyIt, b);
-
-      fillBlockData(b, &raw, m_sizeType, m_slabWidth, m_slabHeight);
-
-      m_main.erase((*emptyIt)->index());
-      m_mainEmpty.erase(emptyIt);
-      m_main.insert(std::make_pair(b->index(), b));
     }
   }
 
