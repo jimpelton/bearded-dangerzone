@@ -177,8 +177,8 @@ private:
   swapPixel(bd::Block *src, bd::Block *dest);
 
 
-  void
-  swapTexture(bd::Block *src, bd::Block *dest);
+//  void
+//  swapTexture(bd::Block *src, bd::Block *dest);
 
   /// Find empty blocks in the resident blocks map \c r, and update the
   /// the empty-resident set, er.
