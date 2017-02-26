@@ -219,11 +219,7 @@ private:
 //  void
 //  fileWithBufferFromEmptyBlock(bd::Block *b);
 
-  /// Blocks that will be examined for loading.
-  std::vector<bd::Block *> m_loadQueue;
-
-  ///< Blocks with GPU_WAIT status.
-  std::queue<bd::Block *> m_gpuReadyQueue;
+  std::atomic_bool m_stopThread;
 
   /// E-resident on gpu
   /// Also E-resident on CPU
@@ -246,7 +242,12 @@ private:
   /// Buffer of reserve buffers.
   std::vector<char *> m_buffs;
 
-  std::atomic_bool m_stopThread;
+  /// Blocks that will be examined for loading.
+  std::vector<bd::Block *> m_loadQueue;
+
+  ///< Blocks with GPU_WAIT status.
+  std::queue<bd::Block *> m_gpuReadyQueue;
+
   std::mutex m_gpuMutex;
   std::mutex m_gpuReadyMutex;
   std::mutex m_loadQueueMutex;

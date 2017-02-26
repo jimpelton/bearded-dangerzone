@@ -440,7 +440,7 @@ ColorMap const &
 ColorMapManager::getNextMap()
 {
   s_currentMapNameIdx += 1;
-  if (s_currentMapNameIdx >= s_colorMapNames.size()) {
+  if (size_t(s_currentMapNameIdx) >= s_colorMapNames.size()) {
     s_currentMapNameIdx = 0;
   }
   std::string const *name{ s_colorMapNames[s_currentMapNameIdx] };

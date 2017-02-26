@@ -23,6 +23,8 @@ BlockLoader::BlockLoader(BLThreadData *threadParams, bd::Volume const &volume)
   , m_main{ }
   , m_texs{ *(threadParams->texs) }
   , m_buffs{ *(threadParams->buffers) }
+  , m_loadQueue{ }
+  , m_gpuReadyQueue{ }
   , m_maxGpuBlocks{ threadParams->maxGpuBlocks }
   , m_maxMainBlocks{ threadParams->maxCpuBlocks }
   , m_sizeType{ threadParams->size }
@@ -85,15 +87,15 @@ namespace
 //  return found != end;
 //}
 
-void
-printBar(size_t ticks, char const *prefix)
-{
-//  unsigned char bar[81] = { 255 }; // white space
-  std::cout << '\r' << prefix << " cache: ";
-  for (int i=0; i<ticks; ++i) {
-    std::cout << '.'; //static_cast<char>(178);
-  }
-}
+//void
+//printBar(size_t ticks, char const *prefix)
+//{
+////  unsigned char bar[81] = { 255 }; // white space
+//  std::cout << '\r' << prefix << " cache: ";
+//  for (size_t i=0; i<ticks; ++i) {
+//    std::cout << '.'; //static_cast<char>(178);
+//  }
+//}
 
 
 
@@ -340,7 +342,6 @@ BlockLoader::handleVisible_NotInGPU_IsInMain(bd::Block *b)
   } else {
     bd::Dbg() << "Could not add block " << b->index() << " (" << b->status() << ") "
               << "no free textures or empty blocks available.";
-
   }
 
 //  bd::Block *empty{ nullptr };
@@ -380,7 +381,7 @@ BlockLoader::handleVisible_NotInGPU_IsInMain(bd::Block *b)
 void
 BlockLoader::handleVisible_NotInGPU_NotInMain(bd::Block *b)
 {
-  bd::Block *empty{ nullptr };
+//  bd::Block *empty{ nullptr };
 //  auto first = m_gpuEmpty.begin();
 //  if (first == m_gpuEmpty.end()) {
 //    bd::Dbg() << "Can't load visible block " << b->index() << " from disk, no room on Gpu.";
