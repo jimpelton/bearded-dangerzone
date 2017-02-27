@@ -27,16 +27,15 @@ BlockLoader::BlockLoader(BLThreadData *threadParams, bd::Volume const &volume)
   , m_gpuReadyQueue{ }
   , m_maxGpuBlocks{ threadParams->maxGpuBlocks }
   , m_maxMainBlocks{ threadParams->maxCpuBlocks }
-  , m_sizeType{ threadParams->size }
+  , m_sizeType{ bd::to_sizeType(threadParams->type) }
   , m_slabWidth{ threadParams->slabDims[0] }
   , m_slabHeight{ threadParams->slabDims[1] }
   , m_volMin{ volume.min() }
   , m_volDiff{ volume.max() - volume.min() }
   , m_fileName{ threadParams->filename }
+  , m_reader{ nullptr }
 {
-//  m_volMin = volume.min();
-//  m_volDiff = volume.max() - volume.min();
-
+  m_reader = BlockReaderFactory::New(threadParams->type);
 }
 
 
@@ -52,83 +51,6 @@ BlockLoader::~BlockLoader()
 //  }
 }
 
-
-namespace
-{
-
-//bd::Block *
-//removeLastInvisibleBlock(std::list<bd::Block *> &list)
-//{
-//  auto rend = list.end();
-//  auto not_vis =
-//      std::find_if(list.begin(), rend,
-//                   [](bd::Block *be) -> bool {
-//                     return ( be->status() & bd::Block::VISIBLE ) == 0;
-//                   });
-//
-//  if (not_vis == rend) {
-//    // no non-visible blocks in the cpu queue
-//    // (only happens if size m_gpu == size cpu)
-//    return nullptr;
-//  }
-//
-////  std::advance(not_vis, 1);
-////  auto byebye = list.erase( not_vis.base() );
-//  auto byebye = list.erase(not_vis);
-//  return *byebye;
-//}
-
-
-//bool
-//isInList(bd::Block *b, std::list<bd::Block *> &list)
-//{
-//  auto end = list.end();
-//  auto found = std::find(list.begin(), end, b);
-//  return found != end;
-//}
-
-//void
-//printBar(size_t ticks, char const *prefix)
-//{
-////  unsigned char bar[81] = { 255 }; // white space
-//  std::cout << '\r' << prefix << " cache: ";
-//  for (size_t i=0; i<ticks; ++i) {
-//    std::cout << '.'; //static_cast<char>(178);
-//  }
-//}
-
-
-
-} // namespace
-
-
-//void
-//BlockLoader::fileWithBufferFromEmptyBlock(bd::Block *b)
-//{
-//  block_type *empty = m_mainEmpty.front();
-//  m_mainEmpty.pop();
-//
-//  auto index = empty->fileBlock().block_index;
-//
-//  // evict empty from m_main.
-//  auto it = m_main.find(index);
-//  assert(it != m_main.end());
-//  m_main.erase(it);
-//
-//  bd::Texture *t = nullptr;
-//  auto gpuIt = m_gpu.find(index);
-//  assert(gpuIt != m_gpu.end());
-//  m_gpu.erase(index);
-//
-//
-//  char *pixels = empty->pixelData();
-//  empty->pixelData(nullptr);
-//  assert(pixels != nullptr);
-//  b->pixelData(pixels);
-//
-//  fillBlockData(b, &m_raw, m_sizeType, m_slabWidth, m_slabHeight);
-//  m_main.insert(std::make_pair(b->fileBlock().block_index, b));
-//}
 
 
 int
@@ -205,27 +127,6 @@ BlockLoader::waitPopLoadQueue()
 }
 
 
-//bd::Block *
-//BlockLoader::removeGpuLastInvisible()
-//{
-//  std::unique_lock<std::mutex>(m_gpuMutex);
-//  return removeLastInvisibleBlock(m_gpu);
-//}
-
-
-//bd::Block *
-//BlockLoader::removeGpuBlockReverse(bd::Block *b)
-//{
-//  std::unique_lock<std::mutex>(m_gpuMutex);
-//  auto found = std::find(m_gpu.begin(), m_gpu.end(), b);
-//  if (found == m_gpu.end()) {
-//    return nullptr;
-//  }
-//
-//  m_gpu.erase(found);
-//  return *found;
-//}
-
 
 size_t
 BlockLoader::findEmptyBlocks(std::unordered_map<uint64_t, bd::Block *> const &r,
@@ -239,35 +140,6 @@ BlockLoader::findEmptyBlocks(std::unordered_map<uint64_t, bd::Block *> const &r,
     }
   }
   return found;
-}
-
-
-//void
-//BlockLoader::swapTexture(bd::Block *src, bd::Block *dest)
-//{
-//  assert(src != nullptr);
-//  assert(dest != nullptr);
-//  assert(src->texture() != nullptr);
-//  assert(dest->texture() == nullptr);
-//
-//  bd::Texture *p{ src->texture() };
-//  src->texture(dest->texture());
-//  dest->texture(p);
-//
-//}
-
-///////////////////////////////////////////////////////////////////////////////
-void
-BlockLoader::swapPixel(bd::Block *src, bd::Block *dest)
-{
-  assert(src != nullptr);
-  assert(dest != nullptr);
-  assert(src->pixelData() != nullptr);
-  assert(dest->pixelData() == nullptr);
-
-  char *p{ src->pixelData() };
-  src->pixelData(dest->pixelData());
-  dest->pixelData(p);
 }
 
 
@@ -308,8 +180,8 @@ BlockLoader::handleVisible_NotInGPU_IsInMain(bd::Block *b)
     auto emptyIt = gpu_e.begin();
     assert(emptyIt != gpu_e.end());
     bd::Block *eblk{ *emptyIt };
-    assert(eblk->pixelData() != nullptr);
     assert(eblk->texture() != nullptr);
+    assert(eblk->pixelData() != nullptr);
 
     bd::Dbg() << "Stealing block " << eblk->index() << " texture.";
     b->texture(eblk->texture());
@@ -344,36 +216,6 @@ BlockLoader::handleVisible_NotInGPU_IsInMain(bd::Block *b)
               << "no free textures or empty blocks available.";
   }
 
-//  bd::Block *empty{ nullptr };
-//  bd::Texture *tex{ nullptr };
-//    // find empty block on GPU
-//    auto first = m_gpuEmpty.begin();
-//
-//    if (first == m_gpuEmpty.end()) {
-//      size_t found{ findEmptyBlocks(m_gpu, m_gpuEmpty) };
-//      if (found == 0) {
-//        tex = m_texs.back();
-//        m_texs.pop_back();
-//      } else {
-//
-//      }
-//
-//      bd::Dbg() << "Can't load visible block " << b->index() << " that is already on cpu, no room on GPU";
-//      return;
-//    }
-//
-//    empty = { *first };
-//    m_gpuEmpty.erase(first);
-//    m_mainEmpty.erase(empty);
-//    m_gpu.erase(empty->index());
-//    assert(m_main.find(empty->index()) != m_main.end());
-//
-//  char *pixels{ empty->pixelData() };
-//  b->pixelData(pixels);
-//
-//  bd::Texture *tex{ b->texture() };
-//  b->texture(tex);
-//  pushGPUReadyQueue(b);
 }
 
 
@@ -381,12 +223,6 @@ BlockLoader::handleVisible_NotInGPU_IsInMain(bd::Block *b)
 void
 BlockLoader::handleVisible_NotInGPU_NotInMain(bd::Block *b)
 {
-//  bd::Block *empty{ nullptr };
-//  auto first = m_gpuEmpty.begin();
-//  if (first == m_gpuEmpty.end()) {
-//    bd::Dbg() << "Can't load visible block " << b->index() << " from disk, no room on Gpu.";
-//    return;
-//  }
 
   auto stealEmptyBlockPixelData = [&b,this](decltype(m_mainEmpty) &main_e,
                                        decltype(m_main) &main) {
@@ -400,7 +236,9 @@ BlockLoader::handleVisible_NotInGPU_NotInMain(bd::Block *b)
     char *pix{ (*emptyIt)->removePixelData() };
     b->pixelData(pix);
 
-    fillBlockData(b, &(this->raw), this->m_sizeType, this->m_slabWidth, this->m_slabHeight);
+    m_reader->fillBlockData(b, &(this->raw), this->m_sizeType,
+                            this->m_slabWidth, this->m_slabHeight,
+                            this->m_volMin, this->m_volDiff);
 
     main.erase((*emptyIt)->index());
     main_e.erase(emptyIt);
@@ -429,7 +267,8 @@ BlockLoader::handleVisible_NotInGPU_NotInMain(bd::Block *b)
         m_buffs.pop_back();
         b->pixelData(buf);
 
-        fillBlockData(b, &raw, m_sizeType, m_slabWidth, m_slabHeight);
+        m_reader->fillBlockData(b, &raw, m_sizeType, m_slabWidth, m_slabHeight,
+                                m_volMin, m_volDiff);
         m_main.insert(std::make_pair(b->index(), b));
       } else {
         bd::Dbg() << "Block " << b->index() << " not loaded into cpu, no free buffers.";
@@ -466,12 +305,6 @@ BlockLoader::handleVisibleBlock(bd::Block *b)
   }
 }
 
-//bool
-//BlockLoader::isInGpuList(bd::Block *b)
-//{
-//  std::unique_lock<std::mutex>(m_gpuMutex);
-//  return isInList(b, m_gpu);
-//}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -518,12 +351,6 @@ BlockLoader::queueClassified(std::vector<bd::Block *> const &visible,
 }
 
 
-//void
-//BlockLoader::getBlocksToLoad(std::vector<bd::Block *> &blocks)   
-//{
-//  std::unique_lock<std::mutex> lock(m_loadablesMutex);
-//  std::copy(m_loadables.begin(), m_loadables.end(), blocks.begin());
-//}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -546,9 +373,13 @@ void
 BlockLoader::pushGpuResidentBlock(bd::Block *b)
 {
   std::unique_lock<std::mutex> lock(m_gpuMutex);
-  assert(m_gpu.find(b->index()) == m_gpu.end() &&
-             ("Block: " + std::to_string(b->index())).c_str());
-  m_gpu.insert(std::make_pair(b->index(), b));
+//  assert(m_gpu.find(b->index()) == m_gpu.end() &&
+//             ;
+//  if (m_gpu.find(b->index()) != m_gpu.end()) {
+//     bd::Dbg() << "Block: " << b->index() << " already gpu resident.";
+//  } else {
+    m_gpu.insert(std::make_pair(b->index(), b));
+//  }
 }
 
 
@@ -573,54 +404,54 @@ BlockLoader::pushGPUReadyQueue(bd::Block *b)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void
-BlockLoader::fillBlockData(bd::Block *b, std::istream *infile,
-                           size_t sizeType, size_t vX, size_t vY) const
-{
-
-  // block's dimensions in voxels
-  glm::u64vec3 const be{ b->voxel_extent() };
-  // start element = block index w/in volume * block size
-  glm::u64vec3 const start{ b->ijk() * be };
-  // block end element = block voxel start voxelDims + block size
-  glm::u64vec3 const end{ start + be };
-
-  size_t const blockRowLength{ be.x };
-  //size_t const sizeType{ to_sizeType(b->texture()->dataType()) };
-
-  // byte offset into file to read from
-  size_t offset{ b->fileBlock().data_offset };
-
-  uint64_t const buf_len{ be.x * be.y * be.z };
-  //TODO: support for than char*
-  char * const disk_buf{ new char[buf_len] }; 
-  char *temp = disk_buf;
-  // Loop through rows and slabs of volume reading rows of voxels into memory.
-  for (uint64_t slab = start.z; slab < end.z; ++slab) {
-    for (uint64_t row = start.y; row < end.y; ++row) {
-
-      // seek to start of row
-      infile->seekg(offset);
-
-      // read the bytes of current row
-      infile->read(temp, blockRowLength * sizeType);
-      temp += blockRowLength;
-
-      // offset of next row
-      offset = bd::to1D(start.x, row + 1, slab, vX, vY);
-      offset *= sizeType;
-    }
-  }
-
-  float * const pixelData = reinterpret_cast<float *>(b->pixelData());
-  //Normalize the data prior to generating the texture.
-  for (size_t idx{ 0 }; idx < buf_len; ++idx) {
-    pixelData[idx] = (disk_buf[idx] - m_volMin) / m_volDiff;
-  }
-
-  delete [] disk_buf;
-
-}
+//void
+//BlockLoader::fillBlockData(bd::Block *b, std::istream *infile,
+//                           size_t sizeType, size_t vX, size_t vY) const
+//{
+//
+//  // block's dimensions in voxels
+//  glm::u64vec3 const be{ b->voxel_extent() };
+//  // start element = block index w/in volume * block size
+//  glm::u64vec3 const start{ b->ijk() * be };
+//  // block end element = block voxel start voxelDims + block size
+//  glm::u64vec3 const end{ start + be };
+//
+//  size_t const blockRowLength{ be.x };
+//  //size_t const sizeType{ to_sizeType(b->texture()->dataType()) };
+//
+//  // byte offset into file to read from
+//  size_t offset{ b->fileBlock().data_offset };
+//
+//  uint64_t const buf_len{ be.x * be.y * be.z };
+//  //TODO: support for than char*
+//  char * const disk_buf{ new char[buf_len] };
+//  char *temp = disk_buf;
+//  // Loop through rows and slabs of volume reading rows of voxels into memory.
+//  for (uint64_t slab = start.z; slab < end.z; ++slab) {
+//    for (uint64_t row = start.y; row < end.y; ++row) {
+//
+//      // seek to start of row
+//      infile->seekg(offset);
+//
+//      // read the bytes of current row
+//      infile->read(temp, blockRowLength * sizeType);
+//      temp += blockRowLength;
+//
+//      // offset of next row
+//      offset = bd::to1D(start.x, row + 1, slab, vX, vY);
+//      offset *= sizeType;
+//    }
+//  }
+//
+//  float * const pixelData = reinterpret_cast<float *>(b->pixelData());
+//  //Normalize the data prior to generating the texture.
+//  for (size_t idx{ 0 }; idx < buf_len; ++idx) {
+//    pixelData[idx] = (disk_buf[idx] - m_volMin) / m_volDiff;
+//  }
+//
+//  delete [] disk_buf;
+//
+//}
 
 } // namespace bd
 

@@ -6,6 +6,8 @@
 #include <GLFW/glfw3.h>
 
 #include "renderhelp.h"
+#include "blockloader.h"
+#include "blockcollection.h"
 #include "renderer.h"
 #include "controls.h"
 #include "timing.h"
@@ -114,7 +116,8 @@ initializeBlockCollection(BlockCollection **bc,
 {
   glm::u64vec3 dims = indexFile->getVolume().block_dims();
   bd::DataType type = bd::IndexFileHeader::getType(indexFile->getHeader());
-  size_t sizeType{ bd::to_sizeType(type) };
+
+  // Number of bytes on the GPU for each block (sizeof(float)).
   uint64_t blockBytes = dims.x * dims.y * dims.z * sizeof(float);
 
   if (blockBytes == 0) {
@@ -124,14 +127,26 @@ initializeBlockCollection(BlockCollection **bc,
     bd::Info() << "Block texture size (bytes): " << blockBytes;
   }
 
-
+  size_t numBlocks{ indexFile->getFileBlocks().size() };
   BLThreadData *tdata{ new BLThreadData() };
+
+  // Find max cpu blocks (assert no larger than actual number of blocks).
   tdata->maxCpuBlocks = clo.mainMemoryBytes / blockBytes;
+  tdata->maxCpuBlocks = tdata->maxCpuBlocks > numBlocks ?
+                        numBlocks : tdata->maxCpuBlocks;
+
+  // Find max gpu blocks (assert no larger than actual number of blocks).
   tdata->maxGpuBlocks = clo.gpuMemoryBytes / blockBytes;
-  tdata->size = sizeType;
+  tdata->maxGpuBlocks = tdata->maxGpuBlocks > numBlocks ?
+                        numBlocks : tdata->maxGpuBlocks;
+
+  tdata->type = type;
+
   tdata->slabDims[0] = indexFile->getVolume().voxelDims().x;
   tdata->slabDims[1] = indexFile->getVolume().voxelDims().y;
+
   tdata->filename = clo.rawFilePath;
+
   tdata->texs = new std::vector<bd::Texture*>();
   tdata->buffers = new std::vector<char*>();
 

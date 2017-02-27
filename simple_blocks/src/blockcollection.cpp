@@ -1,6 +1,7 @@
 #include <GLFW/glfw3.h>
 
 #include "blockcollection.h"
+#include "blockloader.h"
 
 #include <bd/log/gl_log.h>
 #include <bd/log/logger.h>

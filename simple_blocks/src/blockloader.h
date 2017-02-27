@@ -7,6 +7,7 @@
 
 #include <bd/volume/block.h>
 #include <bd/volume/volume.h>
+#include <bd/util/util.h>
 
 #include <string>
 #include <atomic>
@@ -26,7 +27,7 @@ struct BLThreadData
   BLThreadData()
       : maxGpuBlocks{0}
       , maxCpuBlocks{0}
-      , size{ 1 }
+      , type{ bd::DataType::UnsignedCharacter }
       , slabDims{0,0}
       , filename{ }
       , texs{ nullptr }
@@ -35,7 +36,7 @@ struct BLThreadData
   size_t maxGpuBlocks;
   size_t maxCpuBlocks;
   // size of data elements on disk
-  size_t size;
+  bd::DataType type;
   // x, y dims of volume slab
   size_t slabDims[2];
 
@@ -117,8 +118,111 @@ private:
 
 };
 
+//template<class VTy> class BlockReaderSpec;
+
+class BlockReader
+{
+public:
+  BlockReader(){ }
+  virtual ~BlockReader() { }
+
+  virtual void
+  fillBlockData(bd::Block *b, std::istream *infile,
+                size_t sizeType, size_t vX, size_t vY,
+                double vMin, double vDiff) const = 0;
+
+};
+
+
+template<class VTy>
+class BlockReaderSpec : public BlockReader
+{
+public:
+
+  virtual void
+  fillBlockData(bd::Block *b, std::istream *infile,
+                size_t sizeType, size_t vX, size_t vY,
+                double vMin, double vDiff) const override
+  {
+
+    // block's dimensions in voxels
+    glm::u64vec3 const be{ b->voxel_extent() };
+    // start element = block index w/in volume * block size
+    glm::u64vec3 const start{ b->ijk() * be };
+    // block end element = block voxel start voxelDims + block size
+    glm::u64vec3 const end{ start + be };
+
+    size_t const blockRowLength{ be.x };
+    //size_t const sizeType{ to_sizeType(b->texture()->dataType()) };
+
+    // byte offset into file to read from
+    size_t offset{ b->fileBlock().data_offset };
+
+    uint64_t const buf_len{ be.x * be.y * be.z };
+    //TODO: support for than char*
+    VTy * const disk_buf{ new VTy[buf_len] };
+    char *temp = reinterpret_cast<char *>(disk_buf);
+    // Loop through rows and slabs of volume reading rows of voxels into memory.
+    for (uint64_t slab = start.z; slab < end.z; ++slab) {
+      for (uint64_t row = start.y; row < end.y; ++row) {
+
+        // seek to start of row
+        infile->seekg(offset);
+
+        // read the bytes of current row
+        infile->read(temp, blockRowLength * sizeType);
+        temp += blockRowLength;
+
+        // offset of next row
+        offset = bd::to1D(start.x, row + 1, slab, vX, vY);
+        offset *= sizeType;
+      }
+    }
+
+    float * const pixelData = reinterpret_cast<float *>(b->pixelData());
+    //Normalize the data prior to generating the texture.
+    for (size_t idx{ 0 }; idx < buf_len; ++idx) {
+      pixelData[idx] = (disk_buf[idx] - vMin) / vDiff;
+    }
+
+    delete [] disk_buf;
+  }
+
+};
+
+class BlockReaderFactory
+{
+public:
+  using T = bd::DataType;
+
+  static
+  BlockReader *
+  New(bd::DataType ty)
+  {
+    switch(ty){
+      case T::UnsignedCharacter:
+        return new BlockReaderSpec<uint8_t>();
+        break;
+      case T::Character:
+        return new BlockReaderSpec<int8_t>();
+        break;
+      case T::UnsignedShort:
+        return new BlockReaderSpec<uint16_t>();
+        break;
+      case T::Short:
+        return new BlockReaderSpec<int16_t>();
+        break;
+      case T::Float:
+      default:
+        return new BlockReaderSpec<float>();
+        break;
+    }
+  }
+};
+
+
 /// Threaded load block data from disk. Blocks to load are put into a queue by
-/// a thread. 
+/// a thread.
 class BlockLoader
 {
 public:
@@ -173,8 +277,8 @@ private:
 //  bd::Block *
 //  removeGpuBlockReverse(bd::Block *);
 
-  void
-  swapPixel(bd::Block *src, bd::Block *dest);
+//  void
+//  swapPixel(bd::Block *src, bd::Block *dest);
 
 
 //  void
@@ -213,8 +317,8 @@ private:
   pushGPUReadyQueue(bd::Block *b);
 
 
-  void
-  fillBlockData(bd::Block *b, std::istream *infile, size_t szTy, size_t vX, size_t vY) const;
+//  void
+//  fillBlockData(bd::Block *b, std::istream *infile, size_t szTy, size_t vX, size_t vY) const;
 
 //  void
 //  fileWithBufferFromEmptyBlock(bd::Block *b);
@@ -269,7 +373,19 @@ private:
   std::string m_fileName;
   std::ifstream raw;
 
+  BlockReader *m_reader;
+
 }; // class BlockLoader
 
-}
+} // namespace subvol
+
+
+
+
+
+
+
+
+
+
 #endif //! bd_blockloader_h
