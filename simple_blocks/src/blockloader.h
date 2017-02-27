@@ -128,7 +128,7 @@ public:
 
   virtual void
   fillBlockData(bd::Block *b, std::istream *infile,
-                size_t sizeType, size_t vX, size_t vY,
+                size_t vX, size_t vY,
                 double vMin, double vDiff) const = 0;
 
 };
@@ -141,10 +141,9 @@ public:
 
   virtual void
   fillBlockData(bd::Block *b, std::istream *infile,
-                size_t sizeType, size_t vX, size_t vY,
+                size_t vX, size_t vY,
                 double vMin, double vDiff) const override
   {
-
     // block's dimensions in voxels
     glm::u64vec3 const be{ b->voxel_extent() };
     // start element = block index w/in volume * block size
@@ -153,16 +152,21 @@ public:
     glm::u64vec3 const end{ start + be };
 
     size_t const blockRowLength{ be.x };
-    //size_t const sizeType{ to_sizeType(b->texture()->dataType()) };
+    size_t const sizeType = sizeof(VTy);
+    size_t const rowBytes{ blockRowLength * sizeType };
+
 
     // byte offset into file to read from
     size_t offset{ b->fileBlock().data_offset };
 
+
+    // allocate temp space for the block (the entire block is brought into mem).
     uint64_t const buf_len{ be.x * be.y * be.z };
-    //TODO: support for than char*
     VTy * const disk_buf{ new VTy[buf_len] };
-    char *temp = reinterpret_cast<char *>(disk_buf);
+
+
     // Loop through rows and slabs of volume reading rows of voxels into memory.
+    char *temp = reinterpret_cast<char *>(disk_buf);
     for (uint64_t slab = start.z; slab < end.z; ++slab) {
       for (uint64_t row = start.y; row < end.y; ++row) {
 
@@ -170,8 +174,8 @@ public:
         infile->seekg(offset);
 
         // read the bytes of current row
-        infile->read(temp, blockRowLength * sizeType);
-        temp += blockRowLength;
+        infile->read(temp, rowBytes);
+        temp += rowBytes;
 
         // offset of next row
         offset = bd::to1D(start.x, row + 1, slab, vX, vY);

@@ -236,7 +236,8 @@ BlockLoader::handleVisible_NotInGPU_NotInMain(bd::Block *b)
     char *pix{ (*emptyIt)->removePixelData() };
     b->pixelData(pix);
 
-    m_reader->fillBlockData(b, &(this->raw), this->m_sizeType,
+    m_reader->fillBlockData(b,
+                            &(this->raw),
                             this->m_slabWidth, this->m_slabHeight,
                             this->m_volMin, this->m_volDiff);
 
@@ -267,8 +268,11 @@ BlockLoader::handleVisible_NotInGPU_NotInMain(bd::Block *b)
         m_buffs.pop_back();
         b->pixelData(buf);
 
-        m_reader->fillBlockData(b, &raw, m_sizeType, m_slabWidth, m_slabHeight,
+        m_reader->fillBlockData(b,
+                                &raw,
+                                m_slabWidth, m_slabHeight,
                                 m_volMin, m_volDiff);
+
         m_main.insert(std::make_pair(b->index(), b));
       } else {
         bd::Dbg() << "Block " << b->index() << " not loaded into cpu, no free buffers.";
