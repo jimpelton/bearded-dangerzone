@@ -245,8 +245,6 @@ public:
   stop();
 
   
-  void
-  queueBlockAtFrontOfLoadQueue(bd::Block *block);
 
 
   /// \brief Enqueue the provided blocks for loading.
@@ -271,9 +269,12 @@ public:
 
 private:
 
+  void
+  queueBlockAtFrontOfLoadQueue(bd::Block *block);
 
   bd::Block* 
   waitPopLoadQueue();
+
 
 //  bd::Block *
 //  removeGpuLastInvisible();
@@ -298,25 +299,27 @@ private:
                   std::set<bd::Block *> &er);
 
 
-  void 
-  handleEmptyBlock(bd::Block *);
+//  void
+//  handleEmptyBlock(bd::Block *);
 
 
-  void
-  handleVisibleBlock(bd::Block *);
+//  void
+//  handleVisibleBlock(bd::Block *);
 
 
-  void
-  handleVisible_NotInGPU_IsInMain(bd::Block *b);
+//  void
+//  handleVisible_NotInGPU_IsInMain(bd::Block *b);
 
 
-  void
-  handleVisible_NotInGPU_NotInMain(bd::Block *b);
+//  void
+//  handleVisible_NotInGPU_NotInMain(bd::Block *b);
 
 //  bool
 //  isInGpuList(bd::Block*);
 
 
+  /// Push a block that is ready for loading to the GPU.
+  /// \param b
   void
   pushGPUReadyQueue(bd::Block *b);
 

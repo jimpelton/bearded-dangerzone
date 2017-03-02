@@ -86,7 +86,10 @@ ColorMap::loadFromTFFiles(std::string const &funcName,
     bd::OpacityTransferFunction otf;
 
     if (! colorTF.empty()) {
-      ctf.load(colorTF);
+      if (ctf.load(colorTF) < 0) {
+        bd::Err() << "Error loading color transfer function.";
+        return false;
+      };
 
       for (auto &k : ctf.getKnotsVector()) {
         scalars.insert(k.s);
@@ -94,7 +97,10 @@ ColorMap::loadFromTFFiles(std::string const &funcName,
     }
 
     if (! opacityTF.empty()) {
-      otf.load(opacityTF);
+      if (otf.load(opacityTF) < 0) {
+        bd::Err() << "Error loading opacity transfer function";
+        return false;
+      }
 
       for (auto &k : otf.getKnotsVector()) {
         scalars.insert(k.s);

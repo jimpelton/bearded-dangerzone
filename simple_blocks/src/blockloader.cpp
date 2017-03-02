@@ -70,7 +70,7 @@ BlockLoader::operator()()
     bd::Block *b{ waitPopLoadQueue() };
 
     if (!b) {
-      bd::Info() << "Exiting load loop.";
+      bd::Info() << "Null block found! Exiting load loop.";
       continue;
     }
 
@@ -78,12 +78,16 @@ BlockLoader::operator()()
               << " block " << b->index()
               << " (" << b->status() << ").";
 
+    m_reader->fillBlockData(b, &raw,
+                            m_slabWidth, m_slabHeight,
+                            m_volMin, m_volDiff);
 
-    if (b->empty()) {
-      handleEmptyBlock(b);
-    } else {
-      handleVisibleBlock(b);
-    }
+
+//    if (b->empty()) {
+//      handleEmptyBlock(b);
+//    } else {
+//      handleVisibleBlock(b);
+//    }
 
 
     std::cout << "Cpu: " << m_main.size() << "/" << m_maxMainBlocks << "\n"
@@ -144,170 +148,178 @@ BlockLoader::findEmptyBlocks(std::unordered_map<uint64_t, bd::Block *> const &r,
 
 
 ///////////////////////////////////////////////////////////////////////////////
-void
-BlockLoader::handleEmptyBlock(bd::Block *b)
-{
-  auto idx = b->index();
-  if (m_gpu.find(idx) != m_gpu.end())
-  {
-    // if it is in gpu, then it better be in main.
-    assert(m_main.find(idx) != m_main.end());
-    m_gpuEmpty.insert(b);
-    m_mainEmpty.insert(b);
-  } else if (m_main.find(idx) != m_main.end()) {
-    // if it is in main, but not in gpu, then it better not be
-    // in gpu empty.
-    assert(m_gpuEmpty.find(b) == m_gpuEmpty.end());
-    // if it is in main, then put it in main empty
-    m_mainEmpty.insert(b);
-  } else {
-    // it is not in either cpu or main, so remove from empties
-    m_mainEmpty.erase(b);
-    m_gpuEmpty.erase(b);
-  }
-}
+//void
+//BlockLoader::handleEmptyBlock(bd::Block *b)
+//{
+//  auto idx = b->index();
+//  if (m_gpu.find(idx) != m_gpu.end())
+//  {
+//    // if it is in gpu, then it better be in main.
+//    assert(m_main.find(idx) != m_main.end());
+//    m_gpuEmpty.insert(b);
+//    m_mainEmpty.insert(b);
+//  } else if (m_main.find(idx) != m_main.end()) {
+//    // if it is in main, but not in gpu, then it better not be
+//    // in gpu empty.
+//    assert(m_gpuEmpty.find(b) == m_gpuEmpty.end());
+//    // if it is in main, then put it in main empty
+//    m_mainEmpty.insert(b);
+//  } else {
+//    // it is not in either cpu or main, so remove from empties
+//    m_mainEmpty.erase(b);
+//    m_gpuEmpty.erase(b);
+//  }
+//}
 
 
 ///////////////////////////////////////////////////////////////////////////////
-void
-BlockLoader::handleVisible_NotInGPU_IsInMain(bd::Block *b)
-{
-  auto stealEmptyBlockTexture = [b](decltype(m_mainEmpty) &main_e,
-                                    decltype(m_gpu) &gpu,
-                                    decltype(m_gpuEmpty) &gpu_e) -> void
-  {
-    // grab empty gpu block.
-    auto emptyIt = gpu_e.begin();
-    assert(emptyIt != gpu_e.end());
-    bd::Block *eblk{ *emptyIt };
-    assert(eblk->texture() != nullptr);
-    assert(eblk->pixelData() != nullptr);
-
-    bd::Dbg() << "Stealing block " << eblk->index() << " texture.";
-    b->texture(eblk->texture());
-    eblk->texture(nullptr);
-
-    gpu.erase(eblk->index());
-    main_e.erase(eblk);
-    gpu_e.erase(emptyIt);
-  };
-
-  assert(b->pixelData() != nullptr);
-
-  if (m_gpuEmpty.size() > 0) {
-    stealEmptyBlockTexture(m_mainEmpty, m_gpu, m_gpuEmpty);
-  } else {
-    size_t found{ findEmptyBlocks(m_gpu, m_gpuEmpty) };
-    if (found > 0) {
-      stealEmptyBlockTexture(m_mainEmpty, m_gpu, m_gpuEmpty);
-    } else {
-      if (m_texs.size() > 0) {
-        bd::Texture *tex{ m_texs.back() };
-        m_texs.pop_back();
-        b->texture(tex);
-      }
-    }
-  }
-//  assert(b->texture() != nullptr);
-  if (b->texture() != nullptr) {
-    pushGPUReadyQueue(b);
-  } else {
-    bd::Dbg() << "Could not add block " << b->index() << " (" << b->status() << ") "
-              << "no free textures or empty blocks available.";
-  }
-
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-void
-BlockLoader::handleVisible_NotInGPU_NotInMain(bd::Block *b)
-{
-
-  auto stealEmptyBlockPixelData = [&b,this](decltype(m_mainEmpty) &main_e,
-                                       decltype(m_main) &main) {
-
-    auto emptyIt = main_e.begin();
-
-    assert((*emptyIt)->pixelData() != nullptr);
-    assert(b->pixelData() == nullptr);
-    assert(b->texture() == nullptr);
-
-    char *pix{ (*emptyIt)->removePixelData() };
-    b->pixelData(pix);
-
-    m_reader->fillBlockData(b,
-                            &(this->raw),
-                            this->m_slabWidth, this->m_slabHeight,
-                            this->m_volMin, this->m_volDiff);
-
-    main.erase((*emptyIt)->index());
-    main_e.erase(emptyIt);
-    main.insert(std::make_pair(b->index(), b));
-
-  };
-
-
-  if (m_mainEmpty.size() > 0) {
-    stealEmptyBlockPixelData(m_mainEmpty, m_main);
-  } else {
-    // If no blocks are e-resident in main's empty list, it is still possible that
-    // e-resdient blocks exist in main, but haven't been placed into
-    // the empty list.
-    size_t found{ findEmptyBlocks(m_main, m_mainEmpty) };
-    if (found != 0) {
-      stealEmptyBlockPixelData(m_mainEmpty, m_main);
-    } else {
-      // we didn't find any empty blocks, our last ditch effort is to see if we have
-      // buffers in the buffer buffer (as is the case with first run).
-      if (m_buffs.size() > 0) {
-
-        assert(b->pixelData() == nullptr);
-
-        char *buf{ m_buffs.back() };
-        m_buffs.pop_back();
-        b->pixelData(buf);
-
-        m_reader->fillBlockData(b,
-                                &raw,
-                                m_slabWidth, m_slabHeight,
-                                m_volMin, m_volDiff);
-
-        m_main.insert(std::make_pair(b->index(), b));
-      } else {
-        bd::Dbg() << "Block " << b->index() << " not loaded into cpu, no free buffers.";
-        return;
-      }
-    }
-  }
-
-  // Enqueue this block, so that when the load loop comes back around it can get
-  // setup for loading to the GPU.
-  queueBlockAtFrontOfLoadQueue(b);
-}
+//void
+//BlockLoader::handleVisible_NotInGPU_IsInMain(bd::Block *b)
+//{
+//  auto stealEmptyBlockTexture = [b](decltype(m_mainEmpty) &main_e,
+//                                    decltype(m_gpu) &gpu,
+//                                    decltype(m_gpuEmpty) &gpu_e) -> void
+//  {
+//    // grab empty gpu block.
+//    auto emptyIt = gpu_e.begin();
+//    assert(emptyIt != gpu_e.end());
+//    bd::Block *eblk{ *emptyIt };
+//    assert(eblk->texture() != nullptr);
+//    assert(eblk->pixelData() != nullptr);
+//
+//    bd::Dbg() << "Stealing block " << eblk->index() << " texture.";
+//    b->texture(eblk->texture());
+//    eblk->texture(nullptr);
+//
+//    gpu.erase(eblk->index());
+//    main_e.erase(eblk);
+//    gpu_e.erase(emptyIt);
+//  };
+//
+//  assert(b->pixelData() != nullptr);
+//
+//  if (m_gpuEmpty.size() > 0) {
+//    stealEmptyBlockTexture(m_mainEmpty, m_gpu, m_gpuEmpty);
+//  } else {
+//    size_t found{ findEmptyBlocks(m_gpu, m_gpuEmpty) };
+//    if (found > 0) {
+//      stealEmptyBlockTexture(m_mainEmpty, m_gpu, m_gpuEmpty);
+//    } else {
+//      if (m_texs.size() > 0) {
+//        bd::Texture *tex{ m_texs.back() };
+//        m_texs.pop_back();
+//        b->texture(tex);
+//      }
+//    }
+//  }
+////  assert(b->texture() != nullptr);
+//  if (b->texture() != nullptr) {
+//    pushGPUReadyQueue(b);
+//  } else {
+//    bd::Dbg() << "Could not add block " << b->index() << " (" << b->status() << ") "
+//              << "no free textures or empty blocks available.";
+//  }
+//
+//}
 
 
 ///////////////////////////////////////////////////////////////////////////////
-void
-BlockLoader::handleVisibleBlock(bd::Block *b)
-{
-  auto idx = b->index();
-  if (m_gpu.find(idx) != m_gpu.end()) {
-    // it is in the gpu list already, so nothing needs
-    // to be done to it, it is already on the gpu and ready to
-    // be drawn.
-    assert(m_main.find(idx) != m_main.end());
-    assert(m_mainEmpty.find(b) == m_mainEmpty.end());
-    assert(m_gpuEmpty.find(b) == m_gpuEmpty.end());
-    return;
-  } else if (m_main.find(idx) != m_main.end()) {
-    // if is not in the gpu list, but is in the cpu list
-    handleVisible_NotInGPU_IsInMain(b);
-  } else {
-    // not in cpu or gpu.
-    handleVisible_NotInGPU_NotInMain(b);
-  }
-}
+//void
+//BlockLoader::handleVisible_NotInGPU_NotInMain(bd::Block *b)
+//{
+//
+//  auto stealEmptyBlockPixelData = [&b,this](decltype(m_mainEmpty) &main_e,
+//                                            decltype(m_main) &main,
+//                                            decltype(m_gpu) &gpu,
+//                                            decltype(m_gpuEmpty) &gpu_e) {
+//
+//    auto emptyIt = main_e.begin();
+//
+//    assert((*emptyIt)->pixelData() != nullptr);
+//    assert(b->pixelData() == nullptr);
+//    assert(b->texture() == nullptr);
+//
+//    char *pix{ (*emptyIt)->removePixelData() };
+//    b->pixelData(pix);
+//    bd::Texture *t{ b->removeTexture() };
+//    if (t) {
+//      m_texs.push_back(t);
+//    }
+//
+//    m_reader->fillBlockData(b,
+//                            &(this->raw),
+//                            this->m_slabWidth, this->m_slabHeight,
+//                            this->m_volMin, this->m_volDiff);
+//
+//    gpu.erase((*emptyIt)->index());
+//    gpu_e.erase(*emptyIt);
+//    main.erase((*emptyIt)->index());
+//    main_e.erase(emptyIt);
+//    main.insert(std::make_pair(b->index(), b));
+//
+//  };
+//
+//
+//  if (m_mainEmpty.size() > 0) {
+//    stealEmptyBlockPixelData(m_mainEmpty, m_main, m_gpu, m_gpuEmpty);
+//  } else {
+//    // If no blocks are e-resident in main's empty list, it is still possible that
+//    // e-resdient blocks exist in main, but haven't been placed into
+//    // the empty list.
+//    size_t found{ findEmptyBlocks(m_main, m_mainEmpty) };
+//    if (found != 0) {
+//      stealEmptyBlockPixelData(m_mainEmpty, m_main, m_gpu, m_gpuEmpty);
+//    } else {
+//      // we didn't find any empty blocks, our last ditch effort is to see if we have
+//      // buffers in the buffer buffer (as is the case with first run).
+//      if (m_buffs.size() > 0) {
+//
+//        assert(b->pixelData() == nullptr);
+//
+//        char *buf{ m_buffs.back() };
+//        m_buffs.pop_back();
+//        b->pixelData(buf);
+//
+//        m_reader->fillBlockData(b,
+//                                &raw,
+//                                m_slabWidth, m_slabHeight,
+//                                m_volMin, m_volDiff);
+//
+//        m_main.insert(std::make_pair(b->index(), b));
+//      } else {
+//        bd::Dbg() << "Block " << b->index() << " not loaded into cpu, no free buffers.";
+//        return;
+//      }
+//    }
+//  }
+//
+//  // Enqueue this block, so that when the load loop comes back around it can get
+//  // setup for loading to the GPU.
+//  queueBlockAtFrontOfLoadQueue(b);
+//}
+
+
+///////////////////////////////////////////////////////////////////////////////
+//void
+//BlockLoader::handleVisibleBlock(bd::Block *b)
+//{
+//  auto idx = b->index();
+//  if (m_gpu.find(idx) != m_gpu.end()) {
+//    // it is in the gpu list already, so nothing needs
+//    // to be done to it, it is already on the gpu and ready to
+//    // be drawn.
+//    assert(m_main.find(idx) != m_main.end());
+//    assert(m_mainEmpty.find(b) == m_mainEmpty.end());
+//    assert(m_gpuEmpty.find(b) == m_gpuEmpty.end());
+//    return;
+//  } else if (m_main.find(idx) != m_main.end()) {
+//    // if is not in the gpu list, but is in the cpu list
+//    handleVisible_NotInGPU_IsInMain(b);
+//  } else {
+//    // not in cpu or gpu.
+//    handleVisible_NotInGPU_NotInMain(b);
+//  }
+//}
 
 
 
@@ -326,18 +338,89 @@ void
 BlockLoader::queueClassified(std::vector<bd::Block *> const &visible,
                              std::vector<bd::Block *> const &empty)
 {
+  bd::Dbg() << "Visible: " << visible.size() << ", empty: " << empty.size();
+  // we can hold the load queue mutex here because the load thread shouldn't be doing
+  // any work anyway while we sort things out.
   std::unique_lock<std::mutex> lock(m_loadQueueMutex);
   m_loadQueue.clear();
 
-  bd::Dbg() << "Queueing " << visible.size() << " visible blocks for processing.";
-  for (size_t i = 0; i < visible.size(); ++i) {
-    m_loadQueue.push_back(visible[i]);
+  {
+    // clear the gpu ready queue.
+    std::unique_lock<std::mutex> lock_gpuReady(m_gpuReadyMutex);
+    std::queue<bd::Block *> empty_q;
+    m_gpuReadyQueue.swap(empty_q);
   }
 
+
+  // remove empty blocks from the GPU and give away the block texture texture.
+  for (auto it = m_gpu.begin(); it != m_gpu.end(); ) {
+    bd::Block *b{ it->second };
+    if (b->empty()) {
+      bd::Texture *e{ b->removeTexture() };
+      assert(e != nullptr);
+      m_texs.push_back(e);
+      m_gpu.erase(b->index());
+    } else {
+      ++it;
+    }
+  }
+
+  // figure out if we must evict blocks from main memory.
+  // queue all blocks not in main memory,
+  for (size_t i{ 0 }; i < visible.size(); ++i) {
+    bd::Block *b{ visible[i] };
+
+    if (m_main.find(b->index()) == m_main.end()) {
+      // The block is not in main, so it needs to be loaded from disk.
+      assert(m_gpu.find(b->index()) == m_gpu.end() &&
+                 "Block is not in main, but is in gpu!");
+      m_loadQueue.push_back(b);
+    } else if (m_gpu.find(b->index()) == m_gpu.end()) {
+      // The block is not on the gpu yet, but it is in main,
+      // so push to the gpu queue.
+      if (b->texture() != nullptr) {
+        pushGPUReadyQueue(b);
+      } else if (m_texs.size() > 0) {
+        b->texture(m_texs.back());
+        m_texs.pop_back();
+        pushGPUReadyQueue(b);
+      }
+    }
+  }
+
+  // sort blocks in ROV descending order
   std::sort(m_loadQueue.begin(), m_loadQueue.end(),
             [](bd::Block *lhs, bd::Block *rhs) -> bool {
               return lhs->fileBlock().rov > rhs->fileBlock().rov;
             });
+
+  size_t num_to_evict{ m_loadQueue.size() - m_texs.size() };
+  if (num_to_evict > 0) {
+    // We have more blocks than there are available memory slots, so we need to
+    // evict some empties.
+    size_t i{ m_main.size() - 1 } ;
+    while (num_to_evict > 0 && i >= 0) {
+      bd::Block *b{ m_main[i] };
+      if (b->empty()) {
+        char *buff{ b->removePixelData() };
+        m_buffs.push_back(buff);
+        m_main.erase(b->index());
+        --num_to_evict;
+      }
+      --i;
+    }
+
+    while (num_to_evict > 0) {
+      m_loadQueue.pop_back();
+      num_to_evict--;
+    }
+  }
+
+
+
+
+//  bd::Dbg() << "Queueing " << visible.size() << " visible blocks for processing.";
+
 
 //  bd::Dbg() << "Queueing " << empty.size() << " empty blocks for processing.";
 //  for (size_t i{ 0 }; i < empty.size(); ++i) {
