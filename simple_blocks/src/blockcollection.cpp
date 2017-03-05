@@ -197,8 +197,8 @@ BlockCollection::loadSomeBlocks()
     uint64_t start{ glfwGetTimerValue() };
     b->sendToGpu();
     m_loader->pushGpuResidentBlock(b);
-    bd::Dbg() << "Sent " << b->fileBlock().block_index
-              << " (" << b->status() << ") to GPU.";
+//    bd::Dbg() << "Sent " << b->fileBlock().block_index
+//              << " (" << b->status() << ") to GPU.";
     uint64_t timeToLoadBlock{ glfwGetTimerValue() - start };
     t += timeToLoadBlock;
     ++i;

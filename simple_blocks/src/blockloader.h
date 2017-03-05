@@ -132,8 +132,8 @@ public:
                 double vMin, double vDiff) const = 0;
 
 };
-
-
+//
+//
 template<class VTy>
 class BlockReaderSpec : public BlockReader
 {
@@ -206,20 +206,15 @@ public:
     switch(ty){
       case T::UnsignedCharacter:
         return new BlockReaderSpec<uint8_t>();
-        break;
       case T::Character:
         return new BlockReaderSpec<int8_t>();
-        break;
       case T::UnsignedShort:
         return new BlockReaderSpec<uint16_t>();
-        break;
       case T::Short:
         return new BlockReaderSpec<int16_t>();
-        break;
       case T::Float:
       default:
         return new BlockReaderSpec<float>();
-        break;
     }
   }
 };
@@ -245,8 +240,6 @@ public:
   stop();
 
   
-
-
   /// \brief Enqueue the provided blocks for loading.
   /// First the non-vis blocks are pushed, then the
   /// vis blocks.
@@ -269,53 +262,14 @@ public:
 
 private:
 
-  void
-  queueBlockAtFrontOfLoadQueue(bd::Block *block);
+//  void
+//  queueBlockAtFrontOfLoadQueue(bd::Block *block);
 
   bd::Block* 
   waitPopLoadQueue();
 
 
-//  bd::Block *
-//  removeGpuLastInvisible();
 
-//  bd::Block *
-//  removeGpuBlockReverse(bd::Block *);
-
-//  void
-//  swapPixel(bd::Block *src, bd::Block *dest);
-
-
-//  void
-//  swapTexture(bd::Block *src, bd::Block *dest);
-
-  /// Find empty blocks in the resident blocks map \c r, and update the
-  /// the empty-resident set, er.
-  /// \param r The map to find blocks in.
-  /// \param er The empty-resident set.
-  /// \return Number of empty blocks found.
-  size_t
-  findEmptyBlocks(std::unordered_map<uint64_t, bd::Block*> const &r,
-                  std::set<bd::Block *> &er);
-
-
-//  void
-//  handleEmptyBlock(bd::Block *);
-
-
-//  void
-//  handleVisibleBlock(bd::Block *);
-
-
-//  void
-//  handleVisible_NotInGPU_IsInMain(bd::Block *b);
-
-
-//  void
-//  handleVisible_NotInGPU_NotInMain(bd::Block *b);
-
-//  bool
-//  isInGpuList(bd::Block*);
 
 
   /// Push a block that is ready for loading to the GPU.
@@ -324,17 +278,11 @@ private:
   pushGPUReadyQueue(bd::Block *b);
 
 
-//  void
-//  fillBlockData(bd::Block *b, std::istream *infile, size_t szTy, size_t vX, size_t vY) const;
-
-//  void
-//  fileWithBufferFromEmptyBlock(bd::Block *b);
-
   std::atomic_bool m_stopThread;
 
   /// E-resident on gpu
   /// Also E-resident on CPU
-  std::set<bd::Block *> m_gpuEmpty;
+//  std::set<bd::Block *> m_gpuEmpty;
 
   /// NE-resident on gpu.
   /// Also NE-resident on cpu.
@@ -342,7 +290,7 @@ private:
 
   /// E-resident on cpu.
   /// Could be E-resident on gpu (in gpu empty list).
-  std::set<bd::Block *> m_mainEmpty;
+//  std::set<bd::Block *> m_mainEmpty;
 
   /// NE-resident on cpu.
   std::unordered_map<uint64_t, bd::Block *> m_main;
