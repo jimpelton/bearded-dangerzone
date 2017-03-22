@@ -195,6 +195,7 @@ createQuads(std::vector<glm::vec4> &quads,
 {
 
   float delta{ 0 };
+  size_t planes = 0;
   switch (a) {
     case Axis::X:
     {
@@ -202,13 +203,14 @@ createQuads(std::vector<glm::vec4> &quads,
 //      decrement_delta<float> dd(max.x, delta, min.x);
       float tmax = max.x;
       float const tmin = min.x;
-      while( tmax > tmin ) {
+      while( planes < numPlanes ) {
         float offset = tmax; // - delta;
         quads.push_back({ offset, min.y, max.z, 1 });   // ll
         quads.push_back({ offset, min.y, min.z, 1 });   // lr
         quads.push_back({ offset, max.y, max.z, 1 });   // ul
         quads.push_back({ offset, max.y, min.z, 1 });   // ur
         tmax = tmax - delta;
+        planes += 1;
       }
 //      while (dd.hasNext()) {
 //        float offset = dd();
@@ -226,13 +228,14 @@ createQuads(std::vector<glm::vec4> &quads,
 //      decrement_delta<float> dd(max.y, delta, min.y);
       float tmax = max.y;
       float const tmin = min.y;
-      while (tmax > tmin) {
+      while (planes < numPlanes) {
         float offset = tmax; // - delta;
         quads.push_back({ min.x, offset, max.z, 1 });   // ll
         quads.push_back({ max.x, offset, max.z, 1 });   // lr
         quads.push_back({ min.x, offset, min.z, 1 });   // ul
         quads.push_back({ max.x, offset, min.z, 1 });   // ur
         tmax = tmax - delta;
+        planes += 1;
       }
 //      while (dd.hasNext()) {
 //        float offset = dd();
@@ -250,13 +253,14 @@ createQuads(std::vector<glm::vec4> &quads,
 //      decrement_delta<float> dd(max.z, delta, min.z);
       float tmax = max.z;
       float const tmin = min.z;
-      while (tmax > tmin) {
+      while (planes < numPlanes) {
         float offset = tmax;// - delta;
         quads.push_back({ min.x, min.y, offset, 1 });   // ll
         quads.push_back({ max.x, min.y, offset, 1 });   // lr
         quads.push_back({ min.x, max.y, offset, 1 });   // ul
         quads.push_back({ max.x, max.y, offset, 1 });   // ur
         tmax = tmax - delta;
+        planes += 1;
       }
 //      while (dd.hasNext()) {
 //        float offset = dd();
@@ -278,18 +282,19 @@ createQuads_Reversed(std::vector<glm::vec4> &quads,
                      size_t numPlanes, Axis a)
 {
   float delta{ 0 };
-
+  size_t planes{ 0 };
   switch (a) {
     case Axis::X:  // -YZ
     {
       delta = (max.x - min.x) / static_cast<float>(numPlanes);
       accum_delta<float> ad(min.x, delta, max.x);
-      while (ad.hasNext()) {
+      while (planes < numPlanes) {
         float offset = ad();
         quads.push_back({ offset, min.y, min.z, 1 });   // ll
         quads.push_back({ offset, min.y, max.z, 1 });   // lr
         quads.push_back({ offset, max.y, min.z, 1 });   // ul
         quads.push_back({ offset, max.y, max.z, 1 });   // ur
+        planes += 1;
       }
       break;
     }
@@ -298,12 +303,13 @@ createQuads_Reversed(std::vector<glm::vec4> &quads,
     {
       delta = (max.y - min.y) / static_cast<float>(numPlanes);
       accum_delta<float> ad(min.y, delta, max.y);
-      while (ad.hasNext()) {
+      while (planes < numPlanes) {
         float offset = ad();
         quads.push_back({ min.x, offset, min.z, 1 });   // ll
         quads.push_back({ max.x, offset, min.z, 1 });   // lr
         quads.push_back({ min.x, offset, max.z, 1 });   // ul
         quads.push_back({ max.x, offset, max.z, 1 });   // ur
+        planes += 1;
       }
       break;
     }
@@ -311,12 +317,13 @@ createQuads_Reversed(std::vector<glm::vec4> &quads,
     case Axis::Z: {
       delta = (max.z - min.z) / static_cast<float>(numPlanes);
       accum_delta<float> ad(min.z, delta, max.z);
-      while (ad.hasNext()) {
+      while (planes < numPlanes) {
         float offset = ad();
         quads.push_back({ max.x, min.y, offset, 1 });   // ll
         quads.push_back({ min.x, min.y, offset, 1 });   // lr
         quads.push_back({ max.x, max.y, offset, 1 });   // ul
         quads.push_back({ min.x, max.y, offset, 1 });   // ur
+        planes += 1;
       }
       break;
     }
