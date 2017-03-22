@@ -57,6 +57,10 @@ public:
   setColorMapScaleValue(float val);
 
 
+  float
+  getColorMapScaleValue();
+
+
   void
   setShaderNShiney(float n);
 
@@ -65,7 +69,6 @@ public:
   setShaderLightPos(glm::vec3 const &L);
 
 
-//  void setShaderViewVec(glm::vec3 const &V);
   void
   setShaderMaterial(glm::vec3 const &M);
 
@@ -100,6 +103,14 @@ public:
 
   void
   setROVRange(double min, double max);
+
+
+  double
+  getROVMin();
+
+
+  double
+  getROVMax();
 
 
   unsigned long long int

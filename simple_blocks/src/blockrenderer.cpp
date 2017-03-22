@@ -130,6 +130,13 @@ BlockRenderer::setColorMapScaleValue(float val)
 
 
 ///////////////////////////////////////////////////////////////////////////////
+float
+BlockRenderer::getColorMapScaleValue()
+{
+  return m_tfuncScaleValue;
+}
+
+///////////////////////////////////////////////////////////////////////////////
 void
 BlockRenderer::setBackgroundColor(const glm::vec3 &c)
 {
@@ -211,6 +218,22 @@ BlockRenderer::setROVRange(double min, double max)
   m_rov_max = max;
   m_ROVRangeChanged = true;
 
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+double
+BlockRenderer::getROVMin()
+{
+  return m_rov_min;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+double
+BlockRenderer::getROVMax()
+{
+  return m_rov_max;
 }
 
 

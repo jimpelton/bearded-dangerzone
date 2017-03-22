@@ -381,7 +381,7 @@ std::unordered_map<std::string, ColorMap> ColorMapManager::s_maps;
 
 std::vector<std::string const *> ColorMapManager::s_colorMapNames;
 
-int ColorMapManager::s_currentMapNameIdx{ 0 };
+long long ColorMapManager::s_currentMapNameIdx{ 0 };
 
 
 /* static */
@@ -460,7 +460,7 @@ ColorMapManager::getPrevMap()
 {
   s_currentMapNameIdx -= 1;
   if (s_currentMapNameIdx < 0) {
-    s_currentMapNameIdx = int(s_colorMapNames.size()) - 1;
+    s_currentMapNameIdx = s_colorMapNames.size() - 1L;
   }
   std::string const *name{ s_colorMapNames[s_currentMapNameIdx] };
   return s_maps.find(*name)->second;

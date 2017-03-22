@@ -50,8 +50,8 @@ initializeControls(GLFWwindow *, std::shared_ptr<BlockRenderer>);
 void
 loop(GLFWwindow *, BlockRenderer *);
 
-/// \brief Get the total and avail memory. If no pointer to avail is provided
-/// then just total is returned.
+/// \brief Get the total and avail memory on the gpu in bytes.
+/// If no pointer to avail is provided then just total is returned.
 void
 queryGPUMemory(int64_t *total, int64_t *avail = nullptr);
 

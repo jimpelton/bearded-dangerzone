@@ -195,47 +195,76 @@ createQuads(std::vector<glm::vec4> &quads,
 {
 
   float delta{ 0 };
-
   switch (a) {
     case Axis::X:
     {
       delta = (max.x - min.x) / static_cast<float>(numPlanes);
-      decrement_delta<float> dd(max.x, delta, min.x);
-      while (dd.hasNext()) {
-        float offset = dd();
+//      decrement_delta<float> dd(max.x, delta, min.x);
+      float tmax = max.x;
+      float const tmin = min.x;
+      while( tmax > tmin ) {
+        float offset = tmax; // - delta;
         quads.push_back({ offset, min.y, max.z, 1 });   // ll
         quads.push_back({ offset, min.y, min.z, 1 });   // lr
         quads.push_back({ offset, max.y, max.z, 1 });   // ul
         quads.push_back({ offset, max.y, min.z, 1 });   // ur
+        tmax = tmax - delta;
       }
+//      while (dd.hasNext()) {
+//        float offset = dd();
+//        quads.push_back({ offset, min.y, max.z, 1 });   // ll
+//        quads.push_back({ offset, min.y, min.z, 1 });   // lr
+//        quads.push_back({ offset, max.y, max.z, 1 });   // ul
+//        quads.push_back({ offset, max.y, min.z, 1 });   // ur
+//      }
         break;
     }
 
     case Axis::Y:
     {
       delta = (max.y - min.y) / static_cast<float>(numPlanes);
-      decrement_delta<float> dd(max.y, delta, min.y);
-      while (dd.hasNext()) {
-        float offset = dd();
+//      decrement_delta<float> dd(max.y, delta, min.y);
+      float tmax = max.y;
+      float const tmin = min.y;
+      while (tmax > tmin) {
+        float offset = tmax; // - delta;
         quads.push_back({ min.x, offset, max.z, 1 });   // ll
         quads.push_back({ max.x, offset, max.z, 1 });   // lr
         quads.push_back({ min.x, offset, min.z, 1 });   // ul
         quads.push_back({ max.x, offset, min.z, 1 });   // ur
+        tmax = tmax - delta;
       }
+//      while (dd.hasNext()) {
+//        float offset = dd();
+//        quads.push_back({ min.x, offset, max.z, 1 });   // ll
+//        quads.push_back({ max.x, offset, max.z, 1 });   // lr
+//        quads.push_back({ min.x, offset, min.z, 1 });   // ul
+//        quads.push_back({ max.x, offset, min.z, 1 });   // ur
+//      }
           break;
     }
 
     case Axis::Z:
     {
       delta = (max.z - min.z) / static_cast<float>(numPlanes);
-      decrement_delta<float> dd(max.z, delta, min.z);
-      while (dd.hasNext()) {
-        float offset = dd();
+//      decrement_delta<float> dd(max.z, delta, min.z);
+      float tmax = max.z;
+      float const tmin = min.z;
+      while (tmax > tmin) {
+        float offset = tmax;// - delta;
         quads.push_back({ min.x, min.y, offset, 1 });   // ll
         quads.push_back({ max.x, min.y, offset, 1 });   // lr
         quads.push_back({ min.x, max.y, offset, 1 });   // ul
         quads.push_back({ max.x, max.y, offset, 1 });   // ur
+        tmax = tmax - delta;
       }
+//      while (dd.hasNext()) {
+//        float offset = dd();
+//        quads.push_back({ min.x, min.y, offset, 1 });   // ll
+//        quads.push_back({ max.x, min.y, offset, 1 });   // lr
+//        quads.push_back({ min.x, max.y, offset, 1 });   // ul
+//        quads.push_back({ max.x, max.y, offset, 1 });   // ur
+//      }
       break;
     }
       // default: break;

@@ -220,7 +220,7 @@ private:
   /// \brief Lists the names of the color maps
   /// (pointers are to std::string in s_textures map)
   static std::vector<std::string const *> s_colorMapNames;
-  static int s_currentMapNameIdx;
+  static long long s_currentMapNameIdx;
 
 }; // class ColorMapManager
 

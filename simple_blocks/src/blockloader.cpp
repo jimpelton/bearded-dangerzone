@@ -377,9 +377,9 @@ BlockLoader::queueClassified(std::vector<bd::Block *> const &visible,
 
     if (m_main.find(b->index()) == m_main.end()) {
       // The block is not in main, so it needs to be loaded from disk, and finally pushed
-      // to the gpu ready queue. The load thread pushes to the gpu ready queue and the
-      // render thread pops from the load queue and uploads to the gpu, then returns the
-      // block pointer to the gpu resident queue.
+      // to the gpu ready queue. The load thread (running in operator()) pushes to the
+      // gpu ready queue and the render thread pops from the gpu ready queue and uploads
+      // to the gpu, then returns the block pointer to the gpu resident queue.
       assert(m_gpu.find(b->index()) == m_gpu.end() &&
                  "Block is not in main, but is in gpu!");
       m_loadQueue.push_back(b);
@@ -397,18 +397,14 @@ BlockLoader::queueClassified(std::vector<bd::Block *> const &visible,
     }
   }
 
-  // sort blocks in ROV descending order
-  std::sort(m_loadQueue.begin(), m_loadQueue.end(),
-            [](bd::Block *lhs, bd::Block *rhs) -> bool {
-              return lhs->fileBlock().rov > rhs->fileBlock().rov;
-            });
+
 
   // if the load queue is larger than the number of textures, then we we must evict
-  // empty blocks from main.
+  // empty blocks from main and recover their texture and pixel buffers.
   long long num_to_evict{ static_cast<long long>(m_loadQueue.size()) -
                               static_cast<long long>(m_texs.size()) };
   if (num_to_evict > 0) {
-    bd::Dbg() << "Evicting " << num_to_evict << "blocks (" << m_loadQueue.size() << ", "
+    bd::Dbg() << "Evicting " << num_to_evict << " blocks (" << m_loadQueue.size() << ", "
               << m_texs.size() << ").";
     // We have more blocks than there are available memory slots, so we need to
     // evict some empties.
@@ -428,12 +424,20 @@ BlockLoader::queueClassified(std::vector<bd::Block *> const &visible,
       }
     }
 
-    // remove any blocks we can't fit into m_main.
+    // If we did not evict enough blocks from main to fit the entire load queue
+    // into memory, then pop all the blocks out of the load queue that are
+    // remaining.
     while (num_to_evict > 0) {
       m_loadQueue.pop_back();
       num_to_evict--;
     }
   }
+
+  // sort blocks in ROV descending order
+  std::sort(m_loadQueue.begin(), m_loadQueue.end(),
+            [](bd::Block *lhs, bd::Block *rhs) -> bool {
+              return lhs->fileBlock().rov > rhs->fileBlock().rov;
+            });
 
   m_wait.notify_all();
 }

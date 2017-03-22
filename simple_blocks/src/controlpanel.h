@@ -67,8 +67,8 @@ private:
   unsigned long long m_totalBlocks;
   unsigned long long m_shownBlocks;
   double m_incrementDelta;
-  double m_currentMinFloat;
-  double m_currentMaxFloat;
+  double m_currentMinROVFloat;
+  double m_currentMaxROVFloat;
   double m_globalMin;
   double m_globalMax;
 

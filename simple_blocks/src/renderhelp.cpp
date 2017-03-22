@@ -241,13 +241,15 @@ void
 queryGPUMemory(int64_t *total, int64_t *avail)
 {
   GLint64 total_mem_kb = 0;
-  glGetInteger64v(0x9048, &total_mem_kb);
+  //0x9047
+  glGetInteger64v(GL_GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX, &total_mem_kb);
 
   *total = total_mem_kb * 1024;
 
   if (avail) {
     GLint cur_avail_mem_kb = 0;
-    glGetIntegerv(0x9049, &cur_avail_mem_kb);
+    // 0x9049
+    glGetIntegerv(GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, &cur_avail_mem_kb);
     *avail = cur_avail_mem_kb * 1024;
   }
 }
