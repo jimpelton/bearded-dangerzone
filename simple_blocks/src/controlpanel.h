@@ -16,9 +16,60 @@ class QDoubleSpinBox;
 namespace subvol
 {
 
+//class LightingPanel : public QWidget
+//{
+//  Q_OBJECT
+//
+//public:
+//  explicit LightingPanel(QWidget *parent = nullptr);
+//  ~LightingPanel();
+//
+//signals:
+//  void
+//  lightPosChanged(float x, float y, float z);
+//
+//  void
+//  materialChanged(float a, float d, float s);
+//
+//  void
+//  nShineyChanged(float nShiney);
+//
+//
+//
+//public slots:
+//  void
+//  handle_X_posChanged(int sliderValue);
+//
+//  void
+//  handle_Y_posChanged(int sliderValue);
+//
+//  void
+//  handle_Z_posChanged(int sliderValue);
+//
+//private:
+//
+//};
 
-class ControlPanel
-    : public QWidget
+
+class ClassificationPanel : public QWidget
+{
+  Q_OBJECT
+
+
+public:
+
+
+signals:
+
+
+public slots:
+
+
+private:
+
+};
+
+class ControlPanel : public QWidget
 {
   Q_OBJECT
 

@@ -126,9 +126,24 @@ public:
   BlockReader(){ }
   virtual ~BlockReader() { }
 
+  /**
+   *
+   * @param buffer The pixel buffer
+   * @param infile The file to read from
+   * @param offset The byte offset into the file to start reading at
+   * @param be The block extent in voxels
+   * @param ijk The block index
+   * @param ve The extent of a slab in the volume
+   * @param vMin The min value in the volume
+   * @param vDiff The difference of volume max and volume min.
+   */
   virtual void
-  fillBlockData(bd::Block *b, std::istream *infile,
-                size_t vX, size_t vY,
+  fillBlockData(char * buffer,
+                std::istream *infile,
+                uint64_t offset,
+                uint64_t const be[3],
+                uint64_t const ijk[3],
+                uint64_t const ve[2],
                 double vMin, double vDiff) const = 0;
 
 };
@@ -140,28 +155,32 @@ class BlockReaderSpec : public BlockReader
 public:
 
   virtual void
-  fillBlockData(bd::Block *b, std::istream *infile,
-                size_t vX, size_t vY,
+  fillBlockData(char *b,
+                std::istream *infile,
+                uint64_t offset,
+                uint64_t const be[3],
+                uint64_t const ijk[3],
+                uint64_t const ve[2],
                 double vMin, double vDiff) const override
   {
-    // block's dimensions in voxels
-    glm::u64vec3 const be{ b->voxel_extent() };
     // start element = block index w/in volume * block size
-    glm::u64vec3 const start{ b->ijk() * be };
-    // block end element = block voxel start voxelDims + block size
-    glm::u64vec3 const end{ start + be };
+    glm::u64vec3 const start{ ijk[0] * be[0],
+                              ijk[1] * be[1],
+                              ijk[2] * be[2] };
 
-    size_t const blockRowLength{ be.x };
+    // block end element = block voxel start voxelDims + block size
+    glm::u64vec3 const end{ start[0] + be[0],
+                            start[1] + be[1],
+                            start[2] + be[2] };
+
+    // the row length of each block is the extent in the X dimension
+    size_t const blockRowLength{ be[0] };
     size_t const sizeType = sizeof(VTy);
     size_t const rowBytes{ blockRowLength * sizeType };
 
 
-    // byte offset into file to read from
-    size_t offset{ b->fileBlock().data_offset };
-
-
     // allocate temp space for the block (the entire block is brought into mem).
-    uint64_t const buf_len{ be.x * be.y * be.z };
+    uint64_t const buf_len{ be[0] * be[1] * be[2] };
     VTy * const disk_buf{ new VTy[buf_len] };
 
 
@@ -178,12 +197,12 @@ public:
         temp += rowBytes;
 
         // offset of next row
-        offset = bd::to1D(start.x, row + 1, slab, vX, vY);
+        offset = bd::to1D(start.x, row + 1, slab, ve[0], ve[1]);
         offset *= sizeType;
       }
     }
 
-    float * const pixelData = reinterpret_cast<float *>(b->pixelData());
+    float * const pixelData = reinterpret_cast<float *>(b);
     //Normalize the data prior to generating the texture.
     for (size_t idx{ 0 }; idx < buf_len; ++idx) {
       pixelData[idx] = (disk_buf[idx] - vMin) / vDiff;
@@ -280,17 +299,9 @@ private:
 
   std::atomic_bool m_stopThread;
 
-  /// E-resident on gpu
-  /// Also E-resident on CPU
-//  std::set<bd::Block *> m_gpuEmpty;
-
   /// NE-resident on gpu.
   /// Also NE-resident on cpu.
   std::unordered_map<uint64_t, bd::Block *> m_gpu;
-
-  /// E-resident on cpu.
-  /// Could be E-resident on gpu (in gpu empty list).
-//  std::set<bd::Block *> m_mainEmpty;
 
   /// NE-resident on cpu.
   std::unordered_map<uint64_t, bd::Block *> m_main;
@@ -313,14 +324,12 @@ private:
 
   std::condition_variable_any m_wait;
 
-//  BLThreadData *dptr;
-
-
   size_t const m_maxGpuBlocks;
   size_t const m_maxMainBlocks;
   size_t const m_sizeType;
-  size_t const m_slabWidth;
-  size_t const m_slabHeight;
+
+  ///< Dimensions of the volume slabs (x and y dims of volume)
+  uint64_t m_slabDims[2];
 
   double const m_volMin;
   double const m_volDiff;                  ///< diff = volMax - volMin

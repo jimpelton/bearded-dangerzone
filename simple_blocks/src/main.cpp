@@ -126,7 +126,8 @@ updateCommandLineOptionsFromIndexFile(subvol::CommandLineOptions &clo,
   auto minmaxE =
       std::minmax_element(indexFile->getFileBlocks().begin(),
                           indexFile->getFileBlocks().end(),
-                          [](bd::FileBlock const & lhs, bd::FileBlock const & rhs) -> bool {
+                          [](bd::FileBlock const & lhs, bd::FileBlock const & rhs)
+                              -> bool {
                             return lhs.rov < rhs.rov;
                           } );
 

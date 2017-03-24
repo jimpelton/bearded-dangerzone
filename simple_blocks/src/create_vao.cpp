@@ -8,6 +8,7 @@
 #include <bd/geo/wireframebox.h>
 
 #include <glm/glm.hpp>
+#include <glm/gtx/string_cast.hpp>
 
 namespace subvol
 {
@@ -160,6 +161,16 @@ genQuadVao(bd::VertexArrayObject &vao, glm::vec3 const &min, glm::vec3 const &ma
 
   vao.addVbo(vbuf, VERTEX_COORD_ATTR, bd::VertexArrayObject::Usage::Static_Draw);
 
+//  size_t pp{ 0 };
+//  for (glm::vec4 const &v : vbuf) {
+//    if (pp == 4) {
+//      std::cout << std::endl;
+//      pp = 0;
+//    }
+//    std::cout << glm::to_string(v) << ", ";
+//    pp++;
+//
+//  }
 
   // Along X, in the YZ plane.
   createQuads(texbuf, { 0, 0, 0 }, { 1, 1, 1 }, numSlices.x, Axis::X);
@@ -174,7 +185,15 @@ genQuadVao(bd::VertexArrayObject &vao, glm::vec3 const &min, glm::vec3 const &ma
   createQuads_Reversed(texbuf, { 0, 0, 0 }, { 1, 1, 1 }, numSlices.z, Axis::Z);
 
   vao.addVbo(texbuf, VERTEX_COLOR_ATTR, bd::VertexArrayObject::Usage::Static_Draw);
-
+//  pp = 0;
+//  for (glm::vec4 const &v : texbuf) {
+//    if (pp == 4) {
+//      std::cout << std::endl;
+//      pp = 0;
+//    }
+//    std::cout << glm::to_string(v) << ", ";
+//    pp++;
+//  }
   // Create element indexes just for x dimension right now.
   // Since x, y, and z dims have equal number of slices,
   // we only need one set up elements.
@@ -202,7 +221,6 @@ createQuads(std::vector<glm::vec4> &quads,
       delta = (max.x - min.x) / static_cast<float>(numPlanes);
 //      decrement_delta<float> dd(max.x, delta, min.x);
       float tmax = max.x;
-      float const tmin = min.x;
       while( planes < numPlanes ) {
         float offset = tmax; // - delta;
         quads.push_back({ offset, min.y, max.z, 1 });   // ll
@@ -227,7 +245,6 @@ createQuads(std::vector<glm::vec4> &quads,
       delta = (max.y - min.y) / static_cast<float>(numPlanes);
 //      decrement_delta<float> dd(max.y, delta, min.y);
       float tmax = max.y;
-      float const tmin = min.y;
       while (planes < numPlanes) {
         float offset = tmax; // - delta;
         quads.push_back({ min.x, offset, max.z, 1 });   // ll
@@ -252,7 +269,6 @@ createQuads(std::vector<glm::vec4> &quads,
       delta = (max.z - min.z) / static_cast<float>(numPlanes);
 //      decrement_delta<float> dd(max.z, delta, min.z);
       float tmax = max.z;
-      float const tmin = min.z;
       while (planes < numPlanes) {
         float offset = tmax;// - delta;
         quads.push_back({ min.x, min.y, offset, 1 });   // ll
@@ -287,14 +303,15 @@ createQuads_Reversed(std::vector<glm::vec4> &quads,
     case Axis::X:  // -YZ
     {
       delta = (max.x - min.x) / static_cast<float>(numPlanes);
-      accum_delta<float> ad(min.x, delta, max.x);
+      float tmin{ min.x };
       while (planes < numPlanes) {
-        float offset = ad();
+        float offset = tmin;
         quads.push_back({ offset, min.y, min.z, 1 });   // ll
         quads.push_back({ offset, min.y, max.z, 1 });   // lr
         quads.push_back({ offset, max.y, min.z, 1 });   // ul
         quads.push_back({ offset, max.y, max.z, 1 });   // ur
         planes += 1;
+        tmin += delta;
       }
       break;
     }
@@ -302,28 +319,30 @@ createQuads_Reversed(std::vector<glm::vec4> &quads,
     case Axis::Y:  // -XZ
     {
       delta = (max.y - min.y) / static_cast<float>(numPlanes);
-      accum_delta<float> ad(min.y, delta, max.y);
+      float tmin{ min.y };
       while (planes < numPlanes) {
-        float offset = ad();
+        float offset = tmin;
         quads.push_back({ min.x, offset, min.z, 1 });   // ll
         quads.push_back({ max.x, offset, min.z, 1 });   // lr
         quads.push_back({ min.x, offset, max.z, 1 });   // ul
         quads.push_back({ max.x, offset, max.z, 1 });   // ur
         planes += 1;
+        tmin += delta;
       }
       break;
     }
 
     case Axis::Z: {
       delta = (max.z - min.z) / static_cast<float>(numPlanes);
-      accum_delta<float> ad(min.z, delta, max.z);
+      float tmin{ min.z };
       while (planes < numPlanes) {
-        float offset = ad();
+        float offset = tmin;
         quads.push_back({ max.x, min.y, offset, 1 });   // ll
         quads.push_back({ min.x, min.y, offset, 1 });   // lr
         quads.push_back({ max.x, max.y, offset, 1 });   // ul
         quads.push_back({ min.x, max.y, offset, 1 });   // ur
         planes += 1;
+        tmin += delta;
       }
       break;
     }

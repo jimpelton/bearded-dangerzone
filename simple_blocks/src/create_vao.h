@@ -16,75 +16,75 @@ namespace subvol
 /// \brief Generates (max-start)/d Ts.
 ///
 /// \note Values in sequence from [start .. max), non-inclusive on the right.
-template<typename T,
-  typename = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
-class accum_delta
-{
-public:
+//template<typename T,
+//  typename = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
+//class accum_delta
+//{
+//public:
+//
+//  accum_delta(T start, T d, T end)
+//      : m_delta{ d }
+//        , m_next{ start }
+//        , m_end{ end }
+//  { }
+//
+//
+//  T operator()()
+//  {
+//    T r = m_next;
+//    m_next += m_delta;
+//
+//    return r;
+//  }
+//
+//
+//  /// \return True until max has been returned by operator().
+//  bool hasNext()
+//  {
+//    return m_next < m_end;
+//  }
+//
+//
+//private:
+//  T m_delta;
+//  T m_next;
+//  T m_end;
+//};
 
-  accum_delta(T start, T d, T end)
-      : m_delta{ d }
-        , m_next{ start }
-        , m_end{ end }
-  { }
-
-
-  T operator()()
-  {
-    T r = m_next;
-    m_next += m_delta;
-
-    return r;
-  }
-
-
-  /// \return True until max has been returned by operator().
-  bool hasNext()
-  {
-    return m_next < m_end;
-  }
-
-
-private:
-  T m_delta;
-  T m_next;
-  T m_end;
-};
-
-template<typename T,
-  typename = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
-class decrement_delta
-{
-public:
-
-  decrement_delta(T start, T d, T end)
-      : m_delta{ d }
-        , m_next{ start }
-        , m_end{ end }
-  { }
-
-
-  T operator()()
-  {
-    T const r = m_next;
-    m_next -= m_delta;
-
-    return r;
-  }
-
-
-  /// \return True until max has been returned by operator().
-  bool hasNext()
-  {
-    return m_next > m_end;
-  }
-
-
-private:
-  T m_delta;
-  T m_next;
-  T m_end;
-};
+//template<typename T,
+//  typename = typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
+//class decrement_delta
+//{
+//public:
+//
+//  decrement_delta(T start, T d, T end)
+//      : m_delta{ d }
+//        , m_next{ start }
+//        , m_end{ end }
+//  { }
+//
+//
+//  T operator()()
+//  {
+//    T const r = m_next;
+//    m_next -= m_delta;
+//
+//    return r;
+//  }
+//
+//
+//  /// \return True until max has been returned by operator().
+//  bool hasNext()
+//  {
+//    return m_next > m_end;
+//  }
+//
+//
+//private:
+//  T m_delta;
+//  T m_next;
+//  T m_end;
+//};
 
 /// \brief Create slices for each axis with in a region. The min, max of the
 ///        region boundingbox is given by min and max vectors.

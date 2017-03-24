@@ -96,7 +96,7 @@ BlockRenderer::init()
   m_volumeShaderLighting->setUniform(VOLUME_TRANSF_SCALER_UNIFORM_STR, 1.0f);
   setShaderLightPos(glm::normalize(glm::vec3{ 1.0f, 1.0f, 1.0f }));
   setShaderNShiney(1.0f);
-  setShaderMaterial({ 1.0f, 1.0f, 1.0f });
+  setShaderMaterial({ 0.8f, 0.6f, 0.6f });
 
   // sets m_currentShader depending on m_shouldUseLighting.
   setShouldUseLighting(m_shouldUseLighting);
@@ -217,7 +217,6 @@ BlockRenderer::setROVRange(double min, double max)
   m_rov_min = min;
   m_rov_max = max;
   m_ROVRangeChanged = true;
-
 }
 
 
@@ -294,13 +293,7 @@ BlockRenderer::draw()
     m_ROVRangeChanged = false;
   }
 
-//  if (m_cacheNeedsUpdating) {
-//    std::cout << "++++++Updating the block cache++++++" << std::endl;
-//    m_collection->updateBlockCache();
-//    m_cacheNeedsUpdating = false;
-//  }
 
-  
   if (glfwGetTimerValue() - m_timeOfLastJob > MAX_MILLIS_SINCE_LAST_JOB) {
     // load some blocks to the m_gpu if any available.
     m_collection->loadSomeBlocks();

@@ -17,19 +17,16 @@ namespace subvol
 
 BlockLoader::BlockLoader(BLThreadData *threadParams, bd::Volume const &volume)
   : m_stopThread{ false }
-//  , m_gpuEmpty{ }
   , m_gpu{ }
-//  , m_mainEmpty{ }
   , m_main{ }
-  , m_texs() // *(threadParams->texs) }
-  , m_buffs() //{ *(threadParams->buffers) }
+  , m_texs()
+  , m_buffs()
   , m_loadQueue{ }
   , m_gpuReadyQueue{ }
   , m_maxGpuBlocks{ threadParams->maxGpuBlocks }
   , m_maxMainBlocks{ threadParams->maxCpuBlocks }
   , m_sizeType{ bd::to_sizeType(threadParams->type) }
-  , m_slabWidth{ threadParams->slabDims[0] }
-  , m_slabHeight{ threadParams->slabDims[1] }
+  , m_slabDims{ threadParams->slabDims[0], threadParams->slabDims[1] }
   , m_volMin{ volume.min() }
   , m_volDiff{ volume.max() - volume.min() }
   , m_fileName{ threadParams->filename }
@@ -75,18 +72,18 @@ BlockLoader::operator()()
       break;
     }
 
-//    bd::Dbg() << "Loading " << (b->empty() ? "empty" : "non-empty")
-//              << " block " << b->index()
-//              << " (" << b->status() << ").";
-
-//    if (! m_buffs.empty()) {
-      b->pixelData(m_buffs.back());
-      m_buffs.pop_back();
-//    }
-    m_reader->fillBlockData(b, &raw,
-                            m_slabWidth, m_slabHeight,
-                            m_volMin, m_volDiff);
+    b->pixelData(m_buffs.back());
+    m_buffs.pop_back();
+    m_reader->fillBlockData(b->pixelData(),
+                            &raw,
+                            b->fileBlock().data_offset,
+                            b->fileBlock().voxel_dims,
+                            b->fileBlock().ijk_index,
+                            m_slabDims,
+                            m_volMin,
+                            m_volDiff);
     m_main.insert(std::make_pair(b->index(), b));
+
     if(! m_texs.empty()) {
       b->texture(m_texs.back());
       m_texs.pop_back();
@@ -98,7 +95,7 @@ BlockLoader::operator()()
         " LdM: " << m_loadQueue.size() <<
         " LdG: " << m_gpuReadyQueue.size() <<
         " Buf: " << m_buffs.size() <<
-        " Tex: " << m_texs.size(); // << std::endl;
+        " Tex: " << m_texs.size() << std::flush;
 
   } // while
 

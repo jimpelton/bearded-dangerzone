@@ -18,7 +18,6 @@
 
 
 
-
 //namespace Catch {
 //std::string toString(const glm::vec3 &v) {
 //  return glm::to_string(v);
