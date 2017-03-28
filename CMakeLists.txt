@@ -20,15 +20,10 @@ if(NOT DEFINED CRUFT_INCLUDE_DIR)
 endif()
 set(CRUFT_INCLUDE_DIR ${${CRUFT_INCLUDE_DIR}} CACHE PATH "Cruft includes directory path")
 
-if(NOT DEFINED CRUFT_DEBUG_LIBRARIES)
-    set(CRUFT_DEBUG_LIBRARIES)
+if(NOT DEFINED CRUFT_LIBRARIES)
+    set(CRUFT_LIBRARIES)
 endif()
-set(CRUFT_DEBUG_LIBRARIES ${${CRUFT_DEBUG_LIBRARIES}} CACHE FILEPATH "Cruft library file (crufterly.a).")
-
-if(NOT DEFINED CRUFT_RELEASE_LIBRARIES)
-    set(CRUFT_RELEASE_LIBRARIES)
-endif()
-set(CRUFT_RELEASE_LIBRARIES ${${CRUFT_RELEASE_LIBRARIES}} CACHE FILEPATH "Cruft library file (crufterly.a).")
+set(CRUFT_LIBRARIES ${${CRUFT_DEBUG_LIBRARIES}} CACHE FILEPATH "Cruft library file (crufterly.a).")
 
 
 #### Intel TBB Library ##################################################
@@ -37,15 +32,10 @@ if(NOT DEFINED TBB_INCLUDE_DIR)
 endif()
 set(TBB_INCLUDE_DIR ${${TBB_INCLUDE_DIR}} CACHE PATH "Cruft includes directory path")
 
-if(NOT DEFINED TBB_DEBUG_LIBRARIES)
-    set(TBB_DEBUG_LIBRARIES)
+if(NOT DEFINED TBB_LIBRARIES)
+    set(TBB_LIBRARIES)
 endif()
-set(TBB_DEBUG_LIBRARIES ${${TBB_DEBUG_LIBRARIES}} CACHE FILEPATH "Cruft library file (.a,.dylib,.lib).")
-
-if(NOT DEFINED TBB_RELEASE_LIBRARIES)
-    set(TBB_RELEASE_LIBRARIES)
-endif()
-set(TBB_RELEASE_LIBRARIES ${${TBB_RELEASE_LIBRARIES}} CACHE FILEPATH "Cruft library file (.a,.dylib,.lib).")
+set(TBB_LIBRARIES ${${TBB_LIBRARIES}} CACHE FILEPATH "Cruft library file (.a,.dylib,.lib).")
 
 #############################################################################
 if (UNIX)

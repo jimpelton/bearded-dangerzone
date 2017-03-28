@@ -116,10 +116,8 @@ target_link_libraries(simple_blocks
         ${OPENGL_LIBRARIES}
         ${GLFW_LIBRARIES}
         ${GLEW_LIBRARIES}
-        debug ${CRUFT_DEBUG_LIBRARIES}
-        optimized ${CRUFT_RELEASE_LIBRARIES}
-        debug ${TBB_DEBUG_LIBRARIES}
-        optimized ${TBB_RELEASE_LIBRARIES}
+        ${CRUFT_LIBRARIES}
+        ${TBB_LIBRARIES}
         ${NVTOOLSEXT_LIB}
         Qt5::Widgets
         Qt5::Core)
