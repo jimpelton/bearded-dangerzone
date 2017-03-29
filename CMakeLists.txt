@@ -23,7 +23,8 @@ set(CRUFT_INCLUDE_DIR ${${CRUFT_INCLUDE_DIR}} CACHE PATH "Cruft includes directo
 if(NOT DEFINED CRUFT_LIBRARIES)
     set(CRUFT_LIBRARIES)
 endif()
-set(CRUFT_LIBRARIES ${${CRUFT_DEBUG_LIBRARIES}} CACHE FILEPATH "Cruft library file (crufterly.a).")
+set(CRUFT_LIBRARIES ${${CRUFT_LIBRARIES}} CACHE FILEPATH "Cruft library file (crufterly.a).")
+
 
 
 #### Intel TBB Library ##################################################
@@ -36,6 +37,7 @@ if(NOT DEFINED TBB_LIBRARIES)
     set(TBB_LIBRARIES)
 endif()
 set(TBB_LIBRARIES ${${TBB_LIBRARIES}} CACHE FILEPATH "Cruft library file (.a,.dylib,.lib).")
+
 
 #############################################################################
 if (UNIX)
