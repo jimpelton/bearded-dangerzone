@@ -120,31 +120,32 @@ initializeBlockCollection(BlockCollection **bc,
   // Number of bytes on the GPU for each block (sizeof(float)).
   uint64_t blockBytes = dims.x * dims.y * dims.z * sizeof(float);
 
+  BLThreadData *tdata{ new BLThreadData() };
+  size_t numBlocks{ indexFile->getFileBlocks().size() };
+
+  // Provided block dimensions were such that we got 0 for the block bytes,
+  // so lets not allow rendering of any blocks at all.
   if (blockBytes == 0) {
-    bd::Err() << "Blocks have a dimension that is 0, so I can't go on.";
-    return false;
+    tdata->maxCpuBlocks = 0;
+    tdata->maxGpuBlocks = 0;
+    bd::Warn() << "Blocks have a dimension that is 0."; //, so I can't go on.";
   } else {
     bd::Info() << "Block texture size (bytes): " << blockBytes;
-  }
 
-  size_t numBlocks{ indexFile->getFileBlocks().size() };
-  BLThreadData *tdata{ new BLThreadData() };
+    // Find max cpu blocks (assert no larger than actual number of blocks).
+    tdata->maxCpuBlocks = clo.mainMemoryBytes / blockBytes;
+    tdata->maxCpuBlocks = tdata->maxCpuBlocks > numBlocks ?
+                          numBlocks : tdata->maxCpuBlocks;
 
-  // Find max cpu blocks (assert no larger than actual number of blocks).
-  tdata->maxCpuBlocks = clo.mainMemoryBytes / blockBytes;
-  tdata->maxCpuBlocks = tdata->maxCpuBlocks > numBlocks ?
-                        numBlocks : tdata->maxCpuBlocks;
-
-  // Find max gpu blocks (assert no larger than actual number of blocks).
-  tdata->maxGpuBlocks = clo.gpuMemoryBytes / blockBytes;
-  tdata->maxGpuBlocks = tdata->maxGpuBlocks > numBlocks ?
-                        numBlocks : tdata->maxGpuBlocks;
+    // Find max gpu blocks (assert no larger than actual number of blocks).
+    tdata->maxGpuBlocks = clo.gpuMemoryBytes / blockBytes;
+    tdata->maxGpuBlocks = tdata->maxGpuBlocks > numBlocks ?
+                          numBlocks : tdata->maxGpuBlocks;
+  } // else
 
   tdata->type = type;
-
   tdata->slabDims[0] = indexFile->getVolume().voxelDims().x;
   tdata->slabDims[1] = indexFile->getVolume().voxelDims().y;
-
   tdata->filename = clo.rawFilePath;
 
   tdata->texs = new std::vector<bd::Texture*>();

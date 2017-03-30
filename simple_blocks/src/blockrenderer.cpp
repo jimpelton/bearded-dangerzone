@@ -38,7 +38,7 @@ BlockRenderer::BlockRenderer(int numSlices,
                              std::shared_ptr<bd::VertexArrayObject> bboxVAO,
                              std::shared_ptr<bd::VertexArrayObject> axisVao)
     : Renderer()
-
+    , m_classificationType{ ClassificationType::Rov }
     , m_numSlicesPerBlock{ numSlices }
     , m_tfuncScaleValue{ 1.0f }
 
@@ -108,6 +108,21 @@ BlockRenderer::init()
   return true;
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+ClassificationType
+BlockRenderer::getClassificationType()
+{
+  return m_classificationType;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+void
+BlockRenderer::setClassificationType(ClassificationType type)
+{
+  m_classificationType = type;
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 void

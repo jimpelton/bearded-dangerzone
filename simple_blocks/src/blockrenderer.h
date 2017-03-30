@@ -8,6 +8,7 @@
 #include "blockcollection.h"
 #include "renderer.h"
 #include "sliceset.h"
+#include "classificationtype.h"
 
 
 #include <bd/graphics/shader.h>
@@ -48,6 +49,12 @@ private:
 
 
 public:
+  ClassificationType
+  getClassificationType();
+
+  void
+  setClassificationType(ClassificationType type);
+
   /// \brief Set the transfer function texture.
   void
   setColorMapTexture(bd::Texture const &tfunc);
@@ -131,9 +138,11 @@ public:
   void
   drawNonEmptyBoundingBoxes();
 
+
   /// \brief Hint that the block caches should be updated.
   void
   updateCache();
+
 
 private:
 
@@ -158,29 +167,37 @@ private:
   computeBaseVertexFromViewDir(glm::vec3 const &viewdir);
 
 
+  /// \brief Sort visible blocks by distance from the camera (for painter's algorithm)
+  /// Distance is from camera to center of each block. Order is decending.
   void
   sortBlocks();
 
   void
   filterBlocksByROV();
 
-
-  int m_numSlicesPerBlock;            ///< Number of slices per block
-  float m_tfuncScaleValue;            ///< Transfer function scaling value
+  /// By which metric should the blocks be deemed visible or not.
+  ClassificationType m_classificationType;
+  /// Number of slices per block
+  int m_numSlicesPerBlock;
+  /// Transfer function scaling value
+  float m_tfuncScaleValue;
   double m_rov_min;
   double m_rov_max;
-
   uint64_t m_timeOfLastJob;
-
-  bool m_drawNonEmptyBoundingBoxes;   ///< True to draw bounding boxes.
+  /// True to draw bounding boxes.
+  bool m_drawNonEmptyBoundingBoxes;
   bool m_drawNonEmptySlices;
   bool m_ROVRangeChanged;
-  bool m_ROVChanging; ///< Show bounding boxes if rov is changing.
+  /// Show bounding boxes if rov is changing.
+  bool m_ROVChanging;
   bool m_cacheNeedsUpdating;
-  bool m_shouldUseLighting;           ///< True to use Phong lighting shader.
-  glm::vec3 m_backgroundColor;        ///< Current background color.
-
-  bd::Texture const *m_colorMapTexture; ///< Transfer function texture
+  /// True to use Phong lighting shader.
+  bool m_shouldUseLighting;
+  /// Current background color.
+  glm::vec3 m_backgroundColor;
+  /// Transfer function texture
+  bd::Texture const *m_colorMapTexture;
+  /// Current shader being used (lighting, flat, wire, etc).
   bd::ShaderProgram *m_currentShader;
 
   SliceSet m_selectedSliceSet;
@@ -193,9 +210,9 @@ private:
   std::shared_ptr<bd::VertexArrayObject> m_axisVao;
   subvol::BlockCollection *m_collection;
 
-
   std::vector<bd::Block *> *m_nonEmptyBlocks;  ///< Non-empty blocks to draw.
   std::vector<bd::Block *> *m_blocks;       ///< All the blocks!
+
   //std::vector<bd::Block *> m_renderableBlocks;  ///< Blocks that are on the m_gpu.
 
 };

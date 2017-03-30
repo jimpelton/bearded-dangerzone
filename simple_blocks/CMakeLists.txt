@@ -79,6 +79,7 @@ set(simple_blocks_HEADERS
         src/blockcollection.h
         src/blockloader.h
         src/blockrenderer.h
+        src/classificationtype.h
         src/cmdline.h
         src/controls.h
         src/controlpanel.h

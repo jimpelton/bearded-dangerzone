@@ -92,19 +92,19 @@ printBlocks(subvol::BlockCollection *bcol)
 
 
 /////////////////////////////////////////////////////////////////////////////////
-std::shared_ptr<bd::IndexFile>
-openIndexFile(subvol::CommandLineOptions const &clo)
-{
-  // Read the index file to get values from it that we need to populate
-  // the CommandLineOptions struct.
-  std::shared_ptr<bd::IndexFile> indexFile{
-      bd::IndexFile::fromBinaryIndexFile(clo.indexFilePath) };
-  if (indexFile == nullptr) {
-    bd::Err() << "Could open the index file.";
-  }
-
-  return indexFile;
-}
+//std::shared_ptr<bd::IndexFile>
+//openIndexFile(subvol::CommandLineOptions const &clo)
+//{
+//  // Read the index file to get values from it that we need to populate
+//  // the CommandLineOptions struct.
+//  std::shared_ptr<bd::IndexFile> indexFile{
+//      bd::IndexFile::fromBinaryIndexFile(clo.indexFilePath) };
+//  if (indexFile == nullptr) {
+//    bd::Err() << "Could open the index file.";
+//  }
+//
+//  return indexFile;
+//}
 
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -293,17 +293,16 @@ init_subvol(subvol::CommandLineOptions &clo)
   // and give away ownership of the index file to the BlockCollection.
   std::shared_ptr<bd::IndexFile> indexFile{ std::make_shared<bd::IndexFile>() };
   if (! clo.indexFilePath.empty()) {
-    indexFile =
-      bd::IndexFile::fromBinaryIndexFile(clo.indexFilePath);
-    if (indexFile == nullptr) {
-      bd::Err() << "Couldn't open provided index file path: " << clo.indexFilePath;
+    bool ok = false;
+    indexFile = bd::IndexFile::fromBinaryIndexFile(clo.indexFilePath, ok);
+    if (! ok) {
       return nullptr;
     }
     updateCommandLineOptionsFromIndexFile(clo, indexFile);
-  } else {
-    bd::Err() << "No IndexFile provided.";
-    return nullptr;
-  }
+  } //else {
+//    bd::Err() << "No IndexFile provided.";
+//    return nullptr;
+//  }
 
   subvol::printThem(clo);
 
@@ -408,8 +407,8 @@ int main(int argc, char *argv[])
                               QApplication a(argc, argv);
                               subvol::ControlPanel panel(g_renderer.get());
 
-                              panel.setGlobalRange(g_rovMin, g_rovMax);
-                              panel.setMinMax(clo.blockThreshold_Min, clo.blockThreshold_Max);
+                              panel.setGlobalRovMinMax(g_rovMin, g_rovMax);
+                              panel.setMinMax(0,0);
                               panel.show();
 
                               return a.exec();
