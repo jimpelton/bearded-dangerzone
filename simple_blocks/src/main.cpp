@@ -46,7 +46,8 @@ std::shared_ptr<bd::ShaderProgram> g_volumeShaderLighting{ nullptr };
 std::shared_ptr<bd::VertexArrayObject> g_axisVao{ nullptr };
 std::shared_ptr<bd::VertexArrayObject> g_boxVao{ nullptr };
 std::shared_ptr<bd::VertexArrayObject> g_quadVao{ nullptr };
-//std::shared_ptr<subvol::BlockCollection> g_blockCollection{ nullptr };
+std::shared_ptr<subvol::BlockCollection> g_blockCollection{ nullptr };
+std::shared_ptr<bd::IndexFile> g_indexFile{ nullptr };
 //std::shared_ptr<subvol::Controls> g_controls{ nullptr };
 bool g_renderInitComplete{ false };
 
@@ -294,11 +295,13 @@ init_subvol(subvol::CommandLineOptions &clo)
   std::shared_ptr<bd::IndexFile> indexFile{ std::make_shared<bd::IndexFile>() };
   if (! clo.indexFilePath.empty()) {
     bool ok = false;
-    indexFile = bd::IndexFile::fromBinaryIndexFile(clo.indexFilePath, ok);
+    indexFile = std::move(
+        bd::IndexFile::fromBinaryIndexFile(clo.indexFilePath, ok));
     if (! ok) {
       return nullptr;
     }
     updateCommandLineOptionsFromIndexFile(clo, indexFile);
+    g_indexFile = indexFile;
   } //else {
 //    bd::Err() << "No IndexFile provided.";
 //    return nullptr;
@@ -336,6 +339,7 @@ init_subvol(subvol::CommandLineOptions &clo)
     bd::Err() << "Error initializing block collection.";
     return nullptr;
   }
+  g_blockCollection = std::shared_ptr<BlockCollection>(bc);
   
   g_renderer =
       std::make_shared<subvol::BlockRenderer>(int(clo.num_slices),
@@ -400,22 +404,30 @@ int main(int argc, char *argv[])
     return 1;
   }
 
+  std::condition_variable_any wait;
+  std::mutex m;
+
+
   // Start the qt event stuff on a separate thread.
-  std::future<int>
-      returned = std::async(std::launch::async,
-                            [&]() {
-                              QApplication a(argc, argv);
-                              subvol::ControlPanel panel(g_renderer.get());
+  std::future<int> returned =
+      std::async(std::launch::async,
+                 [&]() {
+                   QApplication a(argc, argv);
+                   m.lock();
+                   subvol::ControlPanel panel(g_renderer.get(),
+                                              g_blockCollection.get(),
+                                              g_indexFile);
 
-                              panel.setGlobalRovMinMax(g_rovMin, g_rovMax);
-                              panel.setMinMax(0,0);
-                              panel.show();
+                   panel.setGlobalRovMinMax(g_rovMin, g_rovMax);
+                   panel.setMinMax(0,0);
+                   panel.show();
+                   m.unlock();
+                   wait.notify_all();
 
-                              return a.exec();
-                            });
-
+                   return a.exec();
+                 });
+  wait.wait(m);
   subvol::renderhelp::loop(window, g_renderer.get());
-
   std::cout << "Waiting for GUI to close..." << std::endl;
   returned.wait();
   std::cout << "subvol exiting: " << returned.get() << std::endl;

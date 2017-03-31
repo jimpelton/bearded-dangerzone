@@ -22,9 +22,9 @@ namespace subvol
 class BlockCollection
 {
 public:
-  BlockCollection();
+//  BlockCollection();
 
-  BlockCollection(BlockLoader *loader);
+  BlockCollection(BlockLoader *loader, bd::IndexFile const &index);
 
   ~BlockCollection();
 
@@ -35,10 +35,8 @@ public:
 //  BlockCollection(BlockCollection const &&) = delete;
 
 
-  void
-  initBlocksFromIndexFile(bd::IndexFile const &index,
-                          std::vector<bd::Texture *> *texs,
-                          std::vector<char *> *buffers);
+//  void
+//  initBlocksFromIndexFile(bd::IndexFile const &index)
 
 
   /// \brief Initializes \c blocks from the provided vector of FileBlock.
@@ -73,6 +71,7 @@ public:
   void
   loadSomeBlocks();
 
+
   std::vector<bd::Block *> const&
   blocks() const;
 
@@ -95,6 +94,9 @@ public:
   findLargestBlock(std::vector<bd::Block *> &blocks);
 
 
+  void
+  setVisibleBlocksCallback(std::function<void(size_t)> &func);
+
 private:
 
   std::vector<bd::Block *> m_blocks;
@@ -106,6 +108,8 @@ private:
   BlockLoader *m_loader;
 
   std::future<int> m_loaderFuture;
+
+  std::function<void(size_t)> m_visibleBlocksCb;
 
   //  BlockMemoryManager *m_man;
 

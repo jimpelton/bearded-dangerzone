@@ -8,6 +8,8 @@
 #include "blockrenderer.h"
 #include "classificationtype.h"
 
+#include <bd/io/indexfile.h>
+
 #include <QWidget>
 
 class QSlider;
@@ -71,19 +73,29 @@ public:
   setGlobalRange(double rmax, double rmin);
 
 signals:
-  void minRovValueChanged(double rovMin);
-  void maxRovValueChanged(double rovMax);
+  void minValueChanged(double rovMin);
+  void maxValueChanged(double rovMax);
   void rovChangingChanged(bool toggle);
+  void classificationTypeChanged(ClassificationType);
 
 public slots:
   void
-  handle_rovMinChanged(int minSliderValue);
+  slot_minSliderChanged(int minSliderValue);
+
   void
-  handle_rovMaxChanged(int maxSliderValue);
+  slot_maxSliderChanged(int maxSliderValue);
+
   void
-  handle_sliderPressed();
+  slot_sliderPressed();
+
   void
-  handle_sliderReleased();
+  slot_sliderReleased();
+
+  void
+  slot_averageRadioClicked(bool);
+
+  void
+  slot_rovRadioClicked(bool);
 
 
 private:
@@ -116,8 +128,20 @@ public:
 //signals:
 
 public slots:
-  void handle_shownBlocksChanged(size_t nblocks);
-  void handle_totalBlocksChanged(size_t tblocks);
+  void
+  slot_visibleBlocksChanged(size_t numblk);
+
+  void
+  slot_totalBlocksChanged(size_t t);
+
+  void
+  slot_minRovValueChanged(double minrov);
+
+  void
+  slot_maxRovValueChanged(double maxrov);
+
+  void
+  slot_classificationTypeChanged(ClassificationType type);
 
 private:
   void
@@ -141,7 +165,10 @@ class ControlPanel : public QWidget
   Q_OBJECT
 
 public:
-  explicit ControlPanel(BlockRenderer *renderer, QWidget *parent = nullptr);
+  explicit ControlPanel(BlockRenderer *renderer,
+                        BlockCollection *collection,
+                        std::shared_ptr<const bd::IndexFile> indexFile,
+                        QWidget *parent = nullptr);
 
   ~ControlPanel();
 
@@ -153,16 +180,21 @@ public:
   void
   setMinMax(double min, double max);
 
+  void
+  setVisibleBlocks(size_t visibleBlocks);
 
 signals:
 
 
 public slots:
   void
-  handle_rovChangeToggle(bool toggle);
+  slot_rovChangingChanged(bool toggle);
 
   void
-  handle_classificationChange(ClassificationType type);
+  slot_classificationTypeChanged(ClassificationType type);
+
+  void
+  slot_minMaxChange(double min, double max);
 
 
 private:
@@ -184,6 +216,7 @@ private:
   StatsPanel *m_statsPanel;
 
   BlockRenderer *m_renderer;
+  std::shared_ptr<const bd::IndexFile> m_index;
 
 };
 

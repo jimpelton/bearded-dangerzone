@@ -100,7 +100,7 @@ BlockRenderer::init()
 
   // sets m_currentShader depending on m_shouldUseLighting.
   setShouldUseLighting(m_shouldUseLighting);
-  filterBlocksByROV();
+//  filterBlocksByROV();
 
 //  if (m_colorMapTexture == nullptr)
 //    setColorMapTexture(ColorMapManager::getMapByName("WHITE_TO_BLACK").getTexture());

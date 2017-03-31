@@ -17,13 +17,14 @@ using bd::FileBlock;
 
 
 ///////////////////////////////////////////////////////////////////////////////
-BlockCollection::BlockCollection()
-    : BlockCollection(nullptr)
-{
-}
+//BlockCollection::BlockCollection()
+//    : BlockCollection(nullptr)
+//{
+//}
 
 
-BlockCollection::BlockCollection(BlockLoader *loader)
+BlockCollection::BlockCollection(BlockLoader *loader,
+                                 IndexFile const &index)
     : m_blocks()
     , m_nonEmptyBlocks()
     , m_volume{ }
@@ -33,6 +34,11 @@ BlockCollection::BlockCollection(BlockLoader *loader)
   m_loaderFuture =
       std::async(std::launch::async,
                  [loader]() -> int { return ( *loader )(); });
+
+  m_volume = index.getVolume();
+  initBlocksFromFileBlocks(index.getFileBlocks(),
+                           m_volume.worldDims(),
+                           m_volume.block_count());
 }
 
 
@@ -46,33 +52,27 @@ BlockCollection::~BlockCollection()
 
 
 ///////////////////////////////////////////////////////////////////////////////
-void
-BlockCollection::initBlocksFromIndexFile(bd::IndexFile const &index,
-                                         std::vector<bd::Texture *> *texs,
-                                         std::vector<char *> *buffers)
-{
-  m_volume = index.getVolume();
-
-  initBlocksFromFileBlocks(index.getFileBlocks(),
-                           m_volume.worldDims(),
-                           m_volume.block_count());
-
-
-
-
-
-//  for (size_t i{ 0 }; i < m_blocks.size(); ++i) {
-//    m_blocks[i]->pixelData(( *buffers )[i]);
-//  }
+//void
+//BlockCollection::initBlocksFromIndexFile(bd::IndexFile const &index)
+//{
+//  m_volume = index.getVolume();
 //
-//  for (size_t i{ 0 }; i < texs->size(); ++i) {
-//    m_blocks[i]->texture(( *texs )[i]);
-//    m_nonEmptyBlocks.push_back(m_blocks[i]);
-//  }
-
-//  m_loader->queueClassified(m_nonEmptyBlocks, m_emptyBlocks);
-
-}
+//  initBlocksFromFileBlocks(index.getFileBlocks(),
+//                           m_volume.worldDims(),
+//                           m_volume.block_count());
+//
+////  for (size_t i{ 0 }; i < m_blocks.size(); ++i) {
+////    m_blocks[i]->pixelData(( *buffers )[i]);
+////  }
+////
+////  for (size_t i{ 0 }; i < texs->size(); ++i) {
+////    m_blocks[i]->texture(( *texs )[i]);
+////    m_nonEmptyBlocks.push_back(m_blocks[i]);
+////  }
+//
+////  m_loader->queueClassified(m_nonEmptyBlocks, m_emptyBlocks);
+//
+//}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -158,6 +158,8 @@ BlockCollection::filterBlocksByROVRange(double rov_min, double rov_max)
       m_emptyBlocks.push_back(b);
     }
   } // for
+
+  m_visibleBlocksCb(m_nonEmptyBlocks.size());
 }
 
 
@@ -305,6 +307,13 @@ BlockCollection::findLargestBlock(std::vector<Block *> &blocks)
   Block *blk{ *largest };
   return blk->voxel_extent().x * blk->voxel_extent().y * blk->voxel_extent().z;
 
+}
+
+
+void
+BlockCollection::setVisibleBlocksCallback(std::function<void(size_t)> &func)
+{
+  m_visibleBlocksCb = func;
 }
 
 

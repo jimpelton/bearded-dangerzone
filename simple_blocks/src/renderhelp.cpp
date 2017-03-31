@@ -168,13 +168,13 @@ initializeBlockCollection(BlockCollection **bc,
 
   BlockLoader *loader{ new BlockLoader(tdata, indexFile->getVolume()) };
 
-  BlockCollection *bc_local{ new BlockCollection(loader) };
-  bc_local->initBlocksFromIndexFile(*indexFile, tdata->texs, tdata->buffers);
+  BlockCollection *bc_local{ new BlockCollection(loader, *indexFile) };
+//  bc_local->initBlocksFromIndexFile(*indexFile);
 
   bd::Info() << bc_local->blocks().size() << " blocks in index file.";
 
   // filter blocks in the index file that are within ROV thresholds
-  bc_local->filterBlocksByROVRange(clo.blockThreshold_Min, clo.blockThreshold_Max);
+  //bc_local->filterBlocksByROVRange(clo.blockThreshold_Min, clo.blockThreshold_Max);
   *bc = bc_local;
   return true;
 }

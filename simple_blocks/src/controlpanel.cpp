@@ -5,6 +5,8 @@
 #include "controlpanel.h"
 #include "blockrenderer.h"
 
+#include <bd/io/indexfile.h>
+
 #include <QLabel>
 #include <QSlider>
 #include <QVBoxLayout>
@@ -69,22 +71,28 @@ ClassificationPanel::ClassificationPanel(QWidget *parent = nullptr)
   setLayout(boxLayout);
 
   connect(m_minSlider, SIGNAL(valueChanged(int)),
-          this, SLOT(handle_rovMinChanged(int)));
+          this, SLOT(slot_minSliderChanged(int)));
 
   connect(m_maxSlider, SIGNAL(valueChanged(int)),
-          this, SLOT(handle_rovMaxChanged(int)));
+          this, SLOT(slot_maxSliderChanged(int)));
 
   connect(m_minSlider, SIGNAL(sliderPressed()),
-          this, SLOT(handle_sliderPressed()));
+          this, SLOT(slot_sliderPressed()));
 
   connect(m_minSlider, SIGNAL(sliderReleased()),
-          this, SLOT(handle_sliderReleased()));
+          this, SLOT(slot_sliderReleased()));
 
   connect(m_maxSlider, SIGNAL(sliderPressed()),
-          this, SLOT(handle_sliderPressed()));
+          this, SLOT(slot_sliderPressed()));
 
   connect(m_maxSlider, SIGNAL(sliderReleased()),
-          this, SLOT(handle_sliderReleased()));
+          this, SLOT(slot_sliderReleased()));
+
+  connect(averageRadio, SIGNAL(clicked(bool)),
+          this, SLOT(slot_averageRadioClicked(bool)));
+
+  connect(rovRadio, SIGNAL(clicked(bool)),
+          this, SLOT(slot_rovRadioClicked(bool)));
 }
 
 
@@ -122,7 +130,7 @@ ClassificationPanel::setGlobalRange(double newMin, double newMax)
 
 ///////////////////////////////////////////////////////////////////////////////
 void
-ClassificationPanel::handle_rovMinChanged(int minSliderValue)
+ClassificationPanel::slot_minSliderChanged(int minSliderValue)
 {
   m_currentMinROVFloat = m_globalMin + (minSliderValue * m_incrementDelta);
 
@@ -133,7 +141,7 @@ ClassificationPanel::handle_rovMinChanged(int minSliderValue)
 
   m_currentMin_Label->setText(QString::number(m_currentMinROVFloat));
 
-  emit minRovValueChanged(m_currentMinROVFloat);
+  emit minValueChanged(m_currentMinROVFloat);
 
 //  m_renderer->setROVRange(m_currentMinROVFloat, m_currentMaxROVFloat);
 
@@ -143,7 +151,7 @@ ClassificationPanel::handle_rovMinChanged(int minSliderValue)
 
 ///////////////////////////////////////////////////////////////////////////////
 void
-ClassificationPanel::handle_rovMaxChanged(int maxSliderValue)
+ClassificationPanel::slot_maxSliderChanged(int maxSliderValue)
 {
   m_currentMaxROVFloat = m_globalMin + (maxSliderValue * m_incrementDelta);
 
@@ -153,7 +161,7 @@ ClassificationPanel::handle_rovMaxChanged(int maxSliderValue)
 
   m_currentMax_Label->setText(QString::number(m_currentMaxROVFloat));
 
-  emit maxRovValueChanged(m_currentMaxROVFloat);
+  emit maxValueChanged(m_currentMaxROVFloat);
 
 //  m_renderer->setROVRange(m_currentMinROVFloat, m_currentMaxROVFloat);
 //  updateShownBlocksLabels();
@@ -163,7 +171,7 @@ ClassificationPanel::handle_rovMaxChanged(int maxSliderValue)
 
 ///////////////////////////////////////////////////////////////////////////////
 void
-ClassificationPanel::handle_sliderPressed()
+ClassificationPanel::slot_sliderPressed()
 {
   emit rovChangingChanged(true);
 }
@@ -171,13 +179,33 @@ ClassificationPanel::handle_sliderPressed()
 
 ///////////////////////////////////////////////////////////////////////////////
 void
-ClassificationPanel::handle_sliderReleased()
+ClassificationPanel::slot_sliderReleased()
 {
   emit rovChangingChanged(false);
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+void
+ClassificationPanel::slot_averageRadioClicked(bool)
+{
+  emit classificationTypeChanged(ClassificationType::Avg);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+void
+ClassificationPanel::slot_rovRadioClicked(bool)
+{
+  emit classificationTypeChanged(ClassificationType::Rov);
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////
 //   StatsPanel Impl
+///////////////////////////////////////////////////////////////////////////////
+
+
 ///////////////////////////////////////////////////////////////////////////////
 StatsPanel::StatsPanel(QWidget *parent = nullptr)
 {
@@ -205,22 +233,44 @@ StatsPanel::StatsPanel(QWidget *parent = nullptr)
 
 ///////////////////////////////////////////////////////////////////////////////
 void
-StatsPanel::handle_shownBlocksChanged(size_t nblocks)
+StatsPanel::slot_visibleBlocksChanged(size_t numblk)
 {
-  m_shownBlocks = nblocks;
+  m_shownBlocks = numblk;
   updateShownBlocksLabels();
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 void
-StatsPanel::handle_totalBlocksChanged(size_t tblocks)
+StatsPanel::slot_totalBlocksChanged(size_t t)
 {
-  m_totalBlocks = tblocks;
+  m_totalBlocks = t;
   updateShownBlocksLabels();
 }
 
 
+///////////////////////////////////////////////////////////////////////////////
+void
+StatsPanel::slot_minRovValueChanged(double minrov)
+{
+  std::cout << __PRETTY_FUNCTION__ << " " << minrov << std::endl;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+void
+StatsPanel::slot_maxRovValueChanged(double maxrov)
+{
+  std::cout << __PRETTY_FUNCTION__ << " " << maxrov << std::endl;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+void
+StatsPanel::slot_classificationTypeChanged(ClassificationType type)
+{
+  std::cout << __PRETTY_FUNCTION__ << " " << type << std::endl;
+}
 ///////////////////////////////////////////////////////////////////////////////
 void
 StatsPanel::updateShownBlocksLabels()
@@ -233,7 +283,6 @@ StatsPanel::updateShownBlocksLabels()
 
 
 
-
 ///////////////////////////////////////////////////////////////////////////////
 //   ControlPanel Impl
 ///////////////////////////////////////////////////////////////////////////////
@@ -241,14 +290,25 @@ StatsPanel::updateShownBlocksLabels()
 
 
 ///////////////////////////////////////////////////////////////////////////////
-ControlPanel::ControlPanel(BlockRenderer *renderer, QWidget *parent)
+ControlPanel::ControlPanel(BlockRenderer *renderer,
+                           BlockCollection *collection,
+                           std::shared_ptr<const bd::IndexFile> indexFile,
+                           QWidget *parent)
     : QWidget(parent)
     , m_totalBlocks{ 0 }
     , m_shownBlocks{ 0 }
     , m_globalMin{ 0.0 }
     , m_globalMax{ 0.0 }
     , m_renderer{ renderer }
+    , m_index{ std::move(indexFile) }
 {
+  // oh my god! such hack!
+  std::function<void(size_t)> vb(
+      [this](size_t b) -> void {
+        this->m_totalBlocks = b;
+      });
+  collection->setVisibleBlocksCallback(vb);
+
   m_classificationPanel = new ClassificationPanel(this);
   m_statsPanel = new StatsPanel(this);
 
@@ -261,7 +321,10 @@ ControlPanel::ControlPanel(BlockRenderer *renderer, QWidget *parent)
 
 
   connect(m_classificationPanel, SIGNAL(rovChangingChanged(bool)),
-          this, SLOT(handle_rovChangeToggle(bool)));
+          this, SLOT(slot_rovChangingChanged(bool)));
+
+  connect(m_classificationPanel, SIGNAL(classificationTypeChanged(ClassificationType)),
+          this, SLOT(slot_classificationTypeChanged(ClassificationType)));
 
 }
 
@@ -290,7 +353,15 @@ ControlPanel::setMinMax(double min, double max)
 
 ///////////////////////////////////////////////////////////////////////////////
 void
-ControlPanel::handle_rovChangeToggle(bool toggle)
+ControlPanel::setVisibleBlocks(size_t visibleBlocks)
+{
+  m_statsPanel->slot_visibleBlocksChanged(visibleBlocks);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+void
+ControlPanel::slot_rovChangingChanged(bool toggle)
 {
   m_renderer->setROVChanging(toggle);
 }
@@ -298,9 +369,18 @@ ControlPanel::handle_rovChangeToggle(bool toggle)
 
 ///////////////////////////////////////////////////////////////////////////////
 void
-ControlPanel::handle_classificationChange(ClassificationType type)
+ControlPanel::slot_classificationTypeChanged(ClassificationType type)
 {
   m_renderer->setClassificationType(type);
+
+}
+
+
+
+void
+ControlPanel::slot_minMaxChange(double min, double max)
+{
+  setMinMax(min, max);
 }
 
 
