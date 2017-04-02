@@ -379,6 +379,39 @@ init_subvol(subvol::CommandLineOptions &clo)
 } // namespace subvol
 
 
+
+class Semathing {
+
+public:
+  Semathing(unsigned max) : count{ max } { }
+
+  ~Semathing() { }
+
+  void
+  signal() {
+    std::unique_lock<std::mutex> lck(mutex);
+    count--;
+    if (count == 0) {
+      cv.notify_all();
+    }
+  }
+
+  void
+  wait() {
+    std::unique_lock<std::mutex> lck(mutex);
+    while (count > 0) {
+      cv.wait(mutex);
+    }
+
+  }
+
+private:
+  unsigned int count;
+  std::mutex mutex;
+  std::condition_variable_any cv;
+};
+
+
 /////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char *argv[])
 {
@@ -404,29 +437,25 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  std::condition_variable_any wait;
-  std::mutex m;
-
+  Semathing s(1);
 
   // Start the qt event stuff on a separate thread.
   std::future<int> returned =
       std::async(std::launch::async,
                  [&]() {
                    QApplication a(argc, argv);
-                   m.lock();
                    subvol::ControlPanel panel(g_renderer.get(),
                                               g_blockCollection.get(),
                                               g_indexFile);
 
                    panel.setGlobalRovMinMax(g_rovMin, g_rovMax);
-                   panel.setMinMax(0,0);
+                   panel.setcurrentMinMaxSliders(0, 0);
                    panel.show();
-                   m.unlock();
-                   wait.notify_all();
-
+                   s.signal();
                    return a.exec();
                  });
-  wait.wait(m);
+
+  s.wait();
   subvol::renderhelp::loop(window, g_renderer.get());
   std::cout << "Waiting for GUI to close..." << std::endl;
   returned.wait();

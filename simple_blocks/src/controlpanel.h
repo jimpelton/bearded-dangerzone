@@ -178,7 +178,7 @@ public:
 
 
   void
-  setMinMax(double min, double max);
+  setcurrentMinMaxSliders(double min, double max);
 
   void
   setVisibleBlocks(size_t visibleBlocks);

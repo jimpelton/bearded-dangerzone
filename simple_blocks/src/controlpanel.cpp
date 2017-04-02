@@ -345,7 +345,7 @@ ControlPanel::setGlobalRovMinMax(double min, double max)
 
 ///////////////////////////////////////////////////////////////////////////////
 void
-ControlPanel::setMinMax(double min, double max)
+ControlPanel::setcurrentMinMaxSliders(double min, double max)
 {
   m_classificationPanel->setMinMax(min, max);
 }
@@ -380,7 +380,7 @@ ControlPanel::slot_classificationTypeChanged(ClassificationType type)
 void
 ControlPanel::slot_minMaxChange(double min, double max)
 {
-  setMinMax(min, max);
+  setcurrentMinMaxSliders(min, max);
 }
 
 
