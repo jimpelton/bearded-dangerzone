@@ -81,30 +81,34 @@ set(simple_blocks_HEADERS
         src/blockrenderer.h
         src/classificationtype.h
         src/cmdline.h
+        src/colormap.h
         src/controls.h
+        src/constants.h
         src/controlpanel.h
         src/create_vao.h
+        src/loop.h
         src/nvpm.h
-        src/sliceset.h
-        src/timing.h
-        src/constants.h
-        src/colormap.h
         src/renderer.h
-        src/renderhelp.h )
+        src/renderhelp.h
+        src/sliceset.h
+        src/semathing.h
+        src/timing.h
+        )
 
 set(simple_blocks_SOURCES
         src/main.cpp
         src/blockcollection.cpp
         src/blockloader.cpp
+        src/blockrenderer.cpp
         src/cmdline.cpp
+        src/colormap.cpp
+        src/constants.cpp
         src/controls.cpp
         src/controlpanel.cpp
         src/create_vao.cpp
+        src/loop.cpp
         src/sliceset.cpp
         src/timing.cpp
-        src/blockrenderer.cpp
-        src/colormap.cpp
-        src/constants.cpp
         src/renderer.cpp
         src/renderhelp.cpp )
 

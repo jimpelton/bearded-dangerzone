@@ -144,7 +144,7 @@ public:
                 uint64_t const be[3],
                 uint64_t const ijk[3],
                 uint64_t const ve[2],
-                double vMin, double vDiff) const = 0;
+                double vMin, double vDiff) = 0;
 
 };
 //
@@ -153,6 +153,14 @@ template<class VTy>
 class BlockReaderSpec : public BlockReader
 {
 public:
+  BlockReaderSpec() : disk_buf{ nullptr }{ }
+
+  virtual ~BlockReaderSpec()
+  {
+    if (disk_buf) {
+      delete [] disk_buf;
+    }
+  }
 
   virtual void
   fillBlockData(char *b,
@@ -161,9 +169,16 @@ public:
                 uint64_t const be[3],
                 uint64_t const ijk[3],
                 uint64_t const ve[2],
-                double vMin, double vDiff) const override
+                double vMin, double vDiff) override
   {
+    if (! disk_buf) {
+      // allocate temp space for the block (the entire block is brought into mem).
+      buf_len = be[0] * be[1] * be[2];
+      disk_buf = new VTy[ buf_len ];
+    }
+
     // start element = block index w/in volume * block size
+    // (this works because all blocks are the same size).
     glm::u64vec3 const start{ ijk[0] * be[0],
                               ijk[1] * be[1],
                               ijk[2] * be[2] };
@@ -177,12 +192,6 @@ public:
     size_t const blockRowLength{ be[0] };
     size_t const sizeType = sizeof(VTy);
     size_t const rowBytes{ blockRowLength * sizeType };
-
-
-    // allocate temp space for the block (the entire block is brought into mem).
-    uint64_t const buf_len{ be[0] * be[1] * be[2] };
-    VTy * const disk_buf{ new VTy[buf_len] };
-
 
     // Loop through rows and slabs of volume reading rows of voxels into memory.
     char *temp = reinterpret_cast<char *>(disk_buf);
@@ -208,8 +217,10 @@ public:
       pixelData[idx] = (disk_buf[idx] - vMin) / vDiff;
     }
 
-    delete [] disk_buf;
   }
+private:
+  VTy *disk_buf;
+  size_t buf_len;
 
 };
 
@@ -281,14 +292,14 @@ public:
 
 private:
 
-//  void
-//  queueBlockAtFrontOfLoadQueue(bd::Block *block);
-
-  bd::Block* 
+  bd::Block*
   waitPopLoadQueue();
 
 
-
+  /// \brief Loop through gpu blocks (m_gpu) and remove any that are empty.
+  /// Place textures back into m_texs array.
+  void
+  removeEmptyBlocksFromGpu();
 
 
   /// Push a block that is ready for loading to the GPU.

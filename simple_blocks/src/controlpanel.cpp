@@ -207,9 +207,11 @@ ClassificationPanel::slot_rovRadioClicked(bool)
 
 
 ///////////////////////////////////////////////////////////////////////////////
-StatsPanel::StatsPanel(QWidget *parent = nullptr)
+StatsPanel::StatsPanel(size_t totalBlocks,
+                       QWidget *parent = nullptr )
+    : m_totalBlocks{ totalBlocks }
 {
-  m_blocksShownValueLabel = new QLabel(QString::number(m_shownBlocks));
+  m_blocksShownValueLabel = new QLabel(QString::number(m_visibleBlocks));
   m_blocksTotalValueLabel = new QLabel("/" + QString::number(m_totalBlocks));
   QLabel *compressionRateLabel = new QLabel("Compression: ");
   m_compressionValueLabel = new QLabel("100%");
@@ -228,14 +230,15 @@ StatsPanel::StatsPanel(QWidget *parent = nullptr)
   this->setLayout(formLayout);
 
 
+
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 void
-StatsPanel::slot_visibleBlocksChanged(size_t numblk)
+StatsPanel::slot_visibleBlocksChanged(unsigned int numblk)
 {
-  m_shownBlocks = numblk;
+  m_visibleBlocks = numblk;
   updateShownBlocksLabels();
 }
 
@@ -275,9 +278,9 @@ StatsPanel::slot_classificationTypeChanged(ClassificationType type)
 void
 StatsPanel::updateShownBlocksLabels()
 {
-  m_blocksShownValueLabel->setText(QString::number(m_shownBlocks));
+  m_blocksShownValueLabel->setText(QString::number(m_visibleBlocks));
 
-  float p{ (1.0f - m_shownBlocks / float(m_totalBlocks)) * 100.0f };
+  float p{ (1.0f - m_visibleBlocks / float(m_totalBlocks)) * 100.0f };
   m_compressionValueLabel->setText(QString::asprintf("%f %%", p));
 }
 
@@ -300,17 +303,18 @@ ControlPanel::ControlPanel(BlockRenderer *renderer,
     , m_globalMin{ 0.0 }
     , m_globalMax{ 0.0 }
     , m_renderer{ renderer }
+    , m_collection{ collection }
     , m_index{ std::move(indexFile) }
 {
   // oh my god! such hack!
   std::function<void(size_t)> vb(
       [this](size_t b) -> void {
-        this->m_totalBlocks = b;
+        emit shownBlocksChanged((unsigned int)b);
       });
   collection->setVisibleBlocksCallback(vb);
 
   m_classificationPanel = new ClassificationPanel(this);
-  m_statsPanel = new StatsPanel(this);
+  m_statsPanel = new StatsPanel(collection->getTotalNumBlocks(), this);
 
   QVBoxLayout *layout = new QVBoxLayout;
 
@@ -325,6 +329,16 @@ ControlPanel::ControlPanel(BlockRenderer *renderer,
 
   connect(m_classificationPanel, SIGNAL(classificationTypeChanged(ClassificationType)),
           this, SLOT(slot_classificationTypeChanged(ClassificationType)));
+
+  connect(m_classificationPanel, SIGNAL(minValueChanged(double)),
+          this, SLOT(slot_minValueChanged(double)));
+
+  connect(m_classificationPanel, SIGNAL(maxValueChanged(double)),
+          this, SLOT(slot_maxValueChanged(double)));
+
+  connect(this, SIGNAL(shownBlocksChanged(unsigned int)),
+          m_statsPanel, SLOT(slot_visibleBlocksChanged(unsigned int)));
+
 
 }
 
@@ -352,11 +366,11 @@ ControlPanel::setcurrentMinMaxSliders(double min, double max)
 
 
 ///////////////////////////////////////////////////////////////////////////////
-void
-ControlPanel::setVisibleBlocks(size_t visibleBlocks)
-{
-  m_statsPanel->slot_visibleBlocksChanged(visibleBlocks);
-}
+//void
+//ControlPanel::setVisibleBlocks(size_t visibleBlocks)
+//{
+//  m_statsPanel->slot_visibleBlocksChanged(visibleBlocks);
+//}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -371,17 +385,23 @@ ControlPanel::slot_rovChangingChanged(bool toggle)
 void
 ControlPanel::slot_classificationTypeChanged(ClassificationType type)
 {
-  m_renderer->setClassificationType(type);
-
+  m_collection->setClassificationType(type);
 }
 
 
-
+///////////////////////////////////////////////////////////////////////////////
 void
-ControlPanel::slot_minMaxChange(double min, double max)
+ControlPanel::slot_minValueChanged(double min)
 {
-  setcurrentMinMaxSliders(min, max);
+  m_collection->setRangeMin(min);
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+void
+ControlPanel::slot_maxValueChanged(double max)
+{
+  m_collection->setRangeMax(max);
+}
 
 } // namespace subvol

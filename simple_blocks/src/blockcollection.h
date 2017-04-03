@@ -3,6 +3,7 @@
 
 
 #include "blockloader.h"
+#include "classificationtype.h"
 
 #include <bd/volume/block.h>
 #include <bd/io/indexfile.h>
@@ -55,7 +56,7 @@ public:
 
 
   void
-  filterBlocksByROVRange(double rov_min, double rov_max);
+  filterBlocksByRange();
 
 
   void
@@ -63,6 +64,7 @@ public:
 
   bd::Block *
   nextLoadableBlock();
+
 
   void
   pauseLoaderThread();
@@ -73,20 +75,43 @@ public:
 
 
   std::vector<bd::Block *> const&
-  blocks() const;
+  getBlocks() const;
 
 
   std::vector<bd::Block *>&
-  blocks();
-
-
-  std::vector<bd::Block *> const&
-  nonEmptyBlocks() const;
+  getBlocks();
 
 
   std::vector<bd::Block *>&
-  nonEmptyBlocks();
+  getNonEmptyBlocks();
 
+
+  size_t
+  getNumNonEmptyBlocks() const;
+
+
+  size_t
+  getTotalNumBlocks() const;
+
+
+  double
+  getRangeMin() const;
+
+
+  void
+  setRangeMin(double);
+
+
+  double
+  getRangeMax() const;
+
+
+  void
+  setRangeMax(double);
+
+
+  bool
+  getRangeChanged() const;
 
   /// Find the largest non-empty block and return the number of voxels.
   /// \return size_t that is the number of voxels in the largest block.
@@ -97,10 +122,15 @@ public:
   void
   setVisibleBlocksCallback(std::function<void(size_t)> &func);
 
+  void
+  setClassificationType(ClassificationType type);
+
 private:
 
   std::vector<bd::Block *> m_blocks;
+
   std::vector<bd::Block *> m_nonEmptyBlocks;
+
   std::vector<bd::Block *> m_emptyBlocks;
 
   bd::Volume m_volume;
@@ -109,7 +139,16 @@ private:
 
   std::future<int> m_loaderFuture;
 
+  ClassificationType m_classificationType;
+
+  double m_rangeLow;
+  double m_rangeHigh;
+
+  bool m_rangeChanged;
+
   std::function<void(size_t)> m_visibleBlocksCb;
+
+
 
   //  BlockMemoryManager *m_man;
 

@@ -1,18 +1,15 @@
-//#include <GL/glew.h>
-//#include <GLFW/glfw3.h>
 
 // local includes
 #include "cmdline.h"
-#include "create_vao.h"
 #include "axis_enum.h"
 #include "timing.h"
-#include "blockrenderer.h"
 #include "constants.h"
 #include "colormap.h"
 #include "renderhelp.h"
-#include "controls.h"
 #include "controlpanel.h"
 #include "blockcollection.h"
+#include "semathing.h"
+#include "loop.h"
 
 // BD lib
 #include <bd/graphics/shader.h>
@@ -25,33 +22,16 @@
 
 // STL and STD lib
 #include <string>
-#include <fstream>
 #include <iostream>
-#include <ostream>
+#include <fstream>
 #include <future>
-
-
 #include <memory>
-
 
 // profiling
 #include "nvpm.h"
 
 
-//std::shared_ptr<bd::CoordinateAxis> g_axis{ nullptr }; ///< The coordinate axis lines.
-std::shared_ptr<subvol::BlockRenderer> g_renderer{ nullptr };
-std::shared_ptr<bd::ShaderProgram> g_wireframeShader{ nullptr };
-std::shared_ptr<bd::ShaderProgram> g_volumeShader{ nullptr };
-std::shared_ptr<bd::ShaderProgram> g_volumeShaderLighting{ nullptr };
-std::shared_ptr<bd::VertexArrayObject> g_axisVao{ nullptr };
-std::shared_ptr<bd::VertexArrayObject> g_boxVao{ nullptr };
-std::shared_ptr<bd::VertexArrayObject> g_quadVao{ nullptr };
-std::shared_ptr<subvol::BlockCollection> g_blockCollection{ nullptr };
-std::shared_ptr<bd::IndexFile> g_indexFile{ nullptr };
-//std::shared_ptr<subvol::Controls> g_controls{ nullptr };
-bool g_renderInitComplete{ false };
 
-double g_rovMin, g_rovMax;
 
 void cleanup();
 void printBlocks(subvol::BlockCollection *bcol);
@@ -80,7 +60,7 @@ printBlocks(subvol::BlockCollection *bcol)
 
   if (block_file.is_open()) {
     bd::Info() << "Writing blocks to blocks.txt in the current working directory.";
-    for (auto &b : bcol->blocks()) {
+    for (auto &b : bcol->getBlocks()) {
       block_file << b << "\n";
     }
     block_file.flush();
@@ -109,15 +89,13 @@ printBlocks(subvol::BlockCollection *bcol)
 
 
 /////////////////////////////////////////////////////////////////////////////////
+// Since the IndexFileHeader contains most of the options needed to
+// render the volume, we copy those over into the CommandLineOptions struct.
+// Without an index file these options are provided via argv anyway.
 void
 updateCommandLineOptionsFromIndexFile(subvol::CommandLineOptions &clo,
                                       std::shared_ptr<bd::IndexFile> const &indexFile)
 {
-
-  // Since the IndexFileHeader contains most of the options needed to
-  // render the volume, we copy those over into the CommandLineOptions struct.
-  // Without an index file these options are provided via argv anyway.
-
   // Clamp clo.blockThreshold_Min/Max to the min/max values of
   // the blocks in indexfile.
   double min{ std::numeric_limits<double>::max() };
@@ -132,8 +110,9 @@ updateCommandLineOptionsFromIndexFile(subvol::CommandLineOptions &clo,
                             return lhs.rov < rhs.rov;
                           } );
 
-  g_rovMin = min = (*minmaxE.first).rov;
-  g_rovMax = max = (*minmaxE.second).rov;
+  renderhelp::g_rovMin = min = (*minmaxE.first).rov;
+  renderhelp::g_rovMax = max = (*minmaxE.second).rov;
+
 
   // Clamp the given block thresholds to the actual.
   if (clo.blockThreshold_Min < min) {
@@ -207,85 +186,6 @@ initializeTransferFunctions(subvol::CommandLineOptions const &clo)
 
 
 /////////////////////////////////////////////////////////////////////////////////
-void
-initializeVertexBuffers(subvol::CommandLineOptions const &clo)
-{
-
-  // 2d slices
-  g_quadVao = std::make_shared<bd::VertexArrayObject>();
-  g_quadVao->create();
-  //TODO: generate quads shaped to the actual volume dimensions.
-  bd::Dbg() << "Generating proxy geometry VAO";
-  
-  subvol::genQuadVao(*g_quadVao,
-                     { -0.5f, -0.5f, -0.5f },
-                     { 0.5f, 0.5f, 0.5f },
-                     { clo.num_slices, clo.num_slices, clo.num_slices });
-
-
-  // coordinate axis
-  bd::Dbg() << "Generating coordinate axis VAO";
-  g_axisVao = std::make_shared<bd::VertexArrayObject>();
-  g_axisVao->create();
-  subvol::genAxisVao(*g_axisVao);
-
-
-  // bounding boxes
-  bd::Dbg() << "Generating bounding box VAO";
-  g_boxVao = std::make_shared<bd::VertexArrayObject>();
-  g_boxVao->create();
-  subvol::genBoxVao(*g_boxVao);
-}
-
-
-int
-initializeShaders(subvol::CommandLineOptions &clo)
-{
-  int rval = 0b111;
-
-
-  // Wireframe Shader
-  g_wireframeShader = std::make_shared<bd::ShaderProgram>();
-  GLuint programId{
-      g_wireframeShader->linkProgram("shaders/vert_vertexcolor_passthrough.glsl",
-                                     "shaders/frag_vertcolor.glsl") };
-  if (programId == 0) {
-    bd::Err() << "Error building passthrough shader, program id was 0.";
-    rval &= 0b110;
-  }
-  g_wireframeShader->unbind();
-
-
-  // Volume shader
-  g_volumeShader = std::make_shared<bd::ShaderProgram>();
-  programId =
-      g_volumeShader->linkProgram("shaders/vert_vertexcolor_passthrough.glsl",
-                                  "shaders/frag_volumesampler_noshading.glsl");
-  if (programId == 0) {
-    bd::Err() << "Error building volume shader, program id was 0.";
-    rval &= 0b101;
-  }
-  g_volumeShader->unbind();
-
-
-  // Volume shader with Lighting
-  g_volumeShaderLighting = std::make_shared<bd::ShaderProgram>();
-  programId =
-      g_volumeShaderLighting->linkProgram("shaders/vert_vertexcolor_passthrough.glsl",
-                                          "shaders/frag_shading_otfgrads.glsl");
-  if (programId == 0) {
-    bd::Err() << "Error building volume lighting shader, program id was 0.";
-    rval &= 0b011;
-  }
-  g_volumeShaderLighting->unbind();
-
-
-  return rval;
-}
-
-
-
-/////////////////////////////////////////////////////////////////////////////////
 GLFWwindow *
 init_subvol(subvol::CommandLineOptions &clo)
 {
@@ -301,14 +201,10 @@ init_subvol(subvol::CommandLineOptions &clo)
       return nullptr;
     }
     updateCommandLineOptionsFromIndexFile(clo, indexFile);
-    g_indexFile = indexFile;
-  } //else {
-//    bd::Err() << "No IndexFile provided.";
-//    return nullptr;
-//  }
+    renderhelp::g_indexFile = indexFile;
+  }
 
   subvol::printThem(clo);
-
 
   // Initialize OpenGL and GLFW and generate our transfer function textures.
   GLFWwindow *window{ nullptr };
@@ -329,38 +225,35 @@ init_subvol(subvol::CommandLineOptions &clo)
     clo.gpuMemoryBytes = static_cast<size_t>(totalMemory);
   }
 
-  subvol::renderhelp::setInitialGLState();
-  subvol::initializeVertexBuffers(clo);
-  subvol::initializeShaders(clo);
-  bool loaded = subvol::initializeTransferFunctions(clo);
+  renderhelp::setInitialGLState();
+  renderhelp::initializeVertexBuffers(clo);
+  renderhelp::initializeShaders(clo);
+  bool loaded = initializeTransferFunctions(clo);
 
-  BlockCollection *bc{ nullptr };
-  if (! renderhelp::initializeBlockCollection(&bc, indexFile.get(), clo)) {
-    bd::Err() << "Error initializing block collection.";
-    return nullptr;
-  }
-  g_blockCollection = std::shared_ptr<BlockCollection>(bc);
-  
-  g_renderer =
-      std::make_shared<subvol::BlockRenderer>(int(clo.num_slices),
-                                              g_volumeShader,
-                                              g_volumeShaderLighting,
-                                              g_wireframeShader,
-                                              bc,
-                                              g_quadVao,
-                                              g_boxVao,
-                                              g_axisVao);
+  renderhelp::initializeBlockCollection(indexFile.get(), clo);
 
-  setRendererInitialTransferFunction(loaded, "USER", *g_renderer);
+  renderhelp::g_renderer =
+      std::make_shared<subvol::BlockRenderer>(
+          int(clo.num_slices),
+          renderhelp::g_volumeShader,
+          renderhelp::g_volumeShaderLighting,
+          renderhelp::g_wireframeShader,
+          renderhelp::g_blockCollection,
+          renderhelp::g_quadVao,
+          renderhelp::g_boxVao,
+          renderhelp::g_axisVao);
 
-  g_renderer->resize(clo.windowWidth, clo.windowHeight);
-  g_renderer->getCamera().setEye({ 0, 0, 4 });
-  g_renderer->getCamera().setLookAt({ 0, 0, 0 });
-  g_renderer->getCamera().setUp({ 0, 1, 0 });
-  g_renderer->setViewMatrix(g_renderer->getCamera().createViewMatrix());
-  g_renderer->setROVRange(clo.blockThreshold_Min, clo.blockThreshold_Max);
-  g_renderer->setDrawNonEmptySlices(true);
-  g_renderer->setDrawNonEmptyBoundingBoxes(false);
+  setRendererInitialTransferFunction(loaded, "USER", *renderhelp::g_renderer);
+
+  renderhelp::g_renderer->resize(clo.windowWidth, clo.windowHeight);
+  renderhelp::g_renderer->getCamera().setEye({ 0, 0, 4 });
+  renderhelp::g_renderer->getCamera().setLookAt({ 0, 0, 0 });
+  renderhelp::g_renderer->getCamera().setUp({ 0, 1, 0 });
+  renderhelp::g_renderer->setViewMatrix(
+      renderhelp::g_renderer->getCamera().createViewMatrix());
+//  renderhelp::g_renderer->setROVRange(clo.blockThreshold_Min, clo.blockThreshold_Max);
+  renderhelp::g_renderer->setDrawNonEmptySlices(true);
+  renderhelp::g_renderer->setDrawNonEmptyBoundingBoxes(false);
 
 
 //  setCameraPosPreset(clo.cameraPos);
@@ -369,47 +262,13 @@ init_subvol(subvol::CommandLineOptions &clo)
   perf_initNvPm();
   perf_initMode(clo.perfMode);
 
-  subvol::renderhelp::initializeControls(window, g_renderer);
-  g_renderInitComplete = true;
+  subvol::renderhelp::initializeControls(window, renderhelp::g_renderer);
 
   return window;
 
 } // init_subvol
 
 } // namespace subvol
-
-
-
-class Semathing {
-
-public:
-  Semathing(unsigned max) : count{ max } { }
-
-  ~Semathing() { }
-
-  void
-  signal() {
-    std::unique_lock<std::mutex> lck(mutex);
-    count--;
-    if (count == 0) {
-      cv.notify_all();
-    }
-  }
-
-  void
-  wait() {
-    std::unique_lock<std::mutex> lck(mutex);
-    while (count > 0) {
-      cv.wait(mutex);
-    }
-
-  }
-
-private:
-  unsigned int count;
-  std::mutex mutex;
-  std::condition_variable_any cv;
-};
 
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -437,18 +296,21 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  Semathing s(1);
+  subvol::renderhelp::Loop loop;
+
+  subvol::Semathing s(1);
 
   // Start the qt event stuff on a separate thread.
   std::future<int> returned =
       std::async(std::launch::async,
                  [&]() {
                    QApplication a(argc, argv);
-                   subvol::ControlPanel panel(g_renderer.get(),
-                                              g_blockCollection.get(),
-                                              g_indexFile);
+                   subvol::ControlPanel panel(subvol::renderhelp::g_renderer.get(),
+                                              subvol::renderhelp::g_blockCollection.get(),
+                                              subvol::renderhelp::g_indexFile);
 
-                   panel.setGlobalRovMinMax(g_rovMin, g_rovMax);
+                   panel.setGlobalRovMinMax(subvol::renderhelp::g_rovMin,
+                                            subvol::renderhelp::g_rovMax);
                    panel.setcurrentMinMaxSliders(0, 0);
                    panel.show();
                    s.signal();
@@ -456,7 +318,7 @@ int main(int argc, char *argv[])
                  });
 
   s.wait();
-  subvol::renderhelp::loop(window, g_renderer.get());
+  loop.loop(window);
   std::cout << "Waiting for GUI to close..." << std::endl;
   returned.wait();
   std::cout << "subvol exiting: " << returned.get() << std::endl;

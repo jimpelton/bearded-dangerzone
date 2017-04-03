@@ -369,7 +369,7 @@ void createElementIdx(std::vector<unsigned short> &elebuf, unsigned short numSli
     elebuf.push_back(0xFFFF);
   }
 
-  elebuf.erase(elebuf.end()-1);
+//  elebuf.erase(elebuf.end()-1);
 
 //  for (size_t i{ 0 }; i < numSlices.y; ++i) {
 //    elebuf.push_back(0 + 4 * i);

@@ -34,7 +34,7 @@ public:
                 std::shared_ptr<bd::ShaderProgram> volumeShader,
                 std::shared_ptr<bd::ShaderProgram> volumeShaderLighting,
                 std::shared_ptr<bd::ShaderProgram> wireframeShader,
-                subvol::BlockCollection *blockCollection,
+                std::shared_ptr<subvol::BlockCollection> blockCollection,
                 std::shared_ptr<bd::VertexArrayObject> blocksVAO,
                 std::shared_ptr<bd::VertexArrayObject> bboxVAO,
                 std::shared_ptr<bd::VertexArrayObject> axisVao);
@@ -49,11 +49,12 @@ private:
 
 
 public:
-  ClassificationType
-  getClassificationType();
+//  ClassificationType
+//  getClassificationType();
 
-  void
-  setClassificationType(ClassificationType type);
+//  void
+//  setClassificationType(ClassificationType type);
+
 
   /// \brief Set the transfer function texture.
   void
@@ -108,24 +109,24 @@ public:
   setDrawNonEmptySlices(bool b);
 
 
-  void
-  setROVRange(double min, double max);
+//  void
+//  setROVRange(double min, double max);
 
 
-  double
-  getROVMin();
-
-
-  double
-  getROVMax();
-
-
-  unsigned long long int
-  getNumBlocks() const;
-
-
-  unsigned long long int
-  getNumBlocksShown() const;
+//  double
+//  getROVMin();
+//
+//
+//  double
+//  getROVMax();
+//
+//
+//  unsigned long long int
+//  getNumBlocks() const;
+//
+//
+//  unsigned long long int
+//  getNumBlocksShown() const;
 
 
   /// \brief Draw each non-empty block.
@@ -140,8 +141,8 @@ public:
 
 
   /// \brief Hint that the block caches should be updated.
-  void
-  updateCache();
+//  void
+//  updateCache();
 
 
 private:
@@ -172,25 +173,25 @@ private:
   void
   sortBlocks();
 
-  void
-  filterBlocksByROV();
+//  void
+//  filterBlocksByROV();
 
   /// By which metric should the blocks be deemed visible or not.
-  ClassificationType m_classificationType;
+//  ClassificationType m_classificationType;
   /// Number of slices per block
   int m_numSlicesPerBlock;
   /// Transfer function scaling value
   float m_tfuncScaleValue;
-  double m_rov_min;
-  double m_rov_max;
-  uint64_t m_timeOfLastJob;
+//  double m_rov_min;
+//  double m_rov_max;
+//  uint64_t m_timeOfLastJob;
   /// True to draw bounding boxes.
   bool m_drawNonEmptyBoundingBoxes;
   bool m_drawNonEmptySlices;
-  bool m_ROVRangeChanged;
+//  bool m_ROVRangeChanged;
   /// Show bounding boxes if rov is changing.
-  bool m_ROVChanging;
-  bool m_cacheNeedsUpdating;
+  bool m_rangeChanging;
+//  bool m_cacheNeedsUpdating;
   /// True to use Phong lighting shader.
   bool m_shouldUseLighting;
   /// Current background color.
@@ -208,7 +209,7 @@ private:
   std::shared_ptr<bd::VertexArrayObject> m_quadsVao;    ///< Quad geometry verts
   std::shared_ptr<bd::VertexArrayObject> m_boxesVao;    ///< bounding box wireframe verts
   std::shared_ptr<bd::VertexArrayObject> m_axisVao;
-  subvol::BlockCollection *m_collection;
+  std::shared_ptr<BlockCollection> m_collection;
 
   std::vector<bd::Block *> *m_nonEmptyBlocks;  ///< Non-empty blocks to draw.
   std::vector<bd::Block *> *m_blocks;       ///< All the blocks!

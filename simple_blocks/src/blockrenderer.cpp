@@ -20,7 +20,6 @@ namespace subvol
 {
 
 
-#define MAX_MILLIS_SINCE_LAST_JOB 10000000
 
 BlockRenderer::BlockRenderer()
     : BlockRenderer(0, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr)
@@ -33,24 +32,23 @@ BlockRenderer::BlockRenderer(int numSlices,
                              std::shared_ptr<bd::ShaderProgram> volumeShader,
                              std::shared_ptr<bd::ShaderProgram> volumeShaderLighting,
                              std::shared_ptr<bd::ShaderProgram> wireframeShader,
-                             subvol::BlockCollection *blockCollection,
+                             std::shared_ptr<BlockCollection> blockCollection,
                              std::shared_ptr<bd::VertexArrayObject> blocksVAO,
                              std::shared_ptr<bd::VertexArrayObject> bboxVAO,
                              std::shared_ptr<bd::VertexArrayObject> axisVao)
     : Renderer()
-    , m_classificationType{ ClassificationType::Rov }
     , m_numSlicesPerBlock{ numSlices }
     , m_tfuncScaleValue{ 1.0f }
 
-    , m_rov_min{ 0.0 }
-    , m_rov_max{ 0.0 }
+//    , m_rov_min{ 0.0 }
+//    , m_rov_max{ 0.0 }
    
-    , m_timeOfLastJob{ 0 }
+//    , m_timeOfLastJob{ 0 }
 
     , m_drawNonEmptyBoundingBoxes{ false }
     , m_drawNonEmptySlices{ true }
-    , m_ROVRangeChanged{ false }
-    , m_cacheNeedsUpdating{ false }
+//    , m_ROVRangeChanged{ false }
+//    , m_cacheNeedsUpdating{ false }
     , m_shouldUseLighting{ false }
     , m_backgroundColor{ 0.0f }
 
@@ -63,14 +61,13 @@ BlockRenderer::BlockRenderer(int numSlices,
     , m_quadsVao{ std::move(blocksVAO) }
     , m_boxesVao{ std::move(bboxVAO) }
     , m_axisVao{ std::move(axisVao) }
-    , m_collection{ blockCollection }
+    , m_collection{ std::move(blockCollection) }
 
     , m_nonEmptyBlocks{ nullptr }
     , m_blocks{ nullptr }
 {
-  m_blocks = &(m_collection->blocks());
-  m_nonEmptyBlocks = &(m_collection->nonEmptyBlocks());
-  //m_renderableBlocks.reserve(m_collection->blocks().size());
+  m_blocks = &( m_collection->getBlocks());
+  m_nonEmptyBlocks = &( m_collection->getNonEmptyBlocks());
   init();
 }
 
@@ -95,8 +92,8 @@ BlockRenderer::init()
   m_volumeShaderLighting->setUniform(TRANSF_SAMPLER_UNIFORM_STR, TRANSF_TEXTURE_UNIT);
   m_volumeShaderLighting->setUniform(VOLUME_TRANSF_SCALER_UNIFORM_STR, 1.0f);
   setShaderLightPos(glm::normalize(glm::vec3{ 1.0f, 1.0f, 1.0f }));
-  setShaderNShiney(1.0f);
-  setShaderMaterial({ 0.8f, 0.6f, 0.6f });
+  setShaderNShiney(1.1f);
+  setShaderMaterial({ 0.15f, 0.65f, 0.75f });
 
   // sets m_currentShader depending on m_shouldUseLighting.
   setShouldUseLighting(m_shouldUseLighting);
@@ -108,21 +105,6 @@ BlockRenderer::init()
   return true;
 }
 
-
-///////////////////////////////////////////////////////////////////////////////
-ClassificationType
-BlockRenderer::getClassificationType()
-{
-  return m_classificationType;
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-void
-BlockRenderer::setClassificationType(ClassificationType type)
-{
-  m_classificationType = type;
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 void
@@ -226,45 +208,45 @@ BlockRenderer::setDrawNonEmptyBoundingBoxes(bool b)
 
 
 ///////////////////////////////////////////////////////////////////////////////
-void
-BlockRenderer::setROVRange(double min, double max)
-{
-  m_rov_min = min;
-  m_rov_max = max;
-  m_ROVRangeChanged = true;
-}
+//void
+//BlockRenderer::setROVRange(double min, double max)
+//{
+//  m_rov_min = min;
+//  m_rov_max = max;
+//  m_ROVRangeChanged = true;
+//}
 
 
 ////////////////////////////////////////////////////////////////////////////////
-double
-BlockRenderer::getROVMin()
-{
-  return m_rov_min;
-}
+//double
+//BlockRenderer::getROVMin()
+//{
+//  return m_rov_min;
+//}
+//
+//
+//////////////////////////////////////////////////////////////////////////////////
+//double
+//BlockRenderer::getROVMax()
+//{
+//  return m_rov_max;
+//}
 
 
 ////////////////////////////////////////////////////////////////////////////////
-double
-BlockRenderer::getROVMax()
-{
-  return m_rov_max;
-}
+//unsigned long long int
+//BlockRenderer::getNumBlocks() const
+//{
+//  return m_collection->blocks().size();
+//}
 
 
 ////////////////////////////////////////////////////////////////////////////////
-unsigned long long int
-BlockRenderer::getNumBlocks() const
-{
-  return m_collection->blocks().size();
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-unsigned long long int
-BlockRenderer::getNumBlocksShown() const
-{
-  return m_collection->nonEmptyBlocks().size();
-}
+//unsigned long long int
+//BlockRenderer::getNumBlocksShown() const
+//{
+//  return m_collection->nonEmptyBlocks().size();
+//}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -273,12 +255,13 @@ BlockRenderer::setDrawNonEmptySlices(bool b)
 {
   m_drawNonEmptySlices = b;
 }
- 
+
+
 ////////////////////////////////////////////////////////////////////////////////
 void
 BlockRenderer::setROVChanging(bool b)
 {
-  m_ROVChanging = b;
+  m_rangeChanging = b;
   if (b) {
     m_collection->pauseLoaderThread();
   } else {
@@ -302,22 +285,8 @@ BlockRenderer::draw()
 {
   // We need to draw in reverse-visibility order (painters algorithm!)
   // so the transparency looks correct.
-
-  if(m_ROVRangeChanged) {
-    filterBlocksByROV();
-    m_ROVRangeChanged = false;
-  }
-
-
-  if (glfwGetTimerValue() - m_timeOfLastJob > MAX_MILLIS_SINCE_LAST_JOB) {
-    // load some blocks to the m_gpu if any available.
-    m_collection->loadSomeBlocks();
-    m_timeOfLastJob = glfwGetTimerValue();
-  }
-
-
-  //TODO: only sort if rotated beyond a limit.
   sortBlocks();
+  //TODO: only sort if rotated beyond a limit.
 
 
   // Side effect: recalculation of world-view-projection matrix.
@@ -327,11 +296,11 @@ BlockRenderer::draw()
 
   drawAxis();
 
-  if (m_drawNonEmptyBoundingBoxes || m_ROVChanging) {
+  if (m_drawNonEmptyBoundingBoxes || m_rangeChanging) {
     drawNonEmptyBoundingBoxes();
   }
 
-  if (m_drawNonEmptySlices && !m_ROVChanging) {
+  if (m_drawNonEmptySlices && !m_rangeChanging) {
     drawNonEmptyBlocks_Forward();
   }
 
@@ -368,11 +337,11 @@ BlockRenderer::drawNonEmptyBoundingBoxes()
 
 
 ///////////////////////////////////////////////////////////////////////////////
-void
-BlockRenderer::updateCache()
-{
-  m_cacheNeedsUpdating = true;
-}
+//void
+//BlockRenderer::updateCache()
+//{
+//  m_cacheNeedsUpdating = true;
+//}
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -540,11 +509,11 @@ BlockRenderer::sortBlocks()
             });
 }
 
-void
-BlockRenderer::filterBlocksByROV()
-{
-  m_collection->filterBlocksByROVRange(m_rov_min, m_rov_max);
-}
+//void
+//BlockRenderer::filterBlocksByROV()
+//{
+//  m_collection->filterBlocksByROVRange(m_rov_min, m_rov_max);
+//}
 
 
 

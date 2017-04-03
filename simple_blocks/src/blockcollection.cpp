@@ -27,15 +27,19 @@ BlockCollection::BlockCollection(BlockLoader *loader,
                                  IndexFile const &index)
     : m_blocks()
     , m_nonEmptyBlocks()
-    , m_volume{ }
+    , m_emptyBlocks()
+    , m_volume{ index.getVolume() }
     , m_loader{ loader }
+    , m_classificationType{ ClassificationType::Rov }
+    , m_rangeLow{ 0 }
+    , m_rangeHigh{ 0 }
+    , m_rangeChanged{ false }
 {
   // This is probably a bad place for this, I know.
   m_loaderFuture =
       std::async(std::launch::async,
                  [loader]() -> int { return ( *loader )(); });
 
-  m_volume = index.getVolume();
   initBlocksFromFileBlocks(index.getFileBlocks(),
                            m_volume.worldDims(),
                            m_volume.block_count());
@@ -137,12 +141,10 @@ BlockCollection::initBlocksFromFileBlocks(std::vector<FileBlock> const &fileBloc
 
 ///////////////////////////////////////////////////////////////////////////////
 void
-BlockCollection::filterBlocksByROVRange(double rov_min, double rov_max)
+BlockCollection::filterBlocksByRange()
 {
   m_nonEmptyBlocks.clear();
   m_emptyBlocks.clear();
-
-//  size_t bytes{ 0 };
 
   size_t nBlk{ m_blocks.size() };
   for (size_t i{ 0 }; i < nBlk; ++i) {
@@ -150,16 +152,19 @@ BlockCollection::filterBlocksByROVRange(double rov_min, double rov_max)
     bd::Block *b{ m_blocks[i] };
     double rov = b->fileBlock().rov;
 
-    if (rov >= rov_min && rov <= rov_max) {
+    if (rov >= m_rangeLow && rov <= m_rangeHigh) {
       b->empty(false);
       m_nonEmptyBlocks.push_back(b);
     } else {
       b->empty(true);
       m_emptyBlocks.push_back(b);
     }
+
   } // for
 
   m_visibleBlocksCb(m_nonEmptyBlocks.size());
+
+  m_rangeChanged = false;
 }
 
 
@@ -247,7 +252,7 @@ BlockCollection::loadSomeBlocks()
 
 ///////////////////////////////////////////////////////////////////////////////
 std::vector<Block *> const &
-BlockCollection::blocks() const
+BlockCollection::getBlocks() const
 {
   return m_blocks;
 }
@@ -255,25 +260,74 @@ BlockCollection::blocks() const
 
 ///////////////////////////////////////////////////////////////////////////////
 std::vector<Block *> &
-BlockCollection::blocks()
+BlockCollection::getBlocks()
 {
   return m_blocks;
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
-std::vector<Block *> const &
-BlockCollection::nonEmptyBlocks() const
+std::vector<Block *> &
+BlockCollection::getNonEmptyBlocks()
 {
   return m_nonEmptyBlocks;
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
-std::vector<Block *> &
-BlockCollection::nonEmptyBlocks()
+size_t
+BlockCollection::getNumNonEmptyBlocks() const
 {
-  return m_nonEmptyBlocks;
+  return m_nonEmptyBlocks.size();
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+size_t
+BlockCollection::getTotalNumBlocks() const
+{
+  return m_blocks.size();
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+double
+BlockCollection::getRangeMin() const
+{
+  return m_rangeLow;
+}
+
+
+void
+BlockCollection::setRangeMin(double min)
+{
+  m_rangeLow = min;
+  m_rangeChanged = true;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+double
+BlockCollection::getRangeMax() const
+{
+  return m_rangeHigh;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+void
+BlockCollection::setRangeMax(double max)
+{
+  m_rangeHigh = max;
+  m_rangeChanged = true;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+bool
+BlockCollection::getRangeChanged() const
+{
+  return m_rangeChanged;
 }
 
 
@@ -314,6 +368,15 @@ void
 BlockCollection::setVisibleBlocksCallback(std::function<void(size_t)> &func)
 {
   m_visibleBlocksCb = func;
+}
+
+
+void
+BlockCollection::setClassificationType(ClassificationType type)
+{
+  m_classificationType = type;
+  // TODO: update for this classification type.
+  // TODO: perform callback to caller?
 }
 
 

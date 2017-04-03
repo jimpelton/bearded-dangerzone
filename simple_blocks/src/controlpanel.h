@@ -122,14 +122,15 @@ class StatsPanel : public QWidget
   Q_OBJECT
 
 public:
-  StatsPanel(QWidget *parent);
+  StatsPanel(size_t totalBlocks,
+             QWidget *parent);
   ~StatsPanel() = default;
 
 //signals:
 
 public slots:
   void
-  slot_visibleBlocksChanged(size_t numblk);
+  slot_visibleBlocksChanged(unsigned int numblk);
 
   void
   slot_totalBlocksChanged(size_t t);
@@ -152,7 +153,7 @@ private:
   QLabel *m_compressionValueLabel;
 
 
-  size_t m_shownBlocks;
+  size_t m_visibleBlocks;
   size_t m_totalBlocks;
 
 
@@ -180,10 +181,9 @@ public:
   void
   setcurrentMinMaxSliders(double min, double max);
 
-  void
-  setVisibleBlocks(size_t visibleBlocks);
 
 signals:
+  void shownBlocksChanged(unsigned int);
 
 
 public slots:
@@ -194,7 +194,10 @@ public slots:
   slot_classificationTypeChanged(ClassificationType type);
 
   void
-  slot_minMaxChange(double min, double max);
+  slot_minValueChanged(double min);
+
+  void
+  slot_maxValueChanged(double max);
 
 
 private:
@@ -204,20 +207,18 @@ private:
   double m_globalMin;
   double m_globalMax;
 
-
 //  QDoubleSpinBox *m_currentMin_SpinBox;
 //  QDoubleSpinBox *m_currentMax_SpinBox;
 //  QLabel *m_globalMin_Label;
 //  QLabel *m_globalMax_Label;
 
-
-
   ClassificationPanel *m_classificationPanel;
   StatsPanel *m_statsPanel;
 
   BlockRenderer *m_renderer;
-  std::shared_ptr<const bd::IndexFile> m_index;
+  BlockCollection *m_collection;
 
+  std::shared_ptr<const bd::IndexFile> m_index;
 };
 
 }
