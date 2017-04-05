@@ -51,16 +51,13 @@ public:
                            glm::u64vec3 const &numblocks);
 
 
-//  void
-//  filterBlocks(std::function<bool(bd::Block const &)> filter);
-
-
   void
-  filterBlocksByRange();
+  filterBlocks();
 
 
   void
   updateBlockCache();
+
 
   bd::Block *
   nextLoadableBlock();
@@ -123,9 +120,15 @@ public:
   setVisibleBlocksCallback(std::function<void(size_t)> &func);
 
   void
-  setClassificationType(ClassificationType type);
+  changeClassificationType(ClassificationType type);
 
 private:
+
+  void
+  filterBlocksByROV();
+
+  void
+  filterBlocksByAverage();
 
   std::vector<bd::Block *> m_blocks;
 

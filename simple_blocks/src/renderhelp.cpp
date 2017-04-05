@@ -184,7 +184,7 @@ initializeBlockCollection(bd::IndexFile const *indexFile,
   BlockCollection *bc_local{ new BlockCollection(loader, *indexFile) };
   bc_local->setRangeMin(0);
   bc_local->setRangeMax(0);
-  bc_local->setClassificationType(ClassificationType::Rov);
+  bc_local->changeClassificationType(ClassificationType::Rov);
   g_blockCollection = std::shared_ptr<BlockCollection>(bc_local);
 
   bd::Info() << bc_local->getBlocks().size() << " blocks in index file.";

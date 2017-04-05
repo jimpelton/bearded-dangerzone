@@ -39,7 +39,7 @@ Loop::loop(GLFWwindow *window)
     subvol::timing::startCpuTime();
 
     if (g_blockCollection->getRangeChanged()) {
-      g_blockCollection->filterBlocksByRange();
+      g_blockCollection->filterBlocks();
     }
 
     if (glfwGetTimerValue() - m_timeOfLastJob > MAX_MILLIS_SINCE_LAST_JOB) {

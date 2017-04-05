@@ -65,16 +65,16 @@ BlockCollection::~BlockCollection()
 //                           m_volume.worldDims(),
 //                           m_volume.block_count());
 //
-////  for (size_t i{ 0 }; i < m_blocks.size(); ++i) {
-////    m_blocks[i]->pixelData(( *buffers )[i]);
-////  }
-////
-////  for (size_t i{ 0 }; i < texs->size(); ++i) {
-////    m_blocks[i]->texture(( *texs )[i]);
-////    m_nonEmptyBlocks.push_back(m_blocks[i]);
-////  }
+//  for (size_t i{ 0 }; i < m_blocks.size(); ++i) {
+//    m_blocks[i]->pixelData(( *buffers )[i]);
+//  }
 //
-////  m_loader->queueClassified(m_nonEmptyBlocks, m_emptyBlocks);
+//  for (size_t i{ 0 }; i < texs->size(); ++i) {
+//    m_blocks[i]->texture(( *texs )[i]);
+//    m_nonEmptyBlocks.push_back(m_blocks[i]);
+//  }
+//
+//  m_loader->queueClassified(m_nonEmptyBlocks, m_emptyBlocks);
 //
 //}
 
@@ -119,6 +119,22 @@ BlockCollection::initBlocksFromFileBlocks(std::vector<FileBlock> const &fileBloc
 }
 
 
+void
+BlockCollection::filterBlocks()
+{
+  switch(m_classificationType){
+    case ClassificationType::Rov:
+      filterBlocksByROV();
+      break;
+    case ClassificationType::Avg:
+      filterBlocksByAverage();
+      break;
+    default:
+      break;
+  }
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////
 //void
 //BlockCollection::filterBlocks(std::function<bool(Block const &)> isEmpty)
@@ -131,41 +147,12 @@ BlockCollection::initBlocksFromFileBlocks(std::vector<FileBlock> const &fileBloc
 //    if (! isEmpty(*b)) {
 //      b->visible(true);
 //      m_nonEmptyBlocks.push_back(b);
-////      m_man->asyncLoadBlock(b);
+//      m_man->asyncLoadBlock(b);
 //    } else {
 //      b->visible(false);
 //    }
 //  }
 //}
-
-
-///////////////////////////////////////////////////////////////////////////////
-void
-BlockCollection::filterBlocksByRange()
-{
-  m_nonEmptyBlocks.clear();
-  m_emptyBlocks.clear();
-
-  size_t nBlk{ m_blocks.size() };
-  for (size_t i{ 0 }; i < nBlk; ++i) {
-
-    bd::Block *b{ m_blocks[i] };
-    double rov = b->fileBlock().rov;
-
-    if (rov >= m_rangeLow && rov <= m_rangeHigh) {
-      b->empty(false);
-      m_nonEmptyBlocks.push_back(b);
-    } else {
-      b->empty(true);
-      m_emptyBlocks.push_back(b);
-    }
-
-  } // for
-
-  m_visibleBlocksCb(m_nonEmptyBlocks.size());
-
-  m_rangeChanged = false;
-}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -214,40 +201,6 @@ BlockCollection::loadSomeBlocks()
 //  bd::Dbg() << "Loaded " << i << " blocks.";
 
 }
-
-///////////////////////////////////////////////////////////////////////////////
-//bool
-//BlockCollection::initBlockTextures(std::string const &file, bd::DataType type)
-//{
-//  if (m_blocks.size() == 0)
-//  {
-//    bd::Warn() << "No blocks to initialize textures for.";
-//    return true;
-//  }
-//
-//  bool rval = false;
-//
-//
-//  
-//  switch (type) {
-//    case DataType::UnsignedCharacter:
-//      rval = do_initBlockTextures<unsigned char>(file);
-//      break;
-//    case DataType::UnsignedShort:
-//      rval = do_initBlockTextures<unsigned short>(file);
-//      break;
-//    case DataType::Double:
-//      rval = do_initBlockTextures<double>(file);
-//      break;
-//    case DataType::Float:
-//    default:
-//      rval = do_initBlockTextures<float>(file);
-//      break;
-//  }
-//
-//  return rval;
-//
-//}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -372,13 +325,84 @@ BlockCollection::setVisibleBlocksCallback(std::function<void(size_t)> &func)
 
 
 void
-BlockCollection::setClassificationType(ClassificationType type)
+BlockCollection::changeClassificationType(ClassificationType type)
 {
   m_classificationType = type;
+  pauseLoaderThread();
+  filterBlocks();
   // TODO: update for this classification type.
+
+
+
   // TODO: perform callback to caller?
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+void
+BlockCollection::filterBlocksByROV()
+{
+  m_nonEmptyBlocks.clear();
+  m_emptyBlocks.clear();
+
+  size_t nBlk{ m_blocks.size() };
+  for (size_t i{ 0 }; i < nBlk; ++i) {
+
+    bd::Block *b{ m_blocks[i] };
+    double rov = b->fileBlock().rov;
+
+    if (rov >= m_rangeLow && rov <= m_rangeHigh) {
+      b->empty(false);
+      m_nonEmptyBlocks.push_back(b);
+    } else {
+      b->empty(true);
+      m_emptyBlocks.push_back(b);
+    }
+
+  } // for
+
+  try {
+    m_visibleBlocksCb(m_nonEmptyBlocks.size());
+  } catch (std::bad_function_call &e) {
+    std::cerr << "Aieee! No function to call back to. heee.\n";
+  }
+
+  m_rangeChanged = false;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+void
+BlockCollection::filterBlocksByAverage()
+{
+  m_nonEmptyBlocks.clear();
+  m_emptyBlocks.clear();
+
+  size_t nBlk{ m_blocks.size() };
+  for (size_t i{ 0 }; i < nBlk; ++i) {
+
+    bd::Block *b{ m_blocks[i] };
+    double avg= b->fileBlock().avg_val;
+
+    if (avg >= m_rangeLow && avg <= m_rangeHigh) {
+      b->empty(false);
+      m_nonEmptyBlocks.push_back(b);
+    } else {
+      b->empty(true);
+      m_emptyBlocks.push_back(b);
+    }
+
+  } // for
+
+  try {
+    m_visibleBlocksCb(m_nonEmptyBlocks.size());
+  } catch (std::bad_function_call &e) {
+    std::cerr << "Aieee! No function to call back to. heee.\n";
+  }
+
+  m_rangeChanged = false;
+
+}
 
 //IndexFile const &
 //BlockCollection::indexFile() const

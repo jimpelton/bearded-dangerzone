@@ -244,12 +244,12 @@ StatsPanel::slot_visibleBlocksChanged(unsigned int numblk)
 
 
 ///////////////////////////////////////////////////////////////////////////////
-void
-StatsPanel::slot_totalBlocksChanged(size_t t)
-{
-  m_totalBlocks = t;
-  updateShownBlocksLabels();
-}
+//void
+//StatsPanel::slot_totalBlocksChanged(size_t t)
+//{
+//  m_totalBlocks = t;
+//  updateShownBlocksLabels();
+//}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -381,11 +381,47 @@ ControlPanel::slot_rovChangingChanged(bool toggle)
 }
 
 
+
 ///////////////////////////////////////////////////////////////////////////////
 void
 ControlPanel::slot_classificationTypeChanged(ClassificationType type)
 {
-  m_collection->setClassificationType(type);
+  m_collection->changeClassificationType(type);
+
+  auto avgCompare = [](bd::FileBlock const &lhs, bd::FileBlock const &rhs) {
+    return lhs.avg_val < rhs.avg_val;
+  };
+
+  auto rovCompare = [](bd::FileBlock const &lhs, bd::FileBlock const &rhs) {
+    return lhs.rov < rhs.rov;
+  };
+
+  double min = -1.0;
+  double max = -1.0;
+
+  switch(type) {
+    case ClassificationType::Rov: {
+      auto r = std::minmax_element(this->m_index->getFileBlocks().cbegin(),
+                                   this->m_index->getFileBlocks().cend(),
+                                   rovCompare);
+      min = r.first->rov;
+      max = r.second->rov;
+    }
+      break;
+    case ClassificationType::Avg: {
+      auto r = std::minmax_element(this->m_index->getFileBlocks().cbegin(),
+                                   this->m_index->getFileBlocks().cend(),
+                                   avgCompare);
+      min = r.first->avg_val;
+      max = r.second->avg_val;
+    }
+      break;
+    default:
+      break;
+  }
+
+  m_classificationPanel->setGlobalRange(min, max);
+
 }
 
 

@@ -53,7 +53,7 @@ public:
 //  getClassificationType();
 
 //  void
-//  setClassificationType(ClassificationType type);
+//  changeClassificationType(ClassificationType type);
 
 
   /// \brief Set the transfer function texture.

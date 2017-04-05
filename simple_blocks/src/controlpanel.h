@@ -12,6 +12,8 @@
 
 #include <QWidget>
 
+#include <map>
+
 class QSlider;
 class QLabel;
 class QDoubleSpinBox;
@@ -132,8 +134,8 @@ public slots:
   void
   slot_visibleBlocksChanged(unsigned int numblk);
 
-  void
-  slot_totalBlocksChanged(size_t t);
+//  void
+//  slot_totalBlocksChanged(size_t t);
 
   void
   slot_minRovValueChanged(double minrov);
