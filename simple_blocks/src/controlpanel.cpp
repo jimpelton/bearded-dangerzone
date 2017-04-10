@@ -114,7 +114,7 @@ ClassificationPanel::setMinMax(double min, double max)
 
 ///////////////////////////////////////////////////////////////////////////////
 void
-ClassificationPanel::setGlobalRange(double newMin, double newMax)
+ClassificationPanel::slot_globalRangeChanged(double newMin, double newMax)
 {
 
   if(newMax < newMin) {
@@ -125,6 +125,7 @@ ClassificationPanel::setGlobalRange(double newMin, double newMax)
 
   m_globalMin = newMin;
   m_globalMax = newMax;
+
 }
 
 
@@ -336,6 +337,9 @@ ControlPanel::ControlPanel(BlockRenderer *renderer,
   connect(m_classificationPanel, SIGNAL(maxValueChanged(double)),
           this, SLOT(slot_maxValueChanged(double)));
 
+  connect(this, SIGNAL(globalRangeChanged(double, double)),
+          m_classificationPanel, SLOT(slot_globalRangeChanged(double, double)));
+
   connect(this, SIGNAL(shownBlocksChanged(unsigned int)),
           m_statsPanel, SLOT(slot_visibleBlocksChanged(unsigned int)));
 
@@ -353,7 +357,8 @@ ControlPanel::~ControlPanel()
 void
 ControlPanel::setGlobalRovMinMax(double min, double max)
 {
-  m_classificationPanel->setGlobalRange(min, max);
+//  m_classificationPanel->slot_globalRangeChanged(min, max);
+  emit globalRangeChanged(min, max);
 }
 
 
@@ -420,7 +425,7 @@ ControlPanel::slot_classificationTypeChanged(ClassificationType type)
       break;
   }
 
-  m_classificationPanel->setGlobalRange(min, max);
+  emit globalRangeChanged(min, max);
 
 }
 

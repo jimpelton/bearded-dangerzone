@@ -71,8 +71,6 @@ public:
   void
   setMinMax(double min, double max);
 
-  void
-  setGlobalRange(double rmax, double rmin);
 
 signals:
   void minValueChanged(double rovMin);
@@ -98,6 +96,10 @@ public slots:
 
   void
   slot_rovRadioClicked(bool);
+
+  void
+  slot_globalRangeChanged(double rmax, double rmin);
+
 
 
 private:
@@ -133,9 +135,6 @@ public:
 public slots:
   void
   slot_visibleBlocksChanged(unsigned int numblk);
-
-//  void
-//  slot_totalBlocksChanged(size_t t);
 
   void
   slot_minRovValueChanged(double minrov);
@@ -186,6 +185,7 @@ public:
 
 signals:
   void shownBlocksChanged(unsigned int);
+  void globalRangeChanged(double, double);
 
 
 public slots:
