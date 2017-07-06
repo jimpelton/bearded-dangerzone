@@ -8,7 +8,6 @@
 #include "renderhelp.h"
 #include "blockloader.h"
 #include "blockcollection.h"
-#include "renderer.h"
 #include "controls.h"
 #include "create_vao.h"
 #include "timing.h"
@@ -16,6 +15,7 @@
 
 #include <bd/log/logger.h>
 #include <bd/log/gl_log.h>
+#include <bd/graphics/renderer.h>
 #include "cmdline.h"
 
 //#include <glm/glm.hpp>

@@ -11,8 +11,9 @@
 #include "nvpm.h"
 
 #include <bd/util/ordinal.h>
-#include <glm/gtx/string_cast.hpp>
 #include <bd/geo/axis.h>
+
+#include <glm/gtx/string_cast.hpp>
 #include <bd/log/gl_log.h>
 //#include <bd/log/logger.h>
 

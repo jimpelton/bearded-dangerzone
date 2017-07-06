@@ -6,11 +6,10 @@
 #define blockrenderer_h__
 
 #include "blockcollection.h"
-#include "renderer.h"
 #include "sliceset.h"
 #include "classificationtype.h"
 
-
+#include <bd/graphics/renderer.h>
 #include <bd/graphics/shader.h>
 #include <bd/graphics/texture.h>
 #include <bd/graphics/vertexarrayobject.h>
@@ -23,7 +22,7 @@ namespace subvol
 {
 
 class BlockRenderer
-    : public subvol::Renderer
+    : public bd::Renderer
 {
 
 public:

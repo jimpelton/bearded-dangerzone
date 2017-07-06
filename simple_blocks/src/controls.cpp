@@ -114,7 +114,7 @@ Controls::cursorpos_callback(GLFWwindow *window, double x, double y)
 
     glm::vec2 delta(cpos - m_cursor.pos);
 
-    subvol::Camera &cam{ m_renderer->getCamera() };
+    bd::Camera &cam{ m_renderer->getCamera() };
 
 
     // rotate around camera right

@@ -88,7 +88,6 @@ set(simple_blocks_HEADERS
         src/create_vao.h
         src/loop.h
         src/nvpm.h
-        src/renderer.h
         src/renderhelp.h
         src/sliceset.h
         src/semathing.h
@@ -109,7 +108,6 @@ set(simple_blocks_SOURCES
         src/loop.cpp
         src/sliceset.cpp
         src/timing.cpp
-        src/renderer.cpp
         src/renderhelp.cpp )
 
 
