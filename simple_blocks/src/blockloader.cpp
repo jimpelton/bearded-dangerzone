@@ -166,7 +166,7 @@ BlockLoader::queueClassified(std::vector<bd::Block *> const &visible,
       // and finally pushed to the gpu ready queue.
       // The load thread (running in operator()) pushes to the
       // gpu ready queue and the render thread pops from the gpu ready queue and uploads
-      // to the gpu, then returns the block pointer to the gpu resident queue.
+      // to the gpu, then pushes the block pointer to the gpu resident queue.
       assert(m_gpu.find(b->index()) == m_gpu.end() &&
                  "Block is not in main, but is in gpu!");
       m_loadQueue.push_back(b);
@@ -241,6 +241,8 @@ BlockLoader::queueClassified(std::vector<bd::Block *> const &visible,
 bd::Block *
 BlockLoader::getNextGpuReadyBlock()
 {
+  //we are on the render thread since it is the only thread that
+  //may upload texture data to OGL server.
   std::unique_lock<std::mutex> lock(m_gpuReadyMutex);
   bd::Block *b{ nullptr };
   if (m_gpuReadyQueue.size() > 0) {

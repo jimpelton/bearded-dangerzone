@@ -36,6 +36,7 @@ BlockCollection::BlockCollection(BlockLoader *loader,
     , m_rangeChanged{ false }
 {
   // This is probably a bad place for this, I know.
+  // Launch the block loading thread.
   m_loaderFuture =
       std::async(std::launch::async,
                  [loader]() -> int { return ( *loader )(); });
@@ -94,7 +95,7 @@ BlockCollection::initBlocksFromFileBlocks(std::vector<FileBlock> const &fileBloc
   m_blocks.reserve(fileBlocks.size());
   m_nonEmptyBlocks.reserve(fileBlocks.size());
 
-  int every = 0.1f * fileBlocks.size();
+  int every = static_cast<int>( 0.1f * fileBlocks.size() );
   every = every == 0 ? 1 : every;
 
   auto idx = 0ull;
@@ -164,30 +165,15 @@ BlockCollection::updateBlockCache()
 
 
 ///////////////////////////////////////////////////////////////////////////////
-Block *
-BlockCollection::nextLoadableBlock()
-{
-  return m_loader->getNextGpuReadyBlock();
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-void
-BlockCollection::pauseLoaderThread()
-{
-  m_loader->clearLoadQueue();
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
 void
 BlockCollection::loadSomeBlocks()
 {
+  // we are on the render thread in here.
   uint64_t t{ 0 };
   uint64_t const MAX_JOB_LENGTH_MS = 10000000;
   bd::Block *b{ nullptr };
   int i{ 0 };
-  while (t < MAX_JOB_LENGTH_MS && ( b = nextLoadableBlock())) {
+  while (t < MAX_JOB_LENGTH_MS && ( b = m_loader->getNextGpuReadyBlock())) {
     uint64_t start{ glfwGetTimerValue() };
     b->sendToGpu();
     m_loader->pushGpuResidentBlock(b);
@@ -285,36 +271,36 @@ BlockCollection::getRangeChanged() const
 
 
 ///////////////////////////////////////////////////////////////////////////////
-uint64_t
-BlockCollection::findLargestBlock(std::vector<Block *> &blocks)
-{
-  // find the largest element by comparing voxel counts for each nonEmptyBlock.
-  auto largest =
-      std::max_element(
-          blocks.begin(),
-          blocks.end(),
-
-          [](Block *lhs, Block *rhs) -> bool {
-
-            // compare number of voxels
-
-            size_t lhs_vox =
-                lhs->voxel_extent().x *
-                    lhs->voxel_extent().y *
-                    lhs->voxel_extent().z;
-
-            size_t rhs_vox =
-                rhs->voxel_extent().x *
-                    rhs->voxel_extent().y *
-                    rhs->voxel_extent().z;
-
-            return lhs_vox < rhs_vox;
-          });
-
-  Block *blk{ *largest };
-  return blk->voxel_extent().x * blk->voxel_extent().y * blk->voxel_extent().z;
-
-}
+//uint64_t
+//BlockCollection::findLargestBlock(std::vector<Block *> &blocks)
+//{
+//  // find the largest element by comparing voxel counts for each nonEmptyBlock.
+//  auto largest =
+//      std::max_element(
+//          blocks.begin(),
+//          blocks.end(),
+//
+//          [](Block *lhs, Block *rhs) -> bool {
+//
+//            // compare number of voxels
+//
+//            size_t lhs_vox =
+//                lhs->voxel_extent().x *
+//                    lhs->voxel_extent().y *
+//                    lhs->voxel_extent().z;
+//
+//            size_t rhs_vox =
+//                rhs->voxel_extent().x *
+//                    rhs->voxel_extent().y *
+//                    rhs->voxel_extent().z;
+//
+//            return lhs_vox < rhs_vox;
+//          });
+//
+//  Block *blk{ *largest };
+//  return blk->voxel_extent().x * blk->voxel_extent().y * blk->voxel_extent().z;
+//
+//}
 
 
 void
@@ -328,7 +314,8 @@ void
 BlockCollection::changeClassificationType(ClassificationType type)
 {
   m_classificationType = type;
-  pauseLoaderThread();
+  // pausing the load thread clears the queue of loadable blocks.
+  m_loader->clearLoadQueue();
   filterBlocks();
   // TODO: update for this classification type.
 
@@ -363,8 +350,8 @@ BlockCollection::filterBlocksByROV()
 
   try {
     m_visibleBlocksCb(m_nonEmptyBlocks.size());
-  } catch (std::bad_function_call &e) {
-    std::cerr << "Aieee! No function to call back to. heee.\n";
+  } catch (std::bad_function_call &) {
+    bd::Dbg() << "Aieee! No function to call back to. heee.\n";
   }
 
   m_rangeChanged = false;
@@ -396,8 +383,8 @@ BlockCollection::filterBlocksByAverage()
 
   try {
     m_visibleBlocksCb(m_nonEmptyBlocks.size());
-  } catch (std::bad_function_call &e) {
-    std::cerr << "Aieee! No function to call back to. heee.\n";
+  } catch (std::bad_function_call &) {
+    bd::Dbg() << "Aieee! No function to call back to. heee.\n";
   }
 
   m_rangeChanged = false;

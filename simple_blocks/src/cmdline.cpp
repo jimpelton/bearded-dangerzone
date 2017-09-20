@@ -181,8 +181,8 @@ try
   opts.perfMode = perfMode.getValue();
   opts.windowWidth = screenWidthArg.getValue();
   opts.windowHeight = screenHeightArg.getValue();
-  opts.gpuMemoryBytes = convertToBytes(gpuMemoryArg.getValue());
-  opts.mainMemoryBytes = convertToBytes(mainMemoryArg.getValue());
+  opts.gpuMemoryBytes = static_cast<int64_t>(convertToBytes( gpuMemoryArg.getValue() ));
+  opts.mainMemoryBytes = static_cast<int64_t>(convertToBytes( mainMemoryArg.getValue() ));
 
   return static_cast<int>(cmd.getArgList().size());
 

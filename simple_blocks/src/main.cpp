@@ -175,7 +175,7 @@ initializeTransferFunctions(subvol::CommandLineOptions const &clo)
       loaded = ColorMapManager::load1DT("USER", clo.tfunc1dtPath);
     }
 
-  } catch (std::ios_base::failure &e) {
+  } catch (std::ios_base::failure &) {
     bd::Warn() << "Error reading user defined transfer function file(s). "
         "The function won't be available.";
   }

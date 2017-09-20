@@ -15,6 +15,11 @@
 #include <QGroupBox>
 #include <QRadioButton>
 
+#ifdef _WIN32
+#define __PRETTY_FUNCTION__ __FUNCSIG__
+#endif
+
+
 namespace subvol
 {
 
@@ -310,7 +315,7 @@ ControlPanel::ControlPanel(BlockRenderer *renderer,
   // oh my god! such hack!
   std::function<void(size_t)> vb(
       [this](size_t b) -> void {
-        emit shownBlocksChanged((unsigned int)b);
+        emit shownBlocksChanged(static_cast<unsigned int>(b));
       });
   collection->setVisibleBlocksCallback(vb);
 

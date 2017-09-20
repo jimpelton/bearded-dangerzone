@@ -153,7 +153,7 @@ template<class VTy>
 class BlockReaderSpec : public BlockReader
 {
 public:
-  BlockReaderSpec() : disk_buf{ nullptr }{ }
+	BlockReaderSpec() : disk_buf{ nullptr }, buf_len{ 0 } { }
 
   virtual ~BlockReaderSpec()
   {
@@ -214,7 +214,7 @@ public:
     float * const pixelData = reinterpret_cast<float *>(b);
     //Normalize the data prior to generating the texture.
     for (size_t idx{ 0 }; idx < buf_len; ++idx) {
-      pixelData[idx] = (disk_buf[idx] - vMin) / vDiff;
+      pixelData[idx] = static_cast<float>( (disk_buf[idx] - vMin) / vDiff );
     }
 
   }

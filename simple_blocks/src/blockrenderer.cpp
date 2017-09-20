@@ -262,11 +262,13 @@ BlockRenderer::setDrawNonEmptySlices(bool b)
 void
 BlockRenderer::setROVChanging(bool b)
 {
+  // we are on the GUI thread here.
   m_rangeChanging = b;
-  if (b) {
-    m_collection->pauseLoaderThread();
-  } else {
+//  if (b) {
+//    m_collection->pauseLoaderThread();
+//  } else {
     // if rov is not changing anymore, then yayy! update with new visible blocks.
+  if (!b){
     m_collection->updateBlockCache();
   }
 }
@@ -369,7 +371,7 @@ BlockRenderer::drawAxis()
 {
   m_wireframeShader->bind();
   m_axisVao->bind();
-  m_wireframeShader->setUniform("mvp", getWorldViewProjectionMatrix());
+  m_wireframeShader->setUniform(WIREFRAME_MVP_MATRIX_UNIFORM_STR, getWorldViewProjectionMatrix());
   gl_check(glDrawArrays(GL_LINES,
                         0,
                         static_cast<GLsizei>(bd::CoordinateAxis::verts.size())));
@@ -407,6 +409,7 @@ BlockRenderer::drawNonEmptyBlocks_Forward()
 
     bd::Block *b{ (*m_nonEmptyBlocks)[i] };
 
+    // only render if the block's texture data has been uploaded to GPU.
     if (b->status() & bd::Block::GPU_RES) {
       setWorldMatrix(b->transform());
       b->texture()->bind(BLOCK_TEXTURE_UNIT);
@@ -415,7 +418,6 @@ BlockRenderer::drawNonEmptyBlocks_Forward()
 
       drawSlices(baseVertex);
     }
-
   }
 
   // End the NVPM profiling frame.

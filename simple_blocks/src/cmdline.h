@@ -55,9 +55,9 @@ struct CommandLineOptions
   /// screen height
   int windowHeight;
   /// gpu mem to use
-  size_t gpuMemoryBytes;
+  int64_t gpuMemoryBytes;
   /// cpu mem to use
-  size_t mainMemoryBytes;
+  int64_t mainMemoryBytes;
 };
 
 size_t

@@ -10,7 +10,6 @@
 #include <bd/io/buffer.h>
 #include <bd/util/util.h>
 #include <bd/io/bufferpool.h>
-#include <bd/datastructure/blockingqueue.h>
 
 #include <functional>
 #include <list>
@@ -58,15 +57,6 @@ public:
   void
   updateBlockCache();
 
-
-  bd::Block *
-  nextLoadableBlock();
-
-
-  void
-  pauseLoaderThread();
-
-
   void
   loadSomeBlocks();
 
@@ -112,13 +102,16 @@ public:
 
   /// Find the largest non-empty block and return the number of voxels.
   /// \return size_t that is the number of voxels in the largest block.
-  uint64_t
-  findLargestBlock(std::vector<bd::Block *> &blocks);
+//  uint64_t
+//  findLargestBlock(std::vector<bd::Block *> &blocks);
 
 
   void
   setVisibleBlocksCallback(std::function<void(size_t)> &func);
 
+  /// Change the classification type. 
+  /// The blocks are immediatly filtered and loading of the new
+  /// set of blocks begins.
   void
   changeClassificationType(ClassificationType type);
 
