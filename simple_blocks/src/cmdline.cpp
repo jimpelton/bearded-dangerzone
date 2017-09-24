@@ -55,69 +55,12 @@ try
       indexFilePath("", "index-file", "Path to index file.", false, "", "string");
   cmd.add(indexFilePath);
 
-  // volume data type
-  std::vector<std::string> dataTypes{ "float", "ushort", "uchar" };
-  TCLAP::ValuesConstraint<std::string> dataTypeAllowValues(dataTypes);
-  TCLAP::ValueArg<std::string>
-      dataTypeArg("t", "type", "Data type (float, ushort, uchar).", false, "",
-                  &dataTypeAllowValues);;
-  cmd.add(dataTypeArg);
-
-
-  // volume dims
-  TCLAP::ValueArg<size_t> xdimArg("", "volx", "Volume x dim.", false, 1, "uint");
-  cmd.add(xdimArg);
-
-  TCLAP::ValueArg<size_t> ydimArg("", "voly", "Volume y dim.", false, 1, "uint");
-  cmd.add(ydimArg);
-
-  TCLAP::ValueArg<size_t> zdimArg("", "volz", "Volume z dim.", false, 1, "uint");
-  cmd.add(zdimArg);
-
-
-  // num blocks
-  TCLAP::ValueArg<size_t> xBlocksArg("", "nbx", "Num blocks x dim", false, 1, "uint");
-  cmd.add(xBlocksArg);
-
-  TCLAP::ValueArg<size_t> yBlocksArg("", "nby", "Num blocks y dim", false, 1, "uint");
-  cmd.add(yBlocksArg);
-
-  TCLAP::ValueArg<size_t> zBlocksArg("", "nbz", "Num blocks z dim", false, 1, "uint");
-  cmd.add(zBlocksArg);
-
   TCLAP::ValueArg<unsigned int>
       numSlicesArg("s", "num-slices", "Num slices per block", false, 1, "uint");
   cmd.add(numSlicesArg);
 
 
-  // ROV threshold min/max
-  TCLAP::ValueArg<double>
-      blockThreshold_Min_Arg("",
-                             "block-rov-min",
-                             "Ratio of visibility min value",
-                             false,
-                             std::numeric_limits<double>::lowest(), "dbl prec. float");
-  cmd.add(blockThreshold_Min_Arg);
 
-
-  TCLAP::ValueArg<double>
-      blockThreshold_Max_Arg("",
-                            "block-rov-max",
-                            "Ratio of visibility max value",
-                            false,
-                            std::numeric_limits<double>::max(),
-                            "dbl prec. float");
-  cmd.add(blockThreshold_Max_Arg);
-
-
-  TCLAP::ValueArg<unsigned int>
-      initialCameraPosArg("c",
-                          "camera-pos",
-                          "Initial camera position (z=0, y=1, x=2)",
-                          false,
-                          0,
-                          "uint");
-  cmd.add(initialCameraPosArg);
 
 
   // perf output file path
@@ -135,10 +78,6 @@ try
                             "perf-mode",
                             "Exit as soon as performance test is done.",
                             cmd, false);
-
-  // print blocks
-  TCLAP::SwitchArg
-      printBlocksArg("", "print-blocks", "Print blocks into to stdout.", cmd, false);
 
   TCLAP::ValueArg<int>
       screenWidthArg("", "screen-width", "Width of the window", false, 1280,
@@ -165,18 +104,7 @@ try
   opts.opacityTFuncPath = opacityTFArg.getValue();
   opts.colorTFuncPath = colorTFArg.getValue();
   opts.indexFilePath = indexFilePath.getValue();
-  opts.dataType = dataTypeArg.getValue();
-  opts.printBlocks = printBlocksArg.getValue();
-  opts.vol_w = xdimArg.getValue();
-  opts.vol_h = ydimArg.getValue();
-  opts.vol_d = zdimArg.getValue();
-  opts.numblk_x = xBlocksArg.getValue();
-  opts.numblk_y = yBlocksArg.getValue();
-  opts.numblk_z = zBlocksArg.getValue();
   opts.num_slices = numSlicesArg.getValue();
-  opts.blockThreshold_Min = blockThreshold_Min_Arg.getValue();
-  opts.blockThreshold_Max = blockThreshold_Max_Arg.getValue();
-  opts.cameraPos = initialCameraPosArg.getValue();
   opts.perfOutPath = perfOutPathArg.getValue();
   opts.perfMode = perfMode.getValue();
   opts.windowWidth = screenWidthArg.getValue();
@@ -227,9 +155,6 @@ printThem(CommandLineOptions &opts)
       << "\nNum blocks (x X y X z): " << opts.numblk_x << " X " << opts.numblk_y << " X "
       << opts.numblk_z
       << "\nNum Slices: " << opts.num_slices
-      << "\nBlock Threshold (min-max): " << opts.blockThreshold_Min << " - "
-      << opts.blockThreshold_Max
-      << "\nPrint blocks: " << ( opts.printBlocks ? "True" : "False" )
       << "\nWindow dims: " << opts.windowWidth << " X " << opts.windowHeight
       << "\nCpu memory: " << opts.mainMemoryBytes
       << "\nGpu memory: " << opts.gpuMemoryBytes

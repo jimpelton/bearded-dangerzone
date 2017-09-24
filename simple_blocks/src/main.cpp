@@ -96,12 +96,6 @@ void
 updateCommandLineOptionsFromIndexFile(subvol::CommandLineOptions &clo,
                                       std::shared_ptr<bd::IndexFile> const &indexFile)
 {
-  // Clamp clo.blockThreshold_Min/Max to the min/max values of
-  // the blocks in indexfile.
-  double min{ std::numeric_limits<double>::max() };
-  double max{ std::numeric_limits<double>::lowest() };
-
-
   auto minmaxE =
       std::minmax_element(indexFile->getFileBlocks().begin(),
                           indexFile->getFileBlocks().end(),
@@ -110,17 +104,8 @@ updateCommandLineOptionsFromIndexFile(subvol::CommandLineOptions &clo,
                             return lhs.rov < rhs.rov;
                           } );
 
-  renderhelp::g_rovMin = min = (*minmaxE.first).rov;
-  renderhelp::g_rovMax = max = (*minmaxE.second).rov;
-
-
-  // Clamp the given block thresholds to the actual.
-  if (clo.blockThreshold_Min < min) {
-    clo.blockThreshold_Min = min;
-  }
-  if (clo.blockThreshold_Max > max) {
-    clo.blockThreshold_Max = max;
-  }
+  renderhelp::g_rovMin = (*minmaxE.first).rov;
+  renderhelp::g_rovMax = (*minmaxE.second).rov;
 
   clo.vol_w = indexFile->getVolume().voxelDims().x;
   clo.vol_h = indexFile->getVolume().voxelDims().y;

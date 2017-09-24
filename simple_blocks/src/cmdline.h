@@ -20,8 +20,6 @@ struct CommandLineOptions
   std::string indexFilePath;
   /// volume data type
   std::string dataType;
-  /// true if block data should be dumped to file
-  bool printBlocks;
   /// number of blocks X
   size_t numblk_x;
   /// number of blocks Y
@@ -36,16 +34,6 @@ struct CommandLineOptions
   size_t vol_h;
   /// vol depth
   size_t vol_d;
-  /// block rov threshold max
-  double blockThreshold_Max;
-  /// block rov threshold minimum
-  double blockThreshold_Min;
-  /// threshold max
-//  float tmax;
-  /// threshold minimum
-//  float tmin;
-  /// initial camera position
-  unsigned int cameraPos;
   /// path to output file for performance counter values
   std::string perfOutPath;
   /// quit program when perf tests are completed.
