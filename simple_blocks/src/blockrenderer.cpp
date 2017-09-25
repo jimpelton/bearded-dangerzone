@@ -15,6 +15,9 @@
 
 #include <glm/gtx/string_cast.hpp>
 #include <bd/log/gl_log.h>
+#include "messages/messagebroker.h"
+
+
 //#include <bd/log/logger.h>
 
 namespace subvol
@@ -38,6 +41,7 @@ BlockRenderer::BlockRenderer(int numSlices,
                              std::shared_ptr<bd::VertexArrayObject> bboxVAO,
                              std::shared_ptr<bd::VertexArrayObject> axisVao)
     : Renderer()
+    , Recipient()
     , m_numSlicesPerBlock{ numSlices }
     , m_tfuncScaleValue{ 1.0f }
 
@@ -102,7 +106,7 @@ BlockRenderer::init()
 
 //  if (m_colorMapTexture == nullptr)
 //    setColorMapTexture(ColorMapManager::getMapByName("WHITE_TO_BLACK").getTexture());
-
+  Broker::subscribeRecipient(this);
   return true;
 }
 
@@ -258,28 +262,6 @@ BlockRenderer::setDrawNonEmptySlices(bool b)
 }
 
 
-////////////////////////////////////////////////////////////////////////////////
-void
-BlockRenderer::setROVChanging(bool b)
-{
-  // we are on the GUI thread here.
-  m_rangeChanging = b;
-//  if (b) {
-//    m_collection->pauseLoaderThread();
-//  } else {
-    // if rov is not changing anymore, then yayy! update with new visible blocks.
-  if (!b){
-    m_collection->updateBlockCache();
-  }
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-//void
-//BlockRenderer::setIsRotating(bool b)
-//{
-//  m_ROVChanging = b;
-//}
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -512,11 +494,19 @@ BlockRenderer::sortBlocks()
             });
 }
 
-//void
-//BlockRenderer::filterBlocksByROV()
-//{
-//  m_collection->filterBlocksByROVRange(m_rov_min, m_rov_max);
-//}
+void BlockRenderer::handle_ROVChangingMessage(ROVChangingMessage &r)
+{
+  // we are on the delivery thread here.
+  m_rangeChanging = r.IsChanging;
+//  if (b) {
+//    m_collection->pauseLoaderThread();
+//  } else {
+    // if rov is not changing anymore, then yayy! update with new visible blocks.
+  if (!r.IsChanging){
+    m_collection->updateBlockCache();
+  }
+
+}
 
 
 

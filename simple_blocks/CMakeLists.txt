@@ -89,9 +89,14 @@ set(simple_blocks_HEADERS
         src/loop.h
         src/nvpm.h
         src/renderhelp.h
-        src/sliceset.h
         src/semathing.h
+        src/sliceset.h
         src/timing.h
+        
+        src/messages/message.h
+        src/messages/messagebroker.h
+        src/messages/recipient.h
+        src/messages/rovchangingmessage.h
         )
 
 set(simple_blocks_SOURCES
@@ -108,7 +113,9 @@ set(simple_blocks_SOURCES
         src/loop.cpp
         src/sliceset.cpp
         src/timing.cpp
-        src/renderhelp.cpp )
+        src/renderhelp.cpp
+
+        src/messages/messagebroker.cpp )
 
 
 ################################################################################

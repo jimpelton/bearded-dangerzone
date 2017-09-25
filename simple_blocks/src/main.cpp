@@ -29,8 +29,7 @@
 
 // profiling
 #include "nvpm.h"
-
-
+#include "messages/messagebroker.h"
 
 
 void cleanup();
@@ -259,7 +258,8 @@ init_subvol(subvol::CommandLineOptions &clo)
 /////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char *argv[])
 {
-  
+  subvol::Broker::start();
+
   TCLAP::CmdLine cmd("Simple Blocks blocking volume render experiment.", ' ');
   subvol::CommandLineOptions clo;
   if (subvol::parseThem(argc, argv, cmd, clo) == 0) {

@@ -15,11 +15,13 @@
 #include <list>
 #include <vector>
 #include <future>
+#include "messages/recipient.h"
+
 
 namespace subvol
 {
 
-class BlockCollection
+class BlockCollection : public Recipient
 {
 public:
 //  BlockCollection();
@@ -115,6 +117,11 @@ public:
   void
   changeClassificationType(ClassificationType type);
 
+  virtual void
+  handle_MaxRangeChangedMessage(MaxRangeChangedMessage &m) override;
+  
+  virtual void
+  handle_MinRangeChangedMessage(MinRangeChangedMessage &m) override;
 private:
 
   void
@@ -143,7 +150,6 @@ private:
   bool m_rangeChanged;
 
   std::function<void(size_t)> m_visibleBlocksCb;
-
 
 
   //  BlockMemoryManager *m_man;

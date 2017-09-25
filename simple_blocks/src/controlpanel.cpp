@@ -4,6 +4,7 @@
 
 #include "controlpanel.h"
 #include "blockrenderer.h"
+#include "messages/messagebroker.h"
 
 #include <bd/io/indexfile.h>
 
@@ -147,11 +148,10 @@ ClassificationPanel::slot_minSliderChanged(int minSliderValue)
 
   m_currentMin_Label->setText(QString::number(m_currentMinROVFloat));
 
-  emit minValueChanged(m_currentMinROVFloat);
+  MinRangeChangedMessage m;
+  m.Min = m_currentMinROVFloat;
+  Broker::send(m);
 
-//  m_renderer->setROVRange(m_currentMinROVFloat, m_currentMaxROVFloat);
-
-//  updateShownBlocksLabels();
 }
 
 
@@ -167,10 +167,9 @@ ClassificationPanel::slot_maxSliderChanged(int maxSliderValue)
 
   m_currentMax_Label->setText(QString::number(m_currentMaxROVFloat));
 
-  emit maxValueChanged(m_currentMaxROVFloat);
-
-//  m_renderer->setROVRange(m_currentMinROVFloat, m_currentMaxROVFloat);
-//  updateShownBlocksLabels();
+  MaxRangeChangedMessage m;
+  m.Max = m_currentMaxROVFloat;
+  Broker::send(m);
 
 }
 
@@ -179,7 +178,9 @@ ClassificationPanel::slot_maxSliderChanged(int maxSliderValue)
 void
 ClassificationPanel::slot_sliderPressed()
 {
-  emit rovChangingChanged(true);
+  ROVChangingMessage m;
+  m.IsChanging = true;
+  Broker::send(m);
 }
 
 
@@ -187,7 +188,9 @@ ClassificationPanel::slot_sliderPressed()
 void
 ClassificationPanel::slot_sliderReleased()
 {
-  emit rovChangingChanged(false);
+  ROVChangingMessage m;
+  m.IsChanging = false;
+  Broker::send(m);
 }
 
 
@@ -215,7 +218,8 @@ ClassificationPanel::slot_rovRadioClicked(bool)
 ///////////////////////////////////////////////////////////////////////////////
 StatsPanel::StatsPanel(size_t totalBlocks,
                        QWidget *parent = nullptr )
-    : m_totalBlocks{ totalBlocks }
+  : Recipient{  }
+  , m_totalBlocks{ totalBlocks }
 {
   m_blocksShownValueLabel = new QLabel(QString::number(m_visibleBlocks));
   m_blocksTotalValueLabel = new QLabel("/" + QString::number(m_totalBlocks));
@@ -235,18 +239,18 @@ StatsPanel::StatsPanel(size_t totalBlocks,
 
   this->setLayout(formLayout);
 
-
+  Broker::subscribeRecipient(this);
 
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
-void
-StatsPanel::slot_visibleBlocksChanged(unsigned int numblk)
-{
-  m_visibleBlocks = numblk;
-  updateShownBlocksLabels();
-}
+//void
+//StatsPanel::slot_visibleBlocksChanged(unsigned int numblk)
+//{
+//  m_visibleBlocks = numblk;
+//  updateShownBlocksLabels();
+//}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -290,6 +294,12 @@ StatsPanel::updateShownBlocksLabels()
   m_compressionValueLabel->setText(QString::asprintf("%f %%", p));
 }
 
+void StatsPanel::handle_ShownBlocksMessage(ShownBlocksMessage &m)
+{
+  m_visibleBlocks = m.ShownBlocks;
+  updateShownBlocksLabels();
+}
+
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -306,18 +316,18 @@ ControlPanel::ControlPanel(BlockRenderer *renderer,
     : QWidget(parent)
     , m_totalBlocks{ 0 }
     , m_shownBlocks{ 0 }
-    , m_globalMin{ 0.0 }
-    , m_globalMax{ 0.0 }
+//    , m_globalMin{ 0.0 }
+//    , m_globalMax{ 0.0 }
     , m_renderer{ renderer }
     , m_collection{ collection }
     , m_index{ std::move(indexFile) }
 {
   // oh my god! such hack!
-  std::function<void(size_t)> vb(
-      [this](size_t b) -> void {
-        emit shownBlocksChanged(static_cast<unsigned int>(b));
-      });
-  collection->setVisibleBlocksCallback(vb);
+//  std::function<void(size_t)> vb(
+//      [this](size_t b) -> void {
+//        emit shownBlocksChanged(static_cast<unsigned int>(b));
+//      });
+//  collection->setVisibleBlocksCallback(vb);
 
   m_classificationPanel = new ClassificationPanel(this);
   m_statsPanel = new StatsPanel(collection->getTotalNumBlocks(), this);
@@ -330,23 +340,23 @@ ControlPanel::ControlPanel(BlockRenderer *renderer,
   this->setLayout(layout);
 
 
-  connect(m_classificationPanel, SIGNAL(rovChangingChanged(bool)),
-          this, SLOT(slot_rovChangingChanged(bool)));
+//  connect(m_classificationPanel, SIGNAL(rovChangingChanged(bool)),
+//          this, SLOT(slot_rovChangingChanged(bool)));
 
   connect(m_classificationPanel, SIGNAL(classificationTypeChanged(ClassificationType)),
           this, SLOT(slot_classificationTypeChanged(ClassificationType)));
 
-  connect(m_classificationPanel, SIGNAL(minValueChanged(double)),
-          this, SLOT(slot_minValueChanged(double)));
+//  connect(m_classificationPanel, SIGNAL(minValueChanged(double)),
+//          this, SLOT(slot_minValueChanged(double)));
 
-  connect(m_classificationPanel, SIGNAL(maxValueChanged(double)),
-          this, SLOT(slot_maxValueChanged(double)));
+//  connect(m_classificationPanel, SIGNAL(maxValueChanged(double)),
+//          this, SLOT(slot_maxValueChanged(double)));
 
   connect(this, SIGNAL(globalRangeChanged(double, double)),
           m_classificationPanel, SLOT(slot_globalRangeChanged(double, double)));
 
-  connect(this, SIGNAL(shownBlocksChanged(unsigned int)),
-          m_statsPanel, SLOT(slot_visibleBlocksChanged(unsigned int)));
+//  connect(this, SIGNAL(shownBlocksChanged(unsigned int)),
+//          m_statsPanel, SLOT(slot_visibleBlocksChanged(unsigned int)));
 
 
 }
@@ -384,11 +394,11 @@ ControlPanel::setcurrentMinMaxSliders(double min, double max)
 
 
 ///////////////////////////////////////////////////////////////////////////////
-void
-ControlPanel::slot_rovChangingChanged(bool toggle)
-{
-  m_renderer->setROVChanging(toggle);
-}
+//void
+//ControlPanel::slot_rovChangingChanged(bool toggle)
+//{
+//  m_renderer->setROVChanging(toggle);
+//}
 
 
 
@@ -434,20 +444,5 @@ ControlPanel::slot_classificationTypeChanged(ClassificationType type)
 
 }
 
-
-///////////////////////////////////////////////////////////////////////////////
-void
-ControlPanel::slot_minValueChanged(double min)
-{
-  m_collection->setRangeMin(min);
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-void
-ControlPanel::slot_maxValueChanged(double max)
-{
-  m_collection->setRangeMax(max);
-}
 
 } // namespace subvol

@@ -7,6 +7,8 @@
 #include <bd/log/logger.h>
 #include <bd/util/util.h>
 #include <bd/io/indexfile.h>
+#include "messages/messagebroker.h"
+
 
 namespace subvol
 {
@@ -25,7 +27,8 @@ using bd::FileBlock;
 
 BlockCollection::BlockCollection(BlockLoader *loader,
                                  IndexFile const &index)
-    : m_blocks()
+    : Recipient{  }
+, m_blocks()
     , m_nonEmptyBlocks()
     , m_emptyBlocks()
     , m_volume{ index.getVolume() }
@@ -44,6 +47,8 @@ BlockCollection::BlockCollection(BlockLoader *loader,
   initBlocksFromFileBlocks(index.getFileBlocks(),
                            m_volume.worldDims(),
                            m_volume.block_count());
+
+  Broker::subscribeRecipient(this);
 }
 
 
@@ -303,6 +308,7 @@ BlockCollection::getRangeChanged() const
 //}
 
 
+///////////////////////////////////////////////////////////////////////////////
 void
 BlockCollection::setVisibleBlocksCallback(std::function<void(size_t)> &func)
 {
@@ -310,6 +316,7 @@ BlockCollection::setVisibleBlocksCallback(std::function<void(size_t)> &func)
 }
 
 
+///////////////////////////////////////////////////////////////////////////////
 void
 BlockCollection::changeClassificationType(ClassificationType type)
 {
@@ -324,6 +331,19 @@ BlockCollection::changeClassificationType(ClassificationType type)
   // TODO: perform callback to caller?
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+void BlockCollection::handle_MaxRangeChangedMessage(MaxRangeChangedMessage &m)
+{
+  setRangeMax(m.Max);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+void BlockCollection::handle_MinRangeChangedMessage(MinRangeChangedMessage &m)
+{
+  setRangeMin(m.Min);
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 void
@@ -348,11 +368,9 @@ BlockCollection::filterBlocksByROV()
 
   } // for
 
-  try {
-    m_visibleBlocksCb(m_nonEmptyBlocks.size());
-  } catch (std::bad_function_call &) {
-    bd::Dbg() << "Aieee! No function to call back to. heee.\n";
-  }
+  ShownBlocksMessage m;
+  m.ShownBlocks = m_nonEmptyBlocks.size();
+  Broker::send(m);
 
   m_rangeChanged = false;
 }
@@ -381,15 +399,16 @@ BlockCollection::filterBlocksByAverage()
 
   } // for
 
-  try {
-    m_visibleBlocksCb(m_nonEmptyBlocks.size());
-  } catch (std::bad_function_call &) {
-    bd::Dbg() << "Aieee! No function to call back to. heee.\n";
-  }
+  ShownBlocksMessage m;
+  m.ShownBlocks = m_nonEmptyBlocks.size();
+  Broker::send(m);
 
   m_rangeChanged = false;
 
 }
+
+
+
 
 //IndexFile const &
 //BlockCollection::indexFile() const

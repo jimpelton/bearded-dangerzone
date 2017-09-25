@@ -8,6 +8,7 @@
 #include "blockcollection.h"
 #include "sliceset.h"
 #include "classificationtype.h"
+#include "messages/recipient.h"
 
 #include <bd/graphics/renderer.h>
 #include <bd/graphics/shader.h>
@@ -18,11 +19,12 @@
 
 #include <memory>
 
+
 namespace subvol
 {
 
 class BlockRenderer
-    : public bd::Renderer
+    : public bd::Renderer, public Recipient
 {
 
 public:
@@ -97,35 +99,8 @@ public:
 
 
   void
-  setROVChanging(bool b);
-
-
-  //void
-  //setIsRotating(bool b);
-
-
-  void
   setDrawNonEmptySlices(bool b);
 
-
-//  void
-//  setROVRange(double min, double max);
-
-
-//  double
-//  getROVMin();
-//
-//
-//  double
-//  getROVMax();
-//
-//
-//  unsigned long long int
-//  getNumBlocks() const;
-//
-//
-//  unsigned long long int
-//  getNumBlocksShown() const;
 
 
   /// \brief Draw each non-empty block.
@@ -137,11 +112,6 @@ public:
   /// \param[in] vp View projection matrix.
   void
   drawNonEmptyBoundingBoxes();
-
-
-  /// \brief Hint that the block caches should be updated.
-//  void
-//  updateCache();
 
 
 private:
@@ -172,11 +142,7 @@ private:
   void
   sortBlocks();
 
-//  void
-//  filterBlocksByROV();
 
-  /// By which metric should the blocks be deemed visible or not.
-//  ClassificationType m_classificationType;
   /// Number of slices per block
   int m_numSlicesPerBlock;
   /// Transfer function scaling value
@@ -213,7 +179,11 @@ private:
   std::vector<bd::Block *> *m_nonEmptyBlocks;  ///< Non-empty blocks to draw.
   std::vector<bd::Block *> *m_blocks;       ///< All the blocks!
 
-  //std::vector<bd::Block *> m_renderableBlocks;  ///< Blocks that are on the m_gpu.
+public:
+
+  virtual void
+  handle_ROVChangingMessage(ROVChangingMessage &) override;
+
 
 };
 

@@ -75,7 +75,6 @@ public:
 signals:
   void minValueChanged(double rovMin);
   void maxValueChanged(double rovMax);
-  void rovChangingChanged(bool toggle);
   void classificationTypeChanged(ClassificationType);
 
 public slots:
@@ -121,7 +120,7 @@ private:
 };
 
 
-class StatsPanel : public QWidget
+class StatsPanel : public QWidget, public Recipient
 {
   Q_OBJECT
 
@@ -132,9 +131,13 @@ public:
 
 //signals:
 
-public slots:
-  void
-  slot_visibleBlocksChanged(unsigned int numblk);
+
+  void 
+  handle_ShownBlocksMessage(ShownBlocksMessage &) override;
+
+
+  //  void
+//  slot_visibleBlocksChanged(unsigned int numblk);
 
   void
   slot_minRovValueChanged(double minrov);
@@ -184,30 +187,30 @@ public:
 
 
 signals:
-  void shownBlocksChanged(unsigned int);
+//  void shownBlocksChanged(unsigned int);
   void globalRangeChanged(double, double);
 
 
 public slots:
-  void
-  slot_rovChangingChanged(bool toggle);
+//  void
+//  slot_rovChangingChanged(bool toggle);
 
   void
   slot_classificationTypeChanged(ClassificationType type);
 
-  void
-  slot_minValueChanged(double min);
+//  void
+//  slot_minValueChanged(double min);
 
-  void
-  slot_maxValueChanged(double max);
+//  void
+//  slot_maxValueChanged(double max);
 
 
 private:
 
   unsigned long long m_totalBlocks;
   unsigned long long m_shownBlocks;
-  double m_globalMin;
-  double m_globalMax;
+//  double m_globalMin;
+//  double m_globalMax;
 
 //  QDoubleSpinBox *m_currentMin_SpinBox;
 //  QDoubleSpinBox *m_currentMax_SpinBox;
