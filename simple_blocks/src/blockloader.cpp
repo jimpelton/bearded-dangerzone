@@ -11,6 +11,9 @@
 #include <algorithm>
 #include <fstream>
 #include <bd/volume/block.h>
+#include "messages/recipient.h"
+#include "messages/messagebroker.h"
+
 
 namespace subvol
 {
@@ -89,13 +92,15 @@ BlockLoader::operator()()
       m_texs.pop_back();
       pushGPUReadyQueue(b);
     }
-
-    std::cout << "\rCpu: " << m_main.size() << "/" << m_maxMainBlocks <<
-        " Gpu: " << m_gpu.size() << "/" << m_maxGpuBlocks <<
-        " LdM: " << m_loadQueue.size() <<
-        " LdG: " << m_gpuReadyQueue.size() <<
-        " Buf: " << m_buffs.size() <<
-        " Tex: " << m_texs.size() << std::flush;
+    
+    BlockCacheStatsMessage *m{ new BlockCacheStatsMessage };
+    m->CpuCacheSize = m_main.size();
+    m->GpuCacheSize = m_gpu.size();
+    m->CpuLoadQueueSize = m_loadQueue.size();
+    m->GpuLoadQueueSize = m_gpuReadyQueue.size();
+    m->CpuBuffersAvailable = m_buffs.size();
+    m->GpuTexturesAvailable = m_texs.size();
+    Broker::send(m);
 
   } // while
 

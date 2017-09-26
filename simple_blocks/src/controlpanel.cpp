@@ -148,8 +148,8 @@ ClassificationPanel::slot_minSliderChanged(int minSliderValue)
 
   m_currentMin_Label->setText(QString::number(m_currentMinROVFloat));
 
-  MinRangeChangedMessage m;
-  m.Min = m_currentMinROVFloat;
+  MinRangeChangedMessage *m{ new MinRangeChangedMessage };
+  m->Min = m_currentMinROVFloat;
   Broker::send(m);
 
 }
@@ -167,8 +167,8 @@ ClassificationPanel::slot_maxSliderChanged(int maxSliderValue)
 
   m_currentMax_Label->setText(QString::number(m_currentMaxROVFloat));
 
-  MaxRangeChangedMessage m;
-  m.Max = m_currentMaxROVFloat;
+  MaxRangeChangedMessage *m{ new MaxRangeChangedMessage };
+  m->Max = m_currentMaxROVFloat;
   Broker::send(m);
 
 }
@@ -178,8 +178,8 @@ ClassificationPanel::slot_maxSliderChanged(int maxSliderValue)
 void
 ClassificationPanel::slot_sliderPressed()
 {
-  ROVChangingMessage m;
-  m.IsChanging = true;
+  ROVChangingMessage *m{new ROVChangingMessage };
+  m->IsChanging = true;
   Broker::send(m);
 }
 
@@ -188,8 +188,8 @@ ClassificationPanel::slot_sliderPressed()
 void
 ClassificationPanel::slot_sliderReleased()
 {
-  ROVChangingMessage m;
-  m.IsChanging = false;
+  ROVChangingMessage *m{new ROVChangingMessage };
+  m->IsChanging = false;
   Broker::send(m);
 }
 
@@ -219,25 +219,60 @@ ClassificationPanel::slot_rovRadioClicked(bool)
 StatsPanel::StatsPanel(size_t totalBlocks,
                        QWidget *parent = nullptr )
   : Recipient{  }
+  , m_visibleBlocks{ 0 }
   , m_totalBlocks{ totalBlocks }
 {
+
+  QGridLayout *gridLayout = new QGridLayout();
+   
+
+  QLabel *blocksShownLabel = new QLabel("Blocks Rendered: ");
   m_blocksShownValueLabel = new QLabel(QString::number(m_visibleBlocks));
   m_blocksTotalValueLabel = new QLabel("/" + QString::number(m_totalBlocks));
-  QLabel *compressionRateLabel = new QLabel("Compression: ");
-  m_compressionValueLabel = new QLabel("100%");
-
   QHBoxLayout *blocksValueBoxLayout = new QHBoxLayout();
   blocksValueBoxLayout->addWidget(m_blocksShownValueLabel);
   blocksValueBoxLayout->addWidget(m_blocksTotalValueLabel);
 
-  QLabel *blocksShownLabel = new QLabel("Blocks Rendered: ");
+  gridLayout->addWidget(blocksShownLabel, 0, 0 );
+  gridLayout->addLayout(blocksValueBoxLayout, 0, 1 );
 
-  QFormLayout *formLayout = new QFormLayout();
-  formLayout->addRow(blocksShownLabel, blocksValueBoxLayout);
-  formLayout->addRow(compressionRateLabel, m_compressionValueLabel);
+  QLabel *compressionRateLabel = new QLabel("Compression: ");
+  m_compressionValueLabel = new QLabel("100%");
+  gridLayout->addWidget(compressionRateLabel, 1, 0);
+  gridLayout->addWidget(m_compressionValueLabel, 1, 1);
 
+  QLabel *cpuCacheFilledLabel = new QLabel("Cpu cache blocks:");
+  m_cpuCacheFilledValueLabel = new QLabel();
+  gridLayout->addWidget(cpuCacheFilledLabel, 2, 0);
+  gridLayout->addWidget(m_cpuCacheFilledValueLabel, 2, 1);
 
-  this->setLayout(formLayout);
+  QLabel *gpuCacheFilledLabel = new QLabel("Gpu resident blocks:");
+  m_gpuCacheFilledValueLabel = new QLabel();
+  gridLayout->addWidget(gpuCacheFilledLabel, 3, 0);
+  gridLayout->addWidget(m_gpuCacheFilledValueLabel, 3, 1);
+
+  QLabel *cpuLoadQueueLabel = new QLabel("Cpu load queue:");
+  m_cpuLoadQueueValueLabel = new QLabel();
+  gridLayout->addWidget(cpuLoadQueueLabel, 4, 0);
+  gridLayout->addWidget(m_cpuLoadQueueValueLabel, 4, 1);
+
+  QLabel *gpuLoadQueueLabel = new QLabel("Gpu load queue:");
+  m_gpuLoadQueueValueLabel = new QLabel();
+  gridLayout->addWidget(gpuLoadQueueLabel, 5, 0);
+  gridLayout->addWidget(m_gpuLoadQueueValueLabel, 5, 1);
+
+  QLabel *cpuBuffersAvailLabel = new QLabel("Avail cpu buffs:");
+  m_cpuBuffersAvailValueLabel = new QLabel();
+  gridLayout->addWidget(cpuBuffersAvailLabel, 6, 0);
+  gridLayout->addWidget(m_cpuBuffersAvailValueLabel, 6, 1);
+
+  QLabel *gpuTexturesAvailLabel = new QLabel("Gpu textures avail: ");
+  m_gpuTexturesAvailValueLabel = new QLabel();
+  gridLayout->addWidget(gpuTexturesAvailLabel, 7, 0);
+  gridLayout->addWidget(m_gpuTexturesAvailValueLabel, 7, 1);
+  
+
+  this->setLayout(gridLayout);
 
   Broker::subscribeRecipient(this);
 
@@ -284,6 +319,8 @@ StatsPanel::slot_classificationTypeChanged(ClassificationType type)
 {
   std::cout << __PRETTY_FUNCTION__ << " " << type << std::endl;
 }
+
+
 ///////////////////////////////////////////////////////////////////////////////
 void
 StatsPanel::updateShownBlocksLabels()
@@ -294,10 +331,32 @@ StatsPanel::updateShownBlocksLabels()
   m_compressionValueLabel->setText(QString::asprintf("%f %%", p));
 }
 
-void StatsPanel::handle_ShownBlocksMessage(ShownBlocksMessage &m)
+///////////////////////////////////////////////////////////////////////////////
+void 
+StatsPanel::handle_ShownBlocksMessage(ShownBlocksMessage &m)
 {
+  std::cout << "handle_shownblocksmessage" << std::endl;
   m_visibleBlocks = m.ShownBlocks;
   updateShownBlocksLabels();
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void 
+StatsPanel::handle_BlockCacheStatsMessage(BlockCacheStatsMessage &m)
+{
+  m_cpuCacheFilledValueLabel->setText(QString::number(m.CpuCacheSize));
+  m_gpuCacheFilledValueLabel->setText(QString::number(m.GpuCacheSize));
+  m_cpuLoadQueueValueLabel->setText(QString::number(m.CpuLoadQueueSize));
+  m_gpuLoadQueueValueLabel->setText(QString::number(m.GpuLoadQueueSize));
+  m_cpuBuffersAvailValueLabel->setText(QString::number(m.CpuBuffersAvailable));
+  m_gpuTexturesAvailValueLabel->setText(QString::number(m.GpuTexturesAvailable));
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void 
+StatsPanel::handle_RenderStatsMessage(RenderStatsMessage &)
+{
+  
 }
 
 
@@ -316,19 +375,10 @@ ControlPanel::ControlPanel(BlockRenderer *renderer,
     : QWidget(parent)
     , m_totalBlocks{ 0 }
     , m_shownBlocks{ 0 }
-//    , m_globalMin{ 0.0 }
-//    , m_globalMax{ 0.0 }
     , m_renderer{ renderer }
     , m_collection{ collection }
     , m_index{ std::move(indexFile) }
 {
-  // oh my god! such hack!
-//  std::function<void(size_t)> vb(
-//      [this](size_t b) -> void {
-//        emit shownBlocksChanged(static_cast<unsigned int>(b));
-//      });
-//  collection->setVisibleBlocksCallback(vb);
-
   m_classificationPanel = new ClassificationPanel(this);
   m_statsPanel = new StatsPanel(collection->getTotalNumBlocks(), this);
 
@@ -339,26 +389,11 @@ ControlPanel::ControlPanel(BlockRenderer *renderer,
 
   this->setLayout(layout);
 
-
-//  connect(m_classificationPanel, SIGNAL(rovChangingChanged(bool)),
-//          this, SLOT(slot_rovChangingChanged(bool)));
-
   connect(m_classificationPanel, SIGNAL(classificationTypeChanged(ClassificationType)),
           this, SLOT(slot_classificationTypeChanged(ClassificationType)));
 
-//  connect(m_classificationPanel, SIGNAL(minValueChanged(double)),
-//          this, SLOT(slot_minValueChanged(double)));
-
-//  connect(m_classificationPanel, SIGNAL(maxValueChanged(double)),
-//          this, SLOT(slot_maxValueChanged(double)));
-
   connect(this, SIGNAL(globalRangeChanged(double, double)),
           m_classificationPanel, SLOT(slot_globalRangeChanged(double, double)));
-
-//  connect(this, SIGNAL(shownBlocksChanged(unsigned int)),
-//          m_statsPanel, SLOT(slot_visibleBlocksChanged(unsigned int)));
-
-
 }
 
 
@@ -372,7 +407,6 @@ ControlPanel::~ControlPanel()
 void
 ControlPanel::setGlobalRovMinMax(double min, double max)
 {
-//  m_classificationPanel->slot_globalRangeChanged(min, max);
   emit globalRangeChanged(min, max);
 }
 

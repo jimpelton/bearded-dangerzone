@@ -132,8 +132,6 @@ public:
 //signals:
 
 
-  void 
-  handle_ShownBlocksMessage(ShownBlocksMessage &) override;
 
 
   //  void
@@ -148,6 +146,17 @@ public:
   void
   slot_classificationTypeChanged(ClassificationType type);
 
+  void 
+  handle_ShownBlocksMessage(ShownBlocksMessage &) override;
+
+  void 
+  handle_BlockCacheStatsMessage(BlockCacheStatsMessage &) override;
+
+
+  void 
+  handle_RenderStatsMessage(RenderStatsMessage &) override;
+
+
 private:
   void
   updateShownBlocksLabels();
@@ -155,7 +164,12 @@ private:
   QLabel *m_blocksShownValueLabel;
   QLabel *m_blocksTotalValueLabel;
   QLabel *m_compressionValueLabel;
-
+  QLabel *m_cpuCacheFilledValueLabel;
+  QLabel *m_gpuCacheFilledValueLabel;
+  QLabel *m_cpuLoadQueueValueLabel;
+  QLabel *m_gpuLoadQueueValueLabel;
+  QLabel *m_cpuBuffersAvailValueLabel;
+  QLabel *m_gpuTexturesAvailValueLabel;
 
   size_t m_visibleBlocks;
   size_t m_totalBlocks;

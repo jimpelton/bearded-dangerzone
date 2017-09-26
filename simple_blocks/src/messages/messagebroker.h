@@ -4,12 +4,13 @@
 #include "message.h"
 #include "recipient.h"
 
+#include <bd/log/logger.h>
+
 #include <mutex>
 #include <condition_variable>
 #include <queue>
 #include <future>
 #include <iostream>
-#include <bd/log/logger.h>
 
 
 namespace subvol {
@@ -19,11 +20,11 @@ namespace subvol {
   public:
     
     static void
-    send(Message &m) 
+    send(Message *m) 
     {
-      m_myself->m_messagesMutex.lock();
+      std::unique_lock<std::mutex> lock(m_myself->m_waitMessageMutex);
       m_myself->m_messages.push(m);
-      m_myself->m_messagesMutex.unlock();
+      lock.unlock();
       m_myself->m_waitMessage.notify_all();
     }
 
@@ -51,14 +52,15 @@ namespace subvol {
     work()
     {
       while(true) {
-        Message m{ getNextMessage() };
+        Message *m{ getNextMessage() };
 
         for (auto &r : m_recipients) {
-          std::cout << "Delivering message\n";
           r->deliver(m);
         }
 
-        if (m.type == MessageType::EMPTY_MESSAGE) {
+        delete m;
+
+        if (m->type == MessageType::EMPTY_MESSAGE) {
           break;
         }
 
@@ -66,15 +68,15 @@ namespace subvol {
       bd::Info() << "Message worker exiting.";
     }
     
-    Message 
+    Message *
     getNextMessage()
     {
-      std::unique_lock<std::mutex>(m_waitMessageMutex);
-      while(m_messages.size() == 0) {
+      std::unique_lock<std::mutex> lock(m_waitMessageMutex);
+      while(m_messages.empty()) {
         m_waitMessage.wait(m_waitMessageMutex);
       }
 
-      Message m{ m_messages.front() };
+      Message *m{ m_messages.front() };
       m_messages.pop();
       return m;
     }
@@ -82,8 +84,8 @@ namespace subvol {
 
     std::vector<Recipient*> m_recipients;
 
-    std::mutex m_messagesMutex;
-    std::queue<Message> m_messages;
+//    std::mutex m_messagesMutex;
+    std::queue<Message*> m_messages;
 
     std::mutex m_waitMessageMutex;
     std::condition_variable_any m_waitMessage;

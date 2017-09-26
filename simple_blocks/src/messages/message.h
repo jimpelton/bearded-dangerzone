@@ -1,6 +1,7 @@
 #ifndef subvol_globalstatscollector_h__
 #define subvol_globalstatscollector_h__
 
+#include <iostream>
 
 namespace subvol {
   enum class MessageType : int {
@@ -9,6 +10,8 @@ namespace subvol {
     SHOWN_BLOCKS_MESSAGE,
     MIN_RANGE_CHANGED_MESSAGE,
     MAX_RANGE_CHANGED_MESSAGE,
+    BLOCK_CACHE_STATS_MESSAGE,
+    RENDER_STATS_MESSAGE,
   };
   
   class Recipient;
@@ -21,7 +24,9 @@ namespace subvol {
     virtual ~Message() { }
 
     virtual void
-      operator()(Recipient &r) { }
+      operator()(Recipient &r) 
+    {
+    }
 
     MessageType type;
   };

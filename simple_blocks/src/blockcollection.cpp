@@ -332,18 +332,6 @@ BlockCollection::changeClassificationType(ClassificationType type)
 }
 
 
-///////////////////////////////////////////////////////////////////////////////
-void BlockCollection::handle_MaxRangeChangedMessage(MaxRangeChangedMessage &m)
-{
-  setRangeMax(m.Max);
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-void BlockCollection::handle_MinRangeChangedMessage(MinRangeChangedMessage &m)
-{
-  setRangeMin(m.Min);
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 void
@@ -368,8 +356,8 @@ BlockCollection::filterBlocksByROV()
 
   } // for
 
-  ShownBlocksMessage m;
-  m.ShownBlocks = m_nonEmptyBlocks.size();
+  ShownBlocksMessage *m{ new ShownBlocksMessage };
+  m->ShownBlocks = m_nonEmptyBlocks.size();
   Broker::send(m);
 
   m_rangeChanged = false;
@@ -399,14 +387,27 @@ BlockCollection::filterBlocksByAverage()
 
   } // for
 
-  ShownBlocksMessage m;
-  m.ShownBlocks = m_nonEmptyBlocks.size();
+  ShownBlocksMessage *m{ new ShownBlocksMessage };
+  m->ShownBlocks = m_nonEmptyBlocks.size();
   Broker::send(m);
 
   m_rangeChanged = false;
 
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+void BlockCollection::handle_MaxRangeChangedMessage(MaxRangeChangedMessage &m)
+{
+  setRangeMax(m.Max);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+void BlockCollection::handle_MinRangeChangedMessage(MinRangeChangedMessage &m)
+{
+  setRangeMin(m.Min);
+}
 
 
 

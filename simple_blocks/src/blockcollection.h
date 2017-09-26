@@ -28,7 +28,7 @@ public:
 
   BlockCollection(BlockLoader *loader, bd::IndexFile const &index);
 
-  ~BlockCollection();
+  virtual ~BlockCollection();
 
 
 //  BlockCollection(BlockCollection const &) = delete;
@@ -117,19 +117,13 @@ public:
   void
   changeClassificationType(ClassificationType type);
 
-  virtual void
-  handle_MaxRangeChangedMessage(MaxRangeChangedMessage &m) override;
-  
-  virtual void
-  handle_MinRangeChangedMessage(MinRangeChangedMessage &m) override;
-private:
-
   void
   filterBlocksByROV();
 
   void
   filterBlocksByAverage();
 
+private:
   std::vector<bd::Block *> m_blocks;
 
   std::vector<bd::Block *> m_nonEmptyBlocks;
@@ -151,6 +145,14 @@ private:
 
   std::function<void(size_t)> m_visibleBlocksCb;
 
+
+public:   /* public message bus handlers */
+
+  virtual void
+  handle_MaxRangeChangedMessage(MaxRangeChangedMessage &m) override;
+  
+  virtual void
+  handle_MinRangeChangedMessage(MinRangeChangedMessage &m) override;
 
   //  BlockMemoryManager *m_man;
 
