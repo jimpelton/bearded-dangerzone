@@ -160,6 +160,9 @@ public:
     size_t CpuBuffersAvailable;
     size_t GpuTexturesAvailable;
 
+    size_t MaxCpuCacheSize;
+    size_t MaxGpuCacheSize;
+
   };
 
 

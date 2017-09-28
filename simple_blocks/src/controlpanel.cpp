@@ -15,6 +15,7 @@
 #include <QFormLayout>
 #include <QGroupBox>
 #include <QRadioButton>
+#include <QProgressBar>
 
 #ifdef _WIN32
 #define __PRETTY_FUNCTION__ __FUNCSIG__
@@ -243,36 +244,67 @@ StatsPanel::StatsPanel(size_t totalBlocks,
 
   QLabel *cpuCacheFilledLabel = new QLabel("Cpu cache blocks:");
   m_cpuCacheFilledValueLabel = new QLabel();
+  m_cpuCacheFilledBar = new QProgressBar();
+  m_cpuCacheFilledBar->setMaximum(100);
+  m_cpuCacheFilledBar->setMinimum(0);
   gridLayout->addWidget(cpuCacheFilledLabel, 2, 0);
   gridLayout->addWidget(m_cpuCacheFilledValueLabel, 2, 1);
+  gridLayout->addWidget(m_cpuCacheFilledBar, 2, 2);
 
   QLabel *gpuCacheFilledLabel = new QLabel("Gpu resident blocks:");
   m_gpuCacheFilledValueLabel = new QLabel();
+  m_gpuCacheFilledBar = new QProgressBar();
+  m_gpuCacheFilledBar->setMaximum(100);
+  m_gpuCacheFilledBar->setMinimum(0);
   gridLayout->addWidget(gpuCacheFilledLabel, 3, 0);
   gridLayout->addWidget(m_gpuCacheFilledValueLabel, 3, 1);
+  gridLayout->addWidget(m_gpuCacheFilledBar, 3, 2);
 
   QLabel *cpuLoadQueueLabel = new QLabel("Cpu load queue:");
   m_cpuLoadQueueValueLabel = new QLabel();
+  m_cpuLoadQueueValueBar = new QProgressBar();
+  m_cpuLoadQueueValueBar->setMaximum(100);
+  m_cpuLoadQueueValueBar->setMinimum(0);
   gridLayout->addWidget(cpuLoadQueueLabel, 4, 0);
   gridLayout->addWidget(m_cpuLoadQueueValueLabel, 4, 1);
+  gridLayout->addWidget(m_cpuLoadQueueValueBar, 4, 2);
 
   QLabel *gpuLoadQueueLabel = new QLabel("Gpu load queue:");
   m_gpuLoadQueueValueLabel = new QLabel();
+  m_gpuLoadQueueValueBar = new QProgressBar();
+  m_gpuLoadQueueValueBar->setMaximum(100);
+  m_gpuLoadQueueValueBar->setMinimum(0);
   gridLayout->addWidget(gpuLoadQueueLabel, 5, 0);
   gridLayout->addWidget(m_gpuLoadQueueValueLabel, 5, 1);
+  gridLayout->addWidget(m_gpuLoadQueueValueBar, 5, 2);
 
   QLabel *cpuBuffersAvailLabel = new QLabel("Avail cpu buffs:");
   m_cpuBuffersAvailValueLabel = new QLabel();
+  m_cpuBuffersAvailValueBar = new QProgressBar();
+  m_cpuBuffersAvailValueBar->setMaximum(100);
+  m_cpuBuffersAvailValueBar->setMinimum(0);
+  m_cpuBuffersAvailValueBar->setValue(100);
   gridLayout->addWidget(cpuBuffersAvailLabel, 6, 0);
   gridLayout->addWidget(m_cpuBuffersAvailValueLabel, 6, 1);
+  gridLayout->addWidget(m_cpuBuffersAvailValueBar, 6, 2);
 
   QLabel *gpuTexturesAvailLabel = new QLabel("Gpu textures avail: ");
   m_gpuTexturesAvailValueLabel = new QLabel();
+  m_gpuTexturesAvailValueBar = new QProgressBar();
+  m_gpuTexturesAvailValueBar->setMaximum(100);
+  m_gpuTexturesAvailValueBar->setMinimum(0);
+  m_gpuTexturesAvailValueBar->setValue(100);
   gridLayout->addWidget(gpuTexturesAvailLabel, 7, 0);
   gridLayout->addWidget(m_gpuTexturesAvailValueLabel, 7, 1);
-  
+  gridLayout->addWidget(m_gpuTexturesAvailValueBar, 7, 2);
 
   this->setLayout(gridLayout);
+
+  connect(this, SIGNAL(updateStatsValues()), 
+    this, SLOT(setStatsValues()), Qt::QueuedConnection);
+
+  connect(this, SIGNAL(updateRenderStatsValues()), 
+    this, SLOT(setRenderStatsValues()), Qt::QueuedConnection);
 
   Broker::subscribeRecipient(this);
 
@@ -344,17 +376,53 @@ StatsPanel::handle_ShownBlocksMessage(ShownBlocksMessage &m)
 void 
 StatsPanel::handle_BlockCacheStatsMessage(BlockCacheStatsMessage &m)
 {
-  m_cpuCacheFilledValueLabel->setText(QString::number(m.CpuCacheSize));
-  m_gpuCacheFilledValueLabel->setText(QString::number(m.GpuCacheSize));
-  m_cpuLoadQueueValueLabel->setText(QString::number(m.CpuLoadQueueSize));
-  m_gpuLoadQueueValueLabel->setText(QString::number(m.GpuLoadQueueSize));
-  m_cpuBuffersAvailValueLabel->setText(QString::number(m.CpuBuffersAvailable));
-  m_gpuTexturesAvailValueLabel->setText(QString::number(m.GpuTexturesAvailable));
+  m_blockCacheStatsMutex.lock();
+  m_blockCacheStats = m;
+  m_blockCacheStatsMutex.unlock();
+  emit updateStatsValues();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 void 
-StatsPanel::handle_RenderStatsMessage(RenderStatsMessage &)
+StatsPanel::handle_RenderStatsMessage(RenderStatsMessage &m)
+{
+  m_renderStatsMutex.lock();
+  m_renderStatsMessage = m;
+  m_renderStatsMutex.unlock();
+  emit updateRenderStatsValues();
+}
+
+void
+StatsPanel::setStatsValues()
+{
+  m_blockCacheStatsMutex.lock();
+
+  int cpuCashFilledPerc = 
+    int(100 * (m_blockCacheStats.CpuCacheSize / float(m_blockCacheStats.MaxCpuCacheSize)));
+
+  int gpuCashFilledPerc = 
+    int(100 * (m_blockCacheStats.GpuCacheSize / float(m_blockCacheStats.MaxGpuCacheSize)));
+
+  m_cpuCacheFilledValueLabel->setText(QString::number(m_blockCacheStats.CpuCacheSize));
+  m_cpuCacheFilledBar->setValue(cpuCashFilledPerc);
+
+  m_gpuCacheFilledValueLabel->setText(QString::number(m_blockCacheStats.GpuCacheSize));
+  m_gpuCacheFilledBar->setValue(gpuCashFilledPerc);
+
+  m_cpuLoadQueueValueLabel->setText(QString::number(m_blockCacheStats.CpuLoadQueueSize));
+  m_gpuLoadQueueValueLabel->setText(QString::number(m_blockCacheStats.GpuLoadQueueSize));
+
+  m_cpuBuffersAvailValueLabel->setText(QString::number(m_blockCacheStats.CpuBuffersAvailable));
+  m_cpuBuffersAvailValueBar->setValue(100 - cpuCashFilledPerc);
+  
+  m_gpuTexturesAvailValueLabel->setText(QString::number(m_blockCacheStats.GpuTexturesAvailable));
+  m_gpuTexturesAvailValueBar->setValue(100 - gpuCashFilledPerc);
+
+  m_blockCacheStatsMutex.unlock();
+}
+
+void 
+StatsPanel::setRenderStatsValues()
 {
   
 }

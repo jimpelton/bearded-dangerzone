@@ -309,11 +309,11 @@ BlockCollection::getRangeChanged() const
 
 
 ///////////////////////////////////////////////////////////////////////////////
-void
-BlockCollection::setVisibleBlocksCallback(std::function<void(size_t)> &func)
-{
-  m_visibleBlocksCb = func;
-}
+//void
+//BlockCollection::setVisibleBlocksCallback(std::function<void(size_t)> &func)
+//{
+//  m_visibleBlocksCb = func;
+//}
 
 
 ///////////////////////////////////////////////////////////////////////////////

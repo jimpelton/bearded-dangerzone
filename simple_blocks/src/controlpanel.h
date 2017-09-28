@@ -11,6 +11,8 @@
 #include <bd/io/indexfile.h>
 
 #include <QWidget>
+#include <QMutex>
+
 
 #include <map>
 
@@ -19,6 +21,7 @@ class QLabel;
 class QDoubleSpinBox;
 class QCheckBox;
 class QGroupBox;
+class QProgressBar;
 
 namespace subvol
 {
@@ -129,14 +132,12 @@ public:
              QWidget *parent);
   ~StatsPanel() = default;
 
-//signals:
-
 
 
 
   //  void
 //  slot_visibleBlocksChanged(unsigned int numblk);
-
+public:
   void
   slot_minRovValueChanged(double minrov);
 
@@ -156,25 +157,52 @@ public:
   void 
   handle_RenderStatsMessage(RenderStatsMessage &) override;
 
+signals:
+  void
+  updateStatsValues();
+
+  void
+  updateRenderStatsValues();
+
 
 private:
   void
   updateShownBlocksLabels();
 
+private slots:
+  void setStatsValues();
+  void setRenderStatsValues();
+
+private:
   QLabel *m_blocksShownValueLabel;
   QLabel *m_blocksTotalValueLabel;
   QLabel *m_compressionValueLabel;
-  QLabel *m_cpuCacheFilledValueLabel;
-  QLabel *m_gpuCacheFilledValueLabel;
-  QLabel *m_cpuLoadQueueValueLabel;
-  QLabel *m_gpuLoadQueueValueLabel;
-  QLabel *m_cpuBuffersAvailValueLabel;
-  QLabel *m_gpuTexturesAvailValueLabel;
 
+  QLabel *m_cpuCacheFilledValueLabel;
+  QProgressBar *m_cpuCacheFilledBar;
+
+  QLabel *m_gpuCacheFilledValueLabel;
+  QProgressBar *m_gpuCacheFilledBar;
+
+  QLabel *m_cpuLoadQueueValueLabel;
+  QProgressBar *m_cpuLoadQueueValueBar;
+
+  QLabel *m_gpuLoadQueueValueLabel;
+  QProgressBar *m_gpuLoadQueueValueBar;
+
+  QLabel *m_cpuBuffersAvailValueLabel;
+  QProgressBar *m_cpuBuffersAvailValueBar;
+  QLabel *m_gpuTexturesAvailValueLabel;
+  QProgressBar *m_gpuTexturesAvailValueBar;
+  
   size_t m_visibleBlocks;
   size_t m_totalBlocks;
 
+  QMutex m_blockCacheStatsMutex;
+  BlockCacheStatsMessage m_blockCacheStats;
 
+  QMutex m_renderStatsMutex;
+  RenderStatsMessage m_renderStatsMessage;
 };
 
 
@@ -243,3 +271,4 @@ private:
 }
 
 #endif //SUBVOL_CONTROLPANEL_H
+

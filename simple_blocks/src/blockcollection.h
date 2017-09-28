@@ -31,16 +31,6 @@ public:
   virtual ~BlockCollection();
 
 
-//  BlockCollection(BlockCollection const &) = delete;
-
-
-//  BlockCollection(BlockCollection const &&) = delete;
-
-
-//  void
-//  initBlocksFromIndexFile(bd::IndexFile const &index)
-
-
   /// \brief Initializes \c blocks from the provided vector of FileBlock.
   /// \note Blocks are sized to fit it within the world-extent of the volume data.
   /// \param fileBlocks[in] The FileBlocks generated from the IndexFile.
@@ -108,9 +98,6 @@ public:
 //  findLargestBlock(std::vector<bd::Block *> &blocks);
 
 
-  void
-  setVisibleBlocksCallback(std::function<void(size_t)> &func);
-
   /// Change the classification type. 
   /// The blocks are immediatly filtered and loading of the new
   /// set of blocks begins.
@@ -148,10 +135,10 @@ private:
 
 public:   /* public message bus handlers */
 
-  virtual void
+  void
   handle_MaxRangeChangedMessage(MaxRangeChangedMessage &m) override;
   
-  virtual void
+  void
   handle_MinRangeChangedMessage(MinRangeChangedMessage &m) override;
 
   //  BlockMemoryManager *m_man;

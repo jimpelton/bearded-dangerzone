@@ -68,6 +68,31 @@ BlockLoader::operator()()
 
 
   while (!m_stopThread) {
+
+    BlockCacheStatsMessage *m{ new BlockCacheStatsMessage };
+    m->CpuCacheSize = m_main.size();
+
+    m_gpuMutex.lock();
+    m->GpuCacheSize = m_gpu.size();
+    m_gpuMutex.unlock();
+
+    m_loadQueueMutex.lock();
+    m->CpuLoadQueueSize = m_loadQueue.size();
+    m_loadQueueMutex.unlock();
+
+    m->CpuBuffersAvailable = m_buffs.size();
+    m->GpuTexturesAvailable = m_texs.size();
+
+    m->MaxCpuCacheSize = m_maxMainBlocks;
+    m->MaxGpuCacheSize = m_maxGpuBlocks;
+
+    m_gpuReadyMutex.lock();
+    m->GpuLoadQueueSize = m_gpuReadyQueue.size();
+    m_gpuReadyMutex.unlock();
+
+    Broker::send(m);
+
+
     // get a block marked as visible
     bd::Block *b{ waitPopLoadQueue() };
     if (!b) {
@@ -93,14 +118,6 @@ BlockLoader::operator()()
       pushGPUReadyQueue(b);
     }
     
-    BlockCacheStatsMessage *m{ new BlockCacheStatsMessage };
-    m->CpuCacheSize = m_main.size();
-    m->GpuCacheSize = m_gpu.size();
-    m->CpuLoadQueueSize = m_loadQueue.size();
-    m->GpuLoadQueueSize = m_gpuReadyQueue.size();
-    m->CpuBuffersAvailable = m_buffs.size();
-    m->GpuTexturesAvailable = m_texs.size();
-    Broker::send(m);
 
   } // while
 
@@ -187,7 +204,7 @@ BlockLoader::queueClassified(std::vector<bd::Block *> const &visible,
         pushGPUReadyQueue(b);
       }
     }
-  }
+  } // for
 
 
 
@@ -197,7 +214,7 @@ BlockLoader::queueClassified(std::vector<bd::Block *> const &visible,
   // we we must evict empty blocks from main and recover their texture and pixel buffers.
 
 
-  // if the load queue is larger than the available buffers then try to evict empty blocks
+  // if the load queue is larger than the available textures then try to evict empty blocks
   // from the
   long long num_to_evict{ static_cast<long long>(m_loadQueue.size()) -
                               static_cast<long long>(m_texs.size()) };
