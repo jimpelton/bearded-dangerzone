@@ -17,7 +17,8 @@ class RenderStatsMessage;
 
 class Recipient {
 public:
-  Recipient()
+  Recipient(std::string const &name)
+    : m_name{ name }
   {
   }
 
@@ -49,6 +50,16 @@ public:
 
   virtual void
   handle_RenderStatsMessage(RenderStatsMessage &){ }
+
+
+  std::string const &
+  name() const
+  {
+    return m_name;
+  }
+
+private:
+  std::string m_name;
 
 };
 
@@ -166,24 +177,30 @@ public:
   };
 
 
-  ///////////////////////////////////////////////////////////////////////////////
-  class RenderStatsMessage : public Message
-  {
-  public:
-    RenderStatsMessage()
-      : Message{ MessageType::RENDER_STATS_MESSAGE }
-    {
-    }
-    virtual ~RenderStatsMessage() { }
+ ///////////////////////////////////////////////////////////////////////////////
+ class RenderStatsMessage : public Message
+ {
+ public:
+   RenderStatsMessage()
+     : Message{ MessageType::RENDER_STATS_MESSAGE }
+   {
+   }
+   virtual ~RenderStatsMessage() { }
 
-    void
-    operator()(Recipient &r) override
-    {
-      r.handle_RenderStatsMessage(*this);
-    }
-    
+   void
+   operator()(Recipient &r) override
+   {
+     r.handle_RenderStatsMessage(*this);
+   }
+   
+   /// avg frame time over last second.
+   float AvgFrameTime;
+   /// eye location.
+   int CamX, CamY, CamZ;
+   float gpuTime;
+   float cpuTime;
 
-  };
+ };
 
 } // namespace subvol
 #endif // RECIPIENT_H

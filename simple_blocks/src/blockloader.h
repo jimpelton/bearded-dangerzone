@@ -177,13 +177,16 @@ public:
       disk_buf = new VTy[ buf_len ];
     }
 
-    // start element = block index w/in volume * block size
+    // Start and end voxel coordinates are used to compute the byte offset into 
+    // the file that we should start/stop reading at.
+    //
+    // start voxel coord = block index w/in volume * block size
     // (this works because all blocks are the same size).
     glm::u64vec3 const start{ ijk[0] * be[0],
                               ijk[1] * be[1],
                               ijk[2] * be[2] };
 
-    // block end element = block voxel start voxelDims + block size
+    // block end voxel coord = block voxel start + block size
     glm::u64vec3 const end{ start[0] + be[0],
                             start[1] + be[1],
                             start[2] + be[2] };

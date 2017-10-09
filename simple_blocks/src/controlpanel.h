@@ -11,7 +11,8 @@
 #include <bd/io/indexfile.h>
 
 #include <QWidget>
-#include <QMutex>
+//#include <QMutex>
+#include <QReadWriteLock>
 
 
 #include <map>
@@ -128,15 +129,12 @@ class StatsPanel : public QWidget, public Recipient
   Q_OBJECT
 
 public:
-  StatsPanel(size_t totalBlocks,
-             QWidget *parent);
+  StatsPanel(QWidget *parent);
   ~StatsPanel() = default;
 
 
 
 
-  //  void
-//  slot_visibleBlocksChanged(unsigned int numblk);
 public:
   void
   slot_minRovValueChanged(double minrov);
@@ -152,7 +150,6 @@ public:
 
   void 
   handle_BlockCacheStatsMessage(BlockCacheStatsMessage &) override;
-
 
   void 
   handle_RenderStatsMessage(RenderStatsMessage &) override;
@@ -198,10 +195,10 @@ private:
   size_t m_visibleBlocks;
   size_t m_totalBlocks;
 
-  QMutex m_blockCacheStatsMutex;
+  QReadWriteLock m_blockCacheStatsRWLock;
   BlockCacheStatsMessage m_blockCacheStats;
 
-  QMutex m_renderStatsMutex;
+  QReadWriteLock m_renderStatsMutex;
   RenderStatsMessage m_renderStatsMessage;
 };
 
@@ -212,10 +209,7 @@ class ControlPanel : public QWidget
   Q_OBJECT
 
 public:
-  explicit ControlPanel(BlockRenderer *renderer,
-                        BlockCollection *collection,
-                        std::shared_ptr<const bd::IndexFile> indexFile,
-                        QWidget *parent = nullptr);
+  explicit ControlPanel(QWidget *parent = nullptr);
 
   ~ControlPanel();
 
@@ -229,43 +223,22 @@ public:
 
 
 signals:
-//  void shownBlocksChanged(unsigned int);
   void globalRangeChanged(double, double);
 
 
 public slots:
-//  void
-//  slot_rovChangingChanged(bool toggle);
 
   void
   slot_classificationTypeChanged(ClassificationType type);
-
-//  void
-//  slot_minValueChanged(double min);
-
-//  void
-//  slot_maxValueChanged(double max);
 
 
 private:
 
   unsigned long long m_totalBlocks;
   unsigned long long m_shownBlocks;
-//  double m_globalMin;
-//  double m_globalMax;
-
-//  QDoubleSpinBox *m_currentMin_SpinBox;
-//  QDoubleSpinBox *m_currentMax_SpinBox;
-//  QLabel *m_globalMin_Label;
-//  QLabel *m_globalMax_Label;
-
   ClassificationPanel *m_classificationPanel;
   StatsPanel *m_statsPanel;
 
-  BlockRenderer *m_renderer;
-  BlockCollection *m_collection;
-
-  std::shared_ptr<const bd::IndexFile> m_index;
 };
 
 }

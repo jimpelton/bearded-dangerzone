@@ -50,12 +50,6 @@ private:
 
 
 public:
-//  ClassificationType
-//  getClassificationType();
-
-//  void
-//  changeClassificationType(ClassificationType type);
-
 
   /// \brief Set the transfer function texture.
   void
@@ -147,16 +141,11 @@ private:
   int m_numSlicesPerBlock;
   /// Transfer function scaling value
   float m_tfuncScaleValue;
-//  double m_rov_min;
-//  double m_rov_max;
-//  uint64_t m_timeOfLastJob;
   /// True to draw bounding boxes.
   bool m_drawNonEmptyBoundingBoxes;
   bool m_drawNonEmptySlices;
-//  bool m_ROVRangeChanged;
   /// Show bounding boxes if rov is changing.
   bool m_rangeChanging;
-//  bool m_cacheNeedsUpdating;
   /// True to use Phong lighting shader.
   bool m_shouldUseLighting;
   /// Current background color.
@@ -181,7 +170,7 @@ private:
 
 public:
 
-  virtual void
+  void
   handle_ROVChangingMessage(ROVChangingMessage &) override;
 
 

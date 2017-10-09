@@ -31,7 +31,13 @@ namespace subvol {
     static void
     subscribeRecipient(Recipient *r)
     {
-      m_myself->m_recipients.push_back(r);
+      auto found = std::find(m_myself->m_recipients.begin(), 
+        m_myself->m_recipients.end(), r);
+
+      if (found == m_myself->m_recipients.end()) {
+        m_myself->m_recipients.push_back(r);
+        bd::Dbg() << "Added recipient " << r->name();
+      }
     }
 
     static void

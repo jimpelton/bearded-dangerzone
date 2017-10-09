@@ -40,13 +40,20 @@ public:
   static void s_scrollwheel_callback(GLFWwindow *, double xoff, double yoff);
   static void s_mousebutton_callback(GLFWwindow *, int button, int action, int mods);
 
-
-
   void cursorpos_callback(GLFWwindow *window, double x, double y);
   void keyboard_callback(int key, int scancode, int action, int mods);
   void window_size_callback(int width, int height);
   void scrollwheel_callback(double xoff, double yoff);
   void mousebutton_callback(GLFWwindow *, int button, int action, int mods);
+
+
+//  void setShowBlockBoxes(bool);
+//  void setUseLighting(bool);
+//  void setCurrentBackgroundColorIndex(int);
+//  void setTransferFunctionScaleValue(float);
+//  void setLightingNShiney(float);
+//  void setLightPosition(glm::vec3 const &);
+
 
   Cursor & getCursor();
 
