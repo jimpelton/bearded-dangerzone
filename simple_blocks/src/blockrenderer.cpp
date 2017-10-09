@@ -9,13 +9,13 @@
 #include "colormap.h"
 #include "constants.h"
 #include "nvpm.h"
+#include "messages/messagebroker.h"
 
 #include <bd/util/ordinal.h>
 #include <bd/geo/axis.h>
 
 #include <glm/gtx/string_cast.hpp>
 #include <bd/log/gl_log.h>
-#include "messages/messagebroker.h"
 
 
 //#include <bd/log/logger.h>
@@ -33,46 +33,40 @@ BlockRenderer::BlockRenderer()
 
 ////////////////////////////////////////////////////////////////////////////////
 BlockRenderer::BlockRenderer(int numSlices,
-                             std::shared_ptr<bd::ShaderProgram> volumeShader,
-                             std::shared_ptr<bd::ShaderProgram> volumeShaderLighting,
-                             std::shared_ptr<bd::ShaderProgram> wireframeShader,
-                             std::shared_ptr<BlockCollection> blockCollection,
-                             std::shared_ptr<bd::VertexArrayObject> blocksVAO,
-                             std::shared_ptr<bd::VertexArrayObject> bboxVAO,
-                             std::shared_ptr<bd::VertexArrayObject> axisVao)
-    : Renderer()
-    , Recipient()
-    , m_numSlicesPerBlock{ numSlices }
-    , m_tfuncScaleValue{ 1.0f }
+  std::shared_ptr<bd::ShaderProgram> volumeShader,
+  std::shared_ptr<bd::ShaderProgram> volumeShaderLighting,
+  std::shared_ptr<bd::ShaderProgram> wireframeShader,
+  std::shared_ptr<BlockCollection> blockCollection,
+  std::shared_ptr<bd::VertexArrayObject> blocksVAO,
+  std::shared_ptr<bd::VertexArrayObject> bboxVAO,
+  std::shared_ptr<bd::VertexArrayObject> axisVao)
+  : Renderer()
+  , Recipient("BlockRenderer")
 
-//    , m_rov_min{ 0.0 }
-//    , m_rov_max{ 0.0 }
-   
-//    , m_timeOfLastJob{ 0 }
+  , m_numSlicesPerBlock{ numSlices }
+  , m_tfuncScaleValue{ 1.0f }
+  , m_drawNonEmptyBoundingBoxes{ false }
+  , m_drawNonEmptySlices{ true }
+  , m_shouldUseLighting{ false }
+  , m_backgroundColor{ 0.0f }
 
-    , m_drawNonEmptyBoundingBoxes{ false }
-    , m_drawNonEmptySlices{ true }
-//    , m_ROVRangeChanged{ false }
-//    , m_cacheNeedsUpdating{ false }
-    , m_shouldUseLighting{ false }
-    , m_backgroundColor{ 0.0f }
+  , m_colorMapTexture{ nullptr }
 
-    , m_colorMapTexture{ nullptr }
-    , m_currentShader{ nullptr }
+  , m_currentShader{ nullptr }
+  , m_volumeShader{ std::move(volumeShader) }
+  , m_volumeShaderLighting{ std::move(volumeShaderLighting) }
+  , m_wireframeShader{ std::move(wireframeShader) }
 
-    , m_volumeShader{ std::move(volumeShader) }
-    , m_volumeShaderLighting{ std::move(volumeShaderLighting) }
-    , m_wireframeShader{ std::move(wireframeShader) }
-    , m_quadsVao{ std::move(blocksVAO) }
-    , m_boxesVao{ std::move(bboxVAO) }
-    , m_axisVao{ std::move(axisVao) }
-    , m_collection{ std::move(blockCollection) }
+  , m_quadsVao{ std::move(blocksVAO) }
+  , m_boxesVao{ std::move(bboxVAO) }
+  , m_axisVao{ std::move(axisVao) }
 
-    , m_nonEmptyBlocks{ nullptr }
-    , m_blocks{ nullptr }
+  , m_collection{ std::move(blockCollection) }
+  , m_nonEmptyBlocks{ nullptr }
+  , m_blocks{ nullptr }
 {
-  m_blocks = &( m_collection->getBlocks());
-  m_nonEmptyBlocks = &( m_collection->getNonEmptyBlocks());
+  m_blocks = &(m_collection->getBlocks());
+  m_nonEmptyBlocks = &(m_collection->getNonEmptyBlocks());
   init();
 }
 
@@ -102,10 +96,7 @@ BlockRenderer::init()
 
   // sets m_currentShader depending on m_shouldUseLighting.
   setShouldUseLighting(m_shouldUseLighting);
-//  filterBlocksByROV();
 
-//  if (m_colorMapTexture == nullptr)
-//    setColorMapTexture(ColorMapManager::getMapByName("WHITE_TO_BLACK").getTexture());
   Broker::subscribeRecipient(this);
   return true;
 }
@@ -189,12 +180,6 @@ BlockRenderer::setShaderLightPos(glm::vec3 const &L)
   m_volumeShaderLighting->setUniform(LIGHTING_LIGHT_POS_UNIFORM_STR, L);
 }
 
-//void
-//BlockRenderer::setShaderViewVec(glm::vec3 const &V)
-//{
-//  m_volumeShaderLighting->setUniform("V", V);
-//}
-
 
 ///////////////////////////////////////////////////////////////////////////////
 void
@@ -213,55 +198,11 @@ BlockRenderer::setDrawNonEmptyBoundingBoxes(bool b)
 
 
 ///////////////////////////////////////////////////////////////////////////////
-//void
-//BlockRenderer::setROVRange(double min, double max)
-//{
-//  m_rov_min = min;
-//  m_rov_max = max;
-//  m_ROVRangeChanged = true;
-//}
-
-
-////////////////////////////////////////////////////////////////////////////////
-//double
-//BlockRenderer::getROVMin()
-//{
-//  return m_rov_min;
-//}
-//
-//
-//////////////////////////////////////////////////////////////////////////////////
-//double
-//BlockRenderer::getROVMax()
-//{
-//  return m_rov_max;
-//}
-
-
-////////////////////////////////////////////////////////////////////////////////
-//unsigned long long int
-//BlockRenderer::getNumBlocks() const
-//{
-//  return m_collection->blocks().size();
-//}
-
-
-////////////////////////////////////////////////////////////////////////////////
-//unsigned long long int
-//BlockRenderer::getNumBlocksShown() const
-//{
-//  return m_collection->nonEmptyBlocks().size();
-//}
-
-
-///////////////////////////////////////////////////////////////////////////////
 void
 BlockRenderer::setDrawNonEmptySlices(bool b)
 {
   m_drawNonEmptySlices = b;
 }
-
-
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -321,20 +262,12 @@ BlockRenderer::drawNonEmptyBoundingBoxes()
 }
 
 
-///////////////////////////////////////////////////////////////////////////////
-//void
-//BlockRenderer::updateCache()
-//{
-//  m_cacheNeedsUpdating = true;
-//}
-
-
 ////////////////////////////////////////////////////////////////////////////////
 void
 BlockRenderer::drawSlices(int baseVertex)
 {
   // Begin NVPM work profiling
-  perf_workBegin();
+//  perf_workBegin();
   gl_check(
       glDrawElementsBaseVertex(GL_TRIANGLE_STRIP,
                                ELEMENTS_PER_QUAD * m_numSlicesPerBlock, // count
@@ -342,7 +275,7 @@ BlockRenderer::drawSlices(int baseVertex)
                                0,                                       // element offset
                                baseVertex));                            // vertex offset
   // End NVPM work profiling.
-  perf_workEnd();
+//  perf_workEnd();
 
 }
 
@@ -383,12 +316,11 @@ BlockRenderer::drawNonEmptyBlocks_Forward()
   m_quadsVao->bind();
 
   // Start an NVPM profiling frame
-  perf_frameBegin();
+//  perf_frameBegin();
 
   size_t nBlk{ m_nonEmptyBlocks->size() };
 
   for(size_t i{ 0 }; i < nBlk; ++i) {
-
     bd::Block *b{ (*m_nonEmptyBlocks)[i] };
 
     // only render if the block's texture data has been uploaded to GPU.
@@ -403,7 +335,7 @@ BlockRenderer::drawNonEmptyBlocks_Forward()
   }
 
   // End the NVPM profiling frame.
-  perf_frameEnd();
+//  perf_frameEnd();
 //  m_quadsVao->unbind();
 //  m_currentShader->unbind();
 }
@@ -494,6 +426,8 @@ BlockRenderer::sortBlocks()
             });
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
 void BlockRenderer::handle_ROVChangingMessage(ROVChangingMessage &r)
 {
   // we are on the delivery thread here.

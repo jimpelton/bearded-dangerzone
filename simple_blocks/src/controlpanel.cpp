@@ -217,11 +217,10 @@ ClassificationPanel::slot_rovRadioClicked(bool)
 
 
 ///////////////////////////////////////////////////////////////////////////////
-StatsPanel::StatsPanel(size_t totalBlocks,
-                       QWidget *parent = nullptr )
-  : Recipient{  }
+StatsPanel::StatsPanel(QWidget *parent = nullptr )
+  : Recipient{ "StatsPanel" }
   , m_visibleBlocks{ 0 }
-  , m_totalBlocks{ totalBlocks }
+  , m_totalBlocks{ 0 }
 {
 
   QGridLayout *gridLayout = new QGridLayout();
@@ -312,24 +311,6 @@ StatsPanel::StatsPanel(size_t totalBlocks,
 
 
 ///////////////////////////////////////////////////////////////////////////////
-//void
-//StatsPanel::slot_visibleBlocksChanged(unsigned int numblk)
-//{
-//  m_visibleBlocks = numblk;
-//  updateShownBlocksLabels();
-//}
-
-
-///////////////////////////////////////////////////////////////////////////////
-//void
-//StatsPanel::slot_totalBlocksChanged(size_t t)
-//{
-//  m_totalBlocks = t;
-//  updateShownBlocksLabels();
-//}
-
-
-///////////////////////////////////////////////////////////////////////////////
 void
 StatsPanel::slot_minRovValueChanged(double minrov)
 {
@@ -359,34 +340,41 @@ StatsPanel::updateShownBlocksLabels()
 {
   m_blocksShownValueLabel->setText(QString::number(m_visibleBlocks));
 
-  float p{ (1.0f - m_visibleBlocks / float(m_totalBlocks)) * 100.0f };
+  float p{ 0.0 };
+  if (m_totalBlocks != 0)
+    p = (1.0f - m_visibleBlocks / float(m_totalBlocks)) * 100.0f;
+
   m_compressionValueLabel->setText(QString::asprintf("%f %%", p));
 }
+
 
 ///////////////////////////////////////////////////////////////////////////////
 void 
 StatsPanel::handle_ShownBlocksMessage(ShownBlocksMessage &m)
 {
-  std::cout << "handle_shownblocksmessage" << std::endl;
   m_visibleBlocks = m.ShownBlocks;
-  updateShownBlocksLabels();
+//  updateShownBlocksLabels();
+  emit updateStatsValues();
 }
+
 
 ///////////////////////////////////////////////////////////////////////////////
 void 
 StatsPanel::handle_BlockCacheStatsMessage(BlockCacheStatsMessage &m)
 {
-  m_blockCacheStatsMutex.lock();
+  m_blockCacheStatsRWLock.lockForWrite();
   m_blockCacheStats = m;
-  m_blockCacheStatsMutex.unlock();
+  m_blockCacheStatsRWLock.unlock();
   emit updateStatsValues();
 }
+
+
 
 ///////////////////////////////////////////////////////////////////////////////
 void 
 StatsPanel::handle_RenderStatsMessage(RenderStatsMessage &m)
 {
-  m_renderStatsMutex.lock();
+  m_renderStatsMutex.lockForWrite();
   m_renderStatsMessage = m;
   m_renderStatsMutex.unlock();
   emit updateRenderStatsValues();
@@ -395,30 +383,32 @@ StatsPanel::handle_RenderStatsMessage(RenderStatsMessage &m)
 void
 StatsPanel::setStatsValues()
 {
-  m_blockCacheStatsMutex.lock();
+  m_blockCacheStatsRWLock.lockForRead();
+  BlockCacheStatsMessage m = m_blockCacheStats;
+  m_blockCacheStatsRWLock.unlock();
 
-  int cpuCashFilledPerc = 
-    int(100 * (m_blockCacheStats.CpuCacheSize / float(m_blockCacheStats.MaxCpuCacheSize)));
+  m_totalBlocks = m.MaxCpuCacheSize;
+  m_blocksTotalValueLabel->setText(QString::number(m_totalBlocks));
+  updateShownBlocksLabels();
 
-  int gpuCashFilledPerc = 
-    int(100 * (m_blockCacheStats.GpuCacheSize / float(m_blockCacheStats.MaxGpuCacheSize)));
+  int cpuCashFilledPerc = int(100 * (m.CpuCacheSize / float(m.MaxCpuCacheSize)));
 
-  m_cpuCacheFilledValueLabel->setText(QString::number(m_blockCacheStats.CpuCacheSize));
+  int gpuCashFilledPerc = int(100 * (m.GpuCacheSize / float(m.MaxGpuCacheSize)));
+
+  m_cpuCacheFilledValueLabel->setText(QString::number(m.CpuCacheSize));
   m_cpuCacheFilledBar->setValue(cpuCashFilledPerc);
 
-  m_gpuCacheFilledValueLabel->setText(QString::number(m_blockCacheStats.GpuCacheSize));
+  m_gpuCacheFilledValueLabel->setText(QString::number(m.GpuCacheSize));
   m_gpuCacheFilledBar->setValue(gpuCashFilledPerc);
 
-  m_cpuLoadQueueValueLabel->setText(QString::number(m_blockCacheStats.CpuLoadQueueSize));
-  m_gpuLoadQueueValueLabel->setText(QString::number(m_blockCacheStats.GpuLoadQueueSize));
+  m_cpuLoadQueueValueLabel->setText(QString::number(m.CpuLoadQueueSize));
+  m_gpuLoadQueueValueLabel->setText(QString::number(m.GpuLoadQueueSize));
 
-  m_cpuBuffersAvailValueLabel->setText(QString::number(m_blockCacheStats.CpuBuffersAvailable));
+  m_cpuBuffersAvailValueLabel->setText(QString::number(m.CpuBuffersAvailable));
   m_cpuBuffersAvailValueBar->setValue(100 - cpuCashFilledPerc);
   
-  m_gpuTexturesAvailValueLabel->setText(QString::number(m_blockCacheStats.GpuTexturesAvailable));
+  m_gpuTexturesAvailValueLabel->setText(QString::number(m.GpuTexturesAvailable));
   m_gpuTexturesAvailValueBar->setValue(100 - gpuCashFilledPerc);
-
-  m_blockCacheStatsMutex.unlock();
 }
 
 void 
@@ -436,19 +426,13 @@ StatsPanel::setRenderStatsValues()
 
 
 ///////////////////////////////////////////////////////////////////////////////
-ControlPanel::ControlPanel(BlockRenderer *renderer,
-                           BlockCollection *collection,
-                           std::shared_ptr<const bd::IndexFile> indexFile,
-                           QWidget *parent)
+ControlPanel::ControlPanel(QWidget *parent)
     : QWidget(parent)
     , m_totalBlocks{ 0 }
     , m_shownBlocks{ 0 }
-    , m_renderer{ renderer }
-    , m_collection{ collection }
-    , m_index{ std::move(indexFile) }
 {
   m_classificationPanel = new ClassificationPanel(this);
-  m_statsPanel = new StatsPanel(collection->getTotalNumBlocks(), this);
+  m_statsPanel = new StatsPanel(this);
 
   QVBoxLayout *layout = new QVBoxLayout;
 
@@ -488,61 +472,43 @@ ControlPanel::setcurrentMinMaxSliders(double min, double max)
 
 
 ///////////////////////////////////////////////////////////////////////////////
-//void
-//ControlPanel::setVisibleBlocks(size_t visibleBlocks)
-//{
-//  m_statsPanel->slot_visibleBlocksChanged(visibleBlocks);
-//}
-
-
-///////////////////////////////////////////////////////////////////////////////
-//void
-//ControlPanel::slot_rovChangingChanged(bool toggle)
-//{
-//  m_renderer->setROVChanging(toggle);
-//}
-
-
-
-///////////////////////////////////////////////////////////////////////////////
 void
 ControlPanel::slot_classificationTypeChanged(ClassificationType type)
 {
-  m_collection->changeClassificationType(type);
 
-  auto avgCompare = [](bd::FileBlock const &lhs, bd::FileBlock const &rhs) {
-    return lhs.avg_val < rhs.avg_val;
-  };
-
-  auto rovCompare = [](bd::FileBlock const &lhs, bd::FileBlock const &rhs) {
-    return lhs.rov < rhs.rov;
-  };
-
-  double min = -1.0;
-  double max = -1.0;
-
-  switch(type) {
-    case ClassificationType::Rov: {
-      auto r = std::minmax_element(this->m_index->getFileBlocks().cbegin(),
-                                   this->m_index->getFileBlocks().cend(),
-                                   rovCompare);
-      min = r.first->rov;
-      max = r.second->rov;
-    }
-      break;
-    case ClassificationType::Avg: {
-      auto r = std::minmax_element(this->m_index->getFileBlocks().cbegin(),
-                                   this->m_index->getFileBlocks().cend(),
-                                   avgCompare);
-      min = r.first->avg_val;
-      max = r.second->avg_val;
-    }
-      break;
-    default:
-      break;
-  }
-
-  emit globalRangeChanged(min, max);
+//  auto avgCompare = [](bd::FileBlock const &lhs, bd::FileBlock const &rhs) {
+//    return lhs.avg_val < rhs.avg_val;
+//  };
+//
+//  auto rovCompare = [](bd::FileBlock const &lhs, bd::FileBlock const &rhs) {
+//    return lhs.rov < rhs.rov;
+//  };
+//
+//  double min = -1.0;
+//  double max = -1.0;
+//
+//  switch(type) {
+//    case ClassificationType::Rov: {
+//      auto r = std::minmax_element(this->m_index->getFileBlocks().cbegin(),
+//                                   this->m_index->getFileBlocks().cend(),
+//                                   rovCompare);
+//      min = r.first->rov;
+//      max = r.second->rov;
+//    }
+//      break;
+//    case ClassificationType::Avg: {
+//      auto r = std::minmax_element(this->m_index->getFileBlocks().cbegin(),
+//                                   this->m_index->getFileBlocks().cend(),
+//                                   avgCompare);
+//      min = r.first->avg_val;
+//      max = r.second->avg_val;
+//    }
+//      break;
+//    default:
+//      break;
+//  }
+//
+//  emit globalRangeChanged(min, max);
 
 }
 

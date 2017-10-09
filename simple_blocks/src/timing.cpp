@@ -34,7 +34,8 @@ void genQueries()
   gl_check(glGenQueries(QUERY_COUNT, queryID[queryBackBuffer]));
   gl_check(glGenQueries(QUERY_COUNT, queryID[queryFrontBuffer]));
   // dummy query to prevent OpenGL errors from popping out
-  //gl_check(glQueryCounter(queryID[queryFrontBuffer][0], GL_TIMESTAMP));
+//  gl_check(glQueryCounter(queryID[queryFrontBuffer][0], GL_TIMESTAMP));
+//  gl_check(glQueryCounter(queryID[queryBackBuffer][0], GL_TIMESTAMP));
 }
 
 

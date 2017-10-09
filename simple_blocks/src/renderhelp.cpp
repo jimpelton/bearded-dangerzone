@@ -41,12 +41,14 @@ double g_rovMax = 0;
 namespace
 {
 
+/////////////////////////////////////////////////////////////////////////////////
 void
 s_error_callback(int error, const char *description)
 {
   bd::Err() << "GLFW ERROR: code " << error << " msg: " << description;
 }
 
+/////////////////////////////////////////////////////////////////////////////////
 void
 initializeMemoryBuffers(std::vector<char *> *buffers, size_t num, size_t sz)
 {
@@ -107,14 +109,15 @@ initGLContext(int screenWidth, int screenHeight)
     return nullptr;
   }
 
+// Generate OpenGL queries for frame times.
+  subvol::timing::genQueries();
+
   glfwSwapInterval(1); // 0 = no vertical sync.
 
 #ifndef __APPLE__
   bd::subscribe_debug_callbacks();
 #endif
 
-// Generate OpenGL queries for frame times.
-  subvol::timing::genQueries();
 
   bd::checkForAndLogGlError(__FILE__, __FUNCTION__, __LINE__);
 
@@ -122,6 +125,7 @@ initGLContext(int screenWidth, int screenHeight)
 } // initGLContext()
 
 
+/////////////////////////////////////////////////////////////////////////////////
 bool
 initializeBlockCollection(bd::IndexFile const *indexFile,
                           subvol::CommandLineOptions const &clo)
@@ -193,6 +197,7 @@ initializeBlockCollection(bd::IndexFile const *indexFile,
   //bc_local->filterBlocksByROVRange(clo.blockThreshold_Min, clo.blockThreshold_Max);
   return true;
 }
+
 
 ///////////////////////////////////////////////////////////////////////////////
 void

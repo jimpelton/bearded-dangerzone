@@ -86,10 +86,6 @@ BlockLoader::operator()()
     m->MaxCpuCacheSize = m_maxMainBlocks;
     m->MaxGpuCacheSize = m_maxGpuBlocks;
 
-    m_gpuReadyMutex.lock();
-    m->GpuLoadQueueSize = m_gpuReadyQueue.size();
-    m_gpuReadyMutex.unlock();
-
     Broker::send(m);
 
 
@@ -159,8 +155,8 @@ BlockLoader::queueClassified(std::vector<bd::Block *> const &visible,
                              std::vector<bd::Block *> const &empty)
 {
   bd::Dbg() << "Visible: " << visible.size() << ", empty: " << empty.size();
-  // we can hold the load queue mutex here because the load thread shouldn't be doing
-  // any work anyway while we sort things out.
+  // we hold the load queue mutex here because the load thread shouldn't be doing
+  // any work while we sort (literally) things out.
   std::unique_lock<std::mutex> lock(m_loadQueueMutex);
   m_loadQueue.clear();
 
@@ -171,19 +167,17 @@ BlockLoader::queueClassified(std::vector<bd::Block *> const &visible,
     m_gpuReadyQueue.swap(empty_q);
   }
 
-  // remove only empty blocks from the GPU and give away
-  // the block texture texture.
+  // remove only empty blocks from the GPU and put the textures 
+  // back in the list of available textures.
   removeEmptyBlocksFromGpu();
-
 
   // figure out if we must evict blocks from main memory.
   // queue all blocks not in main memory for loading by the loader thread.
   // if the block is already in main, then assign it a texture.
   for (size_t i{ 0 }; i < visible.size(); ++i) {
-    bd::Block *b{ visible[i] };
+    bd::Block *vis{ visible[i] };
     assert(b != nullptr && "Block was null when iterating visible blocks.");
-
-    if (m_main.find(b->index()) == m_main.end()) {
+    if (m_main.find(vis->index()) == m_main.end()) {
       // The block is not in main, so it needs to be loaded from disk, pushed to main,
       // and finally pushed to the gpu ready queue.
       // The load thread (running in operator()) pushes to the
@@ -191,17 +185,17 @@ BlockLoader::queueClassified(std::vector<bd::Block *> const &visible,
       // to the gpu, then pushes the block pointer to the gpu resident queue.
       assert(m_gpu.find(b->index()) == m_gpu.end() &&
                  "Block is not in main, but is in gpu!");
-      m_loadQueue.push_back(b);
-    } else if (m_gpu.find(b->index()) == m_gpu.end()) {
+      m_loadQueue.push_back(vis);
+    } else if (m_gpu.find(vis->index()) == m_gpu.end()) {
       // The block is not on the gpu yet, but it is in main,
-      // so push to the gpu queue. If it has a texture, it is ready to go, if it
-      // needs a texture, give it one.
-      if (b->texture() != nullptr) {
-        pushGPUReadyQueue(b);
+      // so push to the gpu queue. If it has a texture, it is ready to go, 
+      // but if it needs a texture, give it one.
+      if (vis->texture() != nullptr) {
+        pushGPUReadyQueue(vis);
       } else if (m_texs.size() > 0) {
-        b->texture(m_texs.back());
+        vis->texture(m_texs.back());
         m_texs.pop_back();
-        pushGPUReadyQueue(b);
+        pushGPUReadyQueue(vis);
       }
     }
   } // for
@@ -213,9 +207,6 @@ BlockLoader::queueClassified(std::vector<bd::Block *> const &visible,
   // main for empties with textures (there probably won't be any)
   // we we must evict empty blocks from main and recover their texture and pixel buffers.
 
-
-  // if the load queue is larger than the available textures then try to evict empty blocks
-  // from the
   long long num_to_evict{ static_cast<long long>(m_loadQueue.size()) -
                               static_cast<long long>(m_texs.size()) };
   if (num_to_evict > 0) {
@@ -295,8 +286,6 @@ BlockLoader::clearLoadQueue()
 {
   std::unique_lock<std::mutex> lock(m_loadQueueMutex);
   m_loadQueue.clear();
-//  std::queue<bd::Block *> q;
-//  m_loadQueue.swap(q);
 }
 
 

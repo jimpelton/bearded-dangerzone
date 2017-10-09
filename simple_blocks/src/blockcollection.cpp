@@ -27,8 +27,8 @@ using bd::FileBlock;
 
 BlockCollection::BlockCollection(BlockLoader *loader,
                                  IndexFile const &index)
-    : Recipient{  }
-, m_blocks()
+    : Recipient{ "BlockCollection" }
+  , m_blocks()
     , m_nonEmptyBlocks()
     , m_emptyBlocks()
     , m_volume{ index.getVolume() }
@@ -142,26 +142,6 @@ BlockCollection::filterBlocks()
 
 
 ///////////////////////////////////////////////////////////////////////////////
-//void
-//BlockCollection::filterBlocks(std::function<bool(Block const &)> isEmpty)
-//{
-//  m_nonEmptyBlocks.clear();
-//
-//  for (Block *b : m_blocks) {
-//    uint64_t idx{ b->fileBlock().block_index };
-//
-//    if (! isEmpty(*b)) {
-//      b->visible(true);
-//      m_nonEmptyBlocks.push_back(b);
-//      m_man->asyncLoadBlock(b);
-//    } else {
-//      b->visible(false);
-//    }
-//  }
-//}
-
-
-///////////////////////////////////////////////////////////////////////////////
 void
 BlockCollection::updateBlockCache()
 {
@@ -175,22 +155,18 @@ BlockCollection::loadSomeBlocks()
 {
   // we are on the render thread in here.
   uint64_t t{ 0 };
-  uint64_t const MAX_JOB_LENGTH_MS = 10000000;
+  uint64_t const MAX_JOB_LENGTH_MS = 10000000;  // <-- this isn't really going to be millis without glfwGetTimerFreq().
   bd::Block *b{ nullptr };
   int i{ 0 };
   while (t < MAX_JOB_LENGTH_MS && ( b = m_loader->getNextGpuReadyBlock())) {
+    //TODO: use glfwGetTimerFreq() for more accurate timing in loadSomeBlocks().
     uint64_t start{ glfwGetTimerValue() };
     b->sendToGpu();
     m_loader->pushGpuResidentBlock(b);
-//    bd::Dbg() << "Sent " << b->fileBlock().block_index
-//              << " (" << b->status() << ") to GPU.";
     uint64_t timeToLoadBlock{ glfwGetTimerValue() - start };
     t += timeToLoadBlock;
     ++i;
   }
-
-//  bd::Dbg() << "Loaded " << i << " blocks.";
-
 }
 
 
@@ -276,47 +252,6 @@ BlockCollection::getRangeChanged() const
 
 
 ///////////////////////////////////////////////////////////////////////////////
-//uint64_t
-//BlockCollection::findLargestBlock(std::vector<Block *> &blocks)
-//{
-//  // find the largest element by comparing voxel counts for each nonEmptyBlock.
-//  auto largest =
-//      std::max_element(
-//          blocks.begin(),
-//          blocks.end(),
-//
-//          [](Block *lhs, Block *rhs) -> bool {
-//
-//            // compare number of voxels
-//
-//            size_t lhs_vox =
-//                lhs->voxel_extent().x *
-//                    lhs->voxel_extent().y *
-//                    lhs->voxel_extent().z;
-//
-//            size_t rhs_vox =
-//                rhs->voxel_extent().x *
-//                    rhs->voxel_extent().y *
-//                    rhs->voxel_extent().z;
-//
-//            return lhs_vox < rhs_vox;
-//          });
-//
-//  Block *blk{ *largest };
-//  return blk->voxel_extent().x * blk->voxel_extent().y * blk->voxel_extent().z;
-//
-//}
-
-
-///////////////////////////////////////////////////////////////////////////////
-//void
-//BlockCollection::setVisibleBlocksCallback(std::function<void(size_t)> &func)
-//{
-//  m_visibleBlocksCb = func;
-//}
-
-
-///////////////////////////////////////////////////////////////////////////////
 void
 BlockCollection::changeClassificationType(ClassificationType type)
 {
@@ -326,9 +261,6 @@ BlockCollection::changeClassificationType(ClassificationType type)
   filterBlocks();
   // TODO: update for this classification type.
 
-
-
-  // TODO: perform callback to caller?
 }
 
 

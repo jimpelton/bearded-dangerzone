@@ -10,6 +10,7 @@
 #include "blockcollection.h"
 #include "semathing.h"
 #include "loop.h"
+#include "messages/messagebroker.h"
 
 // BD lib
 #include <bd/graphics/shader.h>
@@ -27,14 +28,9 @@
 #include <future>
 #include <memory>
 
-// profiling
-#include "nvpm.h"
-#include "messages/messagebroker.h"
-
-
 void cleanup();
 void printBlocks(subvol::BlockCollection *bcol);
-void printNvPmApiCounters(const char *perfOutPath);
+//void printNvPmApiCounters(const char *perfOutPath);
 
 
 using subvol::ColorMapManager;
@@ -96,12 +92,12 @@ updateCommandLineOptionsFromIndexFile(subvol::CommandLineOptions &clo,
                                       std::shared_ptr<bd::IndexFile> const &indexFile)
 {
   auto minmaxE =
-      std::minmax_element(indexFile->getFileBlocks().begin(),
-                          indexFile->getFileBlocks().end(),
-                          [](bd::FileBlock const & lhs, bd::FileBlock const & rhs)
-                              -> bool {
-                            return lhs.rov < rhs.rov;
-                          } );
+    std::minmax_element(indexFile->getFileBlocks().begin(),
+                        indexFile->getFileBlocks().end(),
+                        [](bd::FileBlock const &lhs, bd::FileBlock const &rhs)
+                        -> bool {
+                        return lhs.rov < rhs.rov;
+                      });
 
   renderhelp::g_rovMin = (*minmaxE.first).rov;
   renderhelp::g_rovMax = (*minmaxE.second).rov;
@@ -113,7 +109,6 @@ updateCommandLineOptionsFromIndexFile(subvol::CommandLineOptions &clo,
   clo.numblk_y = indexFile->getVolume().block_count().y;
   clo.numblk_z = indexFile->getVolume().block_count().z;
   clo.dataType = bd::to_string(bd::IndexFileHeader::getType(indexFile->getHeader()));
-
 }
 
 
@@ -243,8 +238,8 @@ init_subvol(subvol::CommandLineOptions &clo)
 //  setCameraPosPreset(clo.cameraPos);
 
   //// NV Perf Thing ////
-  perf_initNvPm();
-  perf_initMode(clo.perfMode);
+//  perf_initNvPm();
+//  perf_initMode(clo.perfMode);
 
   subvol::renderhelp::initializeControls(window, renderhelp::g_renderer);
 
@@ -269,12 +264,6 @@ int main(int argc, char *argv[])
   }
 
 
-//  if (clo.indexFilePath.empty()) {
-//    bd::Err() << "Provide an index file path.";
-//    return 1;
-//  }
-
-
   GLFWwindow * window{ subvol::init_subvol(clo) };
   if (window == nullptr) {
     bd::Err() << "Could not initialize GLFW (window could not be created). Exiting...";
@@ -285,14 +274,12 @@ int main(int argc, char *argv[])
 
   subvol::Semathing s(1);
 
-  // Start the qt event stuff on a separate thread.
+  // Start the qt event stuff on a separate thread (since this gui is totally kludged in here...).
   std::future<int> returned =
       std::async(std::launch::async,
                  [&]() {
                    QApplication a(argc, argv);
-                   subvol::ControlPanel panel(subvol::renderhelp::g_renderer.get(),
-                                              subvol::renderhelp::g_blockCollection.get(),
-                                              subvol::renderhelp::g_indexFile);
+                   subvol::ControlPanel panel;
 
                    panel.setGlobalRovMinMax(subvol::renderhelp::g_rovMin,
                                             subvol::renderhelp::g_rovMax);
@@ -307,7 +294,7 @@ int main(int argc, char *argv[])
   std::cout << "Waiting for GUI to close..." << std::endl;
   returned.wait();
   std::cout << "subvol exiting: " << returned.get() << std::endl;
-
+  subvol::timing::printTimes(std::cout);
 //  printNvPmApiCounters(clo.perfOutPath.c_str());
   subvol::cleanup();
 

@@ -14,7 +14,6 @@ Controls *Controls::s_instance{ nullptr };
 
 Controls::Controls()
     : m_cursor{ }
-//  , m_tfuncNames{ }
     , m_renderer{ nullptr }
     , m_showBlockBoxes{ false }
     , m_shouldUseLighting{ false }
@@ -53,10 +52,6 @@ Controls::getInstance()
   assert(s_instance != nullptr &&
              "Controls::initiralize() should be called prior to first call of getInstance");
 
-//  if (s_instance == nullptr) {
-//    s_instance = new Controls();
-//  }
-
   return *s_instance;
 }
 
@@ -70,11 +65,7 @@ Controls::s_cursorpos_callback(GLFWwindow *window, double x, double y)
 
 
 void
-Controls::s_keyboard_callback(GLFWwindow *window,
-                              int key,
-                              int scancode,
-                              int action,
-                              int mods)
+Controls::s_keyboard_callback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
   assert(s_instance != nullptr);
   s_instance->keyboard_callback(key, scancode, action, mods);
