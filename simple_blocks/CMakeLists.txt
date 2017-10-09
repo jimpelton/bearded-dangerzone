@@ -24,7 +24,7 @@ if (USE_NVTOOLSEXT)
     endif()
     set(NVTOOLSEXT_LIB ${${NVTOOLSEXT_LIB}} CACHE FILEPATH "NvToolsExt library")
 
-endif(USE_NVTOOLSEXT) 
+endif(USE_NVTOOLSEXT)
 
 
 ################################################################################
@@ -35,16 +35,17 @@ endif()
 set(USE_NVPMAPI ${${USE_NVPROFILE}} CACHE BOOL "True if nvidia's perfmon should be used.")
 
 if (USE_NVPMAPI)
-    add_definitions(-DBDPROF)
+    add_definitions(-DSUBVOL_PROF)
     if(NOT DEFINED NVPMAPI_INCLUDE_DIR)
         set(NVPMAPI_INCLUDE_DIR "")
     endif()
     set(NVPMAPI_INCLUDE_DIR ${${NVPMAPI_INCLUDE_DIR}} CACHE PATH "NvPmApi includes path")
 
-    # if(NOT DEFINED NVPMAPI_LIB)
-    #     set(NVPMAPI_LIB "")
-    # endif()
-    # set(NVPMAPI_LIB ${${NVTOOLSEXT_LIB}} CACHE FILEPATH "NvPmApi library file")
+# if(NOT DEFINED NVPMAPI_LIB)
+#     set(NVPMAPI_LIB "")
+# endif()
+# set(NVPMAPI_LIB ${${NVPMAPI_LIB}} CACHE FILEPATH "NvPmApi library file")
+# add_definitions(-DPATH_TO_NVPMAPI_CORE="${NVPMAPI_LIB}")
 endif(USE_NVPMAPI)
 
 
@@ -87,7 +88,7 @@ set(simple_blocks_HEADERS
         src/controlpanel.h
         src/create_vao.h
         src/loop.h
-        src/nvpm.h
+        # src/nvpm.h
         src/renderhelp.h
         src/semathing.h
         src/sliceset.h
@@ -111,6 +112,7 @@ set(simple_blocks_SOURCES
         src/controlpanel.cpp
         src/create_vao.cpp
         src/loop.cpp
+        # src/nvpm.cpp
         src/sliceset.cpp
         src/timing.cpp
         src/renderhelp.cpp
