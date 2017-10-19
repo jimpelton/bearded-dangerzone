@@ -60,9 +60,10 @@ printBlocks(subvol::BlockCollection *bcol)
     }
     block_file.flush();
     block_file.close();
-  } else {
+  }
+  else {
     bd::Err() << "Could not print blocks because blocks.txt couldn't be created "
-        "in the current working directory.";
+      "in the current working directory.";
   }
 }
 
@@ -91,13 +92,14 @@ void
 updateCommandLineOptionsFromIndexFile(subvol::CommandLineOptions &clo,
                                       std::shared_ptr<bd::IndexFile> const &indexFile)
 {
+  bd::Dbg() << "Updating command line options from index file.";
   auto minmaxE =
     std::minmax_element(indexFile->getFileBlocks().begin(),
                         indexFile->getFileBlocks().end(),
                         [](bd::FileBlock const &lhs, bd::FileBlock const &rhs)
                         -> bool {
-                        return lhs.rov < rhs.rov;
-                      });
+    return lhs.rov < rhs.rov;
+  });
 
   renderhelp::g_rovMin = (*minmaxE.first).rov;
   renderhelp::g_rovMax = (*minmaxE.second).rov;
@@ -112,76 +114,11 @@ updateCommandLineOptionsFromIndexFile(subvol::CommandLineOptions &clo,
 }
 
 
-/////////////////////////////////////////////////////////////////////////////////
-void
-setRendererInitialTransferFunction(bool loaded, std::string const &name,
-                                   subvol::BlockRenderer &renderer)
-{
-
-  if (loaded) {
-
-    // The color map was loaded so, give it to the renderer.
-    renderer.setColorMapTexture(
-        ColorMapManager::getMapByName(name).getTexture());
-
-  } else {
-
-    renderer.setColorMapTexture(
-        ColorMapManager::getMapByName(
-            ColorMapManager::getCurrentMapName()).getTexture());
-
-  }
-
-}
-
-
-/////////////////////////////////////////////////////////////////////////////////
-bool
-initializeTransferFunctions(subvol::CommandLineOptions const &clo)
-{
-
-  ColorMapManager::generateDefaultTransferFunctionTextures();
-
-  // if user transfer function was loaded.
-  bool loaded{ false };
-  try {
-
-    // if at least one of color and opacity files are given... load those tfuncs
-    if ( !clo.colorTFuncPath.empty() || !clo.opacityTFuncPath.empty()) {
-      loaded = ColorMapManager::loadColorMap("USER", clo.colorTFuncPath,
-                                             clo.opacityTFuncPath);
-    } else if (!clo.tfunc1dtPath.empty()) {
-      loaded = ColorMapManager::load1DT("USER", clo.tfunc1dtPath);
-    }
-
-  } catch (std::ios_base::failure &) {
-    bd::Warn() << "Error reading user defined transfer function file(s). "
-        "The function won't be available.";
-  }
-
-
-  return loaded;
-}
-
 
 /////////////////////////////////////////////////////////////////////////////////
 GLFWwindow *
-init_subvol(subvol::CommandLineOptions &clo)
+init_gl(subvol::CommandLineOptions &clo)
 {
-
-  // Open the index file if possible, then setup the BlockCollection
-  // and give away ownership of the index file to the BlockCollection.
-  std::shared_ptr<bd::IndexFile> indexFile{ std::make_shared<bd::IndexFile>() };
-  if (! clo.indexFilePath.empty()) {
-    bool ok = false;
-    indexFile = std::move(
-        bd::IndexFile::fromBinaryIndexFile(clo.indexFilePath, ok));
-    if (! ok) {
-      return nullptr;
-    }
-    updateCommandLineOptionsFromIndexFile(clo, indexFile);
-    renderhelp::g_indexFile = indexFile;
-  }
 
   subvol::printThem(clo);
 
@@ -193,59 +130,31 @@ init_subvol(subvol::CommandLineOptions &clo)
     return nullptr;
   }
   bd::Info() << "Open GL initialized.";
-  
+
   int64_t totalMemory{ 0 };
   subvol::renderhelp::queryGPUMemory(&totalMemory);
   bd::Info() << "GPU memory: " << (totalMemory * 1e-6) << "MB";
 
   if (clo.gpuMemoryBytes > totalMemory) {
     bd::Warn() << "Requested m_gpu memory, " << clo.gpuMemoryBytes
-               << " greater than actual GPU memory, using " << totalMemory << " bytes.";
+      << " greater than actual GPU memory, using " << totalMemory << " bytes.";
     clo.gpuMemoryBytes = static_cast<size_t>(totalMemory);
   }
 
-  renderhelp::setInitialGLState();
-  renderhelp::initializeVertexBuffers(clo);
-  renderhelp::initializeShaders(clo);
-  bool loaded = initializeTransferFunctions(clo);
-
-  renderhelp::initializeBlockCollection(indexFile.get(), clo);
-
-  renderhelp::g_renderer =
-      std::make_shared<subvol::BlockRenderer>(
-          int(clo.num_slices),
-          renderhelp::g_volumeShader,
-          renderhelp::g_volumeShaderLighting,
-          renderhelp::g_wireframeShader,
-          renderhelp::g_blockCollection,
-          renderhelp::g_quadVao,
-          renderhelp::g_boxVao,
-          renderhelp::g_axisVao);
-
-  setRendererInitialTransferFunction(loaded, "USER", *renderhelp::g_renderer);
-
-  renderhelp::g_renderer->resize(clo.windowWidth, clo.windowHeight);
-  renderhelp::g_renderer->getCamera().setEye({ 0, 0, 4 });
-  renderhelp::g_renderer->getCamera().setLookAt({ 0, 0, 0 });
-  renderhelp::g_renderer->getCamera().setUp({ 0, 1, 0 });
-  renderhelp::g_renderer->setViewMatrix(
-      renderhelp::g_renderer->getCamera().createViewMatrix());
-//  renderhelp::g_renderer->setROVRange(clo.blockThreshold_Min, clo.blockThreshold_Max);
-  renderhelp::g_renderer->setDrawNonEmptySlices(true);
-  renderhelp::g_renderer->setDrawNonEmptyBoundingBoxes(false);
 
 
-//  setCameraPosPreset(clo.cameraPos);
 
-  //// NV Perf Thing ////
-//  perf_initNvPm();
-//  perf_initMode(clo.perfMode);
+  //  setCameraPosPreset(clo.cameraPos);
 
-  subvol::renderhelp::initializeControls(window, renderhelp::g_renderer);
+    //// NV Perf Thing ////
+  //  perf_initNvPm();
+  //  perf_initMode(clo.perfMode);
+
+
 
   return window;
 
-} // init_subvol
+} // init_gl
 
 } // namespace subvol
 
@@ -259,43 +168,68 @@ int main(int argc, char *argv[])
   subvol::CommandLineOptions clo;
   if (subvol::parseThem(argc, argv, cmd, clo) == 0) {
     std::cout << "No arguments provided.\nPlease use -h for usage info."
-              << std::endl;
-//    return 1;
+      << std::endl;
+    //    return 1;
   }
 
+  // Open the index file if possible, then setup the BlockCollection
+  // and give away ownership of the index file to the BlockCollection.
+  std::shared_ptr<bd::IndexFile> indexFile{ std::make_shared<bd::IndexFile>() };
+  if (!clo.indexFilePath.empty()) {
+    bool ok = false;
+    indexFile = std::move(
+      bd::IndexFile::fromBinaryIndexFile(clo.indexFilePath, ok));
+    if (!ok) {
+      bd::Err() << "Could not read index file " << clo.indexFilePath;
+      return 1;
+    }
+    updateCommandLineOptionsFromIndexFile(clo, indexFile);
+  }
 
-  GLFWwindow * window{ subvol::init_subvol(clo) };
+  bd::Info() << "Initializing subvol...";
+  GLFWwindow * window{ subvol::init_gl(clo) };
   if (window == nullptr) {
-    bd::Err() << "Could not initialize GLFW (window could not be created). Exiting...";
+    bd::Err() << "Could not initialize subvol. Exiting...";
     return 1;
   }
 
-  subvol::renderhelp::Loop loop;
+  subvol::BlockLoader *loader{
+    subvol::renderhelp::initializeBlockLoader(indexFile.get(), clo) };
+
+  std::shared_ptr<subvol::BlockCollection> bc{
+    subvol::renderhelp::initializeBlockCollection(loader, indexFile.get(), clo) };
+
+  std::shared_ptr<subvol::BlockRenderer> br{ subvol::renderhelp::initializeRenderer(bc, clo) };
+
+  subvol::renderhelp::initializeControls(window, br);
+//  subvol::renderhelp::BenchmarkLoop loop(window, br, bc, glm::vec3{ 1,0,0 });
+  subvol::renderhelp::Loop loop(window, br, bc);
+
 
   subvol::Semathing s(1);
 
-  // Start the qt event stuff on a separate thread (since this gui is totally kludged in here...).
+  // Start the qt event stuff on a separate thread (this gui is totally kludged in here...).
   std::future<int> returned =
-      std::async(std::launch::async,
-                 [&]() {
-                   QApplication a(argc, argv);
-                   subvol::ControlPanel panel;
+    std::async(std::launch::async,
+               [&]() {
+    QApplication a(argc, argv);
+    subvol::ControlPanel panel(indexFile->getVolume(), loader->maxGpuBlocks(), loader->maxMainBlocks());
 
-                   panel.setGlobalRovMinMax(subvol::renderhelp::g_rovMin,
-                                            subvol::renderhelp::g_rovMax);
-                   panel.setcurrentMinMaxSliders(0, 0);
-                   panel.show();
-                   s.signal();
-                   return a.exec();
-                 });
+    panel.setGlobalRovMinMax(subvol::renderhelp::g_rovMin,
+                             subvol::renderhelp::g_rovMax);
+    panel.setcurrentMinMaxSliders(0, 0);
+    panel.show();
+    s.signal();
+    return a.exec();
+  });
 
   s.wait();
-  loop.loop(window);
+  loop.loop();
   std::cout << "Waiting for GUI to close..." << std::endl;
   returned.wait();
   std::cout << "subvol exiting: " << returned.get() << std::endl;
   subvol::timing::printTimes(std::cout);
-//  printNvPmApiCounters(clo.perfOutPath.c_str());
+  //  printNvPmApiCounters(clo.perfOutPath.c_str());
   subvol::cleanup();
 
   return 0;

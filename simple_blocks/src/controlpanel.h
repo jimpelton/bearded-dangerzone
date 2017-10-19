@@ -16,6 +16,7 @@
 
 
 #include <map>
+#include "cmdline.h"
 
 class QSlider;
 class QLabel;
@@ -129,7 +130,7 @@ class StatsPanel : public QWidget, public Recipient
   Q_OBJECT
 
 public:
-  StatsPanel(QWidget *parent);
+  StatsPanel(bd::Volume const &, size_t gpuCacheSize, size_t cpuCacheSize, QWidget *parent);
   ~StatsPanel() = default;
 
 
@@ -152,7 +153,10 @@ public:
   handle_BlockCacheStatsMessage(BlockCacheStatsMessage &) override;
 
   void 
-  handle_RenderStatsMessage(RenderStatsMessage &) override;
+  handle_SliceSetChangedMessage(SliceSetChangedMessage &) override;
+
+  void
+  handle_BlockLoadedMessage(BlockLoadedMessage&) override;
 
 signals:
   void
@@ -193,13 +197,16 @@ private:
   QProgressBar *m_gpuTexturesAvailValueBar;
   
   size_t m_visibleBlocks;
-  size_t m_totalBlocks;
+  size_t m_currentGpuLoadQSize;
+
+  size_t const m_totalBlocks;
+  size_t const m_totalMainBlocks;
+  size_t const m_totalGPUBlocks;
 
   QReadWriteLock m_blockCacheStatsRWLock;
   BlockCacheStatsMessage m_blockCacheStats;
 
   QReadWriteLock m_renderStatsMutex;
-  RenderStatsMessage m_renderStatsMessage;
 };
 
 
@@ -209,7 +216,7 @@ class ControlPanel : public QWidget
   Q_OBJECT
 
 public:
-  explicit ControlPanel(QWidget *parent = nullptr);
+  explicit ControlPanel(bd::Volume const &clo, size_t gpuCacheSize, size_t cpuCacheSize, QWidget *parent = nullptr);
 
   ~ControlPanel();
 
@@ -223,7 +230,8 @@ public:
 
 
 signals:
-  void globalRangeChanged(double, double);
+  void 
+  globalRangeChanged(double, double);
 
 
 public slots:
@@ -234,8 +242,6 @@ public slots:
 
 private:
 
-  unsigned long long m_totalBlocks;
-  unsigned long long m_shownBlocks;
   ClassificationPanel *m_classificationPanel;
   StatsPanel *m_statsPanel;
 

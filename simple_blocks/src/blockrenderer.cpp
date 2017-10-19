@@ -124,7 +124,7 @@ BlockRenderer::setColorMapScaleValue(float val)
 
 ///////////////////////////////////////////////////////////////////////////////
 float
-BlockRenderer::getColorMapScaleValue()
+BlockRenderer::getColorMapScaleValue() const
 {
   return m_tfuncScaleValue;
 }

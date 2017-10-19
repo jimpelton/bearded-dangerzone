@@ -20,10 +20,10 @@ if(NOT DEFINED CRUFT_INCLUDE_DIR)
 endif()
 set(CRUFT_INCLUDE_DIR ${${CRUFT_INCLUDE_DIR}} CACHE PATH "Cruft includes directory path")
 
-if(NOT DEFINED CRUFT_LIBRARIES)
-    set(CRUFT_LIBRARIES)
+if(NOT DEFINED CRUFT_LIBRARY_DIR)
+    set(CRUFT_LIBRARY_DIR)
 endif()
-set(CRUFT_LIBRARIES ${${CRUFT_LIBRARIES}} CACHE FILEPATH "Cruft library file (crufterly.a).")
+set(CRUFT_LIBRARY_DIR ${${CRUFT_LIBRARY_DIR}} CACHE PATH "Cruft library directory.")
 
 
 
@@ -33,10 +33,10 @@ if(NOT DEFINED TBB_INCLUDE_DIR)
 endif()
 set(TBB_INCLUDE_DIR ${${TBB_INCLUDE_DIR}} CACHE PATH "Cruft includes directory path")
 
-if(NOT DEFINED TBB_LIBRARIES)
-    set(TBB_LIBRARIES)
+if(NOT DEFINED TBB_LIBRARY_DIR)
+    set(TBB_LIBRARY_DIR)
 endif()
-set(TBB_LIBRARIES ${${TBB_LIBRARIES}} CACHE FILEPATH "Cruft library file (.a,.dylib,.lib).")
+set(TBB_LIBRARY_DIR ${${TBB_LIBRARY_DIR}} CACHE PATH "Directory with intel tbb libs.")
 
 
 #############################################################################
@@ -53,6 +53,7 @@ endif (UNIX)
 if (WIN32)
     add_definitions(-DGLEW_STATIC)
     add_definitions(-DNOMINMAX)
+    #add_definitions(-DBD_DEBUG)
 endif (WIN32)
 
 find_package(OpenGL REQUIRED)
@@ -71,6 +72,7 @@ endif(UNIX)
 include_directories("${GLEW_INCLUDE_DIR}")
 include_directories("${GLM_INCLUDE_DIR}")
 include_directories("${GLFW_INCLUDE_DIRS}")
+include_directories("${TBB_INCLUDE_DIR}")
 
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/simple_blocks")
 #add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/matrix_benchmark")

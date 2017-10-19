@@ -17,6 +17,7 @@
 #include <bd/log/gl_log.h>
 #include <bd/graphics/renderer.h>
 #include "cmdline.h"
+#include "colormap.h"
 
 //#include <glm/glm.hpp>
 //#include <glm/matrix.hpp>
@@ -26,18 +27,18 @@ namespace subvol
 namespace renderhelp
 {
 
-std::shared_ptr<subvol::BlockRenderer> g_renderer{ nullptr };
+//std::shared_ptr<subvol::BlockRenderer> g_renderer{ nullptr };
 std::shared_ptr<bd::ShaderProgram> g_wireframeShader{ nullptr };
 std::shared_ptr<bd::ShaderProgram> g_volumeShader{ nullptr };
 std::shared_ptr<bd::ShaderProgram> g_volumeShaderLighting{ nullptr };
 std::shared_ptr<bd::VertexArrayObject> g_axisVao{ nullptr };
 std::shared_ptr<bd::VertexArrayObject> g_boxVao{ nullptr };
 std::shared_ptr<bd::VertexArrayObject> g_quadVao{ nullptr };
-std::shared_ptr<subvol::BlockCollection> g_blockCollection{ nullptr };
-std::shared_ptr<bd::IndexFile> g_indexFile{ nullptr };
+//std::shared_ptr<subvol::BlockCollection> g_blockCollection{ nullptr };
+//std::shared_ptr<bd::IndexFile> g_indexFile{ nullptr };
 double g_rovMin = 0;
 double g_rovMax = 0;
-
+//BLThreadData g_blThreadData{};
 namespace
 {
 
@@ -54,8 +55,8 @@ initializeMemoryBuffers(std::vector<char *> *buffers, size_t num, size_t sz)
 {
   buffers->resize(num, nullptr);
   char *mem{ new char[num*sz] };
-  
-  for (size_t i{ 0 }; i<num; ++i)
+
+  for (size_t i{ 0 }; i < num; ++i)
   {
     char *idx = mem + i * sz;
     (*buffers)[i] = idx;
@@ -77,12 +78,12 @@ initGLContext(int screenWidth, int screenHeight)
   glfwSetErrorCallback(s_error_callback);
   glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
 
-// number of samples to use for multi sampling
-//glfwWindowHint(GLFW_SAMPLES, 4);
+  // number of samples to use for multi sampling
+  //glfwWindowHint(GLFW_SAMPLES, 4);
 
 #ifdef __APPLE__
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
 #else
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
@@ -109,7 +110,7 @@ initGLContext(int screenWidth, int screenHeight)
     return nullptr;
   }
 
-// Generate OpenGL queries for frame times.
+  // Generate OpenGL queries for frame times.
   subvol::timing::genQueries();
 
   glfwSwapInterval(1); // 0 = no vertical sync.
@@ -124,11 +125,9 @@ initGLContext(int screenWidth, int screenHeight)
   return window;
 } // initGLContext()
 
-
-/////////////////////////////////////////////////////////////////////////////////
-bool
-initializeBlockCollection(bd::IndexFile const *indexFile,
-                          subvol::CommandLineOptions const &clo)
+BlockLoader*
+initializeBlockLoader(bd::IndexFile const *indexFile,
+                      subvol::CommandLineOptions const &clo)
 {
   glm::u64vec3 dims = indexFile->getVolume().block_dims();
   bd::DataType type = bd::IndexFileHeader::getType(indexFile->getHeader());
@@ -145,18 +144,19 @@ initializeBlockCollection(bd::IndexFile const *indexFile,
     tdata->maxCpuBlocks = 0;
     tdata->maxGpuBlocks = 0;
     bd::Warn() << "Blocks have a dimension that is 0."; //, so I can't go on.";
-  } else {
+  }
+  else {
     bd::Info() << "Block texture size (bytes): " << blockBytes;
 
     // Find max cpu blocks (assert no larger than actual number of blocks).
     tdata->maxCpuBlocks = clo.mainMemoryBytes / blockBytes;
     tdata->maxCpuBlocks = tdata->maxCpuBlocks > numBlocks ?
-                          numBlocks : tdata->maxCpuBlocks;
+      numBlocks : tdata->maxCpuBlocks;
 
     // Find max gpu blocks (assert no larger than actual number of blocks).
     tdata->maxGpuBlocks = clo.gpuMemoryBytes / blockBytes;
     tdata->maxGpuBlocks = tdata->maxGpuBlocks > numBlocks ?
-                          numBlocks : tdata->maxGpuBlocks;
+      numBlocks : tdata->maxGpuBlocks;
   } // else
 
   tdata->type = type;
@@ -166,6 +166,9 @@ initializeBlockCollection(bd::IndexFile const *indexFile,
 
   tdata->texs = new std::vector<bd::Texture*>();
   tdata->buffers = new std::vector<char*>();
+
+  // ugh, such cringe! more global data = more ugh!
+  //  g_blThreadData = *tdata;
 
   bd::Info() << "Max cpu blocks: " << tdata->maxCpuBlocks;
   bd::Info() << "Max GPU blocks: " << tdata->maxGpuBlocks;
@@ -184,20 +187,28 @@ initializeBlockCollection(bd::IndexFile const *indexFile,
   bd::Info() << "Generated " << tdata->buffers->size() << " main memory buffers.";
 
   BlockLoader *loader{ new BlockLoader(tdata, indexFile->getVolume()) };
+  return loader;
+}
 
-  BlockCollection *bc_local{ new BlockCollection(loader, *indexFile) };
-  bc_local->setRangeMin(0);
-  bc_local->setRangeMax(0);
-  bc_local->changeClassificationType(ClassificationType::Rov);
-  g_blockCollection = std::shared_ptr<BlockCollection>(bc_local);
+/////////////////////////////////////////////////////////////////////////////////
+BlockCollection *
+initializeBlockCollection(BlockLoader *loader, 
+                          bd::IndexFile const *indexFile,
+                          subvol::CommandLineOptions const &clo)
+{
 
-  bd::Info() << bc_local->getBlocks().size() << " blocks in index file.";
+  BlockCollection *bc{ new BlockCollection(loader, *indexFile) };
+  bc->setRangeMin(0);
+  bc->setRangeMax(0);
+  bc->changeClassificationType(ClassificationType::Rov);
+  //  g_blockCollection = std::shared_ptr<BlockCollection>(bc);
+
+  bd::Info() << bc->getBlocks().size() << " blocks in index file.";
 
   // filter blocks in the index file that are within ROV thresholds
   //bc_local->filterBlocksByROVRange(clo.blockThreshold_Min, clo.blockThreshold_Max);
-  return true;
+  return bc;
 }
-
 
 ///////////////////////////////////////////////////////////////////////////////
 void
@@ -208,7 +219,7 @@ setInitialGLState()
 
   gl_check(glEnable(GL_CULL_FACE));
   gl_check(glCullFace(GL_FRONT));
-//  gl_check(glDisable(GL_CULL_FACE));
+  //  gl_check(glDisable(GL_CULL_FACE));
 
   gl_check(glEnable(GL_DEPTH_TEST));
   gl_check(glDepthFunc(GL_LESS));
@@ -231,17 +242,70 @@ initializeControls(GLFWwindow *window, std::shared_ptr<BlockRenderer> renderer)
   glfwSetWindowSizeCallback(window, &Controls::s_window_size_callback);
   glfwSetKeyCallback(window, &Controls::s_keyboard_callback);
   glfwSetScrollCallback(window, &Controls::s_scrollwheel_callback);
-//  glfwSetMouseButtonCallback(window, &Controls::s_mousebutton_callback);
+  //  glfwSetMouseButtonCallback(window, &Controls::s_mousebutton_callback);
   glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
 
 }
 
+/////////////////////////////////////////////////////////////////////////////////
+void
+setRendererInitialTransferFunction(bool loaded, std::string const &name,
+                                   subvol::BlockRenderer &renderer)
+{
+
+  if (loaded) {
+
+    // The color map was loaded so, give it to the renderer.
+    renderer.setColorMapTexture(
+      ColorMapManager::getMapByName(name).getTexture());
+
+  }
+  else {
+
+    renderer.setColorMapTexture(
+      ColorMapManager::getMapByName(
+        ColorMapManager::getCurrentMapName()).getTexture());
+
+  }
+
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////
+bool
+initializeTransferFunctions(subvol::CommandLineOptions const &clo)
+{
+
+  ColorMapManager::generateDefaultTransferFunctionTextures();
+
+  // if user transfer function was loaded.
+  bool loaded{ false };
+  try {
+
+    // if at least one of color and opacity files are given... load those tfuncs
+    if (!clo.colorTFuncPath.empty() || !clo.opacityTFuncPath.empty()) {
+      loaded = ColorMapManager::loadColorMap("USER", clo.colorTFuncPath,
+                                             clo.opacityTFuncPath);
+    }
+    else if (!clo.tfunc1dtPath.empty()) {
+      loaded = ColorMapManager::load1DT("USER", clo.tfunc1dtPath);
+    }
+
+  }
+  catch (std::ios_base::failure &) {
+    bd::Warn() << "Error reading user defined transfer function file(s). "
+      "The function won't be available.";
+  }
+
+
+  return loaded;
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
-int
-initializeShaders(subvol::CommandLineOptions &clo)
+bool
+initializeShaders(subvol::CommandLineOptions const &clo)
 {
-  int rval = 0b111;
 
 
   // Wireframe Shader
@@ -251,7 +315,7 @@ initializeShaders(subvol::CommandLineOptions &clo)
                                                  "shaders/frag_vertcolor.glsl") };
   if (programId == 0) {
     bd::Err() << "Error building passthrough shader, program id was 0.";
-    rval &= 0b110;
+    return false;
   }
   renderhelp::g_wireframeShader->unbind();
 
@@ -259,11 +323,11 @@ initializeShaders(subvol::CommandLineOptions &clo)
   // Volume shader
   renderhelp::g_volumeShader = std::make_shared<bd::ShaderProgram>();
   programId =
-      renderhelp::g_volumeShader->linkProgram("shaders/vert_vertexcolor_passthrough.glsl",
-                                              "shaders/frag_volumesampler_noshading.glsl");
+    renderhelp::g_volumeShader->linkProgram("shaders/vert_vertexcolor_passthrough.glsl",
+                                            "shaders/frag_volumesampler_noshading.glsl");
   if (programId == 0) {
     bd::Err() << "Error building volume shader, program id was 0.";
-    rval &= 0b101;
+    return false;
   }
   renderhelp::g_volumeShader->unbind();
 
@@ -271,16 +335,16 @@ initializeShaders(subvol::CommandLineOptions &clo)
   // Volume shader with Lighting
   renderhelp::g_volumeShaderLighting = std::make_shared<bd::ShaderProgram>();
   programId =
-      renderhelp::g_volumeShaderLighting->linkProgram("shaders/vert_vertexcolor_passthrough.glsl",
-                                                      "shaders/frag_shading_otfgrads.glsl");
+    renderhelp::g_volumeShaderLighting->linkProgram("shaders/vert_vertexcolor_passthrough.glsl",
+                                                    "shaders/frag_shading_otfgrads.glsl");
   if (programId == 0) {
     bd::Err() << "Error building volume lighting shader, program id was 0.";
-    rval &= 0b011;
+    return false;
   }
   renderhelp::g_volumeShaderLighting->unbind();
 
 
-  return rval;
+  return true;
 }
 
 
@@ -296,9 +360,9 @@ initializeVertexBuffers(subvol::CommandLineOptions const &clo)
   bd::Dbg() << "Generating proxy geometry VAO";
 
   subvol::genQuadVao(*g_quadVao,
-                     { -0.5f, -0.5f, -0.5f },
-                     { 0.5f, 0.5f, 0.5f },
-                     { clo.num_slices, clo.num_slices, clo.num_slices });
+  { -0.5f, -0.5f, -0.5f },
+  { 0.5f, 0.5f, 0.5f },
+  { clo.num_slices, clo.num_slices, clo.num_slices });
 
 
   // coordinate axis
@@ -313,6 +377,42 @@ initializeVertexBuffers(subvol::CommandLineOptions const &clo)
   renderhelp::g_boxVao = std::make_shared<bd::VertexArrayObject>();
   renderhelp::g_boxVao->create();
   subvol::genBoxVao(*g_boxVao);
+
+}
+
+BlockRenderer *
+initializeRenderer(std::shared_ptr<BlockCollection> bc,
+                   subvol::CommandLineOptions const &clo)
+{
+  renderhelp::setInitialGLState();
+  renderhelp::initializeVertexBuffers(clo);
+  if (!renderhelp::initializeShaders(clo)) {
+    return nullptr;
+  }
+
+  bool loaded = initializeTransferFunctions(clo);
+
+  BlockRenderer *br = new BlockRenderer(
+    int(clo.num_slices),
+    renderhelp::g_volumeShader,
+    renderhelp::g_volumeShaderLighting,
+    renderhelp::g_wireframeShader,
+    bc,
+    renderhelp::g_quadVao,
+    renderhelp::g_boxVao,
+    renderhelp::g_axisVao);
+
+  setRendererInitialTransferFunction(loaded, "USER", *br);
+
+  br->resize(clo.windowWidth, clo.windowHeight);
+  br->getCamera().setEye({ 0, 0, 4 });
+  br->getCamera().setLookAt({ 0, 0, 0 });
+  br->getCamera().setUp({ 0, 1, 0 });
+  br->setViewMatrix(br->getCamera().createViewMatrix());
+  br->setDrawNonEmptySlices(true);
+  br->setDrawNonEmptyBoundingBoxes(false);
+
+  return br;
 }
 
 

@@ -4,6 +4,7 @@
 
 #include "controlpanel.h"
 #include "blockrenderer.h"
+#include "renderhelp.h"
 #include "messages/messagebroker.h"
 
 #include <bd/io/indexfile.h>
@@ -217,10 +218,13 @@ ClassificationPanel::slot_rovRadioClicked(bool)
 
 
 ///////////////////////////////////////////////////////////////////////////////
-StatsPanel::StatsPanel(QWidget *parent = nullptr )
+StatsPanel::StatsPanel(bd::Volume const &vol, size_t gpuCacheSize, size_t cpuCacheSize, QWidget *parent = nullptr)
   : Recipient{ "StatsPanel" }
   , m_visibleBlocks{ 0 }
-  , m_totalBlocks{ 0 }
+  , m_currentGpuLoadQSize{ 0 }
+  , m_totalMainBlocks{ cpuCacheSize }
+  , m_totalGPUBlocks{ gpuCacheSize }
+  , m_totalBlocks{ vol.total_block_count() }
 {
 
   QGridLayout *gridLayout = new QGridLayout();
@@ -353,8 +357,8 @@ void
 StatsPanel::handle_ShownBlocksMessage(ShownBlocksMessage &m)
 {
   m_visibleBlocks = m.ShownBlocks;
-//  updateShownBlocksLabels();
-  emit updateStatsValues();
+  updateShownBlocksLabels();
+//  emit updateStatsValues();
 }
 
 
@@ -368,32 +372,46 @@ StatsPanel::handle_BlockCacheStatsMessage(BlockCacheStatsMessage &m)
   emit updateStatsValues();
 }
 
-
-
-///////////////////////////////////////////////////////////////////////////////
 void 
-StatsPanel::handle_RenderStatsMessage(RenderStatsMessage &m)
+StatsPanel::handle_SliceSetChangedMessage(SliceSetChangedMessage&)
 {
-  m_renderStatsMutex.lockForWrite();
-  m_renderStatsMessage = m;
-  m_renderStatsMutex.unlock();
-  emit updateRenderStatsValues();
+
 }
+
+void 
+StatsPanel::handle_BlockLoadedMessage(BlockLoadedMessage &m)
+{
+  m_blockCacheStatsRWLock.lockForWrite();
+  m_currentGpuLoadQSize = m.GpuLoadQueueSize;
+  m_blockCacheStatsRWLock.unlock();
+  emit updateStatsValues();
+}
+
+  ///////////////////////////////////////////////////////////////////////////////
+//void 
+//StatsPanel::handle_RenderStatsMessage(RenderStatsMessage &m)
+//{
+//  m_renderStatsMutex.lockForWrite();
+//  m_renderStatsMessage = m;
+//  m_renderStatsMutex.unlock();
+//  emit updateRenderStatsValues();
+//}
 
 void
 StatsPanel::setStatsValues()
 {
   m_blockCacheStatsRWLock.lockForRead();
   BlockCacheStatsMessage m = m_blockCacheStats;
+  size_t const gpuQSize{ m_currentGpuLoadQSize };
   m_blockCacheStatsRWLock.unlock();
 
-  m_totalBlocks = m.MaxCpuCacheSize;
-  m_blocksTotalValueLabel->setText(QString::number(m_totalBlocks));
-  updateShownBlocksLabels();
+//  m_totalBlocks = m.MaxCpuCacheSize;
+//  m_blocksTotalValueLabel->setText(QString::number(m_totalBlocks));
+//  updateShownBlocksLabels();
 
-  int cpuCashFilledPerc = int(100 * (m.CpuCacheSize / float(m.MaxCpuCacheSize)));
+  int const cpuCashFilledPerc = int(100 * (m.CpuCacheSize / float(m_totalMainBlocks)));
 
-  int gpuCashFilledPerc = int(100 * (m.GpuCacheSize / float(m.MaxGpuCacheSize)));
+  int const gpuCashFilledPerc = int(100 * (m.GpuCacheSize / float(m_totalGPUBlocks)));
 
   m_cpuCacheFilledValueLabel->setText(QString::number(m.CpuCacheSize));
   m_cpuCacheFilledBar->setValue(cpuCashFilledPerc);
@@ -402,13 +420,14 @@ StatsPanel::setStatsValues()
   m_gpuCacheFilledBar->setValue(gpuCashFilledPerc);
 
   m_cpuLoadQueueValueLabel->setText(QString::number(m.CpuLoadQueueSize));
-  m_gpuLoadQueueValueLabel->setText(QString::number(m.GpuLoadQueueSize));
-
-  m_cpuBuffersAvailValueLabel->setText(QString::number(m.CpuBuffersAvailable));
-  m_cpuBuffersAvailValueBar->setValue(100 - cpuCashFilledPerc);
+  m_gpuLoadQueueValueLabel->setText(QString::number(gpuQSize));
   
-  m_gpuTexturesAvailValueLabel->setText(QString::number(m.GpuTexturesAvailable));
-  m_gpuTexturesAvailValueBar->setValue(100 - gpuCashFilledPerc);
+
+//  m_cpuBuffersAvailValueLabel->setText(QString::number(m.CpuBuffersAvailable));
+//  m_cpuBuffersAvailValueBar->setValue(100 - cpuCashFilledPerc);
+  
+//  m_gpuTexturesAvailValueLabel->setText(QString::number(m.GpuTexturesAvailable));
+//  m_gpuTexturesAvailValueBar->setValue(100 - gpuCashFilledPerc);
 }
 
 void 
@@ -426,13 +445,12 @@ StatsPanel::setRenderStatsValues()
 
 
 ///////////////////////////////////////////////////////////////////////////////
-ControlPanel::ControlPanel(QWidget *parent)
+ControlPanel::ControlPanel(bd::Volume const &vol, size_t gpuCacheSize, 
+                           size_t cpuCacheSize, QWidget *parent)
     : QWidget(parent)
-    , m_totalBlocks{ 0 }
-    , m_shownBlocks{ 0 }
 {
   m_classificationPanel = new ClassificationPanel(this);
-  m_statsPanel = new StatsPanel(this);
+  m_statsPanel = new StatsPanel(vol, gpuCacheSize, cpuCacheSize, this);
 
   QVBoxLayout *layout = new QVBoxLayout;
 

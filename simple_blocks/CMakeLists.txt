@@ -64,7 +64,6 @@ if (USE_NVPMAPI)
 endif(USE_NVPMAPI)
 
 include_directories("${CRUFT_INCLUDE_DIR}"
-        "${TBB_INCLUDE_DIR}"
         "${THIRDPARTY_DIR}/tclap/include")
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
@@ -122,14 +121,24 @@ set(simple_blocks_SOURCES
 
 ################################################################################
 # Linker
+
 add_executable(simple_blocks "${simple_blocks_HEADERS}" "${simple_blocks_SOURCES}")
+
+link_directories("${TBB_LIBRARY_DIR}")
+
+find_library(CRUFT_DEBUG_LIB cruftd HINTS "${CRUFT_LIBRARY_DIR}")
+find_library(CRUFT_RELEASE_LIB cruft HINTS "${CRUFT_LIBRARY_DIR}")
+find_library(TBB_DEBUG_LIB tbb_debug HINTS "${TBB_LIBRARY_DIR}")
+find_library(TBB_RELEASE_LIB tbb HINTS "${TBB_LIBRARY_DIR}")
 
 target_link_libraries(simple_blocks
         ${OPENGL_LIBRARIES}
         ${GLFW_LIBRARIES}
         ${GLEW_LIBRARIES}
-        ${CRUFT_LIBRARIES}
-        ${TBB_LIBRARIES}
+        debug ${CRUFT_DEBUG_LIB}
+        optimized ${CRUFT_RELEASE_LIB}
+        debug ${TBB_DEBUG_LIB}
+        optimized ${TBB_RELEASE_LIB}
         ${NVTOOLSEXT_LIB}
         Qt5::Widgets
         Qt5::Core)

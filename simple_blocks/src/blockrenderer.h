@@ -61,7 +61,7 @@ public:
 
 
   float
-  getColorMapScaleValue();
+  getColorMapScaleValue() const;
 
 
   void
@@ -72,12 +72,24 @@ public:
   setShaderLightPos(glm::vec3 const &L);
 
 
+//  glm::vec3 const &
+//  getShaderLightPos() const;
+
+
   void
   setShaderMaterial(glm::vec3 const &M);
 
 
+//  glm::vec3 const &
+//  getShaderMaterial() const;
+
+
   void
   setBackgroundColor(glm::vec3 const &c);
+
+
+  glm::vec3 const &
+  getBackgroundColor() const;
 
 
   void

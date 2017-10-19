@@ -43,14 +43,14 @@ BlockLoader::BlockLoader(BLThreadData *threadParams, bd::Volume const &volume)
 
 BlockLoader::~BlockLoader()
 {
-//  if (dptr)
-//  {
-//    if (dptr->buffers)
-//      delete dptr->buffers;
-//
-//    if (dptr->texs)
-//      delete dptr->texs;
-//  }
+  //  if (dptr)
+  //  {
+  //    if (dptr->buffers)
+  //      delete dptr->buffers;
+  //
+  //    if (dptr->texs)
+  //      delete dptr->texs;
+  //  }
 }
 
 
@@ -62,7 +62,7 @@ BlockLoader::operator()()
   raw.open(m_fileName, std::ios::binary);
   if (!raw.is_open()) {
     bd::Err() << "The raw file " << m_fileName
-              << " could not be opened. Exiting loader loop.";
+      << " could not be opened. Exiting loader loop.";
     return -1;
   }
 
@@ -82,12 +82,7 @@ BlockLoader::operator()()
 
     m->CpuBuffersAvailable = m_buffs.size();
     m->GpuTexturesAvailable = m_texs.size();
-
-    m->MaxCpuCacheSize = m_maxMainBlocks;
-    m->MaxGpuCacheSize = m_maxGpuBlocks;
-
     Broker::send(m);
-
 
     // get a block marked as visible
     bd::Block *b{ waitPopLoadQueue() };
@@ -108,12 +103,12 @@ BlockLoader::operator()()
                             m_volDiff);
     m_main.insert(std::make_pair(b->index(), b));
 
-    if(! m_texs.empty()) {
+    if (!m_texs.empty()) {
       b->texture(m_texs.back());
       m_texs.pop_back();
       pushGPUReadyQueue(b);
     }
-    
+
 
   } // while
 
@@ -176,23 +171,25 @@ BlockLoader::queueClassified(std::vector<bd::Block *> const &visible,
   // if the block is already in main, then assign it a texture.
   for (size_t i{ 0 }; i < visible.size(); ++i) {
     bd::Block *vis{ visible[i] };
-    assert(b != nullptr && "Block was null when iterating visible blocks.");
+    assert(vis != nullptr && "Block was null when iterating visible blocks.");
     if (m_main.find(vis->index()) == m_main.end()) {
       // The block is not in main, so it needs to be loaded from disk, pushed to main,
       // and finally pushed to the gpu ready queue.
       // The load thread (running in operator()) pushes to the
       // gpu ready queue and the render thread pops from the gpu ready queue and uploads
       // to the gpu, then pushes the block pointer to the gpu resident queue.
-      assert(m_gpu.find(b->index()) == m_gpu.end() &&
-                 "Block is not in main, but is in gpu!");
+      assert(m_gpu.find(vis->index()) == m_gpu.end() &&
+             "Block is not in main, but is in gpu!");
       m_loadQueue.push_back(vis);
-    } else if (m_gpu.find(vis->index()) == m_gpu.end()) {
+    }
+    else if (m_gpu.find(vis->index()) == m_gpu.end()) {
       // The block is not on the gpu yet, but it is in main,
       // so push to the gpu queue. If it has a texture, it is ready to go, 
       // but if it needs a texture, give it one.
       if (vis->texture() != nullptr) {
         pushGPUReadyQueue(vis);
-      } else if (m_texs.size() > 0) {
+      }
+      else if (m_texs.size() > 0) {
         vis->texture(m_texs.back());
         m_texs.pop_back();
         pushGPUReadyQueue(vis);
@@ -211,8 +208,8 @@ BlockLoader::queueClassified(std::vector<bd::Block *> const &visible,
                               static_cast<long long>(m_texs.size()) };
   if (num_to_evict > 0) {
     bd::Dbg() << "Need to evict " << num_to_evict
-              << " blocks (LQ Size: " << m_loadQueue.size()
-              << ", Texs avail: " << m_texs.size() << ").";
+      << " blocks (LQ Size: " << m_loadQueue.size()
+      << ", Texs avail: " << m_texs.size() << ").";
 
     // We have more blocks than there are available memory slots, so we need to
     // evict some empties.
@@ -226,7 +223,8 @@ BlockLoader::queueClassified(std::vector<bd::Block *> const &visible,
         m_buffs.push_back(buff);
         it = m_main.erase(it);
         --num_to_evict;
-      } else {
+      }
+      else {
         ++it;
       }
     }
@@ -243,8 +241,8 @@ BlockLoader::queueClassified(std::vector<bd::Block *> const &visible,
   // sort blocks in ROV descending order
   std::sort(m_loadQueue.begin(), m_loadQueue.end(),
             [](bd::Block *lhs, bd::Block *rhs) -> bool {
-              return lhs->fileBlock().rov > rhs->fileBlock().rov;
-            });
+    return lhs->fileBlock().rov > rhs->fileBlock().rov;
+  });
 
   m_wait.notify_all();
 }
@@ -290,6 +288,22 @@ BlockLoader::clearLoadQueue()
 
 
 ///////////////////////////////////////////////////////////////////////////////
+size_t
+BlockLoader::maxMainBlocks()
+{
+  return m_maxMainBlocks;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+size_t 
+BlockLoader::maxGpuBlocks()
+{
+  return m_maxGpuBlocks;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
 void
 BlockLoader::removeEmptyBlocksFromGpu()
 {
@@ -301,7 +315,8 @@ BlockLoader::removeEmptyBlocksFromGpu()
       assert(e != nullptr && "A block in the GPU list had a null texture.");
       m_texs.push_back(e);
       it = m_gpu.erase(it);
-    } else {
+    }
+    else {
       ++it;
     }
   }

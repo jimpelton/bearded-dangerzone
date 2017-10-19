@@ -47,13 +47,13 @@ public:
   void mousebutton_callback(GLFWwindow *, int button, int action, int mods);
 
 
-//  void setShowBlockBoxes(bool);
-//  void setUseLighting(bool);
+  void setShowBlockBoxes(bool);
+  void setUseLighting(bool);
 //  void setCurrentBackgroundColorIndex(int);
-//  void setTransferFunctionScaleValue(float);
-//  void setLightingNShiney(float);
-//  void setLightPosition(glm::vec3 const &);
-
+  void setTransferFunctionScaleValue(float);
+  void setLightingNShiney(float);
+  void setLightPosition(glm::vec3 const &);
+  void setFov(float);
 
   Cursor & getCursor();
 

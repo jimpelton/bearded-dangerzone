@@ -12,9 +12,12 @@ namespace subvol {
     MAX_RANGE_CHANGED_MESSAGE,
     BLOCK_CACHE_STATS_MESSAGE,
     RENDER_STATS_MESSAGE,
+    SLICESET_CHANGED_MESSAGE,
+    BLOCK_LOADED_MESSAGE,
   };
   
   class Recipient;
+
   class Message {
   public:
     Message(MessageType t) 

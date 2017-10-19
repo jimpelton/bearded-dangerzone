@@ -293,6 +293,12 @@ public:
   void
   clearLoadQueue();
 
+  size_t
+  maxMainBlocks();
+
+  size_t
+  maxGpuBlocks();
+
 private:
 
   bd::Block*
