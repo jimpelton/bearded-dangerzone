@@ -89,11 +89,12 @@ initializeShaders(subvol::CommandLineOptions const &clo);
 
 
 void
-initializeVertexBuffers(subvol::CommandLineOptions const &clo);
+initializeVertexBuffers(subvol::CommandLineOptions const &clo, glm::f32vec3 const &world_dims);
 
 
 BlockRenderer*
 initializeRenderer(std::shared_ptr<BlockCollection> bc, 
+                   glm::f32vec3 const &worldDims,
                    subvol::CommandLineOptions const &clo);
 
 

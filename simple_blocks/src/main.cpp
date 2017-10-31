@@ -60,8 +60,7 @@ printBlocks(subvol::BlockCollection *bcol)
     }
     block_file.flush();
     block_file.close();
-  }
-  else {
+  }  else {
     bd::Err() << "Could not print blocks because blocks.txt couldn't be created "
       "in the current working directory.";
   }
@@ -141,17 +140,6 @@ init_gl(subvol::CommandLineOptions &clo)
     clo.gpuMemoryBytes = static_cast<size_t>(totalMemory);
   }
 
-
-
-
-  //  setCameraPosPreset(clo.cameraPos);
-
-    //// NV Perf Thing ////
-  //  perf_initNvPm();
-  //  perf_initMode(clo.perfMode);
-
-
-
   return window;
 
 } // init_gl
@@ -164,7 +152,7 @@ int main(int argc, char *argv[])
 {
   subvol::Broker::start();
 
-  TCLAP::CmdLine cmd("Simple Blocks blocking volume render experiment.", ' ');
+  TCLAP::CmdLine cmd("Simple Blocks blocking volume rendering experiment.", ' ');
   subvol::CommandLineOptions clo;
   if (subvol::parseThem(argc, argv, cmd, clo) == 0) {
     std::cout << "No arguments provided.\nPlease use -h for usage info."
@@ -183,6 +171,8 @@ int main(int argc, char *argv[])
       bd::Err() << "Could not read index file " << clo.indexFilePath;
       return 1;
     }
+    // there are some CL opts that can be specified in the index file, so we 
+    // read those into our CommandLineOptions struct.
     updateCommandLineOptionsFromIndexFile(clo, indexFile);
   }
 
@@ -199,12 +189,12 @@ int main(int argc, char *argv[])
   std::shared_ptr<subvol::BlockCollection> bc{
     subvol::renderhelp::initializeBlockCollection(loader, indexFile.get(), clo) };
 
-  std::shared_ptr<subvol::BlockRenderer> br{ subvol::renderhelp::initializeRenderer(bc, clo) };
+  std::shared_ptr<subvol::BlockRenderer> br{
+    subvol::renderhelp::initializeRenderer(bc, indexFile->getVolume().worldDims(), clo) };
 
   subvol::renderhelp::initializeControls(window, br);
 //  subvol::renderhelp::BenchmarkLoop loop(window, br, bc, glm::vec3{ 1,0,0 });
   subvol::renderhelp::Loop loop(window, br, bc);
-
 
   subvol::Semathing s(1);
 

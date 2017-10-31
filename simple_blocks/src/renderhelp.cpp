@@ -79,7 +79,7 @@ initGLContext(int screenWidth, int screenHeight)
   glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
 
   // number of samples to use for multi sampling
-  //glfwWindowHint(GLFW_SAMPLES, 4);
+  glfwWindowHint(GLFW_SAMPLES, 4);
 
 #ifdef __APPLE__
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -350,7 +350,7 @@ initializeShaders(subvol::CommandLineOptions const &clo)
 
 /////////////////////////////////////////////////////////////////////////////////
 void
-initializeVertexBuffers(subvol::CommandLineOptions const &clo)
+initializeVertexBuffers(subvol::CommandLineOptions const &clo, glm::f32vec3 const &world_dims)
 {
 
   // 2d slices
@@ -359,10 +359,11 @@ initializeVertexBuffers(subvol::CommandLineOptions const &clo)
   //TODO: generate quads shaped to the actual volume dimensions.
   bd::Dbg() << "Generating proxy geometry VAO";
 
-  subvol::genQuadVao(*g_quadVao,
-  { -0.5f, -0.5f, -0.5f },
-  { 0.5f, 0.5f, 0.5f },
-  { clo.num_slices, clo.num_slices, clo.num_slices });
+  glm::f32vec3 const wMin{ world_dims * -0.5f };
+  glm::f32vec3 const wMax{ world_dims * 0.5f };
+
+  subvol::genQuadVao(*g_quadVao, wMin, wMax, 
+    { clo.num_slices, clo.num_slices, clo.num_slices });
 
 
   // coordinate axis
@@ -382,10 +383,11 @@ initializeVertexBuffers(subvol::CommandLineOptions const &clo)
 
 BlockRenderer *
 initializeRenderer(std::shared_ptr<BlockCollection> bc,
+                   glm::f32vec3 const &wDims,
                    subvol::CommandLineOptions const &clo)
 {
   renderhelp::setInitialGLState();
-  renderhelp::initializeVertexBuffers(clo);
+  renderhelp::initializeVertexBuffers(clo, wDims);
   if (!renderhelp::initializeShaders(clo)) {
     return nullptr;
   }

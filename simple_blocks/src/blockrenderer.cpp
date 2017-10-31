@@ -8,7 +8,6 @@
 #include "blockrenderer.h"
 #include "colormap.h"
 #include "constants.h"
-#include "nvpm.h"
 #include "messages/messagebroker.h"
 
 #include <bd/util/ordinal.h>
@@ -17,8 +16,10 @@
 #include <glm/gtx/string_cast.hpp>
 #include <bd/log/gl_log.h>
 
+#ifdef USE_NV_TOOLS
+#include <nvToolsExt.h>
+#endif
 
-//#include <bd/log/logger.h>
 
 namespace subvol
 {
@@ -137,8 +138,15 @@ BlockRenderer::setBackgroundColor(const glm::vec3 &c)
   glClearColor(c.r, c.g, c.b, 0.0f);
 }
 
-
 ///////////////////////////////////////////////////////////////////////////////
+glm::vec3 const& 
+BlockRenderer::getBackgroundColor() const
+{
+  return m_backgroundColor;
+}
+
+
+  ///////////////////////////////////////////////////////////////////////////////
 void
 BlockRenderer::setShouldUseLighting(bool b)
 {
@@ -227,6 +235,7 @@ BlockRenderer::draw()
   }
 
   if (m_drawNonEmptySlices && !m_rangeChanging) {
+    
     drawNonEmptyBlocks_Forward();
   }
 
@@ -239,7 +248,7 @@ BlockRenderer::drawNonEmptyBoundingBoxes()
 {
   m_wireframeShader->bind();
   m_boxesVao->bind();
-  size_t nblk{ m_nonEmptyBlocks->size() };
+  size_t const nblk  { m_nonEmptyBlocks->size() };
   for(size_t i{ 0 }; i < nblk; ++i) {
 
     bd::Block *b{ (*m_nonEmptyBlocks)[i] };
@@ -264,7 +273,7 @@ BlockRenderer::drawNonEmptyBoundingBoxes()
 
 ////////////////////////////////////////////////////////////////////////////////
 void
-BlockRenderer::drawSlices(int baseVertex)
+BlockRenderer::drawSlices(int baseVertex) const
 {
   // Begin NVPM work profiling
 //  perf_workBegin();
@@ -282,7 +291,7 @@ BlockRenderer::drawSlices(int baseVertex)
 
 ////////////////////////////////////////////////////////////////////////////////
 void
-BlockRenderer::drawAxis()
+BlockRenderer::drawAxis() const
 {
   m_wireframeShader->bind();
   m_axisVao->bind();
@@ -315,11 +324,8 @@ BlockRenderer::drawNonEmptyBlocks_Forward()
 
   m_quadsVao->bind();
 
-  // Start an NVPM profiling frame
-//  perf_frameBegin();
-
-  size_t nBlk{ m_nonEmptyBlocks->size() };
-
+  size_t const nBlk{ m_nonEmptyBlocks->size() };
+  NVTOOLS_PUSH_RANGE("DrawNonEmptyBlocks", 0);
   for(size_t i{ 0 }; i < nBlk; ++i) {
     bd::Block *b{ (*m_nonEmptyBlocks)[i] };
 
@@ -333,9 +339,8 @@ BlockRenderer::drawNonEmptyBlocks_Forward()
       drawSlices(baseVertex);
     }
   }
+  NVTOOLS_POP_RANGE
 
-  // End the NVPM profiling frame.
-//  perf_frameEnd();
 //  m_quadsVao->unbind();
 //  m_currentShader->unbind();
 }

@@ -12,8 +12,11 @@ endif()
 set(USE_NVTOOLSEXT ${${SET_NVPROFILE}} CACHE BOOL "True if profiling should be enabled, false for not profiling")
 
 if (USE_NVTOOLSEXT)
-    add_definitions(-DBDPROF)
-
+    add_compile_options(
+        "$<$<CONFIG:Debug>:-DUSE_NV_TOOLS>"
+        "$<$<CONFIG:Release>:-DUSE_NV_TOOLS>"
+    )
+    
     if(NOT DEFINED NVTOOLSEXT_INCLUDE_DIR)
         set(NVTOOLSEXT_INCLUDE_DIR "")
     endif()
@@ -88,6 +91,7 @@ set(simple_blocks_HEADERS
         src/create_vao.h
         src/loop.h
         # src/nvpm.h
+        src/nvtools.h
         src/renderhelp.h
         src/semathing.h
         src/sliceset.h
@@ -142,8 +146,6 @@ target_link_libraries(simple_blocks
         ${NVTOOLSEXT_LIB}
         Qt5::Widgets
         Qt5::Core)
-
-
 
 ################################################################################
 # Copy shaders folder to the build directory.

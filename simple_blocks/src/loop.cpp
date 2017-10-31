@@ -38,7 +38,7 @@ Loop::~Loop()
 void
 Loop::loop()
 {
-  assert(window != nullptr && "window was passed as nullptr in loop()");
+  assert(_window != nullptr && "window was passed as nullptr in loop()");
   bd::Info() << "About to enter render loop.";
 
 

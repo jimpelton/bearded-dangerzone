@@ -10,12 +10,13 @@
 #include "classificationtype.h"
 #include "messages/recipient.h"
 
+#include "nvtools.h"
+
 #include <bd/graphics/renderer.h>
 #include <bd/graphics/shader.h>
 #include <bd/graphics/texture.h>
 #include <bd/graphics/vertexarrayobject.h>
 
-#include <glm/fwd.hpp>
 
 #include <memory>
 
@@ -124,12 +125,12 @@ private:
 
   /// \brief Disable GL_DEPTH_TEST and draw transparent slices
   void
-  drawSlices(int baseVertex);
+  drawSlices(int baseVertex) const;
 
 
   /// \brief Draw the coordinate axis.
   void
-  drawAxis();
+  drawAxis() const;
 
 
   /// \brief Loop through the blocks and draw each one

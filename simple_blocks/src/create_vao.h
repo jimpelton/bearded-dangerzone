@@ -139,7 +139,7 @@ void createQuads_Reversed(std::vector<glm::vec4> &quads, const glm::vec3 &min,
 ///
 /// \param elebuf[out] Vector for returning element indexes.
 /// \param numQuads[in] Number of quads in each block.
-void createElementIdx(std::vector<unsigned short> &elebuf, unsigned short numslices);
+void createElementIdx(std::vector<unsigned short> &elebuf, glm::u64vec3 const &numslices);
 
 
 /// \brief Generate the vertex buffers for coordinate axis widget

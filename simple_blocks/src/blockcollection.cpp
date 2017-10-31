@@ -45,7 +45,6 @@ BlockCollection::BlockCollection(BlockLoader *loader,
                  [loader]() -> int { return ( *loader )(); });
 
   initBlocksFromFileBlocks(index.getFileBlocks(),
-                           m_volume.worldDims(),
                            m_volume.block_count());
 
   Broker::subscribeRecipient(this);
@@ -88,7 +87,6 @@ BlockCollection::~BlockCollection()
 ///////////////////////////////////////////////////////////////////////////////
 void
 BlockCollection::initBlocksFromFileBlocks(std::vector<FileBlock> const &fileBlocks,
-                                          glm::f32vec3 const &vd,
                                           glm::u64vec3 const &nb)
 {
 
@@ -98,6 +96,7 @@ BlockCollection::initBlocksFromFileBlocks(std::vector<FileBlock> const &fileBloc
   }
 
   m_blocks.reserve(fileBlocks.size());
+  m_emptyBlocks.reserve(fileBlocks.size());
   m_nonEmptyBlocks.reserve(fileBlocks.size());
 
   int every = static_cast<int>( 0.1f * fileBlocks.size() );

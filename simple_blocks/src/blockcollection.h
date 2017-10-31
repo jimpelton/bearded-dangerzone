@@ -38,7 +38,6 @@ public:
   /// \param numblocks[in]  The number of blocks to generate in each dimension.
   void
   initBlocksFromFileBlocks(std::vector<bd::FileBlock> const &fileBlocks,
-                           glm::f32vec3 const &vd,
                            glm::u64vec3 const &numblocks);
 
 

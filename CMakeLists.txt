@@ -53,7 +53,6 @@ endif (UNIX)
 if (WIN32)
     add_definitions(-DGLEW_STATIC)
     add_definitions(-DNOMINMAX)
-    #add_definitions(-DBD_DEBUG)
 endif (WIN32)
 
 find_package(OpenGL REQUIRED)

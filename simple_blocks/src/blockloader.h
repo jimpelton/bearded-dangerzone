@@ -210,6 +210,8 @@ public:
 
         // offset of next row
         offset = bd::to1D(start.x, row + 1, slab, ve[0], ve[1]);
+//        offset = bd::to1D(start.x, row, slab, ve[0], ve[1]);
+
         offset *= sizeType;
       }
     }
