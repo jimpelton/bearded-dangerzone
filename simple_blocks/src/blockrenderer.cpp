@@ -371,7 +371,8 @@ BlockRenderer::computeBaseVertexFromViewDir(glm::vec3 const &viewdir)
   // Compute base vertex VBO offset.
   int const elements_per_vertex{ 4 };
   int baseVertex{ 0 };
-
+  newSelected = SliceSet::XZ;
+  isPos = false;
   switch (newSelected) {
 
     case SliceSet::YZ:

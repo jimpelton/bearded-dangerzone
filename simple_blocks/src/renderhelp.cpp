@@ -18,9 +18,10 @@
 #include <bd/graphics/renderer.h>
 #include "cmdline.h"
 #include "colormap.h"
+#include "constants.h"
 
-//#include <glm/glm.hpp>
-//#include <glm/matrix.hpp>
+#include <glm/glm.hpp>
+#include <glm/matrix.hpp>
 
 namespace subvol
 {
@@ -438,35 +439,35 @@ queryGPUMemory(int64_t *total, int64_t *avail)
 
 
 ///////////////////////////////////////////////////////////////////////////////
-//void
-//setCameraPosPreset(unsigned int cameraPos)
-//{
-//
-//  glm::quat r;
-//  switch (cameraPos) {
-//    case 3:
-//      break;
-//    case 2:
-//      //put camera at { 2.0f, 0.0f, 0.0f  } (view along positive X axis)
-//      r = glm::rotate(r, -1.0f * glm::half_pi<float>(), Y_AXIS);
-//      //g_camera.rotateTo(Y_AXIS);
-//      break;
-//    case 1:
-//      //put camera at { 0.0f, 2.0f, 0.0f } (view along positive Y axis)
-//      r = glm::rotate(r, glm::half_pi<float>(), X_AXIS);
-//      //g_camera.rotateTo(X_AXIS);
-//      break;
-//    case 0:
-//    default:
-//      //put camera at oblique positive quadrant.
-//      // no rotation needed, this is default cam location.
-//      r = glm::rotate(r, glm::pi<float>(), Y_AXIS) *
-//        glm::rotate(r, glm::pi<float>() / 4.0f, X_AXIS);
-//
-//      //g_camera.rotateTo(Z_AXIS);
-//      break;
-//  }
-//}
+void
+setCameraPosPreset(unsigned int cameraPos)
+{
+
+  glm::quat r;
+  switch (cameraPos) {
+    case 3:
+      break;
+    case 2:
+      //put camera at { 2.0f, 0.0f, 0.0f  } (view along positive X axis)
+      r = glm::rotate(r, -1.0f * glm::half_pi<float>(), Y_AXIS);
+      //g_camera.rotateTo(Y_AXIS);
+      break;
+    case 1:
+      //put camera at { 0.0f, 2.0f, 0.0f } (view along positive Y axis)
+      r = glm::rotate(r, glm::half_pi<float>(), X_AXIS);
+      //g_camera.rotateTo(X_AXIS);
+      break;
+    case 0:
+    default:
+      //put camera at oblique positive quadrant.
+      // no rotation needed, this is default cam location.
+      r = glm::rotate(r, glm::pi<float>(), Y_AXIS) *
+        glm::rotate(r, glm::pi<float>() / 4.0f, X_AXIS);
+
+      //g_camera.rotateTo(Z_AXIS);
+      break;
+  }
+}
 
 //void setDefaultView(glm::vec3 const &eye)
 //{

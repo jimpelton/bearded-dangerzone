@@ -145,21 +145,21 @@ Controls::keyboard_callback(int key, int scancode, int action, int mods)
 
     switch (key) {
 
-      //      case GLFW_KEY_0:
-      //        setCameraPosPreset(0);
-      //        break;
-      //
-      //      case GLFW_KEY_1:
-      //        setCameraPosPreset(1);
-      //        break;
-      //
-      //      case GLFW_KEY_2:
-      //        setCameraPosPreset(2);
-      //        break;
-      //
-      //      case GLFW_KEY_3:
-      //        setCameraPosPreset(3);
-      //        break;
+            case GLFW_KEY_0:
+              setCameraPosPreset(0);
+              break;
+      
+            case GLFW_KEY_1:
+              setCameraPosPreset(1);
+              break;
+      
+            case GLFW_KEY_2:
+              setCameraPosPreset(2);
+              break;
+      
+            case GLFW_KEY_3:
+              setCameraPosPreset(3);
+              break;
 
       //      case GLFW_KEY_W:
       //        g_toggleWireFrame = !g_toggleWireFrame;

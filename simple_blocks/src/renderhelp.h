@@ -104,8 +104,8 @@ void
 queryGPUMemory(int64_t *total, 
                int64_t *avail = nullptr);
 
-//void
-//setCameraPosPreset(unsigned int cameraPos);
+void
+setCameraPosPreset(unsigned int cameraPos);
 
 } // namespace renderhelp
 } // namespace subvol

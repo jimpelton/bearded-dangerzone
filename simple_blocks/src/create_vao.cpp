@@ -467,7 +467,6 @@ void genBoxVao(bd::VertexArrayObject &vao)
 //    return (max - min) / float(num_slices);
 //}
 //
-////TODO: use texbuf_adjust instead of duplicated code in texbuf vbo create methods.
 //void texbuf_adjust(std::vector<glm::vec4> &texbuf)
 //{
 //    float diff = 1 - VOL_MAX;
@@ -506,7 +505,6 @@ void genBoxVao(bd::VertexArrayObject &vao)
 //{
 //    create_verts_xy(numSlices, texbuf);
 //
-//    //TODO: float diff = 1-VOL_MAX doesn't work for all negative VOL_MAXes.
 //    float diff = 1 - VOL_MAX;
 //    std::for_each(texbuf.begin(), texbuf.end(),
 //        [diff](glm::vec4 &v){ v += glm::vec4(diff, diff, diff, 0.0f); });
@@ -518,7 +516,6 @@ void genBoxVao(bd::VertexArrayObject &vao)
 //{
 //    create_verts_xz(numSlices, texbuf);
 //
-//    //TODO: float diff = 1-VOL_MAX doesn't work for all negative VOL_MAXes.
 //    float diff = 1 - VOL_MAX;
 //    std::for_each(texbuf.begin(), texbuf.end(),
 //        [diff](glm::vec4 &v){ v += glm::vec4(diff, diff, diff, 0.0f); });
@@ -530,7 +527,6 @@ void genBoxVao(bd::VertexArrayObject &vao)
 //{
 //    create_verts_yz(numSlices, texbuf);
 //
-//    //TODO: float diff = 1-VOL_MAX doesn't work for all negative VOL_MAXes.
 //    float diff = 1 - VOL_MAX;
 //    std::for_each(texbuf.begin(), texbuf.end(),
 //        [diff](glm::vec4 &v){ v += glm::vec4(diff, diff, diff, 0.0f); });
