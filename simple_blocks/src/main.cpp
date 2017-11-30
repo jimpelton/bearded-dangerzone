@@ -193,7 +193,7 @@ int main(int argc, char *argv[])
 //    subvol::renderhelp::initializeRenderer(bc, indexFile->getVolume().worldDims(), clo) };
   
   std::shared_ptr<subvol::BlockRenderer> br{
-    subvol::renderhelp::initializeRenderer(bc, {1.0f, 1.0f, 1.0f}, clo) };
+    subvol::renderhelp::initializeRenderer(bc, indexFile->getVolume(), clo) };
 
 
   subvol::renderhelp::initializeControls(window, br);

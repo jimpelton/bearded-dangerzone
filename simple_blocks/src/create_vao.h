@@ -57,7 +57,7 @@ namespace subvol
   /// \param max[in] Max corner of region
   /// \param numSlices[in] Number of slices per each axis.
 
-
+  
   glm::u64vec3
   genQuadVao(bd::VertexArrayObject& vao,
              bd::Volume const& v,
@@ -65,7 +65,7 @@ namespace subvol
 
   void
   createQuads(std::vector<VertexFormat>& verts,
-              bd::Volume const& v,
+//              bd::Volume const& v,
               size_t numSlices,
               float delta,
               bool flip,

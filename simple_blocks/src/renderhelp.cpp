@@ -346,15 +346,15 @@ namespace subvol
     /////////////////////////////////////////////////////////////////////////////////
     void
     initializeVertexBuffers(subvol::CommandLineOptions const& clo,
-                            bd::Volume const &v
-                            /*glm::f32vec3 const& world_dims*/)
+                            bd::Volume const &v,
+                            glm::u64vec3 *numSlices)
     {
       // 2d slices
       renderhelp::g_quadVao = std::make_shared<bd::VertexArrayObject>();
       renderhelp::g_quadVao->create();
       bd::Dbg() << "Generating proxy geometry VAO";
       //TODO: samplingModifer in commandlineoptions!
-      subvol::genQuadVao(*g_quadVao, v, 1.0);
+      *numSlices = subvol::genQuadVao(*g_quadVao, v, 10);
 
       // coordinate axis
       bd::Dbg() << "Generating coordinate axis VAO";
@@ -370,13 +370,15 @@ namespace subvol
       subvol::genBoxVao(*g_boxVao);
     }
 
+    /////////////////////////////////////////////////////////////////////////////////
     BlockRenderer*
     initializeRenderer(std::shared_ptr<BlockCollection> bc,
-                       glm::f32vec3 const& wDims,
+                       bd::Volume const &v,
                        subvol::CommandLineOptions const& clo)
     {
       renderhelp::setInitialGLState();
-      renderhelp::initializeVertexBuffers(clo, wDims);
+      glm::u64vec3 numSlices;
+      renderhelp::initializeVertexBuffers(clo, v, &numSlices);
       if (!renderhelp::initializeShaders(clo)) {
         return nullptr;
       }
@@ -384,7 +386,7 @@ namespace subvol
       bool loaded = initializeTransferFunctions(clo);
 
       BlockRenderer* br = new BlockRenderer(
-        int(clo.num_slices),
+        numSlices,
         renderhelp::g_volumeShader,
         renderhelp::g_volumeShaderLighting,
         renderhelp::g_wireframeShader,

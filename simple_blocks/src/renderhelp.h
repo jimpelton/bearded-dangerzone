@@ -88,12 +88,13 @@ namespace subvol
 
     void
     initializeVertexBuffers(subvol::CommandLineOptions const& clo,
-                            bd::Volume const &v);
+                            bd::Volume const &v,
+                            glm::u64vec3 *numSlices);
 
 
     BlockRenderer*
     initializeRenderer(std::shared_ptr<BlockCollection> bc,
-                       glm::f32vec3 const& worldDims,
+                       bd::Volume const &v,
                        subvol::CommandLineOptions const& clo);
 
 

@@ -32,7 +32,7 @@ public:
   BlockRenderer();
 
 
-  BlockRenderer(int numSlices,
+  BlockRenderer(glm::u64vec3 numSlices,
                 std::shared_ptr<bd::ShaderProgram> volumeShader,
                 std::shared_ptr<bd::ShaderProgram> volumeShaderLighting,
                 std::shared_ptr<bd::ShaderProgram> wireframeShader,
@@ -125,7 +125,7 @@ private:
 
   /// \brief Disable GL_DEPTH_TEST and draw transparent slices
   void
-  drawSlices(int baseVertex) const;
+  drawSlices(int baseVertex, int numSlices) const;
 
 
   /// \brief Draw the coordinate axis.
@@ -151,7 +151,7 @@ private:
 
 
   /// Number of slices per block
-  int m_numSlicesPerBlock;
+  glm::u64vec3 m_numSlicesPerBlock;
   /// Transfer function scaling value
   float m_tfuncScaleValue;
   /// True to draw bounding boxes.

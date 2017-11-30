@@ -27,13 +27,13 @@ namespace subvol
 
 
 BlockRenderer::BlockRenderer()
-    : BlockRenderer(0, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr)
+  : BlockRenderer({ }, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr)
 {
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-BlockRenderer::BlockRenderer(int numSlices,
+BlockRenderer::BlockRenderer(glm::u64vec3 numSlices,
   std::shared_ptr<bd::ShaderProgram> volumeShader,
   std::shared_ptr<bd::ShaderProgram> volumeShaderLighting,
   std::shared_ptr<bd::ShaderProgram> wireframeShader,
@@ -44,7 +44,7 @@ BlockRenderer::BlockRenderer(int numSlices,
   : Renderer()
   , Recipient("BlockRenderer")
 
-  , m_numSlicesPerBlock{ numSlices - 1 }
+  , m_numSlicesPerBlock{ numSlices }
   , m_tfuncScaleValue{ 1.0f }
   , m_drawNonEmptyBoundingBoxes{ false }
   , m_drawNonEmptySlices{ true }
@@ -288,13 +288,13 @@ BlockRenderer::drawNonEmptyBoundingBoxes()
 
 ////////////////////////////////////////////////////////////////////////////////
 void
-BlockRenderer::drawSlices(int baseVertex) const
+BlockRenderer::drawSlices(int baseVertex, int numSlices) const
 {
   // Begin NVPM work profiling
 //  perf_workBegin();
   gl_check(
       glDrawElementsBaseVertex(GL_TRIANGLE_STRIP,
-                               ELEMENTS_PER_QUAD * m_numSlicesPerBlock, // count
+                               ELEMENTS_PER_QUAD * numSlices, // count
                                GL_UNSIGNED_SHORT,                       // type
                                0,                                       // element offset
                                baseVertex));                            // vertex offset
@@ -353,7 +353,7 @@ BlockRenderer::drawNonEmptyBlocks_Forward()
       m_currentShader->setUniform(VOLUME_MVP_MATRIX_UNIFORM_STR,
                                   getWorldViewProjectionMatrix());
 
-      drawSlices(baseVertex);
+      drawSlices(baseVertex, m_numSlicesPerBlock[bd::ordinal<SliceSet>(m_selectedSliceSet)]);
     }
   }
   NVTOOLS_POP_RANGE
@@ -384,34 +384,36 @@ BlockRenderer::computeBaseVertexFromViewDir(glm::vec3 const &viewdir)
     isPos = viewdir.z > 0;
   }
 
-
+  
   // Compute base vertex VBO offset.
   int const verts_per_quad{ 4 };
   int baseVertex{ 0 };
-  
+
+  glm::u64 numSlices{ m_numSlicesPerBlock[bd::ordinal<SliceSet>(newSelected)] };
+
   switch (newSelected) {
 
     case SliceSet::YZ:
       if (isPos) {
         baseVertex = 0;
       } else {
-        baseVertex = 1 * verts_per_quad * m_numSlicesPerBlock;
+        baseVertex = 1 * verts_per_quad * numSlices;
       }
       break;
 
     case SliceSet::XZ:
       if (isPos) {
-        baseVertex = 2 * verts_per_quad * m_numSlicesPerBlock;
+        baseVertex = 2 * verts_per_quad * numSlices;
       } else {
-        baseVertex = 3 * verts_per_quad * m_numSlicesPerBlock;
+        baseVertex = 3 * verts_per_quad * numSlices;
       }
       break;
 
     case SliceSet::XY:
       if (isPos) {
-        baseVertex = 4 * verts_per_quad * m_numSlicesPerBlock;
+        baseVertex = 4 * verts_per_quad * numSlices;
       } else {
-        baseVertex = 5 * verts_per_quad * m_numSlicesPerBlock;
+        baseVertex = 5 * verts_per_quad * numSlices;
       }
       break;
 

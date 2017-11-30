@@ -162,7 +162,7 @@ namespace subvol
              float samplingModifer,
              Axis a)
     {
-      return 1.0f / (samplingModifer * v.worldDims[bd::ordinal<Axis>(a)] * 1.414213562f); // 1.414213562f = sqrt(2)
+      return 1.0f / (samplingModifer * v.worldDims()[bd::ordinal<Axis>(a)] * 1.414213562f); // 1.414213562f = sqrt(2)
     }
 
 
@@ -198,28 +198,37 @@ namespace subvol
     float delta{ getDelta(v, smod, Axis::X) };
     size_t numSlices{ static_cast<size_t>(std::floor(1.0f / delta)) };
     delta = 1.0f / (numSlices - 1);
-    createQuads(vbuf, v, numSlices, delta, false, Axis::X);
-    createQuads(vbuf, v, numSlices, delta, true, Axis::X);
+    bd::Dbg() << "Slices on X: " << numSlices << " with delta: " << delta;
+    createQuads(vbuf, numSlices, delta, false, Axis::X);
+    createQuads(vbuf, numSlices, delta, true, Axis::X);
     createElementIdx(elebuf, numSlices);
     sliceCounts.x = numSlices;
 
     delta = getDelta(v, smod, Axis::Y);
     numSlices = static_cast<size_t>(std::floor(1.0f / delta));
     delta = 1.0f / (numSlices - 1);
-    createQuads(vbuf, v, numSlices, delta, false, Axis::Y);
-    createQuads(vbuf, v, numSlices, delta, true, Axis::Y);
+    bd::Dbg() << "Slices on Y: " << numSlices << " with delta: " << delta;
+    createQuads(vbuf, numSlices, delta, false, Axis::Y);
+    createQuads(vbuf, numSlices, delta, true, Axis::Y);
     createElementIdx(elebuf, numSlices);
     sliceCounts.y = numSlices;
 
     delta = getDelta(v, smod, Axis::Z);
     numSlices = static_cast<size_t>(std::floor(1.0f / delta));
     delta = 1.0f / (numSlices - 1);
-    createQuads(vbuf, v, numSlices, delta, false, Axis::Z);
-    createQuads(vbuf, v, numSlices, delta, true, Axis::Z);
+    bd::Dbg() << "Slices on Z: " << numSlices << " with delta: " << delta;
+    createQuads(vbuf, numSlices, delta, false, Axis::Z);
+    createQuads(vbuf, numSlices, delta, true, Axis::Z);
     createElementIdx(elebuf, numSlices);
     sliceCounts.z = numSlices;
 
-    vao.addVbo(vbuf);
+    std::vector<glm::vec4> verts, texs;
+    for (auto &vf : vbuf) {
+      verts.push_back(vf.pos);
+      texs.push_back({ vf.uv, 1.0 });
+    }
+    vao.addVbo(verts, VERTEX_COORD_ATTR, bd::VertexArrayObject::Usage::Static_Draw);
+    vao.addVbo(texs, VERTEX_COLOR_ATTR, bd::VertexArrayObject::Usage::Static_Draw);
     // Element index buffer
     vao.setIndexBuffer(elebuf.data(),
                        elebuf.size(),
@@ -285,7 +294,7 @@ namespace subvol
 
   void
   createQuads(std::vector<VertexFormat>& verts,
-              bd::Volume const& v,
+//              bd::Volume const& v,
               size_t numSlices,
               float delta,
               bool flip,
@@ -308,8 +317,9 @@ namespace subvol
         sliceVerts[1] = interpolateVertex(volBox.verts[3], volBox.verts[2], depth);
         sliceVerts[2] = interpolateVertex(volBox.verts[7], volBox.verts[6], depth);
         sliceVerts[3] = interpolateVertex(volBox.verts[4], volBox.verts[5], depth);
-
-        std::copy(sliceVerts.begin(), sliceVerts.end(), verts.end());
+        for (auto &v : sliceVerts) {
+          verts.push_back(v);
+        }
 
         depth += delta;
       }
@@ -320,8 +330,9 @@ namespace subvol
         sliceVerts[1] = interpolateVertex(volBox.verts[1], volBox.verts[2], depth);
         sliceVerts[2] = interpolateVertex(volBox.verts[4], volBox.verts[7], depth);
         sliceVerts[3] = interpolateVertex(volBox.verts[5], volBox.verts[6], depth);
-
-        std::copy(sliceVerts.begin(), sliceVerts.end(), verts.end());
+        for (auto &v : sliceVerts) {
+          verts.push_back(v);
+        }
 
         depth += delta;
       }
@@ -332,8 +343,9 @@ namespace subvol
         sliceVerts[1] = interpolateVertex(volBox.verts[1], volBox.verts[5], depth);
         sliceVerts[2] = interpolateVertex(volBox.verts[3], volBox.verts[7], depth);
         sliceVerts[3] = interpolateVertex(volBox.verts[2], volBox.verts[6], depth);
-
-        std::copy(sliceVerts.begin(), sliceVerts.end(), verts.end());
+        for (auto &v : sliceVerts) {
+          verts.push_back(v);
+        }
 
         depth += delta;
       }
@@ -466,7 +478,7 @@ namespace subvol
   void createElementIdx(std::vector<unsigned short>& elebuf,
                         size_t numSlices)
   {
-    elebuf.clear();
+//    elebuf.clear();
     // Creates element indices just for X dimension becuase we are using same
     // number of slices for each dimension.
     for (unsigned short i{ 0 }; i < numSlices; ++i) {
