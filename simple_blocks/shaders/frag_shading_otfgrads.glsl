@@ -1,6 +1,6 @@
-#version 400 core
+#version 420 core
 
-in vec3 vcol;
+layout(location=0) smooth in vec3 vcol;
 out vec4 color;
 
 uniform sampler3D volume_sampler;

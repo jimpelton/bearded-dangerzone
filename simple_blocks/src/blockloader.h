@@ -18,6 +18,7 @@
 #include <condition_variable>
 #include <set>
 #include <fstream>
+#include <sstream>
 
 namespace subvol
 {
@@ -174,6 +175,8 @@ public:
       disk_buf = new VTy[ buf_len ];
     }
 
+    memset(disk_buf, 0, buf_len);
+
     // Start and end voxel coordinates are used to compute the byte offset into 
     // the file that we should start/stop reading at.
     //
@@ -211,8 +214,25 @@ public:
         
         // convert voxel offset to bytes
         offset *= typeSize;
-      }
-    }
+      } // for row
+
+//      std::stringstream filename;
+//      filename << "C:\\Users\\jim\\Desktop\\slabs\\slab-" << ijk[0] << "_" << ijk[1] << "_" << ijk[2] << "-" << slab << ".pgm";
+//      std::ofstream of(filename.str());
+//      
+//      // header
+//      of << "P2\n"
+//        << be[0] << ' ' << be[1] << '\n'
+//        << *std::max_element(disk_buf, disk_buf + (be[0]*be[1])) << '\n';
+//
+//      for (int i = 0; i < be[0]*be[1]; ++i) {
+//        of << disk_buf[i] << ' ';
+//      }
+//
+//      of.flush();
+//      of.close();
+
+    } // for slab
 
     float * const pixelData = reinterpret_cast<float *>(b);
     //Normalize the data prior to generating the texture.

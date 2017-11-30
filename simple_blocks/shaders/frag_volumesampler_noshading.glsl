@@ -1,7 +1,7 @@
-#version 400 core
+#version 420 core
 
 // Interpolated values from the vertex shaders
-in vec3 vcol;
+layout(location=0) smooth in vec3 vcol;;
 
 // Ouput data
 out vec4 color;

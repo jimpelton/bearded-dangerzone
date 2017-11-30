@@ -44,7 +44,7 @@ BlockRenderer::BlockRenderer(int numSlices,
   : Renderer()
   , Recipient("BlockRenderer")
 
-  , m_numSlicesPerBlock{ numSlices }
+  , m_numSlicesPerBlock{ numSlices - 1 }
   , m_tfuncScaleValue{ 1.0f }
   , m_drawNonEmptyBoundingBoxes{ false }
   , m_drawNonEmptySlices{ true }
@@ -82,6 +82,8 @@ BlockRenderer::~BlockRenderer()
 bool
 BlockRenderer::init()
 {
+  Broker::subscribeRecipient(this);
+
   m_volumeShader->bind();
   m_volumeShader->setUniform(VOLUME_SAMPLER_UNIFORM_STR, BLOCK_TEXTURE_UNIT);
   m_volumeShader->setUniform(TRANSF_SAMPLER_UNIFORM_STR, TRANSF_TEXTURE_UNIT);
@@ -97,8 +99,22 @@ BlockRenderer::init()
 
   // sets m_currentShader depending on m_shouldUseLighting.
   setShouldUseLighting(m_shouldUseLighting);
-
-  Broker::subscribeRecipient(this);
+  
+  GLuint sampler_state{ 0 };
+  gl_check(glGenSamplers(1, &sampler_state));
+  if (sampler_state == 0) {
+    bd::Err() << "Could not generate a sampler object.";
+    return false;
+  }
+  gl_check(glSamplerParameteri(sampler_state, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+  gl_check(glSamplerParameteri(sampler_state, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+  gl_check(glSamplerParameteri(sampler_state, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+  gl_check(glSamplerParameteri(sampler_state, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+  gl_check(glSamplerParameteri(sampler_state, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE));
+//  gl_check(glSamplerParameterf(sampler_state, GL_TEXTURE_MAX_ANISOTROPY_EXT, 16.0f));
+  gl_check(glBindSampler(sampler_state, BLOCK_TEXTURE_UNIT));
+  m_sampler_state = sampler_state;
+  
   return true;
 }
 
@@ -235,7 +251,6 @@ BlockRenderer::draw()
   }
 
   if (m_drawNonEmptySlices && !m_rangeChanging) {
-    
     drawNonEmptyBlocks_Forward();
   }
 
@@ -333,6 +348,8 @@ BlockRenderer::drawNonEmptyBlocks_Forward()
     if (b->status() & bd::Block::GPU_RES) {
       setWorldMatrix(b->transform());
       b->texture()->bind(BLOCK_TEXTURE_UNIT);
+      gl_check(glBindSampler(m_sampler_state, BLOCK_TEXTURE_UNIT));
+
       m_currentShader->setUniform(VOLUME_MVP_MATRIX_UNIFORM_STR,
                                   getWorldViewProjectionMatrix());
 
@@ -369,33 +386,32 @@ BlockRenderer::computeBaseVertexFromViewDir(glm::vec3 const &viewdir)
 
 
   // Compute base vertex VBO offset.
-  int const elements_per_vertex{ 4 };
+  int const verts_per_quad{ 4 };
   int baseVertex{ 0 };
-  newSelected = SliceSet::XZ;
-  isPos = false;
+  
   switch (newSelected) {
 
     case SliceSet::YZ:
       if (isPos) {
         baseVertex = 0;
       } else {
-        baseVertex = 1 * elements_per_vertex * m_numSlicesPerBlock;
+        baseVertex = 1 * verts_per_quad * m_numSlicesPerBlock;
       }
       break;
 
     case SliceSet::XZ:
       if (isPos) {
-        baseVertex = 2 * elements_per_vertex * m_numSlicesPerBlock;
+        baseVertex = 2 * verts_per_quad * m_numSlicesPerBlock;
       } else {
-        baseVertex = 3 * elements_per_vertex * m_numSlicesPerBlock;
+        baseVertex = 3 * verts_per_quad * m_numSlicesPerBlock;
       }
       break;
 
     case SliceSet::XY:
       if (isPos) {
-        baseVertex = 4 * elements_per_vertex * m_numSlicesPerBlock;
+        baseVertex = 4 * verts_per_quad * m_numSlicesPerBlock;
       } else {
-        baseVertex = 5 * elements_per_vertex * m_numSlicesPerBlock;
+        baseVertex = 5 * verts_per_quad * m_numSlicesPerBlock;
       }
       break;
 

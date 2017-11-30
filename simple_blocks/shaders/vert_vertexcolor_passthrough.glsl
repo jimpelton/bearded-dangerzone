@@ -1,4 +1,4 @@
-#version 400 core
+#version 420 core
 
 // vertices
 layout(location = 0) in vec4 v;
@@ -9,7 +9,7 @@ layout(location = 1) in vec3 in_col;
 
 uniform mat4 mvp;
 
-out vec3 vcol;
+layout(location=0) out vec3 vcol;
 
 void main () {
   gl_Position = mvp * v;

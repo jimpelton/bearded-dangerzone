@@ -169,7 +169,7 @@ private:
   bd::ShaderProgram *m_currentShader;
 
   SliceSet m_selectedSliceSet;
-
+  unsigned int m_sampler_state;
   std::shared_ptr<bd::ShaderProgram> m_volumeShader;
   std::shared_ptr<bd::ShaderProgram> m_volumeShaderLighting;
   std::shared_ptr<bd::ShaderProgram> m_wireframeShader;
