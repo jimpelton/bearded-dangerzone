@@ -222,7 +222,7 @@ int main(int argc, char *argv[])
   std::cout << "Waiting for GUI to close..." << std::endl;
   returned.wait();
   std::cout << "subvol exiting: " << returned.get() << std::endl;
-  subvol::timing::printTimes(std::cout);
+//  subvol::timing::printTimes(std::cout);
   //  printNvPmApiCounters(clo.perfOutPath.c_str());
   subvol::cleanup();
 

@@ -151,7 +151,7 @@ template<class VTy>
 class BlockReaderSpec : public BlockReader
 {
 public:
-	BlockReaderSpec() : disk_buf{ nullptr }, buf_len{ 0 } { }
+	BlockReaderSpec() : disk_buf{ nullptr }, buf_elems{ 0 } { }
 
   virtual ~BlockReaderSpec()
   {
@@ -166,16 +166,17 @@ public:
                 uint64_t offset,                // byte offset into infile of block
                 uint64_t const be[3],           // block dims (in voxels)
                 uint64_t const ijk[3],          // block ijk index
-                uint64_t const ve[2],           // slab dims
+                uint64_t const ve[2],           // slab dims of the entire volume
                 double vMin, double vDiff) override
   {
     if (! disk_buf) {
       // allocate temp space for the block (the entire block is brought into mem).
-      buf_len = be[0] * be[1] * be[2];
-      disk_buf = new VTy[ buf_len ];
+      buf_elems = be[0] * be[1] * be[2];
+      disk_buf = new VTy[ buf_elems ];
     }
 
-    memset(disk_buf, 0, buf_len);
+    size_t const typeSize = sizeof(VTy);
+//    memset(disk_buf, 0, buf_elems*typeSize);
 
     // Start and end voxel coordinates are used to compute the byte offset into 
     // the file that we should start/stop reading at.
@@ -193,7 +194,6 @@ public:
 
     // the row length of each block is the extent in the X dimension
     size_t const blockRowLength{ be[0] };
-    size_t const typeSize = sizeof(VTy);
     size_t const rowBytes{ blockRowLength * typeSize };
 
     // Loop through rows and slabs of volume reading rows of voxels into memory.
@@ -236,14 +236,14 @@ public:
 
     float * const pixelData = reinterpret_cast<float *>(b);
     //Normalize the data prior to generating the texture.
-    for (size_t idx{ 0 }; idx < buf_len; ++idx) {
+    for (size_t idx{ 0 }; idx < buf_elems; ++idx) {
       pixelData[idx] = static_cast<float>( (disk_buf[idx] - vMin) / vDiff );
     }
 
   }
 private:
   VTy *disk_buf;
-  size_t buf_len;
+  size_t buf_elems;
 
 };
 

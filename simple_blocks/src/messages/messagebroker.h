@@ -31,12 +31,26 @@ namespace subvol {
     static void
     subscribeRecipient(Recipient *r)
     {
+      std::unique_lock<std::mutex> lock(m_myself->m_recipientsMutex);
       auto found = std::find(m_myself->m_recipients.begin(), 
         m_myself->m_recipients.end(), r);
 
       if (found == m_myself->m_recipients.end()) {
         m_myself->m_recipients.push_back(r);
         bd::Dbg() << "Added recipient " << r->name();
+      }
+    }
+
+    static void
+    unsubscribeRecipient(Recipient *r)
+    {
+      std::unique_lock<std::mutex> lock(m_myself->m_recipientsMutex);
+      auto found = std::find(m_myself->m_recipients.begin(), 
+        m_myself->m_recipients.end(), r);
+
+      if (found != m_myself->m_recipients.end()) {
+        m_myself->m_recipients.erase(found);
+        bd::Dbg() << "Removed recipient " << r->name();
       }
     }
 
@@ -60,9 +74,11 @@ namespace subvol {
       while(true) {
         Message *m{ getNextMessage() };
 
+        m_recipientsMutex.lock();
         for (auto &r : m_recipients) {
           r->deliver(m);
         }
+        m_recipientsMutex.unlock();
 
         delete m;
 
@@ -88,6 +104,7 @@ namespace subvol {
     }
 
 
+    std::mutex m_recipientsMutex;
     std::vector<Recipient*> m_recipients;
 
 //    std::mutex m_messagesMutex;

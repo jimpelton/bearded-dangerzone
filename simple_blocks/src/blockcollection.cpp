@@ -57,6 +57,7 @@ BlockCollection::~BlockCollection()
   if (m_loader) {
     delete m_loader;
   }
+  Broker::unsubscribeRecipient(this);
 }
 
 

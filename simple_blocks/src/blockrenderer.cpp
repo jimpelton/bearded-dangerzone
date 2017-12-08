@@ -108,9 +108,9 @@ BlockRenderer::init()
   }
   gl_check(glSamplerParameteri(sampler_state, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
   gl_check(glSamplerParameteri(sampler_state, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-  gl_check(glSamplerParameteri(sampler_state, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
-  gl_check(glSamplerParameteri(sampler_state, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
-  gl_check(glSamplerParameteri(sampler_state, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE));
+  gl_check(glSamplerParameteri(sampler_state, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER));
+  gl_check(glSamplerParameteri(sampler_state, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER));
+  gl_check(glSamplerParameteri(sampler_state, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER));
 //  gl_check(glSamplerParameterf(sampler_state, GL_TEXTURE_MAX_ANISOTROPY_EXT, 16.0f));
   gl_check(glBindSampler(sampler_state, BLOCK_TEXTURE_UNIT));
   m_sampler_state = sampler_state;
@@ -288,7 +288,7 @@ BlockRenderer::drawNonEmptyBoundingBoxes()
 
 ////////////////////////////////////////////////////////////////////////////////
 void
-BlockRenderer::drawSlices(int baseVertex, int numSlices) const
+BlockRenderer::drawSlices(int baseVertex, int elementOffset, int numSlices) const
 {
   // Begin NVPM work profiling
 //  perf_workBegin();
@@ -296,7 +296,7 @@ BlockRenderer::drawSlices(int baseVertex, int numSlices) const
       glDrawElementsBaseVertex(GL_TRIANGLE_STRIP,
                                ELEMENTS_PER_QUAD * numSlices, // count
                                GL_UNSIGNED_SHORT,                       // type
-                               0,                                       // element offset
+                               (void const *)elementOffset,                           // element offset
                                baseVertex));                            // vertex offset
   // End NVPM work profiling.
 //  perf_workEnd();
@@ -329,7 +329,7 @@ BlockRenderer::drawNonEmptyBlocks_Forward()
   glm::vec3 const
       viewdir{ glm::normalize(getCamera().getLookAt() - getCamera().getEye()) };
 
-  GLint const
+  std::pair<int, int> const
       baseVertex{ computeBaseVertexFromViewDir(viewdir) };
 
   m_currentShader->bind();
@@ -353,7 +353,8 @@ BlockRenderer::drawNonEmptyBlocks_Forward()
       m_currentShader->setUniform(VOLUME_MVP_MATRIX_UNIFORM_STR,
                                   getWorldViewProjectionMatrix());
 
-      drawSlices(baseVertex, m_numSlicesPerBlock[bd::ordinal<SliceSet>(m_selectedSliceSet)]);
+      drawSlices(baseVertex.first, baseVertex.second, 
+                 m_numSlicesPerBlock[bd::ordinal<SliceSet>(m_selectedSliceSet)]);
     }
   }
   NVTOOLS_POP_RANGE
@@ -364,7 +365,7 @@ BlockRenderer::drawNonEmptyBlocks_Forward()
 
 
 ////////////////////////////////////////////////////////////////////////////////
-int
+std::pair<int, int>
 BlockRenderer::computeBaseVertexFromViewDir(glm::vec3 const &viewdir)
 {
   glm::vec3 const absViewDir{ glm::abs(viewdir) };
@@ -388,6 +389,7 @@ BlockRenderer::computeBaseVertexFromViewDir(glm::vec3 const &viewdir)
   // Compute base vertex VBO offset.
   int const verts_per_quad{ 4 };
   int baseVertex{ 0 };
+  int elementOffset{ 0 };
 
   glm::u64 numSlices{ m_numSlicesPerBlock[bd::ordinal<SliceSet>(newSelected)] };
 
@@ -399,6 +401,7 @@ BlockRenderer::computeBaseVertexFromViewDir(glm::vec3 const &viewdir)
       } else {
         baseVertex = 1 * verts_per_quad * numSlices;
       }
+      elementOffset = 0;
       break;
 
     case SliceSet::XZ:
@@ -407,6 +410,7 @@ BlockRenderer::computeBaseVertexFromViewDir(glm::vec3 const &viewdir)
       } else {
         baseVertex = 3 * verts_per_quad * numSlices;
       }
+      elementOffset = 1 * ELEMENTS_PER_QUAD * numSlices;
       break;
 
     case SliceSet::XY:
@@ -415,6 +419,7 @@ BlockRenderer::computeBaseVertexFromViewDir(glm::vec3 const &viewdir)
       } else {
         baseVertex = 5 * verts_per_quad * numSlices;
       }
+      elementOffset = 2 * ELEMENTS_PER_QUAD * numSlices;
       break;
 
     default:
@@ -430,7 +435,8 @@ BlockRenderer::computeBaseVertexFromViewDir(glm::vec3 const &viewdir)
 
   m_selectedSliceSet = newSelected;
 
-  return baseVertex;
+  return std::make_pair(baseVertex, elementOffset);
+
 }
 
 

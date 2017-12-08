@@ -125,7 +125,7 @@ private:
 
   /// \brief Disable GL_DEPTH_TEST and draw transparent slices
   void
-  drawSlices(int baseVertex, int numSlices) const;
+  drawSlices(int baseVertex, int elementOffset, int numSlices) const;
 
 
   /// \brief Draw the coordinate axis.
@@ -140,7 +140,7 @@ private:
 
   /// \brief Compute the base vertex offset for the slices vertex buffer based
   ///        off the largest component of \c viewdir.
-  int
+  std::pair<int, int>
   computeBaseVertexFromViewDir(glm::vec3 const &viewdir);
 
 

@@ -17,146 +17,45 @@ namespace subvol
 {
   namespace
   {
-    /*////////////////////////////////////////////////////////////////////////////////
-    //   createQuads_* Implementations
-    ////////////////////////////////////////////////////////////////////////////////*/
-
-
-    /// \brief Create quads perpendicular to X-axis within the region with diagonal
-    ///        from min to max.
-    ///
-    /// \note Quad vertices are returned in triangle strip winding order.
-    ///
-    /// \param[in] min Minimum corner of first plane
-    /// \param[in] max Maximum corner of first plane.
-    /// \verbatim
-    ///  y.min         y.max
-    ///  z.max         z.max
-    ///    +------------+
-    ///    |            |
-    ///    |            |
-    ///    |            |
-    ///    |            |
-    ///    +------------+
-    ///  y.min         y.max
-    ///  z.min         z.min
-    /// \endverbatim
-    //void createQuads_X(std::vector<glm::vec4> &quads,
-    //                   glm::vec3 const &min, glm::vec3 const &max,
-    //                   decrement_delta<float> &nextDelta)
-    //{
-    //
-    //  while (nextDelta.hasNext()) {
-    //    float offset = nextDelta();
-    //    quads.push_back({ offset, min.y, max.z, 1 });   // ll
-    //    quads.push_back({ offset, min.y, min.z, 1 });   // lr
-    //    quads.push_back({ offset, max.y, max.z, 1 });   // ul
-    //    quads.push_back({ offset, max.y, min.z, 1 });   // ur
-    //  }
-    //
-    //}
-
-
-    /// \brief Create quads perpendicular to Y-axis within the region with diagonal
-    ///        from min to max.
-    ///
-    /// \note Quad vertices are returned in triangle strip winding order.
-    ///
-    /// \param[in] min Minimum corner of first plane
-    /// \param[in] max Maximum corner of first plane.
-    /// \verbatim
-    ///  x.min         x.max
-    ///  z.min         z.min
-    ///    +------------+
-    ///    |            |
-    ///    |            |
-    ///    |            |
-    ///    |            |
-    ///    +------------+
-    ///  x.min         x.max
-    ///  z.max         z.max
-    /// \endverbatim
-    //void createQuads_Y(std::vector<glm::vec4> &quads,
-    //                   glm::vec3 const &min, glm::vec3 const &max,
-    //                   decrement_delta<float> &nextDelta)
-    //{
-    //
-    //  while (nextDelta.hasNext()) {
-    //    float offset = nextDelta();
-    //    quads.push_back({ min.x, offset, max.z, 1 });   // ll
-    //    quads.push_back({ max.x, offset, max.z, 1 });   // lr
-    //    quads.push_back({ min.x, offset, min.z, 1 });   // ul
-    //    quads.push_back({ max.x, offset, min.z, 1 });   // ur
-    //  }
-    //
-    //}
-
-
-    /// \brief Create quads perpendicular to Z-axis within the region with diagonal
-    ///        from min to max.
-    ///
-    /// \note Quad vertices are returned in triangle strip winding order.
-    ///
-    /// \param[in] min Minimum corner of region
-    /// \param[in] max Maximum corner of region.
-    ///
-    /// \verbatim
-    ///  x.min         x.max
-    ///  y.max         y.max
-    ///    +------------+
-    ///    |            |
-    ///    |            |
-    ///    |            |
-    ///    |            |
-    ///    +------------+
-    ///  x.min         x.max
-    ///  y.min         y.min
-    /// \endverbatim
-    //void createQuads_Z(std::vector<glm::vec4> &quads,
-    //                   glm::vec3 const &min, glm::vec3 const &max,
-    //                   decrement_delta<float> &nextDelta)
-    //{
-    //
-    //  while (nextDelta.hasNext()) {
-    //    float offset = nextDelta();
-    //    quads.push_back({ min.x, min.y, offset, 1 });   // ll
-    //    quads.push_back({ max.x, min.y, offset, 1 });   // lr
-    //    quads.push_back({ min.x, max.y, offset, 1 });   // ul
-    //    quads.push_back({ max.x, max.y, offset, 1 });   // ur
-    //  }
-    //}
-
     struct BBox
     {
       BBox() : BBox({ 1.0f, 1.0f, 1.0f })
       {
       }
 
+      //   7:(-0.5, 0.5, 0.5)
+      //           +---------------+ 6:(0.5, 0.5, 0.5)
+      //          /               /|
+      //         /               / |
+      // 3:(-0.5, 0.5, -0.5)    /  |
+      //       +--------------+` 2:(0.5, 0.5, -0.5)
+      //       |              |    |
+      //       |              |    |
+      //       |              |    + 5:(0.5, -0.5, 0.5)
+      //       |              |   /
+      //       |              |  /
+      //       |              | /
+      //       +--------------+`  1:(0.5, -0.5, -0.5)
+      // 0:(-0.5, -0.5, -0.5)
       BBox(glm::vec3 const& aspect)
       {
-        verts[0] = VertexFormat(glm::vec4(glm::vec3(-0.5, -0.5, -0.5) * aspect, 1.0),
-                                glm::vec3(0, 0, 0)); // left, bottom, back
-        verts[1] = VertexFormat(glm::vec4(glm::vec3(0.5, -0.5, -0.5) * aspect, 1.0),
-                                glm::vec3(1, 0, 0)); // right, bottom, back
-        verts[2] = VertexFormat(glm::vec4(glm::vec3(0.5, 0.5, -0.5) * aspect, 1.0),
-                                glm::vec3(1, 1, 0)); // right, top, back
-        verts[3] = VertexFormat(glm::vec4(glm::vec3(-0.5, 0.5, -0.5) * aspect, 1.0),
-                                glm::vec3(0, 1, 0)); // left, top, back
+        using V3 = glm::vec3;
+        using V4 = glm::vec4;
+        verts[0] = VertexFormat(V4{ V3{-0.5, -0.5, -0.5}*aspect, 1.0 }, V3{ 0, 0, 0 }); // left, bottom, back
+        verts[1] = VertexFormat(V4{ V3{0.5, -0.5, -0.5}*aspect, 1.0 }, V3{ 1, 0, 0 }); // right, bottom, back
+        verts[2] = VertexFormat(V4{ V3{0.5, 0.5, -0.5}*aspect, 1.0 },  V3{ 1, 1, 0 }); // right, top, back
+        verts[3] = VertexFormat(V4{ V3{-0.5, 0.5, -0.5}*aspect, 1.0 }, V3{ 0, 1, 0 }); // left, top, back
 
-        verts[4] = VertexFormat(glm::vec4(glm::vec3(-0.5, -0.5, 0.5) * aspect, 1.0),
-                                glm::vec3(0, 0, 1)); // left, bottom, front
-        verts[5] = VertexFormat(glm::vec4(glm::vec3(0.5, -0.5, 0.5) * aspect, 1.0),
-                                glm::vec3(1, 0, 1)); // right, bottom, front
-        verts[6] = VertexFormat(glm::vec4(glm::vec3(0.5, 0.5, 0.5) * aspect, 1.0),
-                                glm::vec3(1, 1, 1)); // right, top, front
-        verts[7] = VertexFormat(glm::vec4(glm::vec3(-0.5, 0.5, 0.5) * aspect, 1.0),
-                                glm::vec3(0, 1, 1)); // left, top, front
+        verts[4] = VertexFormat(V4{ V3{-0.5, -0.5, 0.5}*aspect, 1.0 }, V3{ 0, 0, 1 }); // left, bottom, front
+        verts[5] = VertexFormat(V4{ V3{0.5, -0.5, 0.5}*aspect, 1.0 },  V3{ 1, 0, 1 }); // right, bottom, front
+        verts[6] = VertexFormat(V4{ V3{0.5, 0.5, 0.5}*aspect, 1.0 },   V3{ 1, 1, 1 }); // right, top, front
+        verts[7] = VertexFormat(V4{ V3{-0.5, 0.5, 0.5}*aspect, 1.0 },  V3{ 0, 1, 1 }); // left, top, front
       }
 
       VertexFormat verts[8];
     }; // class BBox
 
-
+    /// \brief Return the slice spacing along given axis. 
     float
     getDelta(bd::Volume const& v,
              float samplingModifer,
@@ -195,30 +94,33 @@ namespace subvol
 
     glm::u64vec3 sliceCounts;
 
+    bool const REVERSED = true;
+    bool const FORWARD = !REVERSED;
+
     float delta{ getDelta(v, smod, Axis::X) };
     size_t numSlices{ static_cast<size_t>(std::floor(1.0f / delta)) };
     delta = 1.0f / (numSlices - 1);
-    bd::Dbg() << "Slices on X: " << numSlices << " with delta: " << delta;
-    createQuads(vbuf, numSlices, delta, false, Axis::X);
-    createQuads(vbuf, numSlices, delta, true, Axis::X);
+    bd::Info() << "Slices on X: " << numSlices << " with delta: " << delta;
+    createQuads(vbuf, numSlices, delta, FORWARD, Axis::X);
+    createQuads(vbuf, numSlices, delta, REVERSED, Axis::X);
     createElementIdx(elebuf, numSlices);
     sliceCounts.x = numSlices;
 
     delta = getDelta(v, smod, Axis::Y);
     numSlices = static_cast<size_t>(std::floor(1.0f / delta));
     delta = 1.0f / (numSlices - 1);
-    bd::Dbg() << "Slices on Y: " << numSlices << " with delta: " << delta;
-    createQuads(vbuf, numSlices, delta, false, Axis::Y);
-    createQuads(vbuf, numSlices, delta, true, Axis::Y);
+    bd::Info() << "Slices on Y: " << numSlices << " with delta: " << delta;
+    createQuads(vbuf, numSlices, delta, FORWARD, Axis::Y);
+    createQuads(vbuf, numSlices, delta, REVERSED, Axis::Y);
     createElementIdx(elebuf, numSlices);
     sliceCounts.y = numSlices;
 
     delta = getDelta(v, smod, Axis::Z);
     numSlices = static_cast<size_t>(std::floor(1.0f / delta));
     delta = 1.0f / (numSlices - 1);
-    bd::Dbg() << "Slices on Z: " << numSlices << " with delta: " << delta;
-    createQuads(vbuf, numSlices, delta, false, Axis::Z);
-    createQuads(vbuf, numSlices, delta, true, Axis::Z);
+    bd::Info() << "Slices on Z: " << numSlices << " with delta: " << delta;
+    createQuads(vbuf, numSlices, delta, FORWARD, Axis::Z);
+    createQuads(vbuf, numSlices, delta, REVERSED, Axis::Z);
     createElementIdx(elebuf, numSlices);
     sliceCounts.z = numSlices;
 
@@ -236,65 +138,12 @@ namespace subvol
 
     return sliceCounts;
 
-    //  glm::vec3 const mmin{ min };
-    //  glm::vec3 const mmax{ max };
-    // Create two sets of slices one for the + and - viewing direction
-    // for the vertex buffer.
-    // Looking towards +X axis, in the YZ plane.
-    //  createQuads(vbuf, mmin, mmax, numSlices.x, Axis::X);
-    // Looking Towards -X axis, in the YZ plane.
-    //  createQuads_Reversed(vbuf, mmin, mmax, numSlices.x, Axis::X);
-    // Looking Towards +Y axis, in the XZ plane.
-    //  createQuads(vbuf, mmin, mmax, numSlices.y, Axis::Y);
-    // Looking Towards -Y axis, in the XZ plane.
-    //  createQuads_Reversed(vbuf, mmin, mmax, numSlices.y, Axis::Y);
-    // Looking Towards +Z axis, in the XY plane.
-    //  createQuads(vbuf, mmin, mmax, numSlices.z, Axis::Z);
-    // Looking Towards -Z axis, in the XY plane.
-    //  createQuads_Reversed(vbuf, mmin, mmax, numSlices.z, Axis::Z);
-    //  vao.addVbo(vbuf, VERTEX_COORD_ATTR, bd::VertexArrayObject::Usage::Static_Draw);
-    //  std::ofstream versFile("vertsfile.txt");
-    //  size_t pp{ 0 };
-    //  for (glm::vec4 const &v : vbuf) {
-    //    if (pp == 4) {
-    //     versFile << '\n';
-    //      pp = 0;
-    //    }
-    //    versFile << glm::to_string(v) << ", ";
-    //    pp++;
-    //  }
-    //  versFile.flush();
-    //  versFile.close();
-    //  glm::vec3 const texMin{ 0.0, 0.0, 0.0 };
-    //  glm::vec3 const texMax{ 1.0, 1.0, 1.0 };
-    // Along X, in the YZ plane.
-    //  createQuads(texbuf, texMin, texMax, numSlices.x, Axis::X);
-    //  createQuads_Reversed(texbuf, texMin, texMax, numSlices.x, Axis::X);
-    // Along Y, in the XZ plane.
-    //  createQuads(texbuf, texMin, texMax, numSlices.y, Axis::Y);
-    //  createQuads_Reversed(texbuf, texMin, texMax, numSlices.y, Axis::Y);
-    // Along Z, in the XY plane.
-    //  createQuads(texbuf, texMin, texMax, numSlices.z, Axis::Z);
-    //  createQuads_Reversed(texbuf, texMin, texMax, numSlices.z, Axis::Z);
-    //  vao.addVbo(texbuf, VERTEX_COLOR_ATTR, bd::VertexArrayObject::Usage::Static_Draw);
-    //  std::ofstream texsFile("texsfile.txt");
-    //  pp = 0;
-    //  for (glm::vec4 const &v : texbuf) {
-    //    if (pp == 4) {
-    //      texsFile << '\n';
-    //      pp = 0;
-    //    }
-    //    texsFile << glm::to_string(v) << ", ";
-    //    pp++;
-    //  }
-    //  texsFile.flush();
-    //  texsFile.close();
   }
 
-
+  // Generate slices with counter clockwise winding order that can be used
+  // for GL_TRIANGLE_STRIP.
   void
   createQuads(std::vector<VertexFormat>& verts,
-//              bd::Volume const& v,
               size_t numSlices,
               float delta,
               bool flip,
@@ -315,8 +164,8 @@ namespace subvol
       for (size_t x{ 0 }; x < numSlices; ++x) {
         sliceVerts[0] = interpolateVertex(volBox.verts[0], volBox.verts[1], depth);
         sliceVerts[1] = interpolateVertex(volBox.verts[3], volBox.verts[2], depth);
-        sliceVerts[2] = interpolateVertex(volBox.verts[7], volBox.verts[6], depth);
-        sliceVerts[3] = interpolateVertex(volBox.verts[4], volBox.verts[5], depth);
+        sliceVerts[2] = interpolateVertex(volBox.verts[4], volBox.verts[5], depth);
+        sliceVerts[3] = interpolateVertex(volBox.verts[7], volBox.verts[6], depth);
         for (auto &v : sliceVerts) {
           verts.push_back(v);
         }

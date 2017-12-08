@@ -353,9 +353,9 @@ BlockLoader::pushGPUReadyQueue(bd::Block *b)
 //  // byte offset into file to read from
 //  size_t offset{ b->fileBlock().data_offset };
 //
-//  uint64_t const buf_len{ be.x * be.y * be.z };
+//  uint64_t const buf_elems{ be.x * be.y * be.z };
 //  //TODO: support for than char*
-//  char * const disk_buf{ new char[buf_len] };
+//  char * const disk_buf{ new char[buf_elems] };
 //  char *temp = disk_buf;
 //  // Loop through rows and slabs of volume reading rows of voxels into memory.
 //  for (uint64_t slab = start.z; slab < end.z; ++slab) {
@@ -376,7 +376,7 @@ BlockLoader::pushGPUReadyQueue(bd::Block *b)
 //
 //  float * const pixelData = reinterpret_cast<float *>(b->pixelData());
 //  //Normalize the data prior to generating the texture.
-//  for (size_t idx{ 0 }; idx < buf_len; ++idx) {
+//  for (size_t idx{ 0 }; idx < buf_elems; ++idx) {
 //    pixelData[idx] = (disk_buf[idx] - m_volMin) / m_volDiff;
 //  }
 //

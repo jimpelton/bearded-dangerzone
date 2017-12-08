@@ -218,8 +218,8 @@ namespace subvol
       gl_check(glClearColor(0.15f, 0.15f, 0.15f, 0.0f));
 
       gl_check(glEnable(GL_CULL_FACE));
-      gl_check(glCullFace(GL_FRONT));
-      //  gl_check(glDisable(GL_CULL_FACE));
+      gl_check(glCullFace(GL_BACK));
+//        gl_check(glDisable(GL_CULL_FACE));
 
       gl_check(glEnable(GL_DEPTH_TEST));
       gl_check(glDepthFunc(GL_LESS));
@@ -354,7 +354,7 @@ namespace subvol
       renderhelp::g_quadVao->create();
       bd::Dbg() << "Generating proxy geometry VAO";
       //TODO: samplingModifer in commandlineoptions!
-      *numSlices = subvol::genQuadVao(*g_quadVao, v, 10);
+      *numSlices = subvol::genQuadVao(*g_quadVao, v, 500);
 
       // coordinate axis
       bd::Dbg() << "Generating coordinate axis VAO";
