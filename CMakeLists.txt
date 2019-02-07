@@ -72,7 +72,7 @@ include_directories("${GLEW_INCLUDE_DIR}")
 include_directories("${GLM_INCLUDE_DIR}")
 include_directories("${GLFW_INCLUDE_DIRS}")
 include_directories("${TBB_INCLUDE_DIR}")
-
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/libcruft")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/simple_blocks")
 #add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/matrix_benchmark")
 

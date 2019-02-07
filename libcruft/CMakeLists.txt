@@ -1,32 +1,11 @@
 #
-# <root>/CMakeLists.txt
+# <root>/libcruft/CMakeLists.txt
 #
 
 cmake_minimum_required(VERSION 2.8)
 
 #### P r o j e c t   D e f i n i t i o n  ##################################
 project(cruft CXX)
-
-#### T h i r d   P a r t y  ################################################
-set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake
-    ${CMAKE_MODULE_PATH}
-)
-
-
-#### Intel's Thread Building Blocks ################################################
-if(NOT DEFINED INTELTBB_INCLUDE_DIR)
-    set(INTELTBB_INCLUDE_DIR "")
-endif()
-set(INTELTBB_INCLUDE_DIR ${${INTELTBB_INCLUDE_DIR}} CACHE PATH 
-	"Intel's thread building blocks includes path"
-)
-
-if(NOT DEFINED INTELTBB_LIBRARY_DIRS)
-    set(INTELTBB_LIBRARY_DIRS "")
-endif()
-set(INTELTBB_LIBRARY_DIRS ${${INTELTBB_LIBRARY_DIRS}} CACHE PATH 
-	"Intel's thread building blocks library."
-)
 
 #### Graphics & Math Libraries ################################################
 find_package(OpenGL REQUIRED)
@@ -62,11 +41,11 @@ include_directories(
         "${GLEW_INCLUDE_DIR}"
         "${GLM_INCLUDE_DIR}"
         "${GLFW_INCLUDE_DIRS}"
-        "${INTELTBB_INCLUDE_DIR}"
+        "${TBB_INCLUDE_DIR}"
         )
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
-link_directories("${INTELTBB_LIBRARY_DIRS}")
+link_directories("${TBB_LIBRARY_DIRS}")
 
 add_subdirectory("include/bd")
 add_subdirectory("src/bd")
