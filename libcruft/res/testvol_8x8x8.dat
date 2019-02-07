@@ -1,0 +1,5 @@
+ObjectFileName : sphere-32x32x32-float.raw
+Resolution : 8 8 8
+SliceThickness : 1 1 1
+Format : UCHAR
+ObjectModel : I
