@@ -387,11 +387,10 @@ BlockRenderer::computeBaseVertexFromViewDir(glm::vec3 const &viewdir)
     isPos = viewdir.z>0;
   }
 
-
   // Compute base vertex VBO offset.
   int const verts_per_quad{ 4 };
-  int baseVertex{ 0 };
-  int elementOffset{ 0 };
+  unsigned long long baseVertex{ 0uL };
+  unsigned long long elementOffset{ 0 };
 
   glm::u64 numSlices{ m_numSlicesPerBlock[bd::ordinal<SliceSet>(newSelected)] };
 

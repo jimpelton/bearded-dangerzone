@@ -55,10 +55,10 @@ void
 initializeMemoryBuffers(std::vector<char *> *buffers, size_t num, size_t sz)
 {
   buffers->resize(num, nullptr);
-  char *mem{ new char[num*sz] };
+  char *mem{ new char[num * sz] };
 
-  for (size_t i{ 0 }; i<num; ++i) {
-    char *idx = mem+i*sz;
+  for (size_t i{ 0 }; i < num; ++i) {
+    char *idx = mem + i * sz;
     ( *buffers )[i] = idx;
   }
 }
@@ -133,14 +133,14 @@ initializeBlockLoader(bd::indexfile::v2::JsonIndexFile const &indexFile,
   bd::DataType type = indexFile.getDatType();
 
   // Number of bytes on the GPU for each block (sizeof(float)).
-  uint64_t blockBytes = dims.x*dims.y*dims.z*sizeof(float);
+  uint64_t blockBytes = dims.x * dims.y * dims.z * sizeof(float);
 
   BLThreadData *tdata{ new BLThreadData() };
   size_t numBlocks{ indexFile.getFileBlocks().size() };
 
   // Provided block dimensions were such that we got 0 for the block bytes,
   // so lets not allow rendering of any blocks at all.
-  if (blockBytes==0) {
+  if (blockBytes == 0) {
     tdata->maxCpuBlocks = 0;
     tdata->maxGpuBlocks = 0;
     bd::Warn() << "Blocks have a dimension that is 0."; //, so I can't go on.";
@@ -148,14 +148,14 @@ initializeBlockLoader(bd::indexfile::v2::JsonIndexFile const &indexFile,
     bd::Info() << "Block texture size (bytes): " << blockBytes;
 
     // Find max cpu blocks (assert no larger than actual number of blocks).
-    tdata->maxCpuBlocks = clo.mainMemoryBytes/blockBytes;
-    tdata->maxCpuBlocks = tdata->maxCpuBlocks>numBlocks
+    tdata->maxCpuBlocks = clo.mainMemoryBytes / blockBytes;
+    tdata->maxCpuBlocks = tdata->maxCpuBlocks > numBlocks
                           ? numBlocks
                           : tdata->maxCpuBlocks;
 
     // Find max gpu blocks (assert no larger than actual number of blocks).
-    tdata->maxGpuBlocks = clo.gpuMemoryBytes/blockBytes;
-    tdata->maxGpuBlocks = tdata->maxGpuBlocks>numBlocks
+    tdata->maxGpuBlocks = clo.gpuMemoryBytes / blockBytes;
+    tdata->maxGpuBlocks = tdata->maxGpuBlocks > numBlocks
                           ? numBlocks
                           : tdata->maxGpuBlocks;
   } // else
@@ -303,12 +303,12 @@ initializeShaders(subvol::CommandLineOptions const &clo)
 {
   // Wireframe Shader
   renderhelp::g_wireframeShader = std::make_shared<bd::ShaderProgram>();
-  GLuint programId{
-      renderhelp::g_wireframeShader->linkProgram(
-          "shaders/vert_vertexcolor_passthrough.glsl",
-          "shaders/frag_vertcolor.glsl")
-  };
-  if (programId==0) {
+  GLuint programId{ 0 };
+  programId = renderhelp::g_wireframeShader->linkProgram(
+      "shaders/vert_vertexcolor_passthrough.glsl",
+      "shaders/frag_vertcolor.glsl");
+
+  if (programId == 0) {
     bd::Err() << "Error building passthrough shader, program id was 0.";
     return false;
   }
@@ -317,11 +317,10 @@ initializeShaders(subvol::CommandLineOptions const &clo)
 
   // Volume shader
   renderhelp::g_volumeShader = std::make_shared<bd::ShaderProgram>();
-  programId =
-      renderhelp::g_volumeShader->linkProgram(
-          "shaders/vert_vertexcolor_passthrough.glsl",
-          "shaders/frag_volumesampler_noshading.glsl");
-  if (programId==0) {
+  programId = renderhelp::g_volumeShader->linkProgram(
+      "shaders/vert_vertexcolor_passthrough.glsl",
+      "shaders/frag_volumesampler_noshading.glsl");
+  if (programId == 0) {
     bd::Err() << "Error building volume shader, program id was 0.";
     return false;
   }
@@ -334,7 +333,7 @@ initializeShaders(subvol::CommandLineOptions const &clo)
       renderhelp::g_volumeShaderLighting->linkProgram(
           "shaders/vert_vertexcolor_passthrough.glsl",
           "shaders/frag_shading_otfgrads.glsl");
-  if (programId==0) {
+  if (programId == 0) {
     bd::Err() << "Error building volume lighting shader, program id was 0.";
     return false;
   }
@@ -419,13 +418,13 @@ queryGPUMemory(int64_t *total, int64_t *avail)
   //0x9047
   glGetInteger64v(GL_GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX, &total_mem_kb);
 
-  *total = total_mem_kb*1024;
+  *total = total_mem_kb * 1024;
 
   if (avail) {
     GLint cur_avail_mem_kb = 0;
     // 0x9049
     glGetIntegerv(GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, &cur_avail_mem_kb);
-    *avail = cur_avail_mem_kb*1024;
+    *avail = cur_avail_mem_kb * 1024;
   }
 }
 
