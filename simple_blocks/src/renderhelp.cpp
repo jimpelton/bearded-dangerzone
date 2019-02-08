@@ -21,6 +21,7 @@
 
 #include <glm/glm.hpp>
 #include <glm/matrix.hpp>
+#include <bd/io/indexfile/v2/jsonindexfile.h>
 
 namespace subvol
 {
@@ -125,11 +126,11 @@ initGLContext(int screenWidth, int screenHeight)
 } // initGLContext()
 
 BlockLoader *
-initializeBlockLoader(bd::IndexFile const &indexFile,
+initializeBlockLoader(bd::indexfile::v2::JsonIndexFile const &indexFile,
                       subvol::CommandLineOptions const &clo)
 {
   glm::u64vec3 dims = indexFile.getVolume().block_dims();
-  bd::DataType type = bd::IndexFileHeader::getType(indexFile.getHeader());
+  bd::DataType type = indexFile.getDatType();
 
   // Number of bytes on the GPU for each block (sizeof(float)).
   uint64_t blockBytes = dims.x*dims.y*dims.z*sizeof(float);
@@ -193,7 +194,7 @@ initializeBlockLoader(bd::IndexFile const &indexFile,
 /////////////////////////////////////////////////////////////////////////////////
 BlockCollection *
 initializeBlockCollection(BlockLoader *loader,
-                          bd::IndexFile const &indexFile,
+                          bd::indexfile::v2::JsonIndexFile const &indexFile,
                           subvol::CommandLineOptions const &clo)
 {
   BlockCollection *bc{ new BlockCollection(loader, indexFile) };

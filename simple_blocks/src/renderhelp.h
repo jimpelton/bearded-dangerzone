@@ -15,6 +15,7 @@
 
 #include <glm/glm.hpp>
 #include <memory>
+#include <bd/io/indexfile/v2/jsonindexfile.h>
 
 namespace subvol
 {
@@ -56,13 +57,13 @@ initGLContext(int screenWidth, int screenHeight);
 
 
 BlockLoader *
-initializeBlockLoader(bd::IndexFile const &indexFile,
+initializeBlockLoader(bd::indexfile::v2::JsonIndexFile const &indexFile,
                       subvol::CommandLineOptions const &clo);
 
 
 BlockCollection *
 initializeBlockCollection(BlockLoader *loader,
-                          bd::IndexFile const &indexFile,
+                          bd::indexfile::v2::JsonIndexFile const &indexFile,
                           subvol::CommandLineOptions const &clo);
 
 

@@ -14,6 +14,7 @@
 #include <list>
 #include <vector>
 #include <future>
+#include <bd/io/indexfile/v2/jsonindexfile.h>
 #include "messages/recipient.h"
 
 namespace subvol
@@ -25,7 +26,7 @@ class BlockCollection
 public:
 //  BlockCollection();
 
-  BlockCollection(BlockLoader *loader, bd::IndexFile const &index);
+  BlockCollection(BlockLoader *loader, bd::indexfile::v2::JsonIndexFile const &index);
 
 
   virtual ~BlockCollection();

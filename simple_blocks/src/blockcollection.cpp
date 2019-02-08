@@ -7,6 +7,7 @@
 #include <bd/log/logger.h>
 #include <bd/util/util.h>
 #include <bd/io/indexfile/indexfile.h>
+#include <bd/io/indexfile/v2/jsonindexfile.h>
 #include "messages/messagebroker.h"
 
 namespace subvol
@@ -25,7 +26,7 @@ using bd::FileBlock;
 
 
 BlockCollection::BlockCollection(BlockLoader *loader,
-                                 IndexFile const &index)
+                                 bd::indexfile::v2::JsonIndexFile const &index)
     : Recipient{ "BlockCollection" }
     , m_blocks()
     , m_nonEmptyBlocks()
