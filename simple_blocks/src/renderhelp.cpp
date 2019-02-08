@@ -218,9 +218,9 @@ setInitialGLState()
   bd::Info() << "Initializing gl state.";
   gl_check(glClearColor(0.15f, 0.15f, 0.15f, 0.0f));
 
-  gl_check(glEnable(GL_CULL_FACE));
+//  gl_check(glEnable(GL_CULL_FACE));
   gl_check(glCullFace(GL_BACK));
-//        gl_check(glDisable(GL_CULL_FACE));
+        gl_check(glDisable(GL_CULL_FACE));
 
   gl_check(glEnable(GL_DEPTH_TEST));
   gl_check(glDepthFunc(GL_LESS));
@@ -301,13 +301,13 @@ initializeTransferFunctions(subvol::CommandLineOptions const &clo)
 bool
 initializeShaders(subvol::CommandLineOptions const &clo)
 {
+  GLuint programId{ 0 };
+
   // Wireframe Shader
   renderhelp::g_wireframeShader = std::make_shared<bd::ShaderProgram>();
-  GLuint programId{ 0 };
   programId = renderhelp::g_wireframeShader->linkProgram(
       "shaders/vert_vertexcolor_passthrough.glsl",
       "shaders/frag_vertcolor.glsl");
-
   if (programId == 0) {
     bd::Err() << "Error building passthrough shader, program id was 0.";
     return false;
@@ -329,10 +329,9 @@ initializeShaders(subvol::CommandLineOptions const &clo)
 
   // Volume shader with Lighting
   renderhelp::g_volumeShaderLighting = std::make_shared<bd::ShaderProgram>();
-  programId =
-      renderhelp::g_volumeShaderLighting->linkProgram(
-          "shaders/vert_vertexcolor_passthrough.glsl",
-          "shaders/frag_shading_otfgrads.glsl");
+  programId = renderhelp::g_volumeShaderLighting->linkProgram(
+      "shaders/vert_vertexcolor_passthrough.glsl",
+      "shaders/frag_shading_otfgrads.glsl");
   if (programId == 0) {
     bd::Err() << "Error building volume lighting shader, program id was 0.";
     return false;
@@ -380,6 +379,7 @@ initializeRenderer(std::shared_ptr<BlockCollection> bc,
   renderhelp::setInitialGLState();
   glm::u64vec3 numSlices;
   renderhelp::initializeVertexBuffers(clo, v, &numSlices);
+  bd::Dbg() << "Generated: " << numSlices[0] << "x" << numSlices[1] << "x" << numSlices[2] << " slices.";
   if (!renderhelp::initializeShaders(clo)) {
     return nullptr;
   }
@@ -430,6 +430,7 @@ queryGPUMemory(int64_t *total, int64_t *avail)
 
 
 ///////////////////////////////////////////////////////////////////////////////
+// Keep this commented code for later -- JP 2018/02/08
 //void
 //setCameraPosPreset(unsigned int cameraPos)
 //{
