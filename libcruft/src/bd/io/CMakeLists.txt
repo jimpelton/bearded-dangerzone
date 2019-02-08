@@ -6,8 +6,10 @@ set(file_SOURCES
         "${CMAKE_CURRENT_SOURCE_DIR}/datatypes.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/datfile.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/fileblock.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/indexfile.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/indexfileheader.cpp"
+
+        "${CMAKE_CURRENT_SOURCE_DIR}/indexfile/indexfile.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/indexfile/indexfileheader.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/indexfile/v2/jsonindexfile.cpp"
     PARENT_SCOPE
     )
 

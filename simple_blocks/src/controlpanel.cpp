@@ -7,7 +7,7 @@
 #include "renderhelp.h"
 #include "messages/messagebroker.h"
 
-#include <bd/io/indexfile.h>
+#include <bd/io/indexfile/indexfile.h>
 
 #include <QLabel>
 #include <QSlider>

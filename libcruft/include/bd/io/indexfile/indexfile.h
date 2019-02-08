@@ -2,7 +2,7 @@
 #define indexfile_h__
 
 #include <bd/io/fileblock.h>
-#include <bd/io/indexfileheader.h>
+#include <bd/io/indexfile/indexfileheader.h>
 #include <bd/volume/volume.h>
 
 

@@ -8,7 +8,7 @@
 #include "blockrenderer.h"
 #include "classificationtype.h"
 
-#include <bd/io/indexfile.h>
+#include <bd/io/indexfile/indexfile.h>
 
 #include <QWidget>
 //#include <QMutex>

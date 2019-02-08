@@ -1,7 +1,7 @@
 //
 // Created by jim on 10/3/16.
 //
-#include <bd/io/indexfileheader.h>
+#include <bd/io/indexfile/indexfileheader.h>
 
 namespace bd
 {

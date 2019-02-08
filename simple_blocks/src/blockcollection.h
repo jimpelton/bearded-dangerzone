@@ -6,7 +6,7 @@
 #include "classificationtype.h"
 
 #include <bd/volume/block.h>
-#include <bd/io/indexfile.h>
+#include <bd/io/indexfile/indexfile.h>
 #include <bd/io/buffer.h>
 #include <bd/util/util.h>
 #include <bd/io/bufferpool.h>

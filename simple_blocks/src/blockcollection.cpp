@@ -6,7 +6,7 @@
 #include <bd/log/gl_log.h>
 #include <bd/log/logger.h>
 #include <bd/util/util.h>
-#include <bd/io/indexfile.h>
+#include <bd/io/indexfile/indexfile.h>
 #include "messages/messagebroker.h"
 
 

@@ -10,8 +10,11 @@ set(io_HEADERS
         "${CMAKE_CURRENT_SOURCE_DIR}/datfile.h"
        # "${CMAKE_CURRENT_SOURCE_DIR}/fileblockcollection.h"
         "${CMAKE_CURRENT_SOURCE_DIR}/fileblock.h"
-        "${CMAKE_CURRENT_SOURCE_DIR}/indexfile.h"
-        "${CMAKE_CURRENT_SOURCE_DIR}/indexfileheader.h"
         "${CMAKE_CURRENT_SOURCE_DIR}/readerworker.h"
+
+        "${CMAKE_CURRENT_SOURCE_DIR}/indexfile/indexfile.h"
+        "${CMAKE_CURRENT_SOURCE_DIR}/indexfile/indexfileheader.h"
+
+        "${CMAKE_CURRENT_SOURCE_DIR}/indexfile/v2/jsonindexfile.h"
         PARENT_SCOPE
         )

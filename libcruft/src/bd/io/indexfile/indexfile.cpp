@@ -1,4 +1,4 @@
-#include <bd/io/indexfile.h>
+#include <bd/io/indexfile/indexfile.h>
 #include <bd/filter/blockaveragefilter.h>
 #include <bd/util/util.h>
 
@@ -40,6 +40,7 @@ IndexFile::fromBinaryIndexFile(std::string const &path, bool &ok)
 
   return idxfile;
 }
+
 
 
 ///////////////////////////////////////////////////////////////////////////////

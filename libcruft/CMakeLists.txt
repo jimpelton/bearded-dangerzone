@@ -37,12 +37,14 @@ add_subdirectory("include/bd")
 add_subdirectory("src/bd")
 
 # bd_SOURCES and bd_HEADERS are created in subdirectories and passed up to this cmake scope
-add_library(cruft STATIC "${bd_SOURCES}" "${bd_HEADERS}" )
+add_library(cruft STATIC "${bd_SOURCES}" "${bd_HEADERS}")
 
 if (UNIX)
     target_include_directories(cruft PUBLIC "${OPENGL_INCLUDE_DIR}")
 endif()
-target_include_directories(cruft PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_include_directories(cruft PUBLIC
+        "${CMAKE_CURRENT_SOURCE_DIR}/include"
+        "${THIRDPARTY_DIR}/json/include")
 
 target_link_libraries(cruft
     "${GLEW_LIBRARIES}"

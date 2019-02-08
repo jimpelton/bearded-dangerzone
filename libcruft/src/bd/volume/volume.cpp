@@ -5,7 +5,7 @@
 #include <bd/volume/volume.h>
 
 #include <sstream>
-#include "bd/io/indexfileheader.h"
+#include "bd/io/indexfile/indexfileheader.h"
 
 
 namespace bd

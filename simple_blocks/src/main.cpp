@@ -16,7 +16,7 @@
 #include <bd/graphics/shader.h>
 #include <bd/graphics/vertexarrayobject.h>
 #include <bd/log/logger.h>
-#include <bd/io/indexfile.h>
+#include <bd/io/indexfile/indexfile.h>
 
 
 #include <QApplication>

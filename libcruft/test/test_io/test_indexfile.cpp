@@ -4,7 +4,7 @@
 
 
 #include <bd/io/fileblock.h>
-#include <bd/io/indexfile.h>
+#include <bd/io/indexfile/indexfile.h>
 
 #include <catch.hpp>
 
