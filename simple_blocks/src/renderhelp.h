@@ -56,13 +56,13 @@ initGLContext(int screenWidth, int screenHeight);
 
 
 BlockLoader *
-initializeBlockLoader(bd::IndexFile const *indexFile,
+initializeBlockLoader(bd::IndexFile const &indexFile,
                       subvol::CommandLineOptions const &clo);
 
 
 BlockCollection *
 initializeBlockCollection(BlockLoader *loader,
-                          bd::IndexFile const *indexFile,
+                          bd::IndexFile const &indexFile,
                           subvol::CommandLineOptions const &clo);
 
 

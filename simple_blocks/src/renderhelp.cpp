@@ -125,17 +125,17 @@ initGLContext(int screenWidth, int screenHeight)
 } // initGLContext()
 
 BlockLoader *
-initializeBlockLoader(bd::IndexFile const *indexFile,
+initializeBlockLoader(bd::IndexFile const &indexFile,
                       subvol::CommandLineOptions const &clo)
 {
-  glm::u64vec3 dims = indexFile->getVolume().block_dims();
-  bd::DataType type = bd::IndexFileHeader::getType(indexFile->getHeader());
+  glm::u64vec3 dims = indexFile.getVolume().block_dims();
+  bd::DataType type = bd::IndexFileHeader::getType(indexFile.getHeader());
 
   // Number of bytes on the GPU for each block (sizeof(float)).
   uint64_t blockBytes = dims.x*dims.y*dims.z*sizeof(float);
 
   BLThreadData *tdata{ new BLThreadData() };
-  size_t numBlocks{ indexFile->getFileBlocks().size() };
+  size_t numBlocks{ indexFile.getFileBlocks().size() };
 
   // Provided block dimensions were such that we got 0 for the block bytes,
   // so lets not allow rendering of any blocks at all.
@@ -160,8 +160,8 @@ initializeBlockLoader(bd::IndexFile const *indexFile,
   } // else
 
   tdata->type = type;
-  tdata->slabDims[0] = indexFile->getVolume().voxelDims().x;
-  tdata->slabDims[1] = indexFile->getVolume().voxelDims().y;
+  tdata->slabDims[0] = indexFile.getVolume().voxelDims().x;
+  tdata->slabDims[1] = indexFile.getVolume().voxelDims().y;
   tdata->filename = clo.rawFilePath;
 
   tdata->texs = new std::vector<bd::Texture *>();
@@ -185,7 +185,7 @@ initializeBlockLoader(bd::IndexFile const *indexFile,
   initializeMemoryBuffers(tdata->buffers, tdata->maxCpuBlocks, blockBytes);
   bd::Info() << "Generated " << tdata->buffers->size() << " main memory buffers.";
 
-  BlockLoader *loader{ new BlockLoader(tdata, indexFile->getVolume()) };
+  BlockLoader *loader{ new BlockLoader(tdata, indexFile.getVolume()) };
   return loader;
 }
 
@@ -193,10 +193,10 @@ initializeBlockLoader(bd::IndexFile const *indexFile,
 /////////////////////////////////////////////////////////////////////////////////
 BlockCollection *
 initializeBlockCollection(BlockLoader *loader,
-                          bd::IndexFile const *indexFile,
+                          bd::IndexFile const &indexFile,
                           subvol::CommandLineOptions const &clo)
 {
-  BlockCollection *bc{ new BlockCollection(loader, *indexFile) };
+  BlockCollection *bc{ new BlockCollection(loader, indexFile) };
   bc->setRangeMin(0);
   bc->setRangeMax(0);
   bc->changeClassificationType(ClassificationType::Rov);

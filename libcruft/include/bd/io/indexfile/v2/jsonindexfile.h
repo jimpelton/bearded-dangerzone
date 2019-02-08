@@ -14,11 +14,8 @@
 namespace bd { namespace indexfile { namespace v2 {
     class JsonIndexFile{
     public:
-        void
+        bool
         open(std::string const & fname);
-
-        int
-        version();
 
         std::string const &
         getRawFileName();
@@ -44,6 +41,7 @@ namespace bd { namespace indexfile { namespace v2 {
         std::string m_fname;
         std::string m_fpath;
         std::string m_tffname;
+        std::string m_dataType;
     };
 
 

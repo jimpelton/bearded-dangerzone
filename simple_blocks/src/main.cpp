@@ -17,6 +17,7 @@
 #include <bd/graphics/vertexarrayobject.h>
 #include <bd/log/logger.h>
 #include <bd/io/indexfile/indexfile.h>
+#include <bd/io/indexfile/v2/jsonindexfile.h>
 
 #include <QApplication>
 
@@ -93,12 +94,12 @@ printBlocks(subvol::BlockCollection *bcol)
 // Without an index file these options are provided via argv anyway.
 void
 updateCommandLineOptionsFromIndexFile(subvol::CommandLineOptions &clo,
-                                      std::shared_ptr<bd::IndexFile> const &indexFile)
+                                      bd::indexfile::v2::JsonIndexFile const &indexFile)
 {
   bd::Dbg() << "Updating command line options from index file.";
   auto minmaxE =
-      std::minmax_element(indexFile->getFileBlocks().begin(),
-                          indexFile->getFileBlocks().end(),
+      std::minmax_element(indexFile.getFileBlocks().begin(),
+                          indexFile.getFileBlocks().end(),
                           [](bd::FileBlock const &lhs, bd::FileBlock const &rhs)
                               -> bool {
                             return lhs.rov<rhs.rov;
@@ -107,13 +108,13 @@ updateCommandLineOptionsFromIndexFile(subvol::CommandLineOptions &clo,
   renderhelp::g_rovMin = ( *minmaxE.first ).rov;
   renderhelp::g_rovMax = ( *minmaxE.second ).rov;
 
-  clo.vol_w = indexFile->getVolume().voxelDims().x;
-  clo.vol_h = indexFile->getVolume().voxelDims().y;
-  clo.vol_d = indexFile->getVolume().voxelDims().z;
-  clo.numblk_x = indexFile->getVolume().block_count().x;
-  clo.numblk_y = indexFile->getVolume().block_count().y;
-  clo.numblk_z = indexFile->getVolume().block_count().z;
-  clo.dataType = bd::to_string(bd::IndexFileHeader::getType(indexFile->getHeader()));
+  clo.vol_w = indexFile.getVolume().voxelDims().x;
+  clo.vol_h = indexFile.getVolume().voxelDims().y;
+  clo.vol_d = indexFile.getVolume().voxelDims().z;
+  clo.numblk_x = indexFile.getVolume().block_count().x;
+  clo.numblk_y = indexFile.getVolume().block_count().y;
+  clo.numblk_z = indexFile.getVolume().block_count().z;
+  clo.dataType = bd::to_string(indexFile.getDatType());
 }
 
 
@@ -166,12 +167,10 @@ main(int argc, char *argv[])
 
   // Open the index file if possible, then setup the BlockCollection
   // and give away ownership of the index file to the BlockCollection.
-  std::shared_ptr<bd::IndexFile> indexFile{ std::make_shared<bd::IndexFile>() };
+  //std::shared_ptr<bd::IndexFile> indexFile{ std::make_shared<bd::IndexFile>() };
+  bd::indexfile::v2::JsonIndexFile indexFile;
   if (!clo.indexFilePath.empty()) {
-    bool ok = false;
-    indexFile = std::move(
-        bd::IndexFile::fromBinaryIndexFile(clo.indexFilePath, ok));
-    if (!ok) {
+    if (!indexFile.open(clo.indexFilePath)) {
       bd::Err() << "Could not read index file " << clo.indexFilePath;
       return 1;
     }
@@ -188,16 +187,13 @@ main(int argc, char *argv[])
   }
 
   subvol::BlockLoader *loader{
-      subvol::renderhelp::initializeBlockLoader(indexFile.get(), clo) };
+      subvol::renderhelp::initializeBlockLoader(indexFile, clo) };
 
   std::shared_ptr<subvol::BlockCollection> bc{
-      subvol::renderhelp::initializeBlockCollection(loader, indexFile.get(), clo) };
-
-//  std::shared_ptr<subvol::BlockRenderer> br{
-//    subvol::renderhelp::initializeRenderer(bc, indexFile->getVolume().worldDims(), clo) };
+      subvol::renderhelp::initializeBlockCollection(loader, indexFile, clo) };
 
   std::shared_ptr<subvol::BlockRenderer> br{
-      subvol::renderhelp::initializeRenderer(bc, indexFile->getVolume(), clo) };
+      subvol::renderhelp::initializeRenderer(bc, indexFile, clo) };
 
   subvol::renderhelp::initializeControls(window, br);
 //  subvol::renderhelp::BenchmarkLoop loop(window, br, bc, glm::vec3{ 1,0,0 });
@@ -210,7 +206,7 @@ main(int argc, char *argv[])
       std::async(std::launch::async,
                  [&]() {
                    QApplication a(argc, argv);
-                   subvol::ControlPanel panel(indexFile->getVolume(),
+                   subvol::ControlPanel panel(indexFile.getVolume(),
                                               loader->maxGpuBlocks(),
                                               loader->maxMainBlocks());
 

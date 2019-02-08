@@ -12,19 +12,40 @@ namespace
   const std::map<std::string, DataType> DataTypesMap
   {
     { "int", DataType::Integer },
+    { "int32", DataType::Integer },
+    { "int4", DataType::Integer },
+    { "integer", DataType::Integer},
+
     { "uint", DataType::UnsignedInteger },
+    { "uint32", DataType::UnsignedInteger },
+    { "u4", DataType::UnsignedInteger },
     { "unsigned integer", DataType::UnsignedInteger },
 
     { "char", DataType::Character },
+    { "int8", DataType::Character },
+    { "i1", DataType::Character },
+
     { "uchar", DataType::UnsignedCharacter },
+    { "u1", DataType::UnsignedCharacter },
+    { "uint8", DataType::UnsignedCharacter },
     { "unsigned char", DataType::UnsignedCharacter },
 
     { "short", DataType::Short },
+    { "i2", DataType::Short },
+    { "int16", DataType::Short },
+
     { "ushort", DataType::UnsignedShort },
+    { "uint16", DataType::UnsignedShort },
+    { "u2", DataType::UnsignedShort },
     { "unsigned short", DataType::UnsignedShort },
 
     { "float", DataType::Float },
+    { "float32", DataType::Float },
+    { "f4", DataType::Float },
+
     { "double", DataType::Double },
+    { "float64", DataType::Double },
+    { "f8", DataType::Double },
 
     { "unknown", DataType::Unknown }
   };
@@ -34,7 +55,6 @@ namespace
 DataType
 to_dataType(const std::string &typeStr)
 {
- 
   try {
     return DataTypesMap.at(typeStr);
   } catch (std::out_of_range &e) {
