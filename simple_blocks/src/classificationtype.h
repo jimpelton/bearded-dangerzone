@@ -7,10 +7,12 @@
 
 namespace subvol
 {
-  enum ClassificationType : int {
-    Avg,
-    Rov
-  };
+enum ClassificationType
+    : int
+{
+  Avg,
+  Rov
+};
 
 
 } //namespace subvol

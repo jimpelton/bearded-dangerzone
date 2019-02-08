@@ -1,7 +1,6 @@
 #ifndef block_collection_h__
 #define block_collection_h__
 
-
 #include "blockloader.h"
 #include "classificationtype.h"
 
@@ -17,16 +16,17 @@
 #include <future>
 #include "messages/recipient.h"
 
-
 namespace subvol
 {
 
-class BlockCollection : public Recipient
+class BlockCollection
+    : public Recipient
 {
 public:
 //  BlockCollection();
 
   BlockCollection(BlockLoader *loader, bd::IndexFile const &index);
+
 
   virtual ~BlockCollection();
 
@@ -48,19 +48,20 @@ public:
   void
   updateBlockCache();
 
+
   void
   loadSomeBlocks();
 
 
-  std::vector<bd::Block *> const&
+  std::vector<bd::Block *> const &
   getBlocks() const;
 
 
-  std::vector<bd::Block *>&
+  std::vector<bd::Block *> &
   getBlocks();
 
 
-  std::vector<bd::Block *>&
+  std::vector<bd::Block *> &
   getNonEmptyBlocks();
 
 
@@ -103,11 +104,14 @@ public:
   void
   changeClassificationType(ClassificationType type);
 
+
   void
   filterBlocksByROV();
 
+
   void
   filterBlocksByAverage();
+
 
 private:
   std::vector<bd::Block *> m_blocks;
@@ -131,12 +135,12 @@ private:
 
   std::function<void(size_t)> m_visibleBlocksCb;
 
-
 public:   /* public message bus handlers */
 
   void
   handle_MaxRangeChangedMessage(MaxRangeChangedMessage &m) override;
-  
+
+
   void
   handle_MinRangeChangedMessage(MinRangeChangedMessage &m) override;
 

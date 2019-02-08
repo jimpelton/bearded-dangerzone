@@ -1,6 +1,5 @@
 #include "cmdline.h"
 
-
 #include <iostream>
 #include <string>
 
@@ -29,25 +28,25 @@ try
 
   // opacity transfer function file
   TCLAP::ValueArg<std::string> opacityTFArg("",
-                                      "otf",
-                                      "Path to the opacity transfer function."
-                                                "Takes precende over --tf"
-                                                " and must be used with --ctf.",
-                                      false,
-                                      "",
-                                      "string");
+                                            "otf",
+                                            "Path to the opacity transfer function."
+                                            "Takes precende over --tf"
+                                            " and must be used with --ctf.",
+                                            false,
+                                            "",
+                                            "string");
   cmd.add(opacityTFArg);
 
 
   // color transfer function file
   TCLAP::ValueArg<std::string> colorTFArg("",
-                                      "ctf",
-                                      "Path to the color transfer function. "
-                                              "Takes precedencd over --tf"
-                                              " and must be used with --otf.",
-                                      false,
-                                      "",
-                                      "string");
+                                          "ctf",
+                                          "Path to the color transfer function. "
+                                          "Takes precedencd over --tf"
+                                          " and must be used with --otf.",
+                                          false,
+                                          "",
+                                          "string");
   cmd.add(colorTFArg);
 
   // index file path
@@ -109,8 +108,8 @@ try
   opts.perfMode = perfMode.getValue();
   opts.windowWidth = screenWidthArg.getValue();
   opts.windowHeight = screenHeightArg.getValue();
-  opts.gpuMemoryBytes = static_cast<int64_t>(convertToBytes( gpuMemoryArg.getValue() ));
-  opts.mainMemoryBytes = static_cast<int64_t>(convertToBytes( mainMemoryArg.getValue() ));
+  opts.gpuMemoryBytes = static_cast<int64_t>(convertToBytes(gpuMemoryArg.getValue()));
+  opts.mainMemoryBytes = static_cast<int64_t>(convertToBytes(mainMemoryArg.getValue()));
 
   return static_cast<int>(cmd.getArgList().size());
 
@@ -125,21 +124,22 @@ size_t
 convertToBytes(std::string s)
 {
   size_t multiplier{ 1 };
-  std::string last{ *( s.end() - 1 ) };
+  std::string last{ *( s.end()-1 ) };
 
-  if (last == "K") {
+  if (last=="K") {
     multiplier = 1024;
-  } else if (last == "M") {
-    multiplier = 1024 * 1024;
-  } else if (last == "G") {
-    multiplier = 1024 * 1024 * 1024;
+  } else if (last=="M") {
+    multiplier = 1024*1024;
+  } else if (last=="G") {
+    multiplier = 1024*1024*1024;
   }
 
-  std::string numPart(s.begin(), s.end() - 1);
+  std::string numPart(s.begin(), s.end()-1);
   auto num = stoull(numPart);
 
-  return num * multiplier;
+  return num*multiplier;
 }
+
 
 void
 printThem(CommandLineOptions &opts)

@@ -16,8 +16,6 @@ namespace subvol
 namespace renderhelp
 {
 
-
-
 class Loop
 {
 public:
@@ -26,23 +24,24 @@ public:
 
 
   virtual
-    ~Loop();
+  ~Loop();
 
 
   void
-    loop();
+  loop();
+
 
 protected:
 
   virtual void
-    tick(float time);
+  tick(float time);
 
 
   double
-    timeNow() const;
+  timeNow() const;
 
 
-  GLFWwindow * _window;
+  GLFWwindow *_window;
   std::shared_ptr<BlockRenderer> _renderer;
   std::shared_ptr<BlockCollection> _collection;
   uint64_t _frameCount;
@@ -54,18 +53,22 @@ private:
 
 };
 
-class BenchmarkLoop : public Loop
+class BenchmarkLoop
+    : public Loop
 {
 public:
   BenchmarkLoop(GLFWwindow *, std::shared_ptr<BlockRenderer>,
                 std::shared_ptr<BlockCollection>,
-                glm::vec3 rAxis = { 1,0,0 });
+                glm::vec3 rAxis = { 1, 0, 0 });
+
 
   virtual ~BenchmarkLoop();
 
+
 protected:
   void
-    tick(float time) override;
+  tick(float time) override;
+
 
 private:
   float m_rotateSpeed;

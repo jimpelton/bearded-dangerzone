@@ -81,11 +81,6 @@ namespace bd { namespace indexfile { namespace v2 {
         m_blocks = blocks;
     }
 
-    int
-    JsonIndexFile::version() {
-        return 0;
-    }
-
     std::string const &
     JsonIndexFile::getRawFileName() {
         return m_fname;

@@ -11,7 +11,9 @@
 /// \brief Enumerates the possible sets of slices, each set has quads
 ///        aligned with the specified plane.
 ////////////////////////////////////////////////////////////////////////////////
-enum class SliceSet : unsigned int {
+enum class SliceSet
+    : unsigned int
+{
   XZ,
   YZ,
   XY,
@@ -23,6 +25,8 @@ enum class SliceSet : unsigned int {
 ////////////////////////////////////////////////////////////////////////////////
 /// \brief To string representation of SliceSet.
 ////////////////////////////////////////////////////////////////////////////////
-std::ostream &operator<<(std::ostream &ostr, SliceSet s);
+std::ostream &
+operator<<(std::ostream &ostr, SliceSet s);
+
 
 #endif //BZONE_SLICESET_H

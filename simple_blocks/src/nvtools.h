@@ -1,7 +1,6 @@
 #ifndef subvol_nvtools_h__
 #define subvol_nvtools_h__
 
-
 #ifdef USE_NV_TOOLS
 #include <nvToolsExt.h>
 
@@ -24,7 +23,7 @@ const int nvtools_num_colors = sizeof(nvtools_colors) / sizeof(uint32_t);
 
 #else
 
-#define NVTOOLS_PUSH_RANGE(name,cid)
+#define NVTOOLS_PUSH_RANGE(name, cid)
 #define NVTOOLS_POP_RANGE
 
 #endif// USE_NV_TOOLS

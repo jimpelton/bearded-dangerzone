@@ -14,30 +14,29 @@
 #include "messages/recipient.h"
 #include "messages/messagebroker.h"
 
-
 namespace subvol
 {
 
 BlockLoader::BlockLoader(BLThreadData *threadParams, bd::Volume const &volume)
-  : m_stopThread{ false }
-  , m_gpu()
-  , m_main()
-  , m_texs()
-  , m_buffs()
-  , m_loadQueue{ }
-  , m_gpuReadyQueue{ }
-  , m_maxGpuBlocks{ threadParams->maxGpuBlocks }
-  , m_maxMainBlocks{ threadParams->maxCpuBlocks }
-  , m_sizeType{ bd::to_sizeType(threadParams->type) }
-  , m_slabDims{ threadParams->slabDims[0], threadParams->slabDims[1] }
-  , m_volMin{ volume.min() }
-  , m_volDiff{ volume.max() - volume.min() }
-  , m_fileName{ threadParams->filename }
-  , m_reader{ nullptr }
+    : m_stopThread{ false }
+    , m_gpu()
+    , m_main()
+    , m_texs()
+    , m_buffs()
+    , m_loadQueue{ }
+    , m_gpuReadyQueue{ }
+    , m_maxGpuBlocks{ threadParams->maxGpuBlocks }
+    , m_maxMainBlocks{ threadParams->maxCpuBlocks }
+    , m_sizeType{ bd::to_sizeType(threadParams->type) }
+    , m_slabDims{ threadParams->slabDims[0], threadParams->slabDims[1] }
+    , m_volMin{ volume.min() }
+    , m_volDiff{ volume.max()-volume.min() }
+    , m_fileName{ threadParams->filename }
+    , m_reader{ nullptr }
 {
   m_reader = BlockReaderFactory::New(threadParams->type);
-  m_texs = *(threadParams->texs);
-  m_buffs = *(threadParams->buffers);
+  m_texs = *( threadParams->texs );
+  m_buffs = *( threadParams->buffers );
 }
 
 
@@ -54,7 +53,6 @@ BlockLoader::~BlockLoader()
 }
 
 
-
 int
 BlockLoader::operator()()
 {
@@ -62,10 +60,9 @@ BlockLoader::operator()()
   raw.open(m_fileName, std::ios::binary);
   if (!raw.is_open()) {
     bd::Err() << "The raw file " << m_fileName
-      << " could not be opened. Exiting loader loop.";
+              << " could not be opened. Exiting loader loop.";
     return -1;
   }
-
 
   while (!m_stopThread) {
 
@@ -129,7 +126,7 @@ bd::Block *
 BlockLoader::waitPopLoadQueue()
 {
   std::unique_lock<std::mutex> lock(m_loadQueueMutex);
-  while (m_loadQueue.size() == 0 && !m_stopThread) {
+  while (m_loadQueue.size()==0 && !m_stopThread) {
     m_wait.wait(m_loadQueueMutex);
   }
   if (m_stopThread) {
@@ -137,7 +134,7 @@ BlockLoader::waitPopLoadQueue()
   }
 
   bd::Block *b{ m_loadQueue.back() };
-  assert(b != nullptr && "A null block was found in the load queue");
+  assert(b!=nullptr && "A null block was found in the load queue");
   m_loadQueue.pop_back();
 
   return b;
@@ -169,27 +166,25 @@ BlockLoader::queueClassified(std::vector<bd::Block *> const &visible,
   // figure out if we must evict blocks from main memory.
   // queue all blocks not in main memory for loading by the loader thread.
   // if the block is already in main, then assign it a texture.
-  for (size_t i{ 0 }; i < visible.size(); ++i) {
+  for (size_t i{ 0 }; i<visible.size(); ++i) {
     bd::Block *vis{ visible[i] };
-    assert(vis != nullptr && "Block was null when iterating visible blocks.");
-    if (m_main.find(vis->index()) == m_main.end()) {
+    assert(vis!=nullptr && "Block was null when iterating visible blocks.");
+    if (m_main.find(vis->index())==m_main.end()) {
       // The block is not in main, so it needs to be loaded from disk, pushed to main,
       // and finally pushed to the gpu ready queue.
       // The load thread (running in operator()) pushes to the
       // gpu ready queue and the render thread pops from the gpu ready queue and uploads
       // to the gpu, then pushes the block pointer to the gpu resident queue.
-      assert(m_gpu.find(vis->index()) == m_gpu.end() &&
-             "Block is not in main, but is in gpu!");
+      assert(m_gpu.find(vis->index())==m_gpu.end() &&
+                 "Block is not in main, but is in gpu!");
       m_loadQueue.push_back(vis);
-    }
-    else if (m_gpu.find(vis->index()) == m_gpu.end()) {
+    } else if (m_gpu.find(vis->index())==m_gpu.end()) {
       // The block is not on the gpu yet, but it is in main,
       // so push to the gpu queue. If it has a texture, it is ready to go, 
       // but if it needs a texture, give it one.
-      if (vis->texture() != nullptr) {
+      if (vis->texture()!=nullptr) {
         pushGPUReadyQueue(vis);
-      }
-      else if (m_texs.size() > 0) {
+      } else if (m_texs.size()>0) {
         vis->texture(m_texs.back());
         m_texs.pop_back();
         pushGPUReadyQueue(vis);
@@ -204,27 +199,26 @@ BlockLoader::queueClassified(std::vector<bd::Block *> const &visible,
   // main for empties with textures (there probably won't be any)
   // we we must evict empty blocks from main and recover their texture and pixel buffers.
 
-  long long num_to_evict{ static_cast<long long>(m_loadQueue.size()) -
+  long long num_to_evict{ static_cast<long long>(m_loadQueue.size())-
                               static_cast<long long>(m_texs.size()) };
-  if (num_to_evict > 0) {
+  if (num_to_evict>0) {
     bd::Dbg() << "Need to evict " << num_to_evict
-      << " blocks (LQ Size: " << m_loadQueue.size()
-      << ", Texs avail: " << m_texs.size() << ").";
+              << " blocks (LQ Size: " << m_loadQueue.size()
+              << ", Texs avail: " << m_texs.size() << ").";
 
     // We have more blocks than there are available memory slots, so we need to
     // evict some empties.
     auto it = m_main.begin();
     auto end = m_main.end();
-    while (num_to_evict > 0 && it != end) {
+    while (num_to_evict>0 && it!=end) {
       bd::Block *b{ it->second };
-      assert(b != nullptr && "Block was null when iterating main to evict empty blocks.");
+      assert(b!=nullptr && "Block was null when iterating main to evict empty blocks.");
       if (b->empty()) {
         char *buff{ b->removePixelData() };
         m_buffs.push_back(buff);
         it = m_main.erase(it);
         --num_to_evict;
-      }
-      else {
+      } else {
         ++it;
       }
     }
@@ -232,7 +226,7 @@ BlockLoader::queueClassified(std::vector<bd::Block *> const &visible,
     // If we did not evict enough blocks from main to fit the entire load queue
     // into memory, then pop all the blocks out of the load queue that are
     // remaining.
-    while (num_to_evict > 0) {
+    while (num_to_evict>0) {
       m_loadQueue.pop_back();
       num_to_evict--;
     }
@@ -241,8 +235,8 @@ BlockLoader::queueClassified(std::vector<bd::Block *> const &visible,
   // sort blocks in ROV descending order
   std::sort(m_loadQueue.begin(), m_loadQueue.end(),
             [](bd::Block *lhs, bd::Block *rhs) -> bool {
-    return lhs->fileBlock().rov > rhs->fileBlock().rov;
-  });
+              return lhs->fileBlock().rov>rhs->fileBlock().rov;
+            });
 
   m_wait.notify_all();
 }
@@ -256,9 +250,9 @@ BlockLoader::getNextGpuReadyBlock()
   //may upload texture data to OGL server.
   std::unique_lock<std::mutex> lock(m_gpuReadyMutex);
   bd::Block *b{ nullptr };
-  if (m_gpuReadyQueue.size() > 0) {
+  if (m_gpuReadyQueue.size()>0) {
     b = m_gpuReadyQueue.front();
-    assert(b != nullptr && "Block was null in gpuReadyQueue()");
+    assert(b!=nullptr && "Block was null in gpuReadyQueue()");
     m_gpuReadyQueue.pop();
   }
 
@@ -270,8 +264,8 @@ BlockLoader::getNextGpuReadyBlock()
 void
 BlockLoader::pushGpuResidentBlock(bd::Block *b)
 {
-  assert(b != nullptr && "Block was nullptr!");
-  assert(b->texture() != nullptr && "Block had a null texture!");
+  assert(b!=nullptr && "Block was nullptr!");
+  assert(b->texture()!=nullptr && "Block had a null texture!");
 
   std::unique_lock<std::mutex> lock(m_gpuMutex);
   m_gpu.insert(std::make_pair(b->index(), b));
@@ -296,7 +290,7 @@ BlockLoader::maxMainBlocks()
 
 
 ///////////////////////////////////////////////////////////////////////////////
-size_t 
+size_t
 BlockLoader::maxGpuBlocks()
 {
   return m_maxGpuBlocks;
@@ -307,16 +301,15 @@ BlockLoader::maxGpuBlocks()
 void
 BlockLoader::removeEmptyBlocksFromGpu()
 {
-  for (auto it = m_gpu.begin(); it != m_gpu.end(); ) {
+  for (auto it = m_gpu.begin(); it!=m_gpu.end();) {
     bd::Block *b{ it->second };
-    assert(b != nullptr && "Block was null when iterating gpu blocks.");
+    assert(b!=nullptr && "Block was null when iterating gpu blocks.");
     if (b->empty()) {
       bd::Texture *e{ b->removeTexture() };
-      assert(e != nullptr && "A block in the GPU list had a null texture.");
+      assert(e!=nullptr && "A block in the GPU list had a null texture.");
       m_texs.push_back(e);
       it = m_gpu.erase(it);
-    }
-    else {
+    } else {
       ++it;
     }
   }
@@ -327,8 +320,8 @@ BlockLoader::removeEmptyBlocksFromGpu()
 void
 BlockLoader::pushGPUReadyQueue(bd::Block *b)
 {
-  assert(b != nullptr && "Block was nullptr!");
-  assert(b->texture() != nullptr && "Block had a null texture!");
+  assert(b!=nullptr && "Block was nullptr!");
+  assert(b->texture()!=nullptr && "Block had a null texture!");
 
   std::unique_lock<std::mutex> lock(m_gpuReadyMutex);
   m_gpuReadyQueue.push(b);

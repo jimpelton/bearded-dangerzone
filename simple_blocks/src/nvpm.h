@@ -2,7 +2,6 @@
 #ifndef nvpm_h__
 #define nvpm_h__
 
-
 #include <bd/log/logger.h>
 
 #include <iomanip>
@@ -18,7 +17,7 @@
 //#define PATH_TO_NVPMAPI_CORE L"C:\\libs\\perfkit\\PerfKit-4.4.0\\bin\\x64\\NvPmApi.Core.dll"
 
 #ifndef NVPM_INIGUID
-    #define NVPM_INITGUID 1
+#define NVPM_INITGUID 1
 #endif
 
 #include "NvPmApi.h"

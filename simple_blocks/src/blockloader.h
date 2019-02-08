@@ -26,13 +26,16 @@ namespace subvol
 struct BLThreadData
 {
   BLThreadData()
-      : maxGpuBlocks{0}
-      , maxCpuBlocks{0}
+      : maxGpuBlocks{ 0 }
+      , maxCpuBlocks{ 0 }
       , type{ bd::DataType::UnsignedCharacter }
-      , slabDims{0,0}
+      , slabDims{ 0, 0 }
       , filename{ }
       , texs{ nullptr }
-      , buffers{ nullptr } { }
+      , buffers{ nullptr }
+  {
+  }
+
 
   size_t maxGpuBlocks;
   size_t maxCpuBlocks;
@@ -122,8 +125,15 @@ struct BLThreadData
 class BlockReader
 {
 public:
-  BlockReader(){ }
-  virtual ~BlockReader() { }
+  BlockReader()
+  {
+  }
+
+
+  virtual ~BlockReader()
+  {
+  }
+
 
   /**
    * @param buffer The pixel buffer
@@ -136,7 +146,7 @@ public:
    * @param vDiff The difference of volume max and volume min.
    */
   virtual void
-  fillBlockData(char * buffer,
+  fillBlockData(char *buffer,
                 std::istream *infile,
                 uint64_t offset,
                 uint64_t const be[3],
@@ -145,20 +155,27 @@ public:
                 double vMin, double vDiff) = 0;
 
 };
+
 //
 //
 template<class VTy>
-class BlockReaderSpec : public BlockReader
+class BlockReaderSpec
+    : public BlockReader
 {
 public:
-	BlockReaderSpec() : disk_buf{ nullptr }, buf_elems{ 0 } { }
+  BlockReaderSpec()
+      : disk_buf{ nullptr }, buf_elems{ 0 }
+  {
+  }
+
 
   virtual ~BlockReaderSpec()
   {
     if (disk_buf) {
-      delete [] disk_buf;
+      delete[] disk_buf;
     }
   }
+
 
   void
   fillBlockData(char *b,                        // buffer to fill
@@ -169,10 +186,10 @@ public:
                 uint64_t const ve[2],           // slab dims of the entire volume
                 double vMin, double vDiff) override
   {
-    if (! disk_buf) {
+    if (!disk_buf) {
       // allocate temp space for the block (the entire block is brought into mem).
-      buf_elems = be[0] * be[1] * be[2];
-      disk_buf = new VTy[ buf_elems ];
+      buf_elems = be[0]*be[1]*be[2];
+      disk_buf = new VTy[buf_elems];
     }
 
     size_t const typeSize = sizeof(VTy);
@@ -183,23 +200,23 @@ public:
     //
     // start voxel coord = block index w/in volume * block size
     // (this works because all blocks are the same size).
-    glm::u64vec3 const start{ ijk[0] * be[0],
-                              ijk[1] * be[1],
-                              ijk[2] * be[2] };
+    glm::u64vec3 const start{ ijk[0]*be[0],
+                              ijk[1]*be[1],
+                              ijk[2]*be[2] };
 
     // block end voxel coord = block voxel start + block size
-    glm::u64vec3 const end{ start[0] + be[0],
-                            start[1] + be[1],
-                            start[2] + be[2] };
+    glm::u64vec3 const end{ start[0]+be[0],
+                            start[1]+be[1],
+                            start[2]+be[2] };
 
     // the row length of each block is the extent in the X dimension
     size_t const blockRowLength{ be[0] };
-    size_t const rowBytes{ blockRowLength * typeSize };
+    size_t const rowBytes{ blockRowLength*typeSize };
 
     // Loop through rows and slabs of volume reading rows of voxels into memory.
     char *temp = reinterpret_cast<char *>(disk_buf);
-    for (uint64_t slab = start.z; slab < end.z; ++slab) {
-      for (uint64_t row = start.y; row < end.y; ++row) {
+    for (uint64_t slab = start.z; slab<end.z; ++slab) {
+      for (uint64_t row = start.y; row<end.y; ++row) {
 
         // seek to start of row
         infile->seekg(offset);
@@ -209,9 +226,9 @@ public:
         temp += rowBytes;
 
         // offset of next row in voxels
-        offset = bd::to1D(start.x, row + 1, slab, ve[0], ve[1]);
+        offset = bd::to1D(start.x, row+1, slab, ve[0], ve[1]);
 //        offset = bd::to1D(start.x, row, slab, ve[0], ve[1]);
-        
+
         // convert voxel offset to bytes
         offset *= typeSize;
       } // for row
@@ -234,13 +251,15 @@ public:
 
     } // for slab
 
-    float * const pixelData = reinterpret_cast<float *>(b);
+    float *const pixelData = reinterpret_cast<float *>(b);
     //Normalize the data prior to generating the texture.
-    for (size_t idx{ 0 }; idx < buf_elems; ++idx) {
-      pixelData[idx] = static_cast<float>( (disk_buf[idx] - vMin) / vDiff );
+    for (size_t idx{ 0 }; idx<buf_elems; ++idx) {
+      pixelData[idx] = static_cast<float>(( disk_buf[idx]-vMin )/vDiff );
     }
 
   }
+
+
 private:
   VTy *disk_buf;
   size_t buf_elems;
@@ -252,11 +271,12 @@ class BlockReaderFactory
 public:
   using T = bd::DataType;
 
+
   static
   BlockReader *
   New(bd::DataType ty)
   {
-    switch(ty){
+    switch (ty) {
       case T::UnsignedCharacter:
         return new BlockReaderSpec<uint8_t>();
       case T::Character:
@@ -271,7 +291,6 @@ public:
     }
   }
 };
-
 
 /// Threaded load block data from disk. Blocks to load are put into a queue by
 /// a thread.
@@ -292,7 +311,7 @@ public:
   void
   stop();
 
-  
+
   /// \brief Enqueue the provided blocks for loading.
   /// First the non-vis blocks are pushed, then the
   /// vis blocks.
@@ -306,6 +325,7 @@ public:
   bd::Block *
   getNextGpuReadyBlock();
 
+
   void
   pushGpuResidentBlock(bd::Block *);
 
@@ -313,15 +333,18 @@ public:
   void
   clearLoadQueue();
 
+
   size_t
   maxMainBlocks();
+
 
   size_t
   maxGpuBlocks();
 
+
 private:
 
-  bd::Block*
+  bd::Block *
   waitPopLoadQueue();
 
 

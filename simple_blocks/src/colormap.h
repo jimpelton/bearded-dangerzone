@@ -14,7 +14,6 @@
 #include <vector>
 #include <unordered_map>
 
-
 namespace subvol
 {
 
@@ -85,12 +84,12 @@ public:
   void
   setName(std::string const &name);
 
+
   std::string
   to_string() const;
 
 
 private:
-
 
   /// \brief Create tfunc texture and put it in the colormap map.
   /// \return true on success, false otherwise.
@@ -177,6 +176,7 @@ public:
                std::string const &colorTF,
                std::string const &opacityTF);
 
+
   /// \brief Create and add a new colormap to the list of color maps.
   /// The returned colormap is a reference to the actual colormap in the list.
   /// The caller can load transfer functions and modify the colormap as needed.
@@ -184,6 +184,7 @@ public:
   /// \return A ref. to the newly created color map in the list
   static ColorMap &
   newColorMap(std::string const &funcName);
+
 
 private:
   /// \brief Fill texels with interpolated values between the knots in map.

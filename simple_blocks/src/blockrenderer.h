@@ -17,9 +17,7 @@
 #include <bd/graphics/texture.h>
 #include <bd/graphics/vertexarrayobject.h>
 
-
 #include <memory>
-
 
 namespace subvol
 {
@@ -107,7 +105,6 @@ public:
 
   void
   setDrawNonEmptySlices(bool b);
-
 
 
   /// \brief Draw each non-empty block.

@@ -14,15 +14,19 @@
 //#include <QMutex>
 #include <QReadWriteLock>
 
-
 #include <map>
 #include "cmdline.h"
 
 class QSlider;
+
 class QLabel;
+
 class QDoubleSpinBox;
+
 class QCheckBox;
+
 class QGroupBox;
+
 class QProgressBar;
 
 namespace subvol
@@ -63,13 +67,15 @@ namespace subvol
 //};
 
 
-class ClassificationPanel : public QWidget
+class ClassificationPanel
+    : public QWidget
 {
-  Q_OBJECT
-
+Q_OBJECT
 
 public:
   ClassificationPanel(QWidget *parent);
+
+
   ~ClassificationPanel() = default;
 
 
@@ -78,32 +84,49 @@ public:
 
 
 signals:
-  void minValueChanged(double rovMin);
-  void maxValueChanged(double rovMax);
-  void classificationTypeChanged(ClassificationType);
+
+
+  void
+  minValueChanged(double rovMin);
+
+
+  void
+  maxValueChanged(double rovMax);
+
+
+  void
+  classificationTypeChanged(ClassificationType);
+
 
 public slots:
+
+
   void
   slot_minSliderChanged(int minSliderValue);
+
 
   void
   slot_maxSliderChanged(int maxSliderValue);
 
+
   void
   slot_sliderPressed();
+
 
   void
   slot_sliderReleased();
 
+
   void
   slot_averageRadioClicked(bool);
+
 
   void
   slot_rovRadioClicked(bool);
 
+
   void
   slot_globalRangeChanged(double rmax, double rmin);
-
 
 
 private:
@@ -124,43 +147,56 @@ private:
 
 };
 
-
-class StatsPanel : public QWidget, public Recipient
+class StatsPanel
+    : public QWidget, public Recipient
 {
-  Q_OBJECT
+Q_OBJECT
 
 public:
-  StatsPanel(bd::Volume const &, size_t gpuCacheSize, size_t cpuCacheSize, QWidget *parent);
+  StatsPanel(bd::Volume const &,
+             size_t gpuCacheSize,
+             size_t cpuCacheSize,
+             QWidget *parent);
+
+
   ~StatsPanel() = default;
-
-
 
 
 public:
   void
   slot_minRovValueChanged(double minrov);
 
+
   void
   slot_maxRovValueChanged(double maxrov);
+
 
   void
   slot_classificationTypeChanged(ClassificationType type);
 
-  void 
+
+  void
   handle_ShownBlocksMessage(ShownBlocksMessage &) override;
 
-  void 
+
+  void
   handle_BlockCacheStatsMessage(BlockCacheStatsMessage &) override;
 
-  void 
+
+  void
   handle_SliceSetChangedMessage(SliceSetChangedMessage &) override;
 
+
   void
-  handle_BlockLoadedMessage(BlockLoadedMessage&) override;
+  handle_BlockLoadedMessage(BlockLoadedMessage &) override;
+
 
 signals:
+
+
   void
   updateStatsValues();
+
 
   void
   updateRenderStatsValues();
@@ -170,9 +206,17 @@ private:
   void
   updateShownBlocksLabels();
 
+
 private slots:
-  void setStatsValues();
-  void setRenderStatsValues();
+
+
+  void
+  setStatsValues();
+
+
+  void
+  setRenderStatsValues();
+
 
 private:
   QLabel *m_blocksShownValueLabel;
@@ -195,7 +239,7 @@ private:
   QProgressBar *m_cpuBuffersAvailValueBar;
   QLabel *m_gpuTexturesAvailValueLabel;
   QProgressBar *m_gpuTexturesAvailValueBar;
-  
+
   size_t m_visibleBlocks;
   size_t m_currentGpuLoadQSize;
 
@@ -209,14 +253,18 @@ private:
   QReadWriteLock m_renderStatsMutex;
 };
 
-
 ///////////////////////////////////////////////////////////////////////////////
-class ControlPanel : public QWidget
+class ControlPanel
+    : public QWidget
 {
-  Q_OBJECT
+Q_OBJECT
 
 public:
-  explicit ControlPanel(bd::Volume const &clo, size_t gpuCacheSize, size_t cpuCacheSize, QWidget *parent = nullptr);
+  explicit ControlPanel(bd::Volume const &clo,
+                        size_t gpuCacheSize,
+                        size_t cpuCacheSize,
+                        QWidget *parent = nullptr);
+
 
   ~ControlPanel();
 
@@ -230,11 +278,14 @@ public:
 
 
 signals:
-  void 
+
+
+  void
   globalRangeChanged(double, double);
 
 
 public slots:
+
 
   void
   slot_classificationTypeChanged(ClassificationType type);

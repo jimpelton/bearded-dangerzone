@@ -14,7 +14,7 @@ class Semathing
 public:
   Semathing(unsigned max)
       : max{ max }
-      ,count{ max }
+      , count{ max }
   {
   }
 
@@ -27,9 +27,9 @@ public:
   void
   signal()
   {
-    std::unique_lock <std::mutex> lck(mutex);
+    std::unique_lock<std::mutex> lck(mutex);
     count--;
-    if (count == 0) {
+    if (count==0) {
       cv.notify_all();
     }
   }
@@ -38,12 +38,13 @@ public:
   void
   wait()
   {
-    std::unique_lock <std::mutex> lck(mutex);
-    while (count > 0) {
+    std::unique_lock<std::mutex> lck(mutex);
+    while (count>0) {
       cv.wait(mutex);
     }
 
   }
+
 
   /// \brief Reset the semaphore. This function is not thread safe!!!
   void
@@ -51,6 +52,7 @@ public:
   {
     count = max;
   }
+
 
 private:
   unsigned int const max;

@@ -13,14 +13,14 @@ Controls *Controls::s_instance{ nullptr };
 
 
 Controls::Controls()
-  : m_cursor{ }
-  , m_renderer{ nullptr }
-  , m_showBlockBoxes{ false }
-  , m_shouldUseLighting{ false }
-  , m_currentBackgroundColor{ 0 }
-  , m_scaleValue{ 1.0f }
-  , m_nShiney{ 1.0f }
-  , m_LightVector{ 1.0f, 1.0f, 1.0f }
+    : m_cursor{ }
+    , m_renderer{ nullptr }
+    , m_showBlockBoxes{ false }
+    , m_shouldUseLighting{ false }
+    , m_currentBackgroundColor{ 0 }
+    , m_scaleValue{ 1.0f }
+    , m_nShiney{ 1.0f }
+    , m_LightVector{ 1.0f, 1.0f, 1.0f }
 {
 
 }
@@ -34,11 +34,11 @@ Controls::~Controls()
 void
 Controls::initialize(std::shared_ptr<BlockRenderer> renderer)
 {
-  if (s_instance == nullptr) {
+  if (s_instance==nullptr) {
     s_instance = new Controls();
   }
 
-  assert(renderer != nullptr && "Passed nullptr as argument to initialize");
+  assert(renderer!=nullptr && "Passed nullptr as argument to initialize");
   Controls &inst{ getInstance() };
   inst.m_shouldUseLighting = renderer->getShouldUseLighting();
   inst.m_renderer = std::move(renderer);
@@ -49,8 +49,8 @@ Controls::initialize(std::shared_ptr<BlockRenderer> renderer)
 Controls &
 Controls::getInstance()
 {
-  assert(s_instance != nullptr &&
-         "Controls::initiralize() should be called prior to first call of getInstance");
+  assert(s_instance!=nullptr &&
+             "Controls::initiralize() should be called prior to first call of getInstance");
 
   return *s_instance;
 }
@@ -59,15 +59,19 @@ Controls::getInstance()
 void
 Controls::s_cursorpos_callback(GLFWwindow *window, double x, double y)
 {
-  assert(s_instance != nullptr);
+  assert(s_instance!=nullptr);
   s_instance->cursorpos_callback(window, x, y);
 }
 
 
 void
-Controls::s_keyboard_callback(GLFWwindow *window, int key, int scancode, int action, int mods)
+Controls::s_keyboard_callback(GLFWwindow *window,
+                              int key,
+                              int scancode,
+                              int action,
+                              int mods)
 {
-  assert(s_instance != nullptr);
+  assert(s_instance!=nullptr);
   s_instance->keyboard_callback(key, scancode, action, mods);
 }
 
@@ -75,7 +79,7 @@ Controls::s_keyboard_callback(GLFWwindow *window, int key, int scancode, int act
 void
 Controls::s_window_size_callback(GLFWwindow *window, int width, int height)
 {
-  assert(s_instance != nullptr);
+  assert(s_instance!=nullptr);
   s_instance->window_size_callback(width, height);
 }
 
@@ -83,7 +87,7 @@ Controls::s_window_size_callback(GLFWwindow *window, int width, int height)
 void
 Controls::s_scrollwheel_callback(GLFWwindow *window, double xoff, double yoff)
 {
-  assert(s_instance != nullptr);
+  assert(s_instance!=nullptr);
   s_instance->scrollwheel_callback(xoff, yoff);
 }
 
@@ -91,7 +95,7 @@ Controls::s_scrollwheel_callback(GLFWwindow *window, double xoff, double yoff)
 void
 Controls::s_mousebutton_callback(GLFWwindow *window, int button, int action, int mods)
 {
-  assert(s_instance != nullptr);
+  assert(s_instance!=nullptr);
   s_instance->mousebutton_callback(window, button, action, mods);
 }
 
@@ -101,9 +105,9 @@ Controls::cursorpos_callback(GLFWwindow *window, double x, double y)
 {
   glm::vec2 cpos(std::floor(x), std::floor(y));
 
-  if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+  if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT)==GLFW_PRESS) {
 
-    glm::vec2 delta(cpos - m_cursor.pos);
+    glm::vec2 delta(cpos-m_cursor.pos);
 
     bd::Camera &cam{ m_renderer->getCamera() };
 
@@ -121,8 +125,8 @@ Controls::cursorpos_callback(GLFWwindow *window, double x, double y)
 
 
     // Give the camera new eye and up
-    cam.setEye(glm::vec3{ rotation * glm::vec4{ cam.getEye(), 1 } });
-    cam.setUp(glm::vec3{ rotation * glm::vec4{ cam.getUp(), 1 } });
+    cam.setEye(glm::vec3{ rotation*glm::vec4{ cam.getEye(), 1 }});
+    cam.setUp(glm::vec3{ rotation*glm::vec4{ cam.getUp(), 1 }});
 
     m_renderer->setViewMatrix(cam.createViewMatrix());
     //    glm::vec3 f{ glm::normalize(cam.getLookAt() - cam.getEye()) };
@@ -141,7 +145,7 @@ void
 Controls::keyboard_callback(int key, int scancode, int action, int mods)
 {
   // on key press
-  if (action == GLFW_PRESS) {
+  if (action==GLFW_PRESS) {
 
     switch (key) {
 
@@ -166,146 +170,133 @@ Controls::keyboard_callback(int key, int scancode, int action, int mods)
       //        break;
 
 
-    case GLFW_KEY_B:
+      case GLFW_KEY_B:
 
-      setShowBlockBoxes(!m_showBlockBoxes);
+        setShowBlockBoxes(!m_showBlockBoxes);
 
-      break;
+        break;
 
-    case GLFW_KEY_L:
-      setUseLighting(!m_shouldUseLighting);
+      case GLFW_KEY_L:
+        setUseLighting(!m_shouldUseLighting);
 
-      break;
+        break;
 
-    case GLFW_KEY_Q:
-      m_currentBackgroundColor ^= 1;
-      std::cout << "Background color: "
-        << (m_currentBackgroundColor == 0 ? "Dark" : "Light")
-        << '\n';
-      m_renderer->setBackgroundColor(g_backgroundColors[m_currentBackgroundColor]);
-      break;
+      case GLFW_KEY_Q:
+        m_currentBackgroundColor ^= 1;
+        std::cout << "Background color: "
+                  << ( m_currentBackgroundColor==0 ? "Dark" : "Light" )
+                  << '\n';
+        m_renderer->setBackgroundColor(g_backgroundColors[m_currentBackgroundColor]);
+        break;
 
-    case GLFW_KEY_T:
-      if (mods & GLFW_MOD_SHIFT) {
-        m_renderer->setColorMapTexture(ColorMapManager::getPrevMap().getTexture());
-        std::cout << "\nColormap: " << ColorMapManager::getCurrentMapName() << '\n';
-      }
-      else if (mods & GLFW_MOD_ALT) {
-        std::cout << "\n Current map: \n\t Scaling value: "
-          << m_scaleValue
-          << "\n\t"
-          << ColorMapManager::getMapByName(
-            ColorMapManager::getCurrentMapName()).to_string() << std::endl;
-      }
-      else {
-        m_renderer->setColorMapTexture(ColorMapManager::getNextMap().getTexture());
-        std::cout << "\nColormap: " << ColorMapManager::getCurrentMapName() << '\n';
-      }
+      case GLFW_KEY_T:
+        if (mods & GLFW_MOD_SHIFT) {
+          m_renderer->setColorMapTexture(ColorMapManager::getPrevMap().getTexture());
+          std::cout << "\nColormap: " << ColorMapManager::getCurrentMapName() << '\n';
+        } else if (mods & GLFW_MOD_ALT) {
+          std::cout << "\n Current map: \n\t Scaling value: "
+                    << m_scaleValue
+                    << "\n\t"
+                    << ColorMapManager::getMapByName(
+                        ColorMapManager::getCurrentMapName()).to_string() << std::endl;
+        } else {
+          m_renderer->setColorMapTexture(ColorMapManager::getNextMap().getTexture());
+          std::cout << "\nColormap: " << ColorMapManager::getCurrentMapName() << '\n';
+        }
 
-    default:
-      break;
+      default:
+        break;
 
     } // switch
   }
 
   // while holding key down.
-  if (action != GLFW_RELEASE) {
+  if (action!=GLFW_RELEASE) {
 
     switch (key) {
 
       // Positive transfer function scaling
-    case GLFW_KEY_PERIOD:
-      if (mods & GLFW_MOD_SHIFT) {
-        setTransferFunctionScaleValue(m_scaleValue + 0.1f);
-      }
-      else if (mods & GLFW_MOD_CONTROL) {
-        setTransferFunctionScaleValue(m_scaleValue + 0.001f);
-      }
-      else if (mods & GLFW_MOD_ALT) {
-        setTransferFunctionScaleValue(m_scaleValue + 0.0001f);
-      }
-      else {
-        setTransferFunctionScaleValue(m_scaleValue + 0.01f);
-      }
+      case GLFW_KEY_PERIOD:
+        if (mods & GLFW_MOD_SHIFT) {
+          setTransferFunctionScaleValue(m_scaleValue+0.1f);
+        } else if (mods & GLFW_MOD_CONTROL) {
+          setTransferFunctionScaleValue(m_scaleValue+0.001f);
+        } else if (mods & GLFW_MOD_ALT) {
+          setTransferFunctionScaleValue(m_scaleValue+0.0001f);
+        } else {
+          setTransferFunctionScaleValue(m_scaleValue+0.01f);
+        }
+
+        break;
 
 
-      break;
+        // Negative transfer function scaling
+      case GLFW_KEY_COMMA:
+        if (mods & GLFW_MOD_SHIFT) {
+          setTransferFunctionScaleValue(m_scaleValue-0.1f);
+        } else if (mods & GLFW_MOD_CONTROL) {
+          setTransferFunctionScaleValue(m_scaleValue-0.001f);
+        } else if (mods & GLFW_MOD_ALT) {
+          setTransferFunctionScaleValue(m_scaleValue-0.0001f);
+        } else {
+          setTransferFunctionScaleValue(m_scaleValue-0.01f);
+
+        }
+
+        break;
 
 
-      // Negative transfer function scaling
-    case GLFW_KEY_COMMA:
-      if (mods & GLFW_MOD_SHIFT) {
-        setTransferFunctionScaleValue(m_scaleValue - 0.1f);
-      }
-      else if (mods & GLFW_MOD_CONTROL) {
-        setTransferFunctionScaleValue(m_scaleValue - 0.001f);
-      }
-      else if (mods & GLFW_MOD_ALT) {
-        setTransferFunctionScaleValue(m_scaleValue - 0.0001f);
-      }
-      else {
-        setTransferFunctionScaleValue(m_scaleValue - 0.01f);
+        // n_shiney
+      case GLFW_KEY_N:
+        if (mods & GLFW_MOD_SHIFT) {
+          setLightingNShiney(m_nShiney-0.01f);
+        } else {
+          setLightingNShiney(m_nShiney+0.01f);
 
-      }
+        }
 
-      break;
+        break;
 
+      case GLFW_KEY_UP:
+        if (mods & GLFW_MOD_SHIFT) {
+          m_LightVector.z += 0.1f;
+        } else {
+          m_LightVector.y += 0.1f;
+        }
 
-      // n_shiney
-    case GLFW_KEY_N:
-      if (mods & GLFW_MOD_SHIFT) {
-        setLightingNShiney(m_nShiney - 0.01f);
-      }
-      else {
-        setLightingNShiney(m_nShiney + 0.01f);
+        m_renderer->setShaderLightPos(glm::normalize(m_LightVector));
+        std::cout << "Light position: " << m_LightVector.x << ", " << m_LightVector.y
+                  << ", " << m_LightVector.z << '\n';
+        break;
 
-      }
+      case GLFW_KEY_LEFT:
+        m_LightVector.x += 0.1f;
+        m_renderer->setShaderLightPos(glm::normalize(m_LightVector));
+        std::cout << "Light position: " << m_LightVector.x << ", " << m_LightVector.y
+                  << ", " << m_LightVector.z << '\n';
+        break;
 
+      case GLFW_KEY_RIGHT:
+        m_LightVector.x -= 0.1f;
+        m_renderer->setShaderLightPos(glm::normalize(m_LightVector));
+        std::cout << "Light position: " << m_LightVector.x << ", " << m_LightVector.y
+                  << ", " << m_LightVector.z << '\n';
+        break;
 
-      break;
+      case GLFW_KEY_DOWN:
+        if (mods & GLFW_MOD_SHIFT) {
+          m_LightVector.z -= 0.1f;
+        } else {
+          m_LightVector.y -= 0.1f;
+        }
 
-    case GLFW_KEY_UP:
-      if (mods & GLFW_MOD_SHIFT) {
-        m_LightVector.z += 0.1f;
-      }
-      else {
-        m_LightVector.y += 0.1f;
-      }
+        m_renderer->setShaderLightPos(glm::normalize(m_LightVector));
+        std::cout << "Light position: " << m_LightVector.x << ", " << m_LightVector.y
+                  << ", " << m_LightVector.z << '\n';
+        break;
 
-      m_renderer->setShaderLightPos(glm::normalize(m_LightVector));
-      std::cout << "Light position: " << m_LightVector.x << ", " << m_LightVector.y
-        << ", " << m_LightVector.z << '\n';
-      break;
-
-    case GLFW_KEY_LEFT:
-      m_LightVector.x += 0.1f;
-      m_renderer->setShaderLightPos(glm::normalize(m_LightVector));
-      std::cout << "Light position: " << m_LightVector.x << ", " << m_LightVector.y
-        << ", " << m_LightVector.z << '\n';
-      break;
-
-    case GLFW_KEY_RIGHT:
-      m_LightVector.x -= 0.1f;
-      m_renderer->setShaderLightPos(glm::normalize(m_LightVector));
-      std::cout << "Light position: " << m_LightVector.x << ", " << m_LightVector.y
-        << ", " << m_LightVector.z << '\n';
-      break;
-
-    case GLFW_KEY_DOWN:
-      if (mods & GLFW_MOD_SHIFT) {
-        m_LightVector.z -= 0.1f;
-      }
-      else {
-        m_LightVector.y -= 0.1f;
-      }
-
-      m_renderer->setShaderLightPos(glm::normalize(m_LightVector));
-      std::cout << "Light position: " << m_LightVector.x << ", " << m_LightVector.y
-        << ", " << m_LightVector.z << '\n';
-      break;
-
-    default:
-      break;
+      default:
+        break;
     } // switch
   }
 
@@ -319,6 +310,7 @@ Controls::setShowBlockBoxes(bool show)
   std::cout << "Show bounding boxes: " << m_showBlockBoxes << '\n';
   m_renderer->setDrawNonEmptyBoundingBoxes(m_showBlockBoxes);
 }
+
 
 void
 Controls::setUseLighting(bool use)
@@ -340,6 +332,7 @@ Controls::setTransferFunctionScaleValue(float val)
   m_renderer->setColorMapScaleValue(val);
 }
 
+
 void
 Controls::setLightingNShiney(float n)
 {
@@ -348,13 +341,15 @@ Controls::setLightingNShiney(float n)
   m_renderer->setShaderNShiney(n);
 }
 
+
 void
-Controls::setLightPosition(glm::vec3 const& pos)
+Controls::setLightPosition(glm::vec3 const &pos)
 {
   m_LightVector = pos;
   std::cout << "Light position: " << pos.x << ", " << pos.y << ", " << pos.z << '\n';
   m_renderer->setShaderLightPos(pos);
 }
+
 
 void
 Controls::setFov(float fov)
@@ -377,9 +372,9 @@ Controls::scrollwheel_callback(double xoff, double yoff)
   std::cout << "xoff: " << xoff << ", yoff: " << yoff << std::endl;
   // 1.75 scales the vertical motion of the scroll wheel so changing the
   // field of view isn't so slow.
-  float fov = static_cast<float>(m_renderer->getFov() + (yoff * 1.75));
+  float fov = static_cast<float>(m_renderer->getFov()+( yoff*1.75 ));
 
-  if (fov < 1.0f || fov > 120.0f) {
+  if (fov<1.0f || fov>120.0f) {
     return;
   }
 
@@ -393,8 +388,6 @@ Controls::mousebutton_callback(GLFWwindow *window, int button, int action, int m
   //  m_renderer->setIsRotating(
   //      glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS);
 }
-
-
 
 
 Cursor &

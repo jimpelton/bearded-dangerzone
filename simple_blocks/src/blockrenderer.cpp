@@ -14,6 +14,7 @@
 #include <bd/geo/axis.h>
 
 #define GLM_ENABLE_EXPERIMENTAL
+
 #include <glm/gtx/string_cast.hpp>
 #include <bd/log/gl_log.h>
 
@@ -21,54 +22,51 @@
 #include <nvToolsExt.h>
 #endif
 
-
 namespace subvol
 {
 
-
-
 BlockRenderer::BlockRenderer()
-  : BlockRenderer({ }, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr)
+    : BlockRenderer({ }, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr)
 {
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
 BlockRenderer::BlockRenderer(glm::u64vec3 numSlices,
-  std::shared_ptr<bd::ShaderProgram> volumeShader,
-  std::shared_ptr<bd::ShaderProgram> volumeShaderLighting,
-  std::shared_ptr<bd::ShaderProgram> wireframeShader,
-  std::shared_ptr<BlockCollection> blockCollection,
-  std::shared_ptr<bd::VertexArrayObject> blocksVAO,
-  std::shared_ptr<bd::VertexArrayObject> bboxVAO,
-  std::shared_ptr<bd::VertexArrayObject> axisVao)
-  : Renderer()
-  , Recipient("BlockRenderer")
+                             std::shared_ptr<bd::ShaderProgram> volumeShader,
+                             std::shared_ptr<bd::ShaderProgram> volumeShaderLighting,
+                             std::shared_ptr<bd::ShaderProgram> wireframeShader,
+                             std::shared_ptr<BlockCollection> blockCollection,
+                             std::shared_ptr<bd::VertexArrayObject> blocksVAO,
+                             std::shared_ptr<bd::VertexArrayObject> bboxVAO,
+                             std::shared_ptr<bd::VertexArrayObject> axisVao)
+    : Renderer()
+    , Recipient("BlockRenderer")
 
-  , m_numSlicesPerBlock{ numSlices }
-  , m_tfuncScaleValue{ 1.0f }
-  , m_drawNonEmptyBoundingBoxes{ false }
-  , m_drawNonEmptySlices{ true }
-  , m_shouldUseLighting{ false }
-  , m_backgroundColor{ 0.0f }
+    , m_numSlicesPerBlock{ numSlices }
+    , m_tfuncScaleValue{ 1.0f }
+    , m_drawNonEmptyBoundingBoxes{ false }
+    , m_drawNonEmptySlices{ true }
+    , m_shouldUseLighting{ false }
+    , m_backgroundColor{ 0.0f }
 
-  , m_colorMapTexture{ nullptr }
+    , m_colorMapTexture{ nullptr }
 
-  , m_currentShader{ nullptr }
-  , m_volumeShader{ std::move(volumeShader) }
-  , m_volumeShaderLighting{ std::move(volumeShaderLighting) }
-  , m_wireframeShader{ std::move(wireframeShader) }
+    , m_currentShader{ nullptr }
+    , m_volumeShader{ std::move(volumeShader) }
+    , m_volumeShaderLighting{ std::move(volumeShaderLighting) }
+    , m_wireframeShader{ std::move(wireframeShader) }
 
-  , m_quadsVao{ std::move(blocksVAO) }
-  , m_boxesVao{ std::move(bboxVAO) }
-  , m_axisVao{ std::move(axisVao) }
+    , m_quadsVao{ std::move(blocksVAO) }
+    , m_boxesVao{ std::move(bboxVAO) }
+    , m_axisVao{ std::move(axisVao) }
 
-  , m_collection{ std::move(blockCollection) }
-  , m_nonEmptyBlocks{ nullptr }
-  , m_blocks{ nullptr }
+    , m_collection{ std::move(blockCollection) }
+    , m_nonEmptyBlocks{ nullptr }
+    , m_blocks{ nullptr }
 {
-  m_blocks = &(m_collection->getBlocks());
-  m_nonEmptyBlocks = &(m_collection->getNonEmptyBlocks());
+  m_blocks = &( m_collection->getBlocks());
+  m_nonEmptyBlocks = &( m_collection->getNonEmptyBlocks());
   init();
 }
 
@@ -100,10 +98,10 @@ BlockRenderer::init()
 
   // sets m_currentShader depending on m_shouldUseLighting.
   setShouldUseLighting(m_shouldUseLighting);
-  
+
   GLuint sampler_state{ 0 };
   gl_check(glGenSamplers(1, &sampler_state));
-  if (sampler_state == 0) {
+  if (sampler_state==0) {
     bd::Err() << "Could not generate a sampler object.";
     return false;
   }
@@ -115,7 +113,7 @@ BlockRenderer::init()
 //  gl_check(glSamplerParameterf(sampler_state, GL_TEXTURE_MAX_ANISOTROPY_EXT, 16.0f));
   gl_check(glBindSampler(sampler_state, BLOCK_TEXTURE_UNIT));
   m_sampler_state = sampler_state;
-  
+
   return true;
 }
 
@@ -147,6 +145,7 @@ BlockRenderer::getColorMapScaleValue() const
   return m_tfuncScaleValue;
 }
 
+
 ///////////////////////////////////////////////////////////////////////////////
 void
 BlockRenderer::setBackgroundColor(const glm::vec3 &c)
@@ -155,15 +154,16 @@ BlockRenderer::setBackgroundColor(const glm::vec3 &c)
   glClearColor(c.r, c.g, c.b, 0.0f);
 }
 
+
 ///////////////////////////////////////////////////////////////////////////////
-glm::vec3 const& 
+glm::vec3 const &
 BlockRenderer::getBackgroundColor() const
 {
   return m_backgroundColor;
 }
 
 
-  ///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 void
 BlockRenderer::setShouldUseLighting(bool b)
 {
@@ -264,10 +264,10 @@ BlockRenderer::drawNonEmptyBoundingBoxes()
 {
   m_wireframeShader->bind();
   m_boxesVao->bind();
-  size_t const nblk  { m_nonEmptyBlocks->size() };
-  for(size_t i{ 0 }; i < nblk; ++i) {
+  size_t const nblk{ m_nonEmptyBlocks->size() };
+  for (size_t i{ 0 }; i<nblk; ++i) {
 
-    bd::Block *b{ (*m_nonEmptyBlocks)[i] };
+    bd::Block *b{ ( *m_nonEmptyBlocks )[i] };
 
     setWorldMatrix(b->transform());
     m_wireframeShader->setUniform(WIREFRAME_MVP_MATRIX_UNIFORM_STR,
@@ -276,11 +276,11 @@ BlockRenderer::drawNonEmptyBoundingBoxes()
     gl_check(glDrawElements(GL_LINE_LOOP,
                             4,
                             GL_UNSIGNED_SHORT,
-                            (GLvoid *) ( 4 * sizeof(GLushort))));
+                            (GLvoid *) ( 4*sizeof(GLushort))));
     gl_check(glDrawElements(GL_LINES,
                             8,
                             GL_UNSIGNED_SHORT,
-                            (GLvoid *) ( 8 * sizeof(GLushort))));
+                            (GLvoid *) ( 8*sizeof(GLushort))));
   }
 //  m_boxesVao->unbind();
 //  m_wireframeShader->unbind();
@@ -295,9 +295,9 @@ BlockRenderer::drawSlices(int baseVertex, int elementOffset, int numSlices) cons
 //  perf_workBegin();
   gl_check(
       glDrawElementsBaseVertex(GL_TRIANGLE_STRIP,
-                               ELEMENTS_PER_QUAD * numSlices, // count
+                               ELEMENTS_PER_QUAD*numSlices, // count
                                GL_UNSIGNED_SHORT,                       // type
-                               (void*)elementOffset,                           // element offset
+                               (void *) elementOffset,                           // element offset
                                baseVertex));                            // vertex offset
   // End NVPM work profiling.
 //  perf_workEnd();
@@ -311,7 +311,8 @@ BlockRenderer::drawAxis() const
 {
   m_wireframeShader->bind();
   m_axisVao->bind();
-  m_wireframeShader->setUniform(WIREFRAME_MVP_MATRIX_UNIFORM_STR, getWorldViewProjectionMatrix());
+  m_wireframeShader
+      ->setUniform(WIREFRAME_MVP_MATRIX_UNIFORM_STR, getWorldViewProjectionMatrix());
   gl_check(glDrawArrays(GL_LINES,
                         0,
                         static_cast<GLsizei>(bd::CoordinateAxis::verts.size())));
@@ -328,7 +329,7 @@ BlockRenderer::drawNonEmptyBlocks_Forward()
    * of that slice set. */
 
   glm::vec3 const
-      viewdir{ glm::normalize(getCamera().getLookAt() - getCamera().getEye()) };
+      viewdir{ glm::normalize(getCamera().getLookAt()-getCamera().getEye()) };
 
   std::pair<int, int> const
       baseVertex{ computeBaseVertexFromViewDir(viewdir) };
@@ -342,8 +343,8 @@ BlockRenderer::drawNonEmptyBlocks_Forward()
 
   size_t const nBlk{ m_nonEmptyBlocks->size() };
   NVTOOLS_PUSH_RANGE("DrawNonEmptyBlocks", 0);
-  for(size_t i{ 0 }; i < nBlk; ++i) {
-    bd::Block *b{ (*m_nonEmptyBlocks)[i] };
+  for (size_t i{ 0 }; i<nBlk; ++i) {
+    bd::Block *b{ ( *m_nonEmptyBlocks )[i] };
 
     // only render if the block's texture data has been uploaded to GPU.
     if (b->status() & bd::Block::GPU_RES) {
@@ -354,7 +355,7 @@ BlockRenderer::drawNonEmptyBlocks_Forward()
       m_currentShader->setUniform(VOLUME_MVP_MATRIX_UNIFORM_STR,
                                   getWorldViewProjectionMatrix());
 
-      drawSlices(baseVertex.first, baseVertex.second, 
+      drawSlices(baseVertex.first, baseVertex.second,
                  m_numSlicesPerBlock[bd::ordinal<SliceSet>(m_selectedSliceSet)]);
     }
   }
@@ -371,22 +372,22 @@ BlockRenderer::computeBaseVertexFromViewDir(glm::vec3 const &viewdir)
 {
   glm::vec3 const absViewDir{ glm::abs(viewdir) };
   SliceSet newSelected{ SliceSet::YZ };
-  bool isPos{ viewdir.x > 0 };
+  bool isPos{ viewdir.x>0 };
   float longest{ absViewDir.x };
 
   // find longest component in view vector.
-  if (absViewDir.y > longest) {
+  if (absViewDir.y>longest) {
     newSelected = SliceSet::XZ;
-    isPos = viewdir.y > 0;
+    isPos = viewdir.y>0;
     longest = absViewDir.y;
   }
 
-  if (absViewDir.z > longest) {
+  if (absViewDir.z>longest) {
     newSelected = SliceSet::XY;
-    isPos = viewdir.z > 0;
+    isPos = viewdir.z>0;
   }
 
-  
+
   // Compute base vertex VBO offset.
   int const verts_per_quad{ 4 };
   int baseVertex{ 0 };
@@ -400,39 +401,37 @@ BlockRenderer::computeBaseVertexFromViewDir(glm::vec3 const &viewdir)
       if (isPos) {
         baseVertex = 0;
       } else {
-        baseVertex = 1 * verts_per_quad * numSlices;
+        baseVertex = 1*verts_per_quad*numSlices;
       }
       elementOffset = 0;
       break;
 
     case SliceSet::XZ:
       if (isPos) {
-        baseVertex = 2 * verts_per_quad * numSlices;
+        baseVertex = 2*verts_per_quad*numSlices;
       } else {
-        baseVertex = 3 * verts_per_quad * numSlices;
+        baseVertex = 3*verts_per_quad*numSlices;
       }
-      elementOffset = 1 * ELEMENTS_PER_QUAD * numSlices;
+      elementOffset = 1*ELEMENTS_PER_QUAD*numSlices;
       break;
 
     case SliceSet::XY:
       if (isPos) {
-        baseVertex = 4 * verts_per_quad * numSlices;
+        baseVertex = 4*verts_per_quad*numSlices;
       } else {
-        baseVertex = 5 * verts_per_quad * numSlices;
+        baseVertex = 5*verts_per_quad*numSlices;
       }
-      elementOffset = 2 * ELEMENTS_PER_QUAD * numSlices;
+      elementOffset = 2*ELEMENTS_PER_QUAD*numSlices;
       break;
 
     default:
       break;
   }
 
-
-  if (newSelected != m_selectedSliceSet) {
+  if (newSelected!=m_selectedSliceSet) {
     std::cout << " Switched slice set: " << ( isPos ? '+' : '-' ) <<
               newSelected << " Base vertex: " << baseVertex << '\n';
   }
-
 
   m_selectedSliceSet = newSelected;
 
@@ -453,29 +452,26 @@ BlockRenderer::sortBlocks()
             [&eye](bd::Block *a, bd::Block *b) {
               float a_dist = glm::distance(eye, a->origin());
               float b_dist = glm::distance(eye, b->origin());
-              return a_dist > b_dist;
+              return a_dist>b_dist;
             });
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
-void BlockRenderer::handle_ROVChangingMessage(ROVChangingMessage &r)
+void
+BlockRenderer::handle_ROVChangingMessage(ROVChangingMessage &r)
 {
   // we are on the delivery thread here.
   m_rangeChanging = r.IsChanging;
 //  if (b) {
 //    m_collection->pauseLoaderThread();
 //  } else {
-    // if rov is not changing anymore, then yayy! update with new visible blocks.
-  if (!r.IsChanging){
+  // if rov is not changing anymore, then yayy! update with new visible blocks.
+  if (!r.IsChanging) {
     m_collection->updateBlockCache();
   }
 
 }
-
-
-
-
 
 
 } // namespace subvol

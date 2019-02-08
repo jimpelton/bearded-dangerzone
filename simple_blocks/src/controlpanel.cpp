@@ -22,7 +22,6 @@
 #define __PRETTY_FUNCTION__ __FUNCSIG__
 #endif
 
-
 namespace subvol
 {
 
@@ -69,9 +68,9 @@ ClassificationPanel::ClassificationPanel(QWidget *parent = nullptr)
 
   QWidget *gridWidget = new QWidget(this);
   QGridLayout *gridLayout = new QGridLayout();
-  gridLayout->addWidget(m_minSlider, 0,0);
+  gridLayout->addWidget(m_minSlider, 0, 0);
   gridLayout->addWidget(m_currentMin_Label, 0, 1);
-  gridLayout->addWidget(m_maxSlider, 1,0);
+  gridLayout->addWidget(m_maxSlider, 1, 0);
   gridLayout->addWidget(m_currentMax_Label, 1, 1);
   gridWidget->setLayout(gridLayout);
 
@@ -109,9 +108,8 @@ void
 ClassificationPanel::setMinMax(double min, double max)
 {
   auto floatToSliderValue = [this](double v) -> int {
-    return static_cast<int>(v * this->m_incrementDelta);
+    return static_cast<int>(v*this->m_incrementDelta);
   };
-
 
   m_currentMinROVFloat = min;
   m_currentMaxROVFloat = max;
@@ -125,11 +123,11 @@ void
 ClassificationPanel::slot_globalRangeChanged(double newMin, double newMax)
 {
 
-  if(newMax < newMin) {
+  if (newMax<newMin) {
     return;
   }
 
-  m_incrementDelta = (newMax - newMin) / m_numberOfSliderIncrements;
+  m_incrementDelta = ( newMax-newMin )/m_numberOfSliderIncrements;
 
   m_globalMin = newMin;
   m_globalMax = newMax;
@@ -141,11 +139,10 @@ ClassificationPanel::slot_globalRangeChanged(double newMin, double newMax)
 void
 ClassificationPanel::slot_minSliderChanged(int minSliderValue)
 {
-  m_currentMinROVFloat = m_globalMin + (minSliderValue * m_incrementDelta);
+  m_currentMinROVFloat = m_globalMin+( minSliderValue*m_incrementDelta );
 
-
-  if (minSliderValue > m_maxSlider->value()) {
-    m_maxSlider->setValue(minSliderValue + 1);
+  if (minSliderValue>m_maxSlider->value()) {
+    m_maxSlider->setValue(minSliderValue+1);
   }
 
   m_currentMin_Label->setText(QString::number(m_currentMinROVFloat));
@@ -161,10 +158,10 @@ ClassificationPanel::slot_minSliderChanged(int minSliderValue)
 void
 ClassificationPanel::slot_maxSliderChanged(int maxSliderValue)
 {
-  m_currentMaxROVFloat = m_globalMin + (maxSliderValue * m_incrementDelta);
+  m_currentMaxROVFloat = m_globalMin+( maxSliderValue*m_incrementDelta );
 
-  if (maxSliderValue < m_minSlider->value()) {
-    m_minSlider->setValue(maxSliderValue - 1);
+  if (maxSliderValue<m_minSlider->value()) {
+    m_minSlider->setValue(maxSliderValue-1);
   }
 
   m_currentMax_Label->setText(QString::number(m_currentMaxROVFloat));
@@ -180,7 +177,7 @@ ClassificationPanel::slot_maxSliderChanged(int maxSliderValue)
 void
 ClassificationPanel::slot_sliderPressed()
 {
-  ROVChangingMessage *m{new ROVChangingMessage };
+  ROVChangingMessage *m{ new ROVChangingMessage };
   m->IsChanging = true;
   Broker::send(m);
 }
@@ -190,7 +187,7 @@ ClassificationPanel::slot_sliderPressed()
 void
 ClassificationPanel::slot_sliderReleased()
 {
-  ROVChangingMessage *m{new ROVChangingMessage };
+  ROVChangingMessage *m{ new ROVChangingMessage };
   m->IsChanging = false;
   Broker::send(m);
 }
@@ -218,27 +215,29 @@ ClassificationPanel::slot_rovRadioClicked(bool)
 
 
 ///////////////////////////////////////////////////////////////////////////////
-StatsPanel::StatsPanel(bd::Volume const &vol, size_t gpuCacheSize, size_t cpuCacheSize, QWidget *parent = nullptr)
-  : Recipient{ "StatsPanel" }
-  , m_visibleBlocks{ 0 }
-  , m_currentGpuLoadQSize{ 0 }
-  , m_totalMainBlocks{ cpuCacheSize }
-  , m_totalGPUBlocks{ gpuCacheSize }
-  , m_totalBlocks{ vol.total_block_count() }
+StatsPanel::StatsPanel(bd::Volume const &vol,
+                       size_t gpuCacheSize,
+                       size_t cpuCacheSize,
+                       QWidget *parent = nullptr)
+    : Recipient{ "StatsPanel" }
+    , m_visibleBlocks{ 0 }
+    , m_currentGpuLoadQSize{ 0 }
+    , m_totalMainBlocks{ cpuCacheSize }
+    , m_totalGPUBlocks{ gpuCacheSize }
+    , m_totalBlocks{ vol.total_block_count() }
 {
 
   QGridLayout *gridLayout = new QGridLayout();
-   
 
   QLabel *blocksShownLabel = new QLabel("Blocks Rendered: ");
   m_blocksShownValueLabel = new QLabel(QString::number(m_visibleBlocks));
-  m_blocksTotalValueLabel = new QLabel("/" + QString::number(m_totalBlocks));
+  m_blocksTotalValueLabel = new QLabel("/"+QString::number(m_totalBlocks));
   QHBoxLayout *blocksValueBoxLayout = new QHBoxLayout();
   blocksValueBoxLayout->addWidget(m_blocksShownValueLabel);
   blocksValueBoxLayout->addWidget(m_blocksTotalValueLabel);
 
-  gridLayout->addWidget(blocksShownLabel, 0, 0 );
-  gridLayout->addLayout(blocksValueBoxLayout, 0, 1 );
+  gridLayout->addWidget(blocksShownLabel, 0, 0);
+  gridLayout->addLayout(blocksValueBoxLayout, 0, 1);
 
   QLabel *compressionRateLabel = new QLabel("Compression: ");
   m_compressionValueLabel = new QLabel("100%");
@@ -303,11 +302,11 @@ StatsPanel::StatsPanel(bd::Volume const &vol, size_t gpuCacheSize, size_t cpuCac
 
   this->setLayout(gridLayout);
 
-  connect(this, SIGNAL(updateStatsValues()), 
-    this, SLOT(setStatsValues()), Qt::QueuedConnection);
+  connect(this, SIGNAL(updateStatsValues()),
+          this, SLOT(setStatsValues()), Qt::QueuedConnection);
 
-  connect(this, SIGNAL(updateRenderStatsValues()), 
-    this, SLOT(setRenderStatsValues()), Qt::QueuedConnection);
+  connect(this, SIGNAL(updateRenderStatsValues()),
+          this, SLOT(setRenderStatsValues()), Qt::QueuedConnection);
 
   Broker::subscribeRecipient(this);
 
@@ -345,15 +344,16 @@ StatsPanel::updateShownBlocksLabels()
   m_blocksShownValueLabel->setText(QString::number(m_visibleBlocks));
 
   float p{ 0.0 };
-  if (m_totalBlocks != 0)
-    p = (1.0f - m_visibleBlocks / float(m_totalBlocks)) * 100.0f;
+  if (m_totalBlocks!=0) {
+    p = ( 1.0f-m_visibleBlocks/float(m_totalBlocks))*100.0f;
+  }
 
   m_compressionValueLabel->setText(QString::asprintf("%f %%", p));
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
-void 
+void
 StatsPanel::handle_ShownBlocksMessage(ShownBlocksMessage &m)
 {
   m_visibleBlocks = m.ShownBlocks;
@@ -363,7 +363,7 @@ StatsPanel::handle_ShownBlocksMessage(ShownBlocksMessage &m)
 
 
 ///////////////////////////////////////////////////////////////////////////////
-void 
+void
 StatsPanel::handle_BlockCacheStatsMessage(BlockCacheStatsMessage &m)
 {
   m_blockCacheStatsRWLock.lockForWrite();
@@ -372,13 +372,15 @@ StatsPanel::handle_BlockCacheStatsMessage(BlockCacheStatsMessage &m)
   emit updateStatsValues();
 }
 
-void 
-StatsPanel::handle_SliceSetChangedMessage(SliceSetChangedMessage&)
+
+void
+StatsPanel::handle_SliceSetChangedMessage(SliceSetChangedMessage &)
 {
 
 }
 
-void 
+
+void
 StatsPanel::handle_BlockLoadedMessage(BlockLoadedMessage &m)
 {
   m_blockCacheStatsRWLock.lockForWrite();
@@ -387,7 +389,7 @@ StatsPanel::handle_BlockLoadedMessage(BlockLoadedMessage &m)
   emit updateStatsValues();
 }
 
-  ///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 //void 
 //StatsPanel::handle_RenderStatsMessage(RenderStatsMessage &m)
 //{
@@ -409,9 +411,9 @@ StatsPanel::setStatsValues()
 //  m_blocksTotalValueLabel->setText(QString::number(m_totalBlocks));
 //  updateShownBlocksLabels();
 
-  int const cpuCashFilledPerc = int(100 * (m.CpuCacheSize / float(m_totalMainBlocks)));
+  int const cpuCashFilledPerc = int(100*( m.CpuCacheSize/float(m_totalMainBlocks)));
 
-  int const gpuCashFilledPerc = int(100 * (m.GpuCacheSize / float(m_totalGPUBlocks)));
+  int const gpuCashFilledPerc = int(100*( m.GpuCacheSize/float(m_totalGPUBlocks)));
 
   m_cpuCacheFilledValueLabel->setText(QString::number(m.CpuCacheSize));
   m_cpuCacheFilledBar->setValue(cpuCashFilledPerc);
@@ -421,19 +423,20 @@ StatsPanel::setStatsValues()
 
   m_cpuLoadQueueValueLabel->setText(QString::number(m.CpuLoadQueueSize));
   m_gpuLoadQueueValueLabel->setText(QString::number(gpuQSize));
-  
+
 
 //  m_cpuBuffersAvailValueLabel->setText(QString::number(m.CpuBuffersAvailable));
 //  m_cpuBuffersAvailValueBar->setValue(100 - cpuCashFilledPerc);
-  
+
 //  m_gpuTexturesAvailValueLabel->setText(QString::number(m.GpuTexturesAvailable));
 //  m_gpuTexturesAvailValueBar->setValue(100 - gpuCashFilledPerc);
 }
 
-void 
+
+void
 StatsPanel::setRenderStatsValues()
 {
-  
+
 }
 
 
@@ -445,7 +448,7 @@ StatsPanel::setRenderStatsValues()
 
 
 ///////////////////////////////////////////////////////////////////////////////
-ControlPanel::ControlPanel(bd::Volume const &vol, size_t gpuCacheSize, 
+ControlPanel::ControlPanel(bd::Volume const &vol, size_t gpuCacheSize,
                            size_t cpuCacheSize, QWidget *parent)
     : QWidget(parent)
 {

@@ -6,7 +6,10 @@
 
 #include <iostream>
 
-std::ostream &operator<<(std::ostream &ostr, SliceSet s) {
+
+std::ostream &
+operator<<(std::ostream &ostr, SliceSet s)
+{
 
   switch (s) {
     case SliceSet::XZ:
@@ -24,7 +27,8 @@ std::ostream &operator<<(std::ostream &ostr, SliceSet s) {
     case SliceSet::NoneOfEm:
       ostr << "NoneOfEm";
       return ostr;
-    default: ostr << "unknown";
+    default:
+      ostr << "unknown";
       return ostr;
   }
 

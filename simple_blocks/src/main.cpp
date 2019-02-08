@@ -18,7 +18,6 @@
 #include <bd/log/logger.h>
 #include <bd/io/indexfile/indexfile.h>
 
-
 #include <QApplication>
 
 // STL and STD lib
@@ -28,8 +27,13 @@
 #include <future>
 #include <memory>
 
-void cleanup();
-void printBlocks(subvol::BlockCollection *bcol);
+
+void
+cleanup();
+
+
+void
+printBlocks(subvol::BlockCollection *bcol);
 //void printNvPmApiCounters(const char *perfOutPath);
 
 
@@ -60,9 +64,9 @@ printBlocks(subvol::BlockCollection *bcol)
     }
     block_file.flush();
     block_file.close();
-  }  else {
+  } else {
     bd::Err() << "Could not print blocks because blocks.txt couldn't be created "
-      "in the current working directory.";
+                 "in the current working directory.";
   }
 }
 
@@ -93,15 +97,15 @@ updateCommandLineOptionsFromIndexFile(subvol::CommandLineOptions &clo,
 {
   bd::Dbg() << "Updating command line options from index file.";
   auto minmaxE =
-    std::minmax_element(indexFile->getFileBlocks().begin(),
-                        indexFile->getFileBlocks().end(),
-                        [](bd::FileBlock const &lhs, bd::FileBlock const &rhs)
-                        -> bool {
-    return lhs.rov < rhs.rov;
-  });
+      std::minmax_element(indexFile->getFileBlocks().begin(),
+                          indexFile->getFileBlocks().end(),
+                          [](bd::FileBlock const &lhs, bd::FileBlock const &rhs)
+                              -> bool {
+                            return lhs.rov<rhs.rov;
+                          });
 
-  renderhelp::g_rovMin = (*minmaxE.first).rov;
-  renderhelp::g_rovMax = (*minmaxE.second).rov;
+  renderhelp::g_rovMin = ( *minmaxE.first ).rov;
+  renderhelp::g_rovMax = ( *minmaxE.second ).rov;
 
   clo.vol_w = indexFile->getVolume().voxelDims().x;
   clo.vol_h = indexFile->getVolume().voxelDims().y;
@@ -111,7 +115,6 @@ updateCommandLineOptionsFromIndexFile(subvol::CommandLineOptions &clo,
   clo.numblk_z = indexFile->getVolume().block_count().z;
   clo.dataType = bd::to_string(bd::IndexFileHeader::getType(indexFile->getHeader()));
 }
-
 
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -124,7 +127,7 @@ init_gl(subvol::CommandLineOptions &clo)
   // Initialize OpenGL and GLFW and generate our transfer function textures.
   GLFWwindow *window{ nullptr };
   window = subvol::renderhelp::initGLContext(clo.windowWidth, clo.windowHeight);
-  if (window == nullptr) {
+  if (window==nullptr) {
     bd::Err() << "Could not initialize GLFW, exiting.";
     return nullptr;
   }
@@ -132,11 +135,11 @@ init_gl(subvol::CommandLineOptions &clo)
 
   int64_t totalMemory{ 0 };
   subvol::renderhelp::queryGPUMemory(&totalMemory);
-  bd::Info() << "GPU memory: " << (totalMemory * 1e-6) << "MB";
+  bd::Info() << "GPU memory: " << ( totalMemory*1e-6 ) << "MB";
 
-  if (clo.gpuMemoryBytes > totalMemory) {
+  if (clo.gpuMemoryBytes>totalMemory) {
     bd::Warn() << "Requested m_gpu memory, " << clo.gpuMemoryBytes
-      << " greater than actual GPU memory, using " << totalMemory << " bytes.";
+               << " greater than actual GPU memory, using " << totalMemory << " bytes.";
     clo.gpuMemoryBytes = static_cast<size_t>(totalMemory);
   }
 
@@ -148,15 +151,16 @@ init_gl(subvol::CommandLineOptions &clo)
 
 
 /////////////////////////////////////////////////////////////////////////////////
-int main(int argc, char *argv[])
+int
+main(int argc, char *argv[])
 {
   subvol::Broker::start();
 
   TCLAP::CmdLine cmd("Simple Blocks blocking volume rendering experiment.", ' ');
   subvol::CommandLineOptions clo;
-  if (subvol::parseThem(argc, argv, cmd, clo) == 0) {
+  if (subvol::parseThem(argc, argv, cmd, clo)==0) {
     std::cout << "No arguments provided.\nPlease use -h for usage info."
-      << std::endl;
+              << std::endl;
     //    return 1;
   }
 
@@ -166,7 +170,7 @@ int main(int argc, char *argv[])
   if (!clo.indexFilePath.empty()) {
     bool ok = false;
     indexFile = std::move(
-      bd::IndexFile::fromBinaryIndexFile(clo.indexFilePath, ok));
+        bd::IndexFile::fromBinaryIndexFile(clo.indexFilePath, ok));
     if (!ok) {
       bd::Err() << "Could not read index file " << clo.indexFilePath;
       return 1;
@@ -177,24 +181,23 @@ int main(int argc, char *argv[])
   }
 
   bd::Info() << "Initializing subvol...";
-  GLFWwindow * window{ subvol::init_gl(clo) };
-  if (window == nullptr) {
+  GLFWwindow *window{ subvol::init_gl(clo) };
+  if (window==nullptr) {
     bd::Err() << "Could not initialize subvol. Exiting...";
     return 1;
   }
 
   subvol::BlockLoader *loader{
-    subvol::renderhelp::initializeBlockLoader(indexFile.get(), clo) };
+      subvol::renderhelp::initializeBlockLoader(indexFile.get(), clo) };
 
   std::shared_ptr<subvol::BlockCollection> bc{
-    subvol::renderhelp::initializeBlockCollection(loader, indexFile.get(), clo) };
+      subvol::renderhelp::initializeBlockCollection(loader, indexFile.get(), clo) };
 
 //  std::shared_ptr<subvol::BlockRenderer> br{
 //    subvol::renderhelp::initializeRenderer(bc, indexFile->getVolume().worldDims(), clo) };
-  
-  std::shared_ptr<subvol::BlockRenderer> br{
-    subvol::renderhelp::initializeRenderer(bc, indexFile->getVolume(), clo) };
 
+  std::shared_ptr<subvol::BlockRenderer> br{
+      subvol::renderhelp::initializeRenderer(bc, indexFile->getVolume(), clo) };
 
   subvol::renderhelp::initializeControls(window, br);
 //  subvol::renderhelp::BenchmarkLoop loop(window, br, bc, glm::vec3{ 1,0,0 });
@@ -204,18 +207,20 @@ int main(int argc, char *argv[])
 
   // Start the qt event stuff on a separate thread (this gui is totally kludged in here...).
   std::future<int> returned =
-    std::async(std::launch::async,
-               [&]() {
-    QApplication a(argc, argv);
-    subvol::ControlPanel panel(indexFile->getVolume(), loader->maxGpuBlocks(), loader->maxMainBlocks());
+      std::async(std::launch::async,
+                 [&]() {
+                   QApplication a(argc, argv);
+                   subvol::ControlPanel panel(indexFile->getVolume(),
+                                              loader->maxGpuBlocks(),
+                                              loader->maxMainBlocks());
 
-    panel.setGlobalRovMinMax(subvol::renderhelp::g_rovMin,
-                             subvol::renderhelp::g_rovMax);
-    panel.setcurrentMinMaxSliders(0, 0);
-    panel.show();
-    s.signal();
-    return a.exec();
-  });
+                   panel.setGlobalRovMinMax(subvol::renderhelp::g_rovMin,
+                                            subvol::renderhelp::g_rovMax);
+                   panel.setcurrentMinMaxSliders(0, 0);
+                   panel.show();
+                   s.signal();
+                   return a.exec();
+                 });
 
   s.wait();
   loop.loop();

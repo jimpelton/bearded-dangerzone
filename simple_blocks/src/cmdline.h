@@ -48,8 +48,10 @@ struct CommandLineOptions
   int64_t mainMemoryBytes;
 };
 
+
 size_t
 convertToBytes(std::string s);
+
 
 ///////////////////////////////////////////////////////////////////////////////
 /// \brief Parses command line args and populates \c opts.
@@ -60,10 +62,12 @@ convertToBytes(std::string s);
 ///
 /// \returns 0 on parse failure, non-zero if the parse was successful.
 ///////////////////////////////////////////////////////////////////////////////
-int parseThem(int argc,  char* argv[], TCLAP::CmdLine &cmd, CommandLineOptions& opts);
+int
+parseThem(int argc, char *argv[], TCLAP::CmdLine &cmd, CommandLineOptions &opts);
 
 
-void printThem(CommandLineOptions&);
+void
+printThem(CommandLineOptions &);
 } // namespace subvol
 
 #endif // subvol_cmdline_h

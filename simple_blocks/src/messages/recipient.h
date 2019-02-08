@@ -5,24 +5,29 @@
 #include <iostream>
 #include "src/sliceset.h"
 
-
 namespace subvol
 {
 
 class ROVChangingMessage;
+
 class ShownBlocksMessage;
+
 class MinRangeChangedMessage;
+
 class MaxRangeChangedMessage;
+
 class BlockCacheStatsMessage;
+
 //class RenderStatsMessage;
 class SliceSetChangedMessage;
+
 class BlockLoadedMessage;
 
-
-class Recipient {
+class Recipient
+{
 public:
   Recipient(std::string const &name)
-    : m_name{ name }
+      : m_name{ name }
   {
   }
 
@@ -31,38 +36,62 @@ public:
   {
   }
 
+
   virtual void
-    deliver(Message *m)
+  deliver(Message *m)
   {
-    (*m)(*this);
+    ( *m )(*this);
   }
 
-  virtual void
-    handle_ROVChangingMessage(ROVChangingMessage &) { }
 
   virtual void
-    handle_ShownBlocksMessage(ShownBlocksMessage &) { }
+  handle_ROVChangingMessage(ROVChangingMessage &)
+  {
+  }
+
 
   virtual void
-    handle_MinRangeChangedMessage(MinRangeChangedMessage &) { }
+  handle_ShownBlocksMessage(ShownBlocksMessage &)
+  {
+  }
+
 
   virtual void
-    handle_MaxRangeChangedMessage(MaxRangeChangedMessage &) { }
+  handle_MinRangeChangedMessage(MinRangeChangedMessage &)
+  {
+  }
+
 
   virtual void
-    handle_BlockCacheStatsMessage(BlockCacheStatsMessage &) { }
+  handle_MaxRangeChangedMessage(MaxRangeChangedMessage &)
+  {
+  }
+
 
   virtual void
-    handle_SliceSetChangedMessage(SliceSetChangedMessage &) { }
+  handle_BlockCacheStatsMessage(BlockCacheStatsMessage &)
+  {
+  }
+
 
   virtual void
-    handle_BlockLoadedMessage(BlockLoadedMessage &){}
+  handle_SliceSetChangedMessage(SliceSetChangedMessage &)
+  {
+  }
+
+
+  virtual void
+  handle_BlockLoadedMessage(BlockLoadedMessage &)
+  {
+  }
+
 
   std::string const &
-    name() const
+  name() const
   {
     return m_name;
   }
+
 
 private:
   std::string m_name;
@@ -70,58 +99,75 @@ private:
 };
 
 /////////////////////////////////////////////////////////////////////////////// 
-class ROVChangingMessage : public Message
+class ROVChangingMessage
+    : public Message
 {
 public:
   ROVChangingMessage()
-    : Message(MessageType::ROV_CHANGING_MESSAGE)
-    , IsChanging{ false }
+      : Message(MessageType::ROV_CHANGING_MESSAGE)
+      , IsChanging{ false }
   {
   }
 
-  virtual ~ROVChangingMessage() { }
+
+  virtual ~ROVChangingMessage()
+  {
+  }
+
 
   void
-    operator()(Recipient &r) override
+  operator()(Recipient &r) override
   {
     r.handle_ROVChangingMessage(*this);
   }
+
 
   bool IsChanging;
 };
 
 /////////////////////////////////////////////////////////////////////////////// 
-class ShownBlocksMessage : public Message
+class ShownBlocksMessage
+    : public Message
 {
 public:
   ShownBlocksMessage()
-    : Message(MessageType::SHOWN_BLOCKS_MESSAGE)
-    , ShownBlocks{ 0 }
+      : Message(MessageType::SHOWN_BLOCKS_MESSAGE)
+      , ShownBlocks{ 0 }
   {
   }
 
-  virtual ~ShownBlocksMessage() { }
+
+  virtual ~ShownBlocksMessage()
+  {
+  }
+
 
   void
-    operator()(Recipient &r) override
+  operator()(Recipient &r) override
   {
     r.handle_ShownBlocksMessage(*this);
   }
+
 
   int ShownBlocks;
 };
 
 /////////////////////////////////////////////////////////////////////////////// 
-class MinRangeChangedMessage : public Message
+class MinRangeChangedMessage
+    : public Message
 {
 public:
   MinRangeChangedMessage()
-    : Message(MessageType::MIN_RANGE_CHANGED_MESSAGE)
-    , Min{ 0 }
+      : Message(MessageType::MIN_RANGE_CHANGED_MESSAGE)
+      , Min{ 0 }
   {
   }
 
-  virtual ~MinRangeChangedMessage() { }
+
+  virtual ~MinRangeChangedMessage()
+  {
+  }
+
 
   void
   operator()(Recipient &r) override
@@ -129,21 +175,26 @@ public:
     r.handle_MinRangeChangedMessage(*this);
   }
 
+
   double Min;
 };
 
-
-/////////////////////////////////////////////////////////////////////////////// 
-class MaxRangeChangedMessage : public Message
+///////////////////////////////////////////////////////////////////////////////
+class MaxRangeChangedMessage
+    : public Message
 {
 public:
   MaxRangeChangedMessage()
-    : Message(MessageType::MAX_RANGE_CHANGED_MESSAGE)
-    , Max{ 0 }
+      : Message(MessageType::MAX_RANGE_CHANGED_MESSAGE)
+      , Max{ 0 }
   {
   }
 
-  virtual ~MaxRangeChangedMessage() { }
+
+  virtual ~MaxRangeChangedMessage()
+  {
+  }
+
 
   void
   operator()(Recipient &r) override
@@ -151,25 +202,32 @@ public:
     r.handle_MaxRangeChangedMessage(*this);
   }
 
+
   double Max;
 };
 
-
 ///////////////////////////////////////////////////////////////////////////////
-class BlockCacheStatsMessage : public Message
+class BlockCacheStatsMessage
+    : public Message
 {
 public:
   BlockCacheStatsMessage()
-    : Message{ MessageType::BLOCK_CACHE_STATS_MESSAGE }
+      : Message{ MessageType::BLOCK_CACHE_STATS_MESSAGE }
   {
   }
-  virtual ~BlockCacheStatsMessage() { }
+
+
+  virtual ~BlockCacheStatsMessage()
+  {
+  }
+
 
   void
   operator()(Recipient &r) override
   {
     r.handle_BlockCacheStatsMessage(*this);
   }
+
 
   size_t CpuCacheSize;
   size_t GpuCacheSize;
@@ -179,16 +237,22 @@ public:
   size_t GpuTexturesAvailable;
 };
 
-class SliceSetChangedMessage : public Message
+class SliceSetChangedMessage
+    : public Message
 {
 public:
 
   SliceSetChangedMessage()
-    : Message{ MessageType::SLICESET_CHANGED_MESSAGE }
-    , Set{ SliceSet::NoneOfEm }
+      : Message{ MessageType::SLICESET_CHANGED_MESSAGE }
+      , Set{ SliceSet::NoneOfEm }
   {
   }
-  virtual ~SliceSetChangedMessage() { }
+
+
+  virtual ~SliceSetChangedMessage()
+  {
+  }
+
 
   void
   operator()(Recipient &r) override
@@ -196,24 +260,32 @@ public:
     r.handle_SliceSetChangedMessage(*this);
   }
 
+
   SliceSet Set;
 };
 
-class BlockLoadedMessage : public Message
+class BlockLoadedMessage
+    : public Message
 {
 public:
 
   BlockLoadedMessage()
-    : Message{ MessageType::BLOCK_LOADED_MESSAGE }
+      : Message{ MessageType::BLOCK_LOADED_MESSAGE }
   {
   }
-  virtual ~BlockLoadedMessage() { }
+
+
+  virtual ~BlockLoadedMessage()
+  {
+  }
+
 
   void
-    operator()(Recipient &r) override
+  operator()(Recipient &r) override
   {
     r.handle_BlockLoadedMessage(*this);
   }
+
 
   size_t GpuLoadQueueSize;
 };

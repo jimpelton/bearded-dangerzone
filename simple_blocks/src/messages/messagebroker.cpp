@@ -3,6 +3,6 @@
 
 namespace subvol
 {
-  Broker *Broker::m_myself = nullptr;
+Broker *Broker::m_myself = nullptr;
 }
 

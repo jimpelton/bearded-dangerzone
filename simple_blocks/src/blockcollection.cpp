@@ -9,7 +9,6 @@
 #include <bd/io/indexfile/indexfile.h>
 #include "messages/messagebroker.h"
 
-
 namespace subvol
 {
 
@@ -28,7 +27,7 @@ using bd::FileBlock;
 BlockCollection::BlockCollection(BlockLoader *loader,
                                  IndexFile const &index)
     : Recipient{ "BlockCollection" }
-  , m_blocks()
+    , m_blocks()
     , m_nonEmptyBlocks()
     , m_emptyBlocks()
     , m_volume{ index.getVolume() }
@@ -91,7 +90,7 @@ BlockCollection::initBlocksFromFileBlocks(std::vector<FileBlock> const &fileBloc
                                           glm::u64vec3 const &nb)
 {
 
-  if (fileBlocks.size() == 0) {
+  if (fileBlocks.size()==0) {
     bd::Warn() << "No blocks in list of file blocks to initialize.";
     return;
   }
@@ -100,15 +99,15 @@ BlockCollection::initBlocksFromFileBlocks(std::vector<FileBlock> const &fileBloc
   m_emptyBlocks.reserve(fileBlocks.size());
   m_nonEmptyBlocks.reserve(fileBlocks.size());
 
-  int every = static_cast<int>( 0.1f * fileBlocks.size() );
-  every = every == 0 ? 1 : every;
+  int every = static_cast<int>( 0.1f*fileBlocks.size());
+  every = every==0 ? 1 : every;
 
   auto idx = 0ull;
-  for (auto k = 0ull; k < nb.z; ++k) {
-    for (auto j = 0ull; j < nb.y; ++j) {
-      for (auto i = 0ull; i < nb.x; ++i) {
+  for (auto k = 0ull; k<nb.z; ++k) {
+    for (auto j = 0ull; j<nb.y; ++j) {
+      for (auto i = 0ull; i<nb.x; ++i) {
 
-        if (idx % every == 0) {
+        if (idx%every==0) {
           std::cout << "\rCreating block " << idx;
         }
 
@@ -128,7 +127,7 @@ BlockCollection::initBlocksFromFileBlocks(std::vector<FileBlock> const &fileBloc
 void
 BlockCollection::filterBlocks()
 {
-  switch(m_classificationType){
+  switch (m_classificationType) {
     case ClassificationType::Rov:
       filterBlocksByROV();
       break;
@@ -155,15 +154,16 @@ BlockCollection::loadSomeBlocks()
 {
   // we are on the render thread in here.
   uint64_t t{ 0 };
-  uint64_t const MAX_JOB_LENGTH_MS = 10000000;  // <-- this isn't really going to be millis without glfwGetTimerFreq().
+  uint64_t const MAX_JOB_LENGTH_MS =
+      10000000;  // <-- this isn't really going to be millis without glfwGetTimerFreq().
   bd::Block *b{ nullptr };
   int i{ 0 };
-  while (t < MAX_JOB_LENGTH_MS && ( b = m_loader->getNextGpuReadyBlock())) {
+  while (t<MAX_JOB_LENGTH_MS && ( b = m_loader->getNextGpuReadyBlock())) {
     //TODO: use glfwGetTimerFreq() for more accurate timing in loadSomeBlocks().
     uint64_t start{ glfwGetTimerValue() };
     b->sendToGpu();
     m_loader->pushGpuResidentBlock(b);
-    uint64_t timeToLoadBlock{ glfwGetTimerValue() - start };
+    uint64_t timeToLoadBlock{ glfwGetTimerValue()-start };
     t += timeToLoadBlock;
     ++i;
   }
@@ -264,7 +264,6 @@ BlockCollection::changeClassificationType(ClassificationType type)
 }
 
 
-
 ///////////////////////////////////////////////////////////////////////////////
 void
 BlockCollection::filterBlocksByROV()
@@ -273,12 +272,12 @@ BlockCollection::filterBlocksByROV()
   m_emptyBlocks.clear();
 
   size_t nBlk{ m_blocks.size() };
-  for (size_t i{ 0 }; i < nBlk; ++i) {
+  for (size_t i{ 0 }; i<nBlk; ++i) {
 
     bd::Block *b{ m_blocks[i] };
     double rov = b->fileBlock().rov;
 
-    if (rov >= m_rangeLow && rov <= m_rangeHigh) {
+    if (rov>=m_rangeLow && rov<=m_rangeHigh) {
       b->empty(false);
       m_nonEmptyBlocks.push_back(b);
     } else {
@@ -304,12 +303,12 @@ BlockCollection::filterBlocksByAverage()
   m_emptyBlocks.clear();
 
   size_t nBlk{ m_blocks.size() };
-  for (size_t i{ 0 }; i < nBlk; ++i) {
+  for (size_t i{ 0 }; i<nBlk; ++i) {
 
     bd::Block *b{ m_blocks[i] };
-    double avg= b->fileBlock().avg_val;
+    double avg = b->fileBlock().avg_val;
 
-    if (avg >= m_rangeLow && avg <= m_rangeHigh) {
+    if (avg>=m_rangeLow && avg<=m_rangeHigh) {
       b->empty(false);
       m_nonEmptyBlocks.push_back(b);
     } else {
@@ -329,14 +328,16 @@ BlockCollection::filterBlocksByAverage()
 
 
 ///////////////////////////////////////////////////////////////////////////////
-void BlockCollection::handle_MaxRangeChangedMessage(MaxRangeChangedMessage &m)
+void
+BlockCollection::handle_MaxRangeChangedMessage(MaxRangeChangedMessage &m)
 {
   setRangeMax(m.Max);
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
-void BlockCollection::handle_MinRangeChangedMessage(MinRangeChangedMessage &m)
+void
+BlockCollection::handle_MinRangeChangedMessage(MinRangeChangedMessage &m)
 {
   setRangeMin(m.Min);
 }

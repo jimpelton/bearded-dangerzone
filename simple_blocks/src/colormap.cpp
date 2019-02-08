@@ -8,12 +8,12 @@
 #include <bd/log/logger.h>
 
 #define GLM_ENABLE_EXPERIMENTAL
+
 #include <glm/gtx/string_cast.hpp>
 
 #include <fstream>
 #include <algorithm>
 #include <set>
-
 
 using bd::Err;
 using bd::Info;
@@ -63,7 +63,7 @@ ColorMap::~ColorMap()
 bool
 ColorMap::loadFromKnots(std::string const &name, std::vector<glm::vec4> const &knots)
 {
-  if (! generateColorMapTexture(name, knots)) {
+  if (!generateColorMapTexture(name, knots)) {
     return false;
   }
 
@@ -86,8 +86,8 @@ ColorMap::loadFromTFFiles(std::string const &funcName,
     bd::ColorTransferFunction ctf;
     bd::OpacityTransferFunction otf;
 
-    if (! colorTF.empty()) {
-      if (ctf.load(colorTF) < 0) {
+    if (!colorTF.empty()) {
+      if (ctf.load(colorTF)<0) {
         bd::Err() << "Error loading color transfer function.";
         return false;
       };
@@ -97,8 +97,8 @@ ColorMap::loadFromTFFiles(std::string const &funcName,
       }
     }
 
-    if (! opacityTF.empty()) {
-      if (otf.load(opacityTF) < 0) {
+    if (!opacityTF.empty()) {
+      if (otf.load(opacityTF)<0) {
         bd::Err() << "Error loading opacity transfer function";
         return false;
       }
@@ -117,7 +117,6 @@ ColorMap::loadFromTFFiles(std::string const &funcName,
       knots.push_back({ color.r, color.g, color.b, opacity });
     }
 
-
     if (!generateColorMapTexture(funcName, knots)) {
       return false;
     }
@@ -130,7 +129,7 @@ ColorMap::loadFromTFFiles(std::string const &funcName,
   }
   catch (std::runtime_error &e) {
     bd::Err() << "Exception encountered when loading user defined colormap: "
-        "Name: " << funcName << ". Message was: " << e.what();
+                 "Name: " << funcName << ". Message was: " << e.what();
     return false;
   }
 
@@ -199,7 +198,7 @@ bool
 ColorMap::generateColorMapTexture(std::string const &name,
                                   std::vector<glm::vec4> const &func)
 {
-  if (func.size() == 0) {
+  if (func.size()==0) {
     return false;
   }
 
@@ -215,7 +214,7 @@ ColorMap::generateColorMapTexture(std::string const &name,
                                bd::Texture::Format::RGBA,
                                numElements);
 
-  if (texId == 0) {
+  if (texId==0) {
     Err() << "The texture for colormap " << name << " could not be created.";
     success = false;
   }
@@ -223,18 +222,19 @@ ColorMap::generateColorMapTexture(std::string const &name,
   return success;
 }
 
+
 std::string
 ColorMap::to_string() const
 {
   std::stringstream ss;
-  if (m_knots.size() != 0) {
+  if (m_knots.size()!=0) {
 
     ss << "{Name: " << m_name
-        << "Knots: {";
-    for (size_t i{ 0 }; i < m_knots.size()-1; ++i) {
+       << "Knots: {";
+    for (size_t i{ 0 }; i<m_knots.size()-1; ++i) {
       ss << glm::to_string(m_knots[i]) << ", ";
     }
-    ss << glm::to_string(*(m_knots.end()-1)) << "}";
+    ss << glm::to_string(*( m_knots.end()-1 )) << "}";
 
   }
 //  else {
@@ -429,8 +429,8 @@ ColorMapManager::getMapByName(std::string const &name)
         std::find_if(s_colorMapNames.begin(),
                      s_colorMapNames.end(),
                      [&name](std::string const *s) {
-                       return name == *s;
-                     }) - s_colorMapNames.begin();
+                       return name==*s;
+                     })-s_colorMapNames.begin();
 
     return s_maps.at(name);
 
@@ -447,7 +447,7 @@ ColorMap const &
 ColorMapManager::getNextMap()
 {
   s_currentMapNameIdx += 1;
-  if (size_t(s_currentMapNameIdx) >= s_colorMapNames.size()) {
+  if (size_t(s_currentMapNameIdx)>=s_colorMapNames.size()) {
     s_currentMapNameIdx = 0;
   }
   std::string const *name{ s_colorMapNames[s_currentMapNameIdx] };
@@ -460,8 +460,8 @@ ColorMap const &
 ColorMapManager::getPrevMap()
 {
   s_currentMapNameIdx -= 1;
-  if (s_currentMapNameIdx < 0) {
-    s_currentMapNameIdx = s_colorMapNames.size() - 1L;
+  if (s_currentMapNameIdx<0) {
+    s_currentMapNameIdx = s_colorMapNames.size()-1L;
   }
   std::string const *name{ s_colorMapNames[s_currentMapNameIdx] };
   return s_maps.find(*name)->second;
@@ -508,7 +508,7 @@ ColorMapManager::loadColorMap(std::string const &funcName,
     return false;
   }
 
-  s_colorMapNames.push_back( &s_maps.find("USER")->first );
+  s_colorMapNames.push_back(&s_maps.find("USER")->first);
 
   return success;
 }
@@ -537,26 +537,25 @@ ColorMapManager::load1DT(std::string const &funcName,
   file >> numKnots; // number of entries/lines in the 1dt file.
   lineNum++;
 
-  if (numKnots > 8192) {
+  if (numKnots>8192) {
     bd::Err() << "The 1dt transfer function has " << numKnots
               << " knots but max allowed is 8192)."
-                  "Skipping loading the transfer function file.";
+                 "Skipping loading the transfer function file.";
     return false;
   }
 
   // read rest of file consisting of rgba colors
   float r, g, b, a;
-  while (lineNum < numKnots && file >> r >> g >> b >> a) {
+  while (lineNum<numKnots && file >> r >> g >> b >> a) {
     rgba.push_back(glm::vec4{ r, g, b, a });
     lineNum++;
   }
   file.close();
 
-  if (lineNum < numKnots) {
+  if (lineNum<numKnots) {
     bd::Err() << "Malformed 1dt transfer function (too few nots?).";
     return false;
   }
-
 
   ColorMap c{ funcName, rgba };
   s_maps[funcName] = c;
@@ -567,11 +566,12 @@ ColorMapManager::load1DT(std::string const &funcName,
   return true;
 }
 
+
 /* static */
-ColorMap&
+ColorMap &
 ColorMapManager::newColorMap(std::string const &funcName)
 {
-  ColorMap c{ funcName, {} };
+  ColorMap c{ funcName, { }};
   s_maps[funcName] = c;
 
   return s_maps[funcName];
