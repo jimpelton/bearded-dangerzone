@@ -65,17 +65,19 @@ JsonIndexFile::open(std::string const &fname)
   f.open(fname, std::fstream::in);
   if (!f.is_open()) {
     bd::Err() << "Could not open: " << fname;
+    return false;
   }
   json js;
   f >> js;
   f.close();
 
+  m_dataType = js.at("dtype").get<std::string>();
+  m_tffname = js.at("tr_func").get<std::string>();
+  m_fname = js.at("vol_name").get<std::string>();
+  m_fpath = js.at("vol_path").get<std::string>();
+
   auto jsVol = js.at("volume");
   auto jsStats = js.at("vol_stats");
-  auto dType = js.at("dtype");
-  m_tffname = js.at("tr_func").get<std::string>();
-  m_fname = jsVol.at("name").get<std::string>();
-  m_fpath = jsVol.at("path").get<std::string>();
 
   Volume v;
   v.avg(jsStats.at("avg").get<double>());
@@ -88,9 +90,10 @@ JsonIndexFile::open(std::string const &fname)
 
   auto blocks = js.at("blocks").get<std::vector<bd::FileBlock>>();
 
-  m_dataType = dType;
   m_volume = v;
   m_blocks = blocks;
+
+  return true;
 }
 
 
