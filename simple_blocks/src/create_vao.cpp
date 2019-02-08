@@ -8,6 +8,7 @@
 #include <bd/geo/wireframebox.h>
 
 #include <glm/glm.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/string_cast.hpp>
 #include <fstream>
 #include <bd/volume/volume.h>

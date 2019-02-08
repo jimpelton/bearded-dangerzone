@@ -41,14 +41,12 @@ if (WIN32)
     add_definitions(-DNOMINMAX)
 endif (WIN32)
 
-find_package(OpenGL REQUIRED)
-find_package(GLFW REQUIRED)
-find_package(GLEW REQUIRED)
-find_package(GLM REQUIRED)
 
 set(BIN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/bin")
 set(THIRDPARTY_DIR "${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/")
 
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/libcruft")
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/simple_blocks")
 
 #if (UNIX)
  #   include_directories("${OPENGL_INCLUDE_DIR}")
@@ -57,8 +55,6 @@ set(THIRDPARTY_DIR "${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/")
 #include_directories("${GLEW_INCLUDE_DIR}")
 #include_directories("${GLM_INCLUDE_DIR}")
 #include_directories("${GLFW_INCLUDE_DIRS}")
-add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/libcruft")
-add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/simple_blocks")
 #add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/matrix_benchmark")
 
 # Projects temporaily not (or ever) being used.

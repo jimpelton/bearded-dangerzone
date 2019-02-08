@@ -52,29 +52,18 @@ if (USE_NVPMAPI)
 endif(USE_NVPMAPI)
 
 
-
-
 ################################################################################
 # Project definition
 project(simple_blocks)
 
-if (USE_NVTOOLSEXT)
-    include_directories("${NVTOOLSEXT_INCLUDE_DIR}")
-endif(USE_NVTOOLSEXT)
-
-if (USE_NVPMAPI)
-    include_directories("${NVPMAPI_INCLUDE_DIR}")
-endif(USE_NVPMAPI)
-
-target_include_directories("${CRUFT_INCLUDE_DIR}"
-        "${THIRDPARTY_DIR}/tclap/include"
-        "${GLEW_INCLUDE_DIR}"
-        "${GLM_INCLUDE_DIR}"
-        "${GLFW_INCLUDE_DIRS}")
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
 
+find_package(OpenGL REQUIRED)
+find_package(GLFW REQUIRED)
+find_package(GLEW REQUIRED)
+find_package(GLM REQUIRED)
 find_package(Qt5Widgets)
 find_package(Qt5Gui)
 
@@ -126,20 +115,33 @@ set(simple_blocks_SOURCES
         src/messages/messagebroker.cpp )
 
 
-################################################################################
-# Linker
-
 add_executable(simple_blocks "${simple_blocks_HEADERS}" "${simple_blocks_SOURCES}")
+
+if (USE_NVTOOLSEXT)
+    target_include_directories(simple_blocks PUBLIC "${NVTOOLSEXT_INCLUDE_DIR}")
+endif(USE_NVTOOLSEXT)
+
+if (USE_NVPMAPI)
+    target_include_directories(simple_blocks PUBLIC "${NVPMAPI_INCLUDE_DIR}")
+endif(USE_NVPMAPI)
+
+target_include_directories(simple_blocks PUBLIC
+        "${CRUFT_INCLUDE_DIR}"
+        "${THIRDPARTY_DIR}/tclap/include"
+        "${GLEW_INCLUDE_DIR}"
+        "${GLM_INCLUDE_DIR}"
+        "${GLFW_INCLUDE_DIRS}")
 
 #find_library(CRUFT_DEBUG_LIB cruftd HINTS "${CRUFT_LIBRARY_DIR}")
 #find_library(CRUFT_RELEASE_LIB cruft HINTS "${CRUFT_LIBRARY_DIR}")
 
-target_link_libraries(simple_blocks
+target_link_libraries(simple_blocks PUBLIC
+        cruft
         ${OPENGL_LIBRARIES}
         ${GLFW_LIBRARIES}
         ${GLEW_LIBRARIES}
-        debug ${CRUFT_DEBUG_LIB}
-        optimized ${CRUFT_RELEASE_LIB}
+#        debug ${CRUFT_DEBUG_LIB}
+#        optimized ${CRUFT_RELEASE_LIB}
         ${NVTOOLSEXT_LIB}
         Qt5::Widgets
         Qt5::Core)

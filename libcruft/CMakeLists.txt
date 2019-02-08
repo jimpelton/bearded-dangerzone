@@ -14,8 +14,6 @@ find_package(GLEW REQUIRED)
 find_package(GLM REQUIRED)
 
 #### Platform Specifics ################################################
-# Windows requires a few extra definitions.
-
 if (UNIX)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} \
               -std=c++14 \
@@ -24,41 +22,34 @@ if (UNIX)
               -pthread \
               -fdiagnostics-color=auto"
     )
-
 endif (UNIX)
 
 # Resource directory is for test code only.
 set(CRUFT_RESOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/res")
 
-if (UNIX)
-    include_directories("${OPENGL_INCLUDE_DIR}")
-endif()
+find_package(OpenGL REQUIRED)
+find_package(GLFW REQUIRED)
+find_package(GLEW REQUIRED)
+find_package(GLM REQUIRED)
 
-#include_directories(
-#        "${GLEW_INCLUDE_DIR}"
-#        "${GLM_INCLUDE_DIR}"
-#        "${GLFW_INCLUDE_DIRS}"
-#        "${TBB_INCLUDE_DIR}"
-#        )
-
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
-#link_directories("${TBB_LIBRARY_DIRS}")
 
 add_subdirectory("include/bd")
 add_subdirectory("src/bd")
 
-
-# bd_SOURCES and bd_HEADERS are created in subdirectories and passed up
-# to this cmake scope--kinda dirty i think.
+# bd_SOURCES and bd_HEADERS are created in subdirectories and passed up to this cmake scope
 add_library(cruft STATIC "${bd_SOURCES}" "${bd_HEADERS}" )
+
+if (UNIX)
+    target_include_directories(cruft PUBLIC "${OPENGL_INCLUDE_DIR}")
+endif()
+target_include_directories(cruft PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+
 target_link_libraries(cruft
     "${GLEW_LIBRARIES}"
     "${OPENGL_LIBRARIES}"
-    "${GLFW_LIBRARIES}"
-    )
+    "${GLFW_LIBRARIES}")
 
 add_definitions(-DGLEW_STATIC)
-
 if (WIN32)
     add_definitions(-DNOMINMAX)     #Disable the overrides of std::min/max in Windows.h
 endif (WIN32)
@@ -72,8 +63,7 @@ set_target_properties(cruft PROPERTIES ARCHIVE_OUTPUT_NAME_RELEASE "cruft")
 
 
 # Install the static library.
-install(TARGETS cruft ARCHIVE
-        DESTINATION "lib/bd/")
+install(TARGETS cruft ARCHIVE DESTINATION "lib/bd/")
 
 # Install the headers.
 install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/bd/"

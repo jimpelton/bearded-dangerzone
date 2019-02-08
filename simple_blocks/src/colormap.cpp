@@ -7,6 +7,7 @@
 
 #include <bd/log/logger.h>
 
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/string_cast.hpp>
 
 #include <fstream>
@@ -434,7 +435,7 @@ ColorMapManager::getMapByName(std::string const &name)
     return s_maps.at(name);
 
   }
-  catch (std::out_of_range e) {
+  catch (std::out_of_range &e) {
     Err() << name << " is not a colormap.";
     throw e;
   }

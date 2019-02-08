@@ -13,6 +13,7 @@
 #include <bd/util/ordinal.h>
 #include <bd/geo/axis.h>
 
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/string_cast.hpp>
 #include <bd/log/gl_log.h>
 
@@ -296,7 +297,7 @@ BlockRenderer::drawSlices(int baseVertex, int elementOffset, int numSlices) cons
       glDrawElementsBaseVertex(GL_TRIANGLE_STRIP,
                                ELEMENTS_PER_QUAD * numSlices, // count
                                GL_UNSIGNED_SHORT,                       // type
-                               (void const *)elementOffset,                           // element offset
+                               (void*)elementOffset,                           // element offset
                                baseVertex));                            // vertex offset
   // End NVPM work profiling.
 //  perf_workEnd();

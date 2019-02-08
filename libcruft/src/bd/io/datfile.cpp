@@ -157,7 +157,7 @@ parseDat(const std::string& datfile, DatFileData& data)
     f.open(datfile, std::ios::in);
     ss << f.rdbuf();
     f.close();
-  } catch (std::ifstream::failure e) {
+  } catch (std::ifstream::failure &e) {
     std::cerr << "Opening/reading/closing the dat file failed: " << e.what() << std::endl;
     return false;
   }

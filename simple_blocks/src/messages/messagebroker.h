@@ -11,7 +11,7 @@
 #include <queue>
 #include <future>
 #include <iostream>
-
+#include <algorithm>
 
 namespace subvol {
 
