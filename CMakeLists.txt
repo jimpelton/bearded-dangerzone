@@ -13,30 +13,16 @@ set(CREATE_TESTS ${${CREATE_TESTS}} CACHE BOOL "True if cmake should create unit
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 
 
-################################################################################
-# Libcrufterly
-if(NOT DEFINED CRUFT_INCLUDE_DIR)
-    set(CRUFT_INCLUDE_DIR)
-endif()
-set(CRUFT_INCLUDE_DIR ${${CRUFT_INCLUDE_DIR}} CACHE PATH "Cruft includes directory path")
-
-if(NOT DEFINED CRUFT_LIBRARY_DIR)
-    set(CRUFT_LIBRARY_DIR)
-endif()
-set(CRUFT_LIBRARY_DIR ${${CRUFT_LIBRARY_DIR}} CACHE PATH "Cruft library directory.")
-
-
-
 #### Intel TBB Library ##################################################
-if(NOT DEFINED TBB_INCLUDE_DIR)
-    set(TBB_INCLUDE_DIR)
-endif()
-set(TBB_INCLUDE_DIR ${${TBB_INCLUDE_DIR}} CACHE PATH "Cruft includes directory path")
-
-if(NOT DEFINED TBB_LIBRARY_DIR)
-    set(TBB_LIBRARY_DIR)
-endif()
-set(TBB_LIBRARY_DIR ${${TBB_LIBRARY_DIR}} CACHE PATH "Directory with intel tbb libs.")
+#if(NOT DEFINED TBB_INCLUDE_DIR)
+#    set(TBB_INCLUDE_DIR)
+#endif()
+#set(TBB_INCLUDE_DIR ${${TBB_INCLUDE_DIR}} CACHE PATH "Cruft includes directory path")
+#
+#if(NOT DEFINED TBB_LIBRARY_DIR)
+#    set(TBB_LIBRARY_DIR)
+#endif()
+#set(TBB_LIBRARY_DIR ${${TBB_LIBRARY_DIR}} CACHE PATH "Directory with intel tbb libs.")
 
 
 #############################################################################
@@ -64,14 +50,13 @@ set(BIN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/bin")
 set(THIRDPARTY_DIR "${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/")
 
 
-if (UNIX)
-    include_directories("${OPENGL_INCLUDE_DIR}")
-endif(UNIX)
+#if (UNIX)
+ #   include_directories("${OPENGL_INCLUDE_DIR}")
+#endif(UNIX)
 
-include_directories("${GLEW_INCLUDE_DIR}")
-include_directories("${GLM_INCLUDE_DIR}")
-include_directories("${GLFW_INCLUDE_DIRS}")
-include_directories("${TBB_INCLUDE_DIR}")
+#include_directories("${GLEW_INCLUDE_DIR}")
+#include_directories("${GLM_INCLUDE_DIR}")
+#include_directories("${GLFW_INCLUDE_DIRS}")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/libcruft")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/simple_blocks")
 #add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/matrix_benchmark")

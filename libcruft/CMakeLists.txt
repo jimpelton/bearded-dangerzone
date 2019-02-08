@@ -27,9 +27,6 @@ if (UNIX)
 
 endif (UNIX)
 
-
-#Link statically to GLEW
-
 # Resource directory is for test code only.
 set(CRUFT_RESOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/res")
 
@@ -37,15 +34,15 @@ if (UNIX)
     include_directories("${OPENGL_INCLUDE_DIR}")
 endif()
 
-include_directories(
-        "${GLEW_INCLUDE_DIR}"
-        "${GLM_INCLUDE_DIR}"
-        "${GLFW_INCLUDE_DIRS}"
-        "${TBB_INCLUDE_DIR}"
-        )
+#include_directories(
+#        "${GLEW_INCLUDE_DIR}"
+#        "${GLM_INCLUDE_DIR}"
+#        "${GLFW_INCLUDE_DIRS}"
+#        "${TBB_INCLUDE_DIR}"
+#        )
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
-link_directories("${TBB_LIBRARY_DIRS}")
+#link_directories("${TBB_LIBRARY_DIRS}")
 
 add_subdirectory("include/bd")
 add_subdirectory("src/bd")
@@ -58,8 +55,6 @@ target_link_libraries(cruft
     "${GLEW_LIBRARIES}"
     "${OPENGL_LIBRARIES}"
     "${GLFW_LIBRARIES}"
-    debug tbb_debug
-    optimized tbb
     )
 
 add_definitions(-DGLEW_STATIC)
@@ -68,15 +63,12 @@ if (WIN32)
     add_definitions(-DNOMINMAX)     #Disable the overrides of std::min/max in Windows.h
 endif (WIN32)
 
-# Enables gl_check() macros.
-
 add_compile_options(
     "$<$<CONFIG:Debug>:-DBD_DEBUG>"
     "$<$<CONFIG:Release>:>"
     )
 set_target_properties(cruft PROPERTIES ARCHIVE_OUTPUT_NAME_DEBUG "cruftd")
 set_target_properties(cruft PROPERTIES ARCHIVE_OUTPUT_NAME_RELEASE "cruft")
-
 
 
 # Install the static library.
