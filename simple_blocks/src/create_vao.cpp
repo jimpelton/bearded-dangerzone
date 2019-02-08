@@ -75,8 +75,7 @@ getDelta(bd::Volume const &v,
          float samplingModifer,
          Axis a)
 {
-  return 1.0f/( samplingModifer*v.worldDims()[bd::ordinal<Axis>(a)]*
-      1.414213562f ); // 1.414213562f = sqrt(2)
+  return 1.0f/(samplingModifer*v.worldDims()[bd::ordinal<Axis>(a)]*1.414213562f ); // 1.414213562f = sqrt(2)
 }
 
 
