@@ -122,7 +122,7 @@ private:
 
   /// \brief Disable GL_DEPTH_TEST and draw transparent slices
   void
-  drawSlices(int baseVertex, int elementOffset, int numSlices) const;
+  drawSlices(int baseVertex, int elementOffset, unsigned int numSlices) const;
 
 
   /// \brief Draw the coordinate axis.

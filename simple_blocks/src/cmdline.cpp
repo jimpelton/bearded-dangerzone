@@ -96,6 +96,10 @@ try
       mainMemoryArg("", "main-mem", "Cpu memory to use", false, "1G", "string");
   cmd.add(mainMemoryArg);
 
+  TCLAP::ValueArg<float>
+      samplingModifierArg("", "smod", "Sampling modifier", true, 0, "float");
+  cmd.add(samplingModifierArg);
+
   cmd.parse(argc, argv);
 
   opts.rawFilePath = fileArg.getValue();
@@ -110,6 +114,7 @@ try
   opts.windowHeight = screenHeightArg.getValue();
   opts.gpuMemoryBytes = static_cast<int64_t>(convertToBytes(gpuMemoryArg.getValue()));
   opts.mainMemoryBytes = static_cast<int64_t>(convertToBytes(mainMemoryArg.getValue()));
+  opts.samplingModifier = samplingModifierArg.getValue();
 
   return static_cast<int>(cmd.getArgList().size());
 

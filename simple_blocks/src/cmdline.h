@@ -46,6 +46,8 @@ struct CommandLineOptions
   int64_t gpuMemoryBytes;
   /// cpu mem to use
   int64_t mainMemoryBytes;
+  // sampling modifier (how tightly to sample data set)
+  float samplingModifier;
 };
 
 

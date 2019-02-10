@@ -353,7 +353,7 @@ initializeVertexBuffers(subvol::CommandLineOptions const &clo,
   renderhelp::g_quadVao->create();
   bd::Dbg() << "Generating proxy geometry VAO";
   //TODO: samplingModifer in commandlineoptions!
-  *numSlices = subvol::genQuadVao(*g_quadVao, v, 500);
+  *numSlices = subvol::genQuadVao(*g_quadVao, v, clo.samplingModifier);
 
   // coordinate axis
   bd::Dbg() << "Generating coordinate axis VAO";

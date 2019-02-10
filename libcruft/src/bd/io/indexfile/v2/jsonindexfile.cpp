@@ -121,7 +121,7 @@ JsonIndexFile::getTFFileName()
 bd::DataType
 JsonIndexFile::getDatType() const
 {
-  bd::to_dataType(m_dataType);
+  return bd::to_dataType(m_dataType);
 }
 
 

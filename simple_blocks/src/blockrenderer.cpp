@@ -101,7 +101,7 @@ BlockRenderer::init()
 
   GLuint sampler_state{ 0 };
   gl_check(glGenSamplers(1, &sampler_state));
-  if (sampler_state==0) {
+  if (sampler_state == 0) {
     bd::Err() << "Could not generate a sampler object.";
     return false;
   }
@@ -265,7 +265,7 @@ BlockRenderer::drawNonEmptyBoundingBoxes()
   m_wireframeShader->bind();
   m_boxesVao->bind();
   size_t const nblk{ m_nonEmptyBlocks->size() };
-  for (size_t i{ 0 }; i<nblk; ++i) {
+  for (size_t i{ 0 }; i < nblk; ++i) {
 
     bd::Block *b{ ( *m_nonEmptyBlocks )[i] };
 
@@ -276,11 +276,11 @@ BlockRenderer::drawNonEmptyBoundingBoxes()
     gl_check(glDrawElements(GL_LINE_LOOP,
                             4,
                             GL_UNSIGNED_SHORT,
-                            (GLvoid *) ( 4*sizeof(GLushort))));
+                            (GLvoid *) ( 4 * sizeof(GLushort))));
     gl_check(glDrawElements(GL_LINES,
                             8,
                             GL_UNSIGNED_SHORT,
-                            (GLvoid *) ( 8*sizeof(GLushort))));
+                            (GLvoid *) ( 8 * sizeof(GLushort))));
   }
 //  m_boxesVao->unbind();
 //  m_wireframeShader->unbind();
@@ -289,16 +289,16 @@ BlockRenderer::drawNonEmptyBoundingBoxes()
 
 ////////////////////////////////////////////////////////////////////////////////
 void
-BlockRenderer::drawSlices(int baseVertex, int elementOffset, int numSlices) const
+BlockRenderer::drawSlices(int baseVertex, int elementOffset, unsigned int numSlices) const
 {
   // Begin NVPM work profiling
 //  perf_workBegin();
   gl_check(
       glDrawElementsBaseVertex(GL_TRIANGLE_STRIP,
-                               ELEMENTS_PER_QUAD*numSlices, // count
-                               GL_UNSIGNED_SHORT,                       // type
-                               (void *) elementOffset,                           // element offset
-                               baseVertex));                            // vertex offset
+                               ELEMENTS_PER_QUAD * numSlices, // count
+                               GL_UNSIGNED_SHORT,              // type
+                               (void *) elementOffset,        // element offset
+                               baseVertex));                  // vertex offset
   // End NVPM work profiling.
 //  perf_workEnd();
 
@@ -329,7 +329,7 @@ BlockRenderer::drawNonEmptyBlocks_Forward()
    * of that slice set. */
 
   glm::vec3 const
-      viewdir{ glm::normalize(getCamera().getLookAt()-getCamera().getEye()) };
+      viewdir{ glm::normalize(getCamera().getLookAt() - getCamera().getEye()) };
 
   std::pair<int, int> const
       baseVertex{ computeBaseVertexFromViewDir(viewdir) };
@@ -343,7 +343,7 @@ BlockRenderer::drawNonEmptyBlocks_Forward()
 
   size_t const nBlk{ m_nonEmptyBlocks->size() };
   NVTOOLS_PUSH_RANGE("DrawNonEmptyBlocks", 0);
-  for (size_t i{ 0 }; i<nBlk; ++i) {
+  for (size_t i{ 0 }; i < nBlk; ++i) {
     bd::Block *b{ ( *m_nonEmptyBlocks )[i] };
 
     // only render if the block's texture data has been uploaded to GPU.
@@ -372,19 +372,19 @@ BlockRenderer::computeBaseVertexFromViewDir(glm::vec3 const &viewdir)
 {
   glm::vec3 const absViewDir{ glm::abs(viewdir) };
   SliceSet newSelected{ SliceSet::YZ };
-  bool isPos{ viewdir.x>0 };
+  bool isPos{ viewdir.x > 0 };
   float longest{ absViewDir.x };
 
   // find longest component in view vector.
-  if (absViewDir.y>longest) {
+  if (absViewDir.y > longest) {
     newSelected = SliceSet::XZ;
-    isPos = viewdir.y>0;
+    isPos = viewdir.y > 0;
     longest = absViewDir.y;
   }
 
-  if (absViewDir.z>longest) {
+  if (absViewDir.z > longest) {
     newSelected = SliceSet::XY;
-    isPos = viewdir.z>0;
+    isPos = viewdir.z > 0;
   }
 
   // Compute base vertex VBO offset.
@@ -400,34 +400,34 @@ BlockRenderer::computeBaseVertexFromViewDir(glm::vec3 const &viewdir)
       if (isPos) {
         baseVertex = 0;
       } else {
-        baseVertex = 1*verts_per_quad*numSlices;
+        baseVertex = 1 * verts_per_quad * numSlices;
       }
       elementOffset = 0;
       break;
 
     case SliceSet::XZ:
       if (isPos) {
-        baseVertex = 2*verts_per_quad*numSlices;
+        baseVertex = 2 * verts_per_quad * numSlices;
       } else {
-        baseVertex = 3*verts_per_quad*numSlices;
+        baseVertex = 3 * verts_per_quad * numSlices;
       }
-      elementOffset = 1*ELEMENTS_PER_QUAD*numSlices;
+      elementOffset = 1 * ELEMENTS_PER_QUAD * numSlices;
       break;
 
     case SliceSet::XY:
       if (isPos) {
-        baseVertex = 4*verts_per_quad*numSlices;
+        baseVertex = 4 * verts_per_quad * numSlices;
       } else {
-        baseVertex = 5*verts_per_quad*numSlices;
+        baseVertex = 5 * verts_per_quad * numSlices;
       }
-      elementOffset = 2*ELEMENTS_PER_QUAD*numSlices;
+      elementOffset = 2 * ELEMENTS_PER_QUAD * numSlices;
       break;
 
     default:
       break;
   }
 
-  if (newSelected!=m_selectedSliceSet) {
+  if (newSelected != m_selectedSliceSet) {
     std::cout << " Switched slice set: " << ( isPos ? '+' : '-' ) <<
               newSelected << " Base vertex: " << baseVertex << '\n';
   }
@@ -451,7 +451,7 @@ BlockRenderer::sortBlocks()
             [&eye](bd::Block *a, bd::Block *b) {
               float a_dist = glm::distance(eye, a->origin());
               float b_dist = glm::distance(eye, b->origin());
-              return a_dist>b_dist;
+              return a_dist > b_dist;
             });
 }
 
