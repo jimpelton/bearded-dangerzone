@@ -56,6 +56,14 @@ toU64Vec3(json const &js, std::string const &key)
   glm::u64vec3 vec{ jsvec[0], jsvec[1], jsvec[2], };
   return vec;
 }
+
+glm::vec3
+toVec3(json const &js, std::string const &key)
+{
+  auto jsvec = js.at(key).get<std::vector<float>>();
+  glm::vec3 vec{ jsvec[0], jsvec[1], jsvec[2], };
+  return vec;
+}
 } //namespace
 
 bool
@@ -86,7 +94,7 @@ JsonIndexFile::open(std::string const &fname)
   v.total(jsStats.at("tot").get<double>());
   v.block_count(toU64Vec3(js, "num_blocks"));
   v.voxelDims(toU64Vec3(jsVol, "vox_dims"));
-  v.worldDims(toU64Vec3(jsVol, "world_dims"));
+  v.worldDims(toVec3(jsVol, "world_dims"));
 
   auto blocks = js.at("blocks").get<std::vector<bd::FileBlock>>();
 

@@ -351,19 +351,16 @@ initializeVertexBuffers(subvol::CommandLineOptions const &clo,
   // 2d slices
   renderhelp::g_quadVao = std::make_shared<bd::VertexArrayObject>();
   renderhelp::g_quadVao->create();
-  bd::Dbg() << "Generating proxy geometry VAO";
-  //TODO: samplingModifer in commandlineoptions!
-  *numSlices = subvol::genQuadVao(*g_quadVao, v, clo.samplingModifier);
+  *numSlices = subvol::genQuadVao(*g_quadVao, v,
+      glm::vec3{clo.smod_x, clo.smod_y, clo.smod_z});
 
   // coordinate axis
-  bd::Dbg() << "Generating coordinate axis VAO";
   renderhelp::g_axisVao = std::make_shared<bd::VertexArrayObject>();
   renderhelp::g_axisVao->create();
   subvol::genAxisVao(*g_axisVao);
 
 
   // bounding boxes
-  bd::Dbg() << "Generating bounding box VAO";
   renderhelp::g_boxVao = std::make_shared<bd::VertexArrayObject>();
   renderhelp::g_boxVao->create();
   subvol::genBoxVao(*g_boxVao);
@@ -379,7 +376,7 @@ initializeRenderer(std::shared_ptr<BlockCollection> bc,
   renderhelp::setInitialGLState();
   glm::u64vec3 numSlices;
   renderhelp::initializeVertexBuffers(clo, v, &numSlices);
-  bd::Dbg() << "Generated: " << numSlices[0] << "x" << numSlices[1] << "x" << numSlices[2] << " slices.";
+  bd::Info() << "Generated: " << numSlices[0] << "x" << numSlices[1] << "x" << numSlices[2] << " slices.";
   if (!renderhelp::initializeShaders(clo)) {
     return nullptr;
   }

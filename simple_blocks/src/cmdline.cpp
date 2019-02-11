@@ -97,8 +97,16 @@ try
   cmd.add(mainMemoryArg);
 
   TCLAP::ValueArg<float>
-      samplingModifierArg("", "smod", "Sampling modifier", true, 0, "float");
-  cmd.add(samplingModifierArg);
+      samplingModifierXArg("", "smod-x", "Sampling modifier", true, 0, "float");
+  cmd.add(samplingModifierXArg);
+
+  TCLAP::ValueArg<float>
+      samplingModifierYArg("", "smod-y", "Sampling modifier", true, 0, "float");
+  cmd.add(samplingModifierYArg);
+
+  TCLAP::ValueArg<float>
+      samplingModifierZArg("", "smod-z", "Sampling modifier", true, 0, "float");
+  cmd.add(samplingModifierZArg);
 
   cmd.parse(argc, argv);
 
@@ -114,7 +122,9 @@ try
   opts.windowHeight = screenHeightArg.getValue();
   opts.gpuMemoryBytes = static_cast<int64_t>(convertToBytes(gpuMemoryArg.getValue()));
   opts.mainMemoryBytes = static_cast<int64_t>(convertToBytes(mainMemoryArg.getValue()));
-  opts.samplingModifier = samplingModifierArg.getValue();
+  opts.smod_x = samplingModifierXArg.getValue();
+  opts.smod_y = samplingModifierYArg.getValue();
+  opts.smod_z = samplingModifierZArg.getValue();
 
   return static_cast<int>(cmd.getArgList().size());
 

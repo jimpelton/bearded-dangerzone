@@ -100,7 +100,7 @@ interpolateVertex(VertexFormat const &v1,
 glm::u64vec3
 genQuadVao(bd::VertexArrayObject &vao,
            bd::Volume const &v,
-           float smod)
+           glm::vec3 const &smod)
 {
 
   std::vector<VertexFormat> vbuf;
@@ -111,7 +111,7 @@ genQuadVao(bd::VertexArrayObject &vao,
   bool const REVERSED = true;
   bool const FORWARD = !REVERSED;
 
-  float delta{ getDelta(v, smod, Axis::X) };
+  float delta{ getDelta(v, smod.x, Axis::X) };
   size_t numSlices{ static_cast<size_t>(std::floor(1.0f/delta)) };
   delta = 1.0f/( numSlices-1 );
   bd::Info() << "Slices on X: " << numSlices << " with delta: " << delta;
@@ -120,7 +120,7 @@ genQuadVao(bd::VertexArrayObject &vao,
   createElementIdx(elebuf, numSlices);
   sliceCounts.x = numSlices;
 
-  delta = getDelta(v, smod, Axis::Y);
+  delta = getDelta(v, smod.y, Axis::Y);
   numSlices = static_cast<size_t>(std::floor(1.0f/delta));
   delta = 1.0f/( numSlices-1 );
   bd::Info() << "Slices on Y: " << numSlices << " with delta: " << delta;
@@ -129,7 +129,7 @@ genQuadVao(bd::VertexArrayObject &vao,
   createElementIdx(elebuf, numSlices);
   sliceCounts.y = numSlices;
 
-  delta = getDelta(v, smod, Axis::Z);
+  delta = getDelta(v, smod.z, Axis::Z);
   numSlices = static_cast<size_t>(std::floor(1.0f/delta));
   delta = 1.0f/( numSlices-1 );
   bd::Info() << "Slices on Z: " << numSlices << " with delta: " << delta;

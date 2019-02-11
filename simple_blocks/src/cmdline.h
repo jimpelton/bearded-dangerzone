@@ -46,8 +46,10 @@ struct CommandLineOptions
   int64_t gpuMemoryBytes;
   /// cpu mem to use
   int64_t mainMemoryBytes;
-  // sampling modifier (how tightly to sample data set)
-  float samplingModifier;
+  // sampling modifier (modifies the sample rate during reconstruction)
+  float smod_x;
+  float smod_y;
+  float smod_z;
 };
 
 

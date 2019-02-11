@@ -64,7 +64,7 @@ struct VertexFormat
 glm::u64vec3
 genQuadVao(bd::VertexArrayObject &vao,
            bd::Volume const &v,
-           float smod);
+           glm::vec3 const &smod);
 
 
 void
