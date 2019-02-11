@@ -6,15 +6,14 @@
 #include <bd/geo/axis.h>
 #include <bd/log/logger.h>
 #include <bd/geo/wireframebox.h>
-
-#include <glm/glm.hpp>
-
-#define GLM_ENABLE_EXPERIMENTAL
-
-#include <glm/gtx/string_cast.hpp>
-#include <fstream>
 #include <bd/volume/volume.h>
 #include <bd/util/ordinal.h>
+
+#include <glm/glm.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/string_cast.hpp>
+
+#include <fstream>
 
 namespace subvol
 {
@@ -42,7 +41,7 @@ struct BBox
   //       |              | /
   //       +--------------+`  1:(0.5, -0.5, -0.5)
   // 0:(-0.5, -0.5, -0.5)
-  BBox(glm::vec3 const &aspect)
+  explicit BBox(glm::vec3 const &aspect)
   {
     using V3 = glm::vec3;
     using V4 = glm::vec4;
@@ -75,7 +74,8 @@ getDelta(bd::Volume const &v,
          float samplingModifer,
          Axis a)
 {
-  return 1.0f/(samplingModifer*v.worldDims()[bd::ordinal<Axis>(a)]*1.414213562f ); // 1.414213562f = sqrt(2)
+  return 1.0f / ( samplingModifer *
+    v.worldDims()[bd::ordinal<Axis>(a)] * 1.414213562f ); // 1.414213562f = sqrt(2)
 }
 
 

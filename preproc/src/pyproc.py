@@ -158,16 +158,15 @@ def main():
 
     max_dim = np.max(vdims)
     world_dims = [vdims[0]/max_dim, vdims[1]/max_dim, vdims[2]/max_dim]
-    world_origin = [0.0, 0.0, 0.0]
+#    world_origin = [0.0, 0.0, 0.0]
 
     vol_stats = volume.VolStats(min=vol_min, max=vol_max, avg=0.0, tot=vol_tot)
-    vol = volume.Volume(world_dims, world_origin, vdims.tolist(), rov_min, rov_max)
+    vol = volume.Volume(world_dims, vdims.tolist(), rov_min, rov_max)
 
     blocks = indexfile.create_file_blocks(bcount, fd.dtype, vol, relevancies)
 
     ifile = indexfile.IndexFile(**{
         'world_dims': world_dims,
-        'world_origin': world_origin,
         'vol_stats': vol_stats,
         'vol_name': vol_name,
         'vol_path': vol_path,

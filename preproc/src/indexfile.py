@@ -8,7 +8,6 @@ class IndexFile:
     def __init__(self, from_file=None, **kwargs):
         """Keyword Arguments:
             - world_dims: the world dimensions of this volume
-            - world_origin: the world origin of the volume (likely (0,0,0))
             - vol_min: min value of the volume
             - vol_max: max value of the volume
             - vol_avg: avg value of the volume

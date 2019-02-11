@@ -8,9 +8,9 @@ class VolStats:
         self.tot = float(tot)
 
 class Volume:
-    def __init__(self, world_dims, world_origin, vox_dims, rov_min, rov_max):
+    def __init__(self, world_dims, vox_dims, rov_min, rov_max):
         self.world_dims = tuple(world_dims)
-        self.world_origin = tuple(world_origin)
+        #self.world_origin = tuple(world_origin)
         self.vox_dims = tuple(vox_dims)
         self.rov_min = float(rov_min)
         self.rov_max = float(rov_max)
