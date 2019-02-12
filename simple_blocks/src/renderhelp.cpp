@@ -220,7 +220,7 @@ setInitialGLState()
 
   gl_check(glEnable(GL_CULL_FACE));
   gl_check(glCullFace(GL_BACK));
-//        gl_check(glDisable(GL_CULL_FACE));
+//  gl_check(glDisable(GL_CULL_FACE));
 
   gl_check(glEnable(GL_DEPTH_TEST));
   gl_check(glDepthFunc(GL_LESS));

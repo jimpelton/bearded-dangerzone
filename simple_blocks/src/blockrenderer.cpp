@@ -372,6 +372,9 @@ BlockRenderer::computeBaseVertexFromViewDir(glm::vec3 const &viewdir)
 {
   glm::vec3 const absViewDir{ glm::abs(viewdir) };
   SliceSet newSelected{ SliceSet::YZ };
+  // If isPos == true, then we are looking in the direction that the positive axis points.
+  // Example:
+  //   viewdir.x > 0 means we are looking in the direction that the positive x axis points.
   bool isPos{ viewdir.x > 0 };
   float longest{ absViewDir.x };
 
@@ -427,9 +430,16 @@ BlockRenderer::computeBaseVertexFromViewDir(glm::vec3 const &viewdir)
       break;
   }
 
+//  if (isPos) {
+//    glFrontFace(GL_CCW);
+//  } else {
+//    glFrontFace(GL_CW);
+//  }
+
   if (newSelected != m_selectedSliceSet) {
     std::cout << " Switched slice set: " << ( isPos ? '+' : '-' ) <<
-              newSelected << " Base vertex: " << baseVertex << '\n';
+              newSelected << " Base vertex: " << baseVertex <<
+              " Element offset" << elementOffset << '\n';
   }
 
   m_selectedSliceSet = newSelected;

@@ -31,11 +31,11 @@ struct BBox
   //           +---------------+ 6:(0.5, 0.5, 0.5)
   //          /               /|
   //         /               / |
-  // 3:(-0.5, 0.5, -0.5)    /  |
-  //       +--------------+` 2:(0.5, 0.5, -0.5)
+  // 2:(-0.5, 0.5, -0.5)    /  |
+  //       +--------------+` 3:(0.5, 0.5, -0.5)
   //       |              |    |
   //       |              |    |
-  //       |              |    + 5:(0.5, -0.5, 0.5)
+  //       |              |    + 4:(0.5, -0.5, 0.5)
   //       |              |   /
   //       |              |  /
   //       |              | /
@@ -49,15 +49,15 @@ struct BBox
                             V3{ 0, 0, 0 }); // left, bottom, back
     verts[1] = VertexFormat(V4{ V3{ 0.5, -0.5, -0.5 }*aspect, 1.0 },
                             V3{ 1, 0, 0 }); // right, bottom, back
-    verts[2] = VertexFormat(V4{ V3{ 0.5, 0.5, -0.5 }*aspect, 1.0 },
-                            V3{ 1, 1, 0 }); // right, top, back
-    verts[3] = VertexFormat(V4{ V3{ -0.5, 0.5, -0.5 }*aspect, 1.0 },
+    verts[2] = VertexFormat(V4{ V3{ -0.5, 0.5, -0.5 }*aspect, 1.0 },
                             V3{ 0, 1, 0 }); // left, top, back
+    verts[3] = VertexFormat(V4{ V3{ 0.5, 0.5, -0.5 }*aspect, 1.0 },
+                            V3{ 1, 1, 0 }); // right, top, back
 
-    verts[4] = VertexFormat(V4{ V3{ -0.5, -0.5, 0.5 }*aspect, 1.0 },
-                            V3{ 0, 0, 1 }); // left, bottom, front
-    verts[5] = VertexFormat(V4{ V3{ 0.5, -0.5, 0.5 }*aspect, 1.0 },
+    verts[4] = VertexFormat(V4{ V3{ 0.5, -0.5, 0.5 }*aspect, 1.0 },
                             V3{ 1, 0, 1 }); // right, bottom, front
+    verts[5] = VertexFormat(V4{ V3{ -0.5, -0.5, 0.5 }*aspect, 1.0 },
+                            V3{ 0, 0, 1 }); // left, bottom, front
     verts[6] = VertexFormat(V4{ V3{ 0.5, 0.5, 0.5 }*aspect, 1.0 },
                             V3{ 1, 1, 1 }); // right, top, front
     verts[7] = VertexFormat(V4{ V3{ -0.5, 0.5, 0.5 }*aspect, 1.0 },
@@ -177,10 +177,10 @@ createQuads(std::vector<VertexFormat> &verts,
   switch (a) {
     case Axis::X:
       for (size_t x{ 0 }; x<numSlices; ++x) {
-        sliceVerts[0] = interpolateVertex(volBox.verts[0], volBox.verts[1], depth);
-        sliceVerts[1] = interpolateVertex(volBox.verts[3], volBox.verts[2], depth);
-        sliceVerts[2] = interpolateVertex(volBox.verts[4], volBox.verts[5], depth);
-        sliceVerts[3] = interpolateVertex(volBox.verts[7], volBox.verts[6], depth);
+        sliceVerts[0] = interpolateVertex(volBox.verts[5], volBox.verts[4], depth);
+        sliceVerts[1] = interpolateVertex(volBox.verts[0], volBox.verts[1], depth);
+        sliceVerts[2] = interpolateVertex(volBox.verts[7], volBox.verts[6], depth);
+        sliceVerts[3] = interpolateVertex(volBox.verts[2], volBox.verts[3], depth);
         for (auto &v : sliceVerts) {
           verts.push_back(v);
         }
@@ -190,10 +190,10 @@ createQuads(std::vector<VertexFormat> &verts,
       break;
     case Axis::Y:
       for (size_t y{ 0 }; y<numSlices; ++y) {
-        sliceVerts[0] = interpolateVertex(volBox.verts[0], volBox.verts[3], depth);
-        sliceVerts[1] = interpolateVertex(volBox.verts[1], volBox.verts[2], depth);
-        sliceVerts[2] = interpolateVertex(volBox.verts[4], volBox.verts[7], depth);
-        sliceVerts[3] = interpolateVertex(volBox.verts[5], volBox.verts[6], depth);
+        sliceVerts[0] = interpolateVertex(volBox.verts[0], volBox.verts[2], depth);
+        sliceVerts[1] = interpolateVertex(volBox.verts[1], volBox.verts[3], depth);
+        sliceVerts[2] = interpolateVertex(volBox.verts[5], volBox.verts[7], depth);
+        sliceVerts[3] = interpolateVertex(volBox.verts[4], volBox.verts[6], depth);
         for (auto &v : sliceVerts) {
           verts.push_back(v);
         }
@@ -203,10 +203,10 @@ createQuads(std::vector<VertexFormat> &verts,
       break;
     case Axis::Z:
       for (size_t z{ 0 }; z<numSlices; ++z) {
-        sliceVerts[0] = interpolateVertex(volBox.verts[0], volBox.verts[4], depth);
-        sliceVerts[1] = interpolateVertex(volBox.verts[1], volBox.verts[5], depth);
-        sliceVerts[2] = interpolateVertex(volBox.verts[3], volBox.verts[7], depth);
-        sliceVerts[3] = interpolateVertex(volBox.verts[2], volBox.verts[6], depth);
+        sliceVerts[0] = interpolateVertex(volBox.verts[0], volBox.verts[5], depth);
+        sliceVerts[1] = interpolateVertex(volBox.verts[1], volBox.verts[4], depth);
+        sliceVerts[2] = interpolateVertex(volBox.verts[2], volBox.verts[7], depth);
+        sliceVerts[3] = interpolateVertex(volBox.verts[3], volBox.verts[6], depth);
         for (auto &v : sliceVerts) {
           verts.push_back(v);
         }
