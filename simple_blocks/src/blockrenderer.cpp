@@ -311,8 +311,7 @@ BlockRenderer::drawAxis() const
 {
   m_wireframeShader->bind();
   m_axisVao->bind();
-  m_wireframeShader
-      ->setUniform(WIREFRAME_MVP_MATRIX_UNIFORM_STR, getWorldViewProjectionMatrix());
+  m_wireframeShader->setUniform(WIREFRAME_MVP_MATRIX_UNIFORM_STR, getWorldViewProjectionMatrix());
   gl_check(glDrawArrays(GL_LINES,
                         0,
                         static_cast<GLsizei>(bd::CoordinateAxis::verts.size())));
@@ -395,11 +394,12 @@ BlockRenderer::computeBaseVertexFromViewDir(glm::vec3 const &viewdir)
   unsigned long long baseVertex{ 0uL };
   unsigned long long elementOffset{ 0 };
 
-  glm::u64 numSlices{ m_numSlicesPerBlock[bd::ordinal<SliceSet>(newSelected)] };
+  glm::u64 numSlices{ 0 };
 
   switch (newSelected) {
 
     case SliceSet::YZ:
+      numSlices = m_numSlicesPerBlock.x;
       if (isPos) {
         baseVertex = 0;
       } else {
@@ -409,6 +409,7 @@ BlockRenderer::computeBaseVertexFromViewDir(glm::vec3 const &viewdir)
       break;
 
     case SliceSet::XZ:
+      numSlices = m_numSlicesPerBlock.y;
       if (isPos) {
         baseVertex = 2 * verts_per_quad * numSlices;
       } else {
@@ -418,6 +419,7 @@ BlockRenderer::computeBaseVertexFromViewDir(glm::vec3 const &viewdir)
       break;
 
     case SliceSet::XY:
+      numSlices = m_numSlicesPerBlock.z;
       if (isPos) {
         baseVertex = 4 * verts_per_quad * numSlices;
       } else {

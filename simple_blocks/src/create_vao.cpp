@@ -190,10 +190,10 @@ createQuads(std::vector<VertexFormat> &verts,
       break;
     case Axis::Y:
       for (size_t y{ 0 }; y<numSlices; ++y) {
-        sliceVerts[0] = interpolateVertex(volBox.verts[0], volBox.verts[2], depth);
-        sliceVerts[1] = interpolateVertex(volBox.verts[1], volBox.verts[3], depth);
-        sliceVerts[2] = interpolateVertex(volBox.verts[5], volBox.verts[7], depth);
-        sliceVerts[3] = interpolateVertex(volBox.verts[4], volBox.verts[6], depth);
+        sliceVerts[0] = interpolateVertex(volBox.verts[5], volBox.verts[7], depth);
+        sliceVerts[1] = interpolateVertex(volBox.verts[4], volBox.verts[6], depth);
+        sliceVerts[2] = interpolateVertex(volBox.verts[0], volBox.verts[2], depth);
+        sliceVerts[3] = interpolateVertex(volBox.verts[1], volBox.verts[3], depth);
         for (auto &v : sliceVerts) {
           verts.push_back(v);
         }
@@ -215,6 +215,16 @@ createQuads(std::vector<VertexFormat> &verts,
       }
       break;
   }
+}
+
+void
+createQuadsReversed(std::vector<VertexFormat> &verts,
+            size_t numSlices,
+            float delta,
+            bool flip,
+            Axis a)
+{
+
 }
 
 //void
