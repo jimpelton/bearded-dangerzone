@@ -71,9 +71,13 @@ void
 createQuads(std::vector<VertexFormat> &verts,
             size_t numSlices,
             float delta,
-            bool flip,
             Axis a);
 
+void
+createQuadsReversed(std::vector<VertexFormat> &verts,
+            size_t numSlices,
+            float delta,
+            Axis a);
 
 /// \brief Create element indexes for the verts returned by \c createQuads()
 ///
