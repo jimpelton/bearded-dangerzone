@@ -1,14 +1,12 @@
 #ifndef mesh_h__
 #define mesh_h__
 
-#include <vector>
 #include <bd/graphics/vertexarrayobject.h>
+
+#include <vector>
 
 namespace bd
 {
-struct MeshData
-{
-};
 
 class Mesh
 {

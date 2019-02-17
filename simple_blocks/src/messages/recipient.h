@@ -2,8 +2,9 @@
 #define RECIPIENT_H
 
 #include "message.h"
+#include "sliceset.h"
+
 #include <iostream>
-#include "src/sliceset.h"
 
 namespace subvol
 {

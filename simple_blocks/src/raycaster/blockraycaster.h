@@ -5,6 +5,8 @@
 #ifndef SUBVOL_BLOCKRAYCASTER_H
 #define SUBVOL_BLOCKRAYCASTER_H
 
+#include "io/blockcollection.h"
+
 #include <bd/graphics/renderer.h>
 #include <bd/graphics/shader.h>
 #include <bd/graphics/vertexarrayobject.h>
@@ -55,11 +57,6 @@ public:
 
   ///////////////////////////////////////////////////////////////////////////////
   void
-  initShaders();
-
-
-  ///////////////////////////////////////////////////////////////////////////////
-  void
   setUniforms();
 
 
@@ -68,8 +65,13 @@ private:
   void
   sortBlocks();
 
+  ///////////////////////////////////////////////////////////////////////////////
+  void
+  initShaders();
+
 private:
   std::unique_ptr<bd::ShaderProgram> m_alphaBlending;
+  std::unique_ptr<subvol::BlockCollection> m_blockCollection;
   bd::Mesh m_cube;
 
 };

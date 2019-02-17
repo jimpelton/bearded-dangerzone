@@ -7,15 +7,15 @@
 
 #include <GLFW/glfw3.h>
 
-#include "blockcollection.h"
+#include "io/blockcollection.h"
 #include "blockrenderer.h"
 #include "cmdline.h"
 
 #include <bd/graphics/vertexarrayobject.h>
+#include <bd/io/indexfile/v2/jsonindexfile.h>
 
 #include <glm/glm.hpp>
 #include <memory>
-#include <bd/io/indexfile/v2/jsonindexfile.h>
 
 namespace subvol
 {

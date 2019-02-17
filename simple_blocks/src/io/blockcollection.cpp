@@ -2,13 +2,13 @@
 
 #include "blockcollection.h"
 #include "blockloader.h"
+#include "messages/messagebroker.h"
 
 #include <bd/log/gl_log.h>
 #include <bd/log/logger.h>
 #include <bd/util/util.h>
 #include <bd/io/indexfile/indexfile.h>
 #include <bd/io/indexfile/v2/jsonindexfile.h>
-#include "messages/messagebroker.h"
 
 namespace subvol
 {

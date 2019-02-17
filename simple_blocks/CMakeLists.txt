@@ -71,8 +71,8 @@ find_package(Qt5Gui)
 # Sources
 set(simple_blocks_HEADERS
         src/axis_enum.h
-        src/blockcollection.h
-        src/blockloader.h
+        src/io/blockcollection.h
+        src/io/blockloader.h
         src/blockrenderer.h
         src/classificationtype.h
         src/cmdline.h
@@ -97,8 +97,8 @@ set(simple_blocks_HEADERS
 
 set(simple_blocks_SOURCES
         src/main.cpp
-        src/blockcollection.cpp
-        src/blockloader.cpp
+        src/io/blockcollection.cpp
+        src/io/blockloader.cpp
         src/blockrenderer.cpp
         src/cmdline.cpp
         src/colormap.cpp
@@ -126,6 +126,7 @@ if (USE_NVPMAPI)
 endif(USE_NVPMAPI)
 
 target_include_directories(simple_blocks PUBLIC
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/"
         "${CRUFT_INCLUDE_DIR}"
         "${THIRDPARTY_DIR}/tclap/include"
         "${GLEW_INCLUDE_DIR}"

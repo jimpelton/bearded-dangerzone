@@ -3,6 +3,7 @@
 
 #include "blockloader.h"
 #include "classificationtype.h"
+#include "messages/recipient.h"
 
 #include <bd/volume/block.h>
 #include <bd/io/indexfile/indexfile.h>
@@ -15,7 +16,6 @@
 #include <vector>
 #include <future>
 #include <bd/io/indexfile/v2/jsonindexfile.h>
-#include "messages/recipient.h"
 
 namespace subvol
 {

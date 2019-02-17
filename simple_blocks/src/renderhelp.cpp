@@ -6,8 +6,8 @@
 #include <GLFW/glfw3.h>
 
 #include "renderhelp.h"
-#include "blockloader.h"
-#include "blockcollection.h"
+#include "io/blockloader.h"
+#include "io/blockcollection.h"
 #include "controls.h"
 #include "create_vao.h"
 #include "timing.h"

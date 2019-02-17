@@ -5,7 +5,7 @@
 #ifndef blockrenderer_h__
 #define blockrenderer_h__
 
-#include "blockcollection.h"
+#include "io/blockcollection.h"
 #include "sliceset.h"
 #include "classificationtype.h"
 #include "messages/recipient.h"

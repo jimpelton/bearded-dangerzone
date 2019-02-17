@@ -7,7 +7,7 @@
 #include "colormap.h"
 #include "renderhelp.h"
 #include "controlpanel.h"
-#include "blockcollection.h"
+#include "io/blockcollection.h"
 #include "semathing.h"
 #include "loop.h"
 #include "messages/messagebroker.h"

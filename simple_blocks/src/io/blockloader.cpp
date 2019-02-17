@@ -3,16 +3,16 @@
 //
 
 #include "blockloader.h"
+#include "messages/recipient.h"
+#include "messages/messagebroker.h"
 
 #include <bd/graphics/texture.h>
 #include <bd/log/logger.h>
 #include <bd/util/util.h>
+#include <bd/volume/block.h>
 
 #include <algorithm>
 #include <fstream>
-#include <bd/volume/block.h>
-#include "messages/recipient.h"
-#include "messages/messagebroker.h"
 
 namespace subvol
 {
