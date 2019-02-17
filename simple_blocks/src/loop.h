@@ -6,10 +6,11 @@
 #define SUBVOL_LOOP_H
 
 #include <GLFW/glfw3.h>
-
 #include "blockrenderer.h"
 #include "timing.h"
 #include "axis_enum.h"
+
+#include <bd/graphics/renderer.h>
 
 namespace subvol
 {
@@ -42,7 +43,7 @@ protected:
 
 
   GLFWwindow *_window;
-  std::shared_ptr<BlockRenderer> _renderer;
+  std::shared_ptr<bd::Renderer> _renderer;
   std::shared_ptr<BlockCollection> _collection;
   uint64_t _frameCount;
 

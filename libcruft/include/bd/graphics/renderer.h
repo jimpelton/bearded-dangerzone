@@ -114,6 +114,9 @@ public:
 
   virtual ~Renderer();
 
+  virtual void
+  draw() = 0;
+
 
   void
   resize(unsigned int w, unsigned int h);
