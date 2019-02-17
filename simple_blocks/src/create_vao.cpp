@@ -108,9 +108,6 @@ genQuadVao(bd::VertexArrayObject &vao,
 
   glm::u64vec3 sliceCounts;
 
-  bool const REVERSED = true;
-  bool const FORWARD = !REVERSED;
-
   float delta{ getDelta(v, smod.x, Axis::X) };
   size_t numSlices{ static_cast<size_t>(std::floor(1.0f/delta)) };
   delta = 1.0f/( numSlices-1 );
@@ -219,10 +216,6 @@ createQuadsReversed(std::vector<VertexFormat> &verts,
 {
   float depth{ 1.0f };
   delta *= -1;
-
-//  if (flip) {
-//    depth = 1.0f;
-//  }
 
   BBox volBox;
 
