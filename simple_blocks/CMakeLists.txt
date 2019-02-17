@@ -93,7 +93,7 @@ set(simple_blocks_HEADERS
         src/messages/messagebroker.h
         src/messages/recipient.h
         src/messages/rovchangingmessage.h
-        )
+        src/raycaster/blockraycaster.h)
 
 set(simple_blocks_SOURCES
         src/main.cpp
@@ -112,7 +112,7 @@ set(simple_blocks_SOURCES
         src/timing.cpp
         src/renderhelp.cpp
 
-        src/messages/messagebroker.cpp )
+        src/messages/messagebroker.cpp src/raycaster/blockraycaster.cpp)
 
 
 add_executable(simple_blocks "${simple_blocks_HEADERS}" "${simple_blocks_SOURCES}")

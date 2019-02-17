@@ -2,28 +2,31 @@
 #define mesh_h__
 
 #include <vector>
+#include <bd/graphics/vertexarrayobject.h>
 
 namespace bd
 {
 struct MeshData
 {
-  std::vector<float> m_positions;
-  std::vector<float> m_normals;
-  std::vector<float> m_texcoords;
-  std::vector<unsigned int> m_indices;
-  std::vector<int> m_material_ids; // per-mesh material ID
 };
 
 class Mesh
 {
 public:
-  Mesh(MeshData const& data);
+  Mesh();
+  Mesh(const std::vector<float> &vertices,
+      unsigned int elements_per_vert, const std::vector<unsigned short> &indices);
   ~Mesh();
 
   void init();
 
+  void draw();
+
 private:
-  MeshData m_data;
+  size_t m_verts_count;
+  size_t m_indices_count;
+  bd::VertexArrayObject m_vao;
+  enum AttributeArray{POSITION=0, NORMAL=1, TEXCOORD=2};
 };
 } /* namespace bd */
 

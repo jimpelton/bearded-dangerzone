@@ -197,7 +197,7 @@ ShaderProgram::linkProgram()
 {
   if (!checkBuilt()) {
     // this ShaderProgram has already been built.
-    return 0;
+    return m_programId;
   }
 
   if (m_stages.empty()) {
