@@ -115,8 +115,8 @@ genQuadVao(bd::VertexArrayObject &vao,
   size_t numSlices{ static_cast<size_t>(std::floor(1.0f/delta)) };
   delta = 1.0f/( numSlices-1 );
   bd::Info() << "Slices on X: " << numSlices << " with delta: " << delta;
-  createQuads(vbuf, numSlices, delta, FORWARD, Axis::X);
-  createQuads(vbuf, numSlices, delta, REVERSED, Axis::X);
+  createQuads(vbuf, numSlices, delta, Axis::X);
+  createQuadsReversed(vbuf, numSlices, delta, Axis::X);
   createElementIdx(elebuf, numSlices);
   sliceCounts.x = numSlices;
 
@@ -124,8 +124,8 @@ genQuadVao(bd::VertexArrayObject &vao,
   numSlices = static_cast<size_t>(std::floor(1.0f/delta));
   delta = 1.0f/( numSlices-1 );
   bd::Info() << "Slices on Y: " << numSlices << " with delta: " << delta;
-  createQuads(vbuf, numSlices, delta, FORWARD, Axis::Y);
-  createQuads(vbuf, numSlices, delta, REVERSED, Axis::Y);
+  createQuads(vbuf, numSlices, delta, Axis::Y);
+  createQuadsReversed(vbuf, numSlices, delta, Axis::Y);
   createElementIdx(elebuf, numSlices);
   sliceCounts.y = numSlices;
 
@@ -133,8 +133,8 @@ genQuadVao(bd::VertexArrayObject &vao,
   numSlices = static_cast<size_t>(std::floor(1.0f/delta));
   delta = 1.0f/( numSlices-1 );
   bd::Info() << "Slices on Z: " << numSlices << " with delta: " << delta;
-  createQuads(vbuf, numSlices, delta, FORWARD, Axis::Z);
-  createQuads(vbuf, numSlices, delta, REVERSED, Axis::Z);
+  createQuads(vbuf, numSlices, delta, Axis::Z);
+  createQuadsReversed(vbuf, numSlices, delta, Axis::Z);
   createElementIdx(elebuf, numSlices);
   sliceCounts.z = numSlices;
 
@@ -161,15 +161,9 @@ void
 createQuads(std::vector<VertexFormat> &verts,
             size_t numSlices,
             float delta,
-            bool flip,
             Axis a)
 {
   float depth{ 0.0f };
-
-  if (flip) {
-    delta *= -1;
-    depth = 1.0f;
-  }
 
   BBox volBox;
 
@@ -221,9 +215,59 @@ void
 createQuadsReversed(std::vector<VertexFormat> &verts,
             size_t numSlices,
             float delta,
-            bool flip,
             Axis a)
 {
+  float depth{ 1.0f };
+  delta *= -1;
+
+//  if (flip) {
+//    depth = 1.0f;
+//  }
+
+  BBox volBox;
+
+  std::array<VertexFormat, 4> sliceVerts;
+  switch (a) {
+    case Axis::X:
+      for (size_t x{ 0 }; x<numSlices; ++x) {
+        sliceVerts[0] = interpolateVertex(volBox.verts[0], volBox.verts[1], depth);
+        sliceVerts[1] = interpolateVertex(volBox.verts[4], volBox.verts[5], depth);
+        sliceVerts[2] = interpolateVertex(volBox.verts[2], volBox.verts[3], depth);
+        sliceVerts[3] = interpolateVertex(volBox.verts[6], volBox.verts[7], depth);
+        for (auto &v : sliceVerts) {
+          verts.push_back(v);
+        }
+
+        depth += delta;
+      }
+      break;
+    case Axis::Y:
+      for (size_t y{ 0 }; y<numSlices; ++y) {
+        sliceVerts[0] = interpolateVertex(volBox.verts[0], volBox.verts[2], depth);
+        sliceVerts[1] = interpolateVertex(volBox.verts[1], volBox.verts[3], depth);
+        sliceVerts[2] = interpolateVertex(volBox.verts[5], volBox.verts[7], depth);
+        sliceVerts[3] = interpolateVertex(volBox.verts[4], volBox.verts[6], depth);
+        for (auto &v : sliceVerts) {
+          verts.push_back(v);
+        }
+
+        depth += delta;
+      }
+      break;
+    case Axis::Z:
+      for (size_t z{ 0 }; z<numSlices; ++z) {
+        sliceVerts[0] = interpolateVertex(volBox.verts[1], volBox.verts[4], depth);
+        sliceVerts[1] = interpolateVertex(volBox.verts[0], volBox.verts[5], depth);
+        sliceVerts[2] = interpolateVertex(volBox.verts[3], volBox.verts[6], depth);
+        sliceVerts[3] = interpolateVertex(volBox.verts[2], volBox.verts[7], depth);
+        for (auto &v : sliceVerts) {
+          verts.push_back(v);
+        }
+
+        depth += delta;
+      }
+      break;
+  }
 
 }
 
