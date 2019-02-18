@@ -117,6 +117,8 @@ public:
   virtual void
   draw() = 0;
 
+  virtual bool
+  initialize() = 0;
 
   void
   resize(unsigned int w, unsigned int h);

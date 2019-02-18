@@ -22,15 +22,15 @@
 namespace subvol
 {
 
-class BlockRenderer
+class SlicingBlockRenderer
     : public bd::Renderer, public Recipient
 {
 
 public:
-  BlockRenderer();
+  SlicingBlockRenderer();
 
 
-  BlockRenderer(glm::u64vec3 numSlices,
+  SlicingBlockRenderer(glm::u64vec3 numSlices,
                 std::shared_ptr<bd::ShaderProgram> volumeShader,
                 std::shared_ptr<bd::ShaderProgram> volumeShaderLighting,
                 std::shared_ptr<bd::ShaderProgram> wireframeShader,
@@ -40,13 +40,13 @@ public:
                 std::shared_ptr<bd::VertexArrayObject> axisVao);
 
 
-  virtual ~BlockRenderer();
+  virtual ~SlicingBlockRenderer();
 
-
-private:
   bool
-  init();
+  initialize() override;
 
+  void
+  draw() override;
 
 public:
 
@@ -105,11 +105,6 @@ public:
 
   void
   setDrawNonEmptySlices(bool b);
-
-
-  /// \brief Draw each non-empty block.
-  void
-  draw();
 
 
   /// \brief Draw wireframe bounding boxes around the blocks.

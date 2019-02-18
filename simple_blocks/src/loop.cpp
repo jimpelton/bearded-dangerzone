@@ -13,7 +13,7 @@ namespace renderhelp
 {
 
 ///////////////////////////////////////////////////////////////////////////////
-Loop::Loop(GLFWwindow *window, std::shared_ptr<BlockRenderer> r,
+Loop::Loop(GLFWwindow *window, std::unique_ptr<Renderer> r,
            std::shared_ptr<BlockCollection> c)
     : _window{ window }
     , _renderer{ r }

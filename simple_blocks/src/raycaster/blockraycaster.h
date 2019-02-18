@@ -24,13 +24,16 @@ class BlockingRaycaster : public bd::Renderer
 public:
 
   ///////////////////////////////////////////////////////////////////////////////
-  BlockingRaycaster();
+  BlockingRaycaster(std::unique_ptr<subvol::BlockCollection> bc);
 
 
   ///////////////////////////////////////////////////////////////////////////////
   virtual
   ~BlockingRaycaster() noexcept override;
 
+
+  virtual bool
+  initialize() override;
 
   ///////////////////////////////////////////////////////////////////////////////
   virtual void
@@ -73,7 +76,7 @@ private:
   std::unique_ptr<bd::ShaderProgram> m_alphaBlending;
   std::unique_ptr<subvol::BlockCollection> m_blockCollection;
   bd::Mesh m_cube;
-
+  unsigned int m_volumeSampler;
 };
 
 }

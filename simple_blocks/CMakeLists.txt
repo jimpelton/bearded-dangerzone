@@ -73,7 +73,7 @@ set(simple_blocks_HEADERS
         src/axis_enum.h
         src/io/blockcollection.h
         src/io/blockloader.h
-        src/blockrenderer.h
+        src/slicingblockrenderer.h
         src/classificationtype.h
         src/cmdline.h
         src/colormap.h
@@ -99,7 +99,7 @@ set(simple_blocks_SOURCES
         src/main.cpp
         src/io/blockcollection.cpp
         src/io/blockloader.cpp
-        src/blockrenderer.cpp
+        src/slicingblockrenderer.cpp
         src/cmdline.cpp
         src/colormap.cpp
         src/constants.cpp

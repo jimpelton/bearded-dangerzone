@@ -5,7 +5,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-#include "blockrenderer.h"
+#include "slicingblockrenderer.h"
 #include "colormap.h"
 #include "constants.h"
 #include "messages/messagebroker.h"
@@ -25,14 +25,14 @@
 namespace subvol
 {
 
-BlockRenderer::BlockRenderer()
-    : BlockRenderer({ }, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr)
+SlicingBlockRenderer::SlicingBlockRenderer()
+    : SlicingBlockRenderer({ }, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr)
 {
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-BlockRenderer::BlockRenderer(glm::u64vec3 numSlices,
+SlicingBlockRenderer::SlicingBlockRenderer(glm::u64vec3 numSlices,
                              std::shared_ptr<bd::ShaderProgram> volumeShader,
                              std::shared_ptr<bd::ShaderProgram> volumeShaderLighting,
                              std::shared_ptr<bd::ShaderProgram> wireframeShader,
@@ -67,19 +67,19 @@ BlockRenderer::BlockRenderer(glm::u64vec3 numSlices,
 {
   m_blocks = &( m_collection->getBlocks());
   m_nonEmptyBlocks = &( m_collection->getNonEmptyBlocks());
-  init();
+  initialize();
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-BlockRenderer::~BlockRenderer()
+SlicingBlockRenderer::~SlicingBlockRenderer()
 {
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
 bool
-BlockRenderer::init()
+SlicingBlockRenderer::initialize()
 {
   Broker::subscribeRecipient(this);
 
@@ -120,7 +120,7 @@ BlockRenderer::init()
 
 ///////////////////////////////////////////////////////////////////////////////
 void
-BlockRenderer::setColorMapTexture(bd::Texture const &tfunc)
+SlicingBlockRenderer::setColorMapTexture(bd::Texture const &tfunc)
 {
   // bind tfunc to the transfer texture unit.
   tfunc.bind(TRANSF_TEXTURE_UNIT);
@@ -131,7 +131,7 @@ BlockRenderer::setColorMapTexture(bd::Texture const &tfunc)
 
 ////////////////////////////////////////////////////////////////////////////////
 void
-BlockRenderer::setColorMapScaleValue(float val)
+SlicingBlockRenderer::setColorMapScaleValue(float val)
 {
   m_tfuncScaleValue = val;
   m_currentShader->setUniform(VOLUME_TRANSF_SCALER_UNIFORM_STR, m_tfuncScaleValue);
@@ -140,7 +140,7 @@ BlockRenderer::setColorMapScaleValue(float val)
 
 ///////////////////////////////////////////////////////////////////////////////
 float
-BlockRenderer::getColorMapScaleValue() const
+SlicingBlockRenderer::getColorMapScaleValue() const
 {
   return m_tfuncScaleValue;
 }
@@ -148,7 +148,7 @@ BlockRenderer::getColorMapScaleValue() const
 
 ///////////////////////////////////////////////////////////////////////////////
 void
-BlockRenderer::setBackgroundColor(const glm::vec3 &c)
+SlicingBlockRenderer::setBackgroundColor(const glm::vec3 &c)
 {
   m_backgroundColor = c;
   glClearColor(c.r, c.g, c.b, 0.0f);
@@ -157,7 +157,7 @@ BlockRenderer::setBackgroundColor(const glm::vec3 &c)
 
 ///////////////////////////////////////////////////////////////////////////////
 glm::vec3 const &
-BlockRenderer::getBackgroundColor() const
+SlicingBlockRenderer::getBackgroundColor() const
 {
   return m_backgroundColor;
 }
@@ -165,7 +165,7 @@ BlockRenderer::getBackgroundColor() const
 
 ///////////////////////////////////////////////////////////////////////////////
 void
-BlockRenderer::setShouldUseLighting(bool b)
+SlicingBlockRenderer::setShouldUseLighting(bool b)
 {
   if (b) {
     m_currentShader->unbind();
@@ -184,7 +184,7 @@ BlockRenderer::setShouldUseLighting(bool b)
 
 ///////////////////////////////////////////////////////////////////////////////
 bool
-BlockRenderer::getShouldUseLighting() const
+SlicingBlockRenderer::getShouldUseLighting() const
 {
   return m_shouldUseLighting;
 }
@@ -192,7 +192,7 @@ BlockRenderer::getShouldUseLighting() const
 
 ///////////////////////////////////////////////////////////////////////////////
 void
-BlockRenderer::setShaderNShiney(float n)
+SlicingBlockRenderer::setShaderNShiney(float n)
 {
   m_volumeShaderLighting->setUniform(LIGHTING_N_SHINEY_UNIFORM_STR, n);
 }
@@ -200,7 +200,7 @@ BlockRenderer::setShaderNShiney(float n)
 
 ///////////////////////////////////////////////////////////////////////////////
 void
-BlockRenderer::setShaderLightPos(glm::vec3 const &L)
+SlicingBlockRenderer::setShaderLightPos(glm::vec3 const &L)
 {
   m_volumeShaderLighting->setUniform(LIGHTING_LIGHT_POS_UNIFORM_STR, L);
 }
@@ -208,7 +208,7 @@ BlockRenderer::setShaderLightPos(glm::vec3 const &L)
 
 ///////////////////////////////////////////////////////////////////////////////
 void
-BlockRenderer::setShaderMaterial(glm::vec3 const &M)
+SlicingBlockRenderer::setShaderMaterial(glm::vec3 const &M)
 {
   m_volumeShaderLighting->setUniform(LIGHTING_MAT_UNIFORM_STR, M);
 }
@@ -216,7 +216,7 @@ BlockRenderer::setShaderMaterial(glm::vec3 const &M)
 
 ///////////////////////////////////////////////////////////////////////////////
 void
-BlockRenderer::setDrawNonEmptyBoundingBoxes(bool b)
+SlicingBlockRenderer::setDrawNonEmptyBoundingBoxes(bool b)
 {
   m_drawNonEmptyBoundingBoxes = b;
 }
@@ -224,7 +224,7 @@ BlockRenderer::setDrawNonEmptyBoundingBoxes(bool b)
 
 ///////////////////////////////////////////////////////////////////////////////
 void
-BlockRenderer::setDrawNonEmptySlices(bool b)
+SlicingBlockRenderer::setDrawNonEmptySlices(bool b)
 {
   m_drawNonEmptySlices = b;
 }
@@ -232,7 +232,7 @@ BlockRenderer::setDrawNonEmptySlices(bool b)
 
 ////////////////////////////////////////////////////////////////////////////////
 void
-BlockRenderer::draw()
+SlicingBlockRenderer::draw()
 {
   // We need to draw in reverse-visibility order (painters algorithm!)
   // so the transparency looks correct.
@@ -260,7 +260,7 @@ BlockRenderer::draw()
 
 ////////////////////////////////////////////////////////////////////////////////
 void
-BlockRenderer::drawNonEmptyBoundingBoxes()
+SlicingBlockRenderer::drawNonEmptyBoundingBoxes()
 {
   m_wireframeShader->bind();
   m_boxesVao->bind();
@@ -289,7 +289,7 @@ BlockRenderer::drawNonEmptyBoundingBoxes()
 
 ////////////////////////////////////////////////////////////////////////////////
 void
-BlockRenderer::drawSlices(int baseVertex, int elementOffset, unsigned int numSlices) const
+SlicingBlockRenderer::drawSlices(int baseVertex, int elementOffset, unsigned int numSlices) const
 {
   // Begin NVPM work profiling
 //  perf_workBegin();
@@ -307,7 +307,7 @@ BlockRenderer::drawSlices(int baseVertex, int elementOffset, unsigned int numSli
 
 ////////////////////////////////////////////////////////////////////////////////
 void
-BlockRenderer::drawAxis() const
+SlicingBlockRenderer::drawAxis() const
 {
   m_wireframeShader->bind();
   m_axisVao->bind();
@@ -322,7 +322,7 @@ BlockRenderer::drawAxis() const
 
 ////////////////////////////////////////////////////////////////////////////////
 void
-BlockRenderer::drawNonEmptyBlocks_Forward()
+SlicingBlockRenderer::drawNonEmptyBlocks_Forward()
 {
   /* Compute the SliceSet and offset into the vertex buffer 
    * of that slice set. */
@@ -367,7 +367,7 @@ BlockRenderer::drawNonEmptyBlocks_Forward()
 
 ////////////////////////////////////////////////////////////////////////////////
 std::pair<int, int>
-BlockRenderer::computeBaseVertexFromViewDir(glm::vec3 const &viewdir)
+SlicingBlockRenderer::computeBaseVertexFromViewDir(glm::vec3 const &viewdir)
 {
   glm::vec3 const absViewDir{ glm::abs(viewdir) };
   SliceSet newSelected{ SliceSet::YZ };
@@ -453,7 +453,7 @@ BlockRenderer::computeBaseVertexFromViewDir(glm::vec3 const &viewdir)
 
 ///////////////////////////////////////////////////////////////////////////////
 void
-BlockRenderer::sortBlocks()
+SlicingBlockRenderer::sortBlocks()
 {
   glm::vec3 const eye{ getCamera().getEye() };
 
@@ -470,7 +470,7 @@ BlockRenderer::sortBlocks()
 
 ///////////////////////////////////////////////////////////////////////////////
 void
-BlockRenderer::handle_ROVChangingMessage(ROVChangingMessage &r)
+SlicingBlockRenderer::handle_ROVChangingMessage(ROVChangingMessage &r)
 {
   // we are on the delivery thread here.
   m_rangeChanging = r.IsChanging;

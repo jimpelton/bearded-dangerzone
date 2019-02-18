@@ -192,8 +192,9 @@ main(int argc, char *argv[])
   std::shared_ptr<subvol::BlockCollection> bc{
       subvol::renderhelp::initializeBlockCollection(loader, indexFile, clo) };
 
-  std::shared_ptr<subvol::BlockRenderer> br{
-      subvol::renderhelp::initializeRenderer(bc, indexFile.getVolume(), clo) };
+
+//  std::shared_ptr<subvol::Renderer> br{
+//      subvol::renderhelp::initializeRenderer(bc, indexFile.getVolume(), clo) };
 
   subvol::renderhelp::initializeControls(window, br);
 //  subvol::renderhelp::BenchmarkLoop loop(window, br, bc, glm::vec3{ 1,0,0 });
