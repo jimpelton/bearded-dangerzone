@@ -93,7 +93,7 @@ set(simple_blocks_HEADERS
         src/messages/messagebroker.h
         src/messages/recipient.h
         src/messages/rovchangingmessage.h
-        src/raycaster/blockraycaster.h)
+        src/raycaster/blockraycaster.h src/blockrenderer.h)
 
 set(simple_blocks_SOURCES
         src/main.cpp

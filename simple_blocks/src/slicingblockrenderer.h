@@ -9,7 +9,7 @@
 #include "sliceset.h"
 #include "classificationtype.h"
 #include "messages/recipient.h"
-
+#include "blockrenderer.h"
 #include "nvtools.h"
 
 #include <bd/graphics/renderer.h>
@@ -23,7 +23,7 @@ namespace subvol
 {
 
 class SlicingBlockRenderer
-    : public bd::Renderer, public Recipient
+    : public BlockRenderer, public Recipient
 {
 
 public:
@@ -145,16 +145,6 @@ private:
   /// Number of slices per block
   glm::u64vec3 m_numSlicesPerBlock;
   /// Transfer function scaling value
-  float m_tfuncScaleValue;
-  /// True to draw bounding boxes.
-  bool m_drawNonEmptyBoundingBoxes;
-  bool m_drawNonEmptySlices;
-  /// Show bounding boxes if rov is changing.
-  bool m_rangeChanging;
-  /// True to use Phong lighting shader.
-  bool m_shouldUseLighting;
-  /// Current background color.
-  glm::vec3 m_backgroundColor;
   /// Transfer function texture
   bd::Texture const *m_colorMapTexture;
   /// Current shader being used (lighting, flat, wire, etc).

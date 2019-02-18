@@ -96,7 +96,7 @@ initializeVertexBuffers(subvol::CommandLineOptions const &clo,
                         glm::u64vec3 *numSlices);
 
 
-std::unique_ptr<bd::Renderer>
+std::unique_ptr<BlockRenderer>
 initializeRenderer(std::unique_ptr<BlockCollection> bc,
                    bd::Volume const &v,
                    subvol::CommandLineOptions const &clo);
