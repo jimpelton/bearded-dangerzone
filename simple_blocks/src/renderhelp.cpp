@@ -11,14 +11,15 @@
 #include "controls.h"
 #include "create_vao.h"
 #include "timing.h"
-
-#include <bd/log/logger.h>
-#include <bd/log/gl_log.h>
-#include <bd/graphics/renderer.h>
 #include "cmdline.h"
 #include "colormap.h"
 #include "constants.h"
 #include "slicingblockrenderer.h"
+#include "raycaster/blockraycaster.h"
+
+#include <bd/log/logger.h>
+#include <bd/log/gl_log.h>
+#include <bd/graphics/renderer.h>
 
 #include <glm/glm.hpp>
 #include <glm/matrix.hpp>
@@ -384,15 +385,17 @@ initializeRenderer(std::shared_ptr<BlockCollection> bc,
 
   bool loaded = initializeTransferFunctions(clo);
 
-  BlockRenderer *br = new SlicingBlockRenderer(
-      numSlices,
-      renderhelp::g_volumeShader,
-      renderhelp::g_volumeShaderLighting,
-      renderhelp::g_wireframeShader,
-      bc,
-      renderhelp::g_quadVao,
-      renderhelp::g_boxVao,
-      renderhelp::g_axisVao);
+//  BlockRenderer *br = new SlicingBlockRenderer(
+//      numSlices,
+//      renderhelp::g_volumeShader,
+//      renderhelp::g_volumeShaderLighting,
+//      renderhelp::g_wireframeShader,
+//      bc,
+//      renderhelp::g_quadVao,
+//      renderhelp::g_boxVao,
+//      renderhelp::g_axisVao);
+
+  BlockRenderer *br = new subvol::render::BlockingRaycaster(bc, v);
 
   setRendererInitialTransferFunction(loaded, "USER", *br);
 

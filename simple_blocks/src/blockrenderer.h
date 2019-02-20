@@ -19,23 +19,38 @@ public:
 
   /// \brief Set the transfer function texture.
   virtual void
-  setColorMapTexture(bd::Texture const &tfunc) = 0;
+  setColorMapTexture(bd::Texture const &tfunc)
+  {
+    _colorMap = &tfunc;
+  }
 
 
   virtual void
-  setColorMapScaleValue(float val) = 0;
+  setColorMapScaleValue(float val)
+  {
+    _tfuncScaleValue = val;
+  };
 
 
   virtual float
-  getColorMapScaleValue() const = 0;
+  getColorMapScaleValue() const
+  {
+    return _tfuncScaleValue;
+  };
 
 
   virtual void
-  setShaderNShiney(float n) = 0;
+  setShaderNShiney(float n)
+  {
+    _shaderNShiney = n;
+  };
 
 
   virtual void
-  setShaderLightPos(glm::vec3 const &L) = 0;
+  setShaderLightPos(glm::vec3 const &L)
+  {
+    _shaderLightPos = L;
+  };
 
 
 //  glm::vec3 const &
@@ -43,7 +58,10 @@ public:
 
 
   virtual void
-  setShaderMaterial(glm::vec3 const &M) = 0;
+  setShaderMaterial(glm::vec3 const &M)
+  {
+    _shaderMat = M;
+  };
 
 
 //  glm::vec3 const &
@@ -51,38 +69,61 @@ public:
 
 
   virtual void
-  setBackgroundColor(glm::vec3 const &c) = 0;
+  setBackgroundColor(glm::vec3 const &c)
+  {
+    _backgroundColor = c;
+  };
 
 
   virtual glm::vec3 const &
-  getBackgroundColor() const = 0;
+  getBackgroundColor() const
+  {
+    return _backgroundColor;
+  };
 
 
   virtual void
-  setShouldUseLighting(bool b) = 0;
+  setShouldUseLighting(bool b)
+  {
+    _shouldUseLighting = true;
+  };
 
 
   virtual bool
-  getShouldUseLighting() const = 0;
+  getShouldUseLighting() const
+  {
+    return _shouldUseLighting;
+  };
 
 
   virtual void
-  setDrawNonEmptyBoundingBoxes(bool b) = 0;
+  setDrawNonEmptyBoundingBoxes(bool b)
+  {
+    _drawNonEmptyBoundingBoxes = b;
+  };
 
   virtual void
-  setDrawNonEmptyBlocks(bool b) = 0;
+  setDrawNonEmptyBlocks(bool b)
+  {
+    _drawNonEmptyBlocks = b;
+  };
 
-//protected:
-//  float m_tfuncScaleValue;
-//  /// True to draw bounding boxes.
-//  bool m_drawNonEmptyBoundingBoxes;
-//  bool m_drawNonEmptySlices;
-//  /// Show bounding boxes if rov is changing.
-//  bool m_rangeChanging;
-//  /// True to use Phong lighting shader.
-//  bool m_shouldUseLighting;
-//  /// Current background color.
-//  glm::vec3 m_backgroundColor;
+protected:
+  float _tfuncScaleValue;
+  /// True to draw bounding boxes.
+  bool _drawNonEmptyBoundingBoxes;
+  /// True to draw the non-empty blocks
+  bool _drawNonEmptyBlocks;
+  /// Show bounding boxes if rov is changing.
+  bool _rangeChanging;
+  /// True to use Phong lighting shader.
+  bool _shouldUseLighting;
+  /// Current background color.
+  glm::vec3 _backgroundColor;
+  glm::vec3 _shaderLightPos;
+  glm::vec3 _shaderMat;
+  float _shaderNShiney;
+  bd::Texture const *_colorMap;
 
 
 };

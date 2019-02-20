@@ -170,6 +170,8 @@ public:
 
   void setUniform(const char* param, const glm::vec3& val);
 
+  void setUniform(const char* param, const glm::vec2& val);
+
   void setUniform(const char* param, glm::f32 val);
   //    void setUniform(const std::string &param, const Texture &tex);
 

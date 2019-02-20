@@ -19,7 +19,8 @@ namespace subvol
 namespace render
 {
 
-BlockingRaycaster::BlockingRaycaster(std::unique_ptr<subvol::BlockCollection> bc)
+BlockingRaycaster::BlockingRaycaster(std::shared_ptr<subvol::BlockCollection> bc,
+    bd::Volume const &v)
   : m_cube {
     {
        -1.0f, -1.0f, 1.0f,
@@ -51,7 +52,8 @@ BlockingRaycaster::BlockingRaycaster(std::unique_ptr<subvol::BlockCollection> bc
        4, 5, 1,
        4, 1, 0,
     } },
-    m_blockCollection{ std::move(bc) }
+    m_blockCollection{ std::move(bc) },
+    m_volume{ v }
 {
 }
 
@@ -68,6 +70,7 @@ bool
 BlockingRaycaster::initialize()
 {
   initShaders();
+  return true;
 }
 
 
@@ -75,7 +78,7 @@ BlockingRaycaster::initialize()
 void
 BlockingRaycaster::draw()
 {
-
+  drawNonEmptyBlocks();
 }
 
 
@@ -104,11 +107,12 @@ BlockingRaycaster::drawNonEmptyBlocks()
     if (b->status() & bd::Block::GPU_RES) {
       setWorldMatrix(b->transform());
       b->texture()->bind(BLOCK_TEXTURE_UNIT);
+      setUniforms();
       gl_check(glBindSampler(m_volumeSampler, BLOCK_TEXTURE_UNIT));
-      m_alphaBlending->setUniform(VOLUME_MVP_MATRIX_UNIFORM_STR, getWorldViewProjectionMatrix());
       m_cube.draw();
     }
   }
+
 }
 
 
@@ -116,7 +120,31 @@ BlockingRaycaster::drawNonEmptyBlocks()
 void
 BlockingRaycaster::setUniforms()
 {
+  auto top = m_volume.worldDims() * 0.5f;
+  auto bot = -m_volume.worldDims() * 0.5f;
+  glm::mat3 mv = glm::mat3{getViewMatrix() * getWorldMatrix()};
+  glm::mat3 normalMatrix = glm::transpose(glm::inverse(mv));
 
+  m_alphaBlending->setUniform("ViewMatrix", getViewMatrix());
+  m_alphaBlending->setUniform("ModelViewProjectionMatrix", getWorldViewProjectionMatrix());
+  m_alphaBlending->setUniform("NormalMatrix", normalMatrix);
+  m_alphaBlending->setUniform("aspect_ratio", getAspectRatio());
+  m_alphaBlending->setUniform("focal_length", getFov());
+  m_alphaBlending->setUniform("viewport_size", glm::vec2{getViewPortWidth(), getViewPortHeight()});
+  m_alphaBlending->setUniform("ray_origin", getCamera().getEye());
+  m_alphaBlending->setUniform("top", top);
+  m_alphaBlending->setUniform("bottom", bot);
+  m_alphaBlending->setUniform("background_colour", glm::vec3{0.15, 0.15, 0.15});
+//  m_alphaBlending->setUniform("light_position", m_lightPosition);
+//  m_alphaBlending->setUniform("material_colour", m_diffuseMaterial);
+  m_alphaBlending->setUniform("step_length", 0.001f);
+//  m_alphaBlending->setUniform("threshold", m_threshold);
+//  m_alphaBlending->setUniform("gamma", m_gamma);
+  m_alphaBlending->setUniform("volume", 0);
+  m_alphaBlending->setUniform("jitter", 1);
+
+  glClearColor(0.15, 0.15, 0.15, 1.0);
+  glClear(GL_COLOR_BUFFER_BIT);
 }
 
 
@@ -163,6 +191,8 @@ BlockingRaycaster::initShaders()
 //  gl_check(glSamplerParameterf(sampler_state, GL_TEXTURE_MAX_ANISOTROPY_EXT, 16.0f));
   gl_check(glBindSampler(sampler_state, BLOCK_TEXTURE_UNIT));
   m_volumeSampler = sampler_state;
+
+  
 
 }
 

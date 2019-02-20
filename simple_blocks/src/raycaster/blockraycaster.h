@@ -6,11 +6,12 @@
 #define SUBVOL_BLOCKRAYCASTER_H
 
 #include "io/blockcollection.h"
-
+#include "blockrenderer.h"
 #include <bd/graphics/renderer.h>
 #include <bd/graphics/shader.h>
 #include <bd/graphics/vertexarrayobject.h>
 #include <bd/geo/mesh.h>
+#include <bd/volume/volume.h>
 
 #include <memory>
 
@@ -19,24 +20,23 @@ namespace subvol
 namespace render
 {
 
-class BlockingRaycaster : public bd::Renderer
+class BlockingRaycaster : public subvol::BlockRenderer
 {
 public:
 
   ///////////////////////////////////////////////////////////////////////////////
-  BlockingRaycaster(std::unique_ptr<subvol::BlockCollection> bc);
+  BlockingRaycaster(std::shared_ptr<subvol::BlockCollection> bc, bd::Volume const &v);
 
 
   ///////////////////////////////////////////////////////////////////////////////
-  virtual
   ~BlockingRaycaster() noexcept override;
 
 
-  virtual bool
+  bool
   initialize() override;
 
   ///////////////////////////////////////////////////////////////////////////////
-  virtual void
+  void
   draw() override;
 
 
@@ -74,8 +74,11 @@ private:
 
 private:
   std::unique_ptr<bd::ShaderProgram> m_alphaBlending;
-  std::unique_ptr<subvol::BlockCollection> m_blockCollection;
+  std::shared_ptr<bd::ShaderProgram> m_wireframeShader;
+  std::shared_ptr<subvol::BlockCollection> m_blockCollection;
+
   bd::Mesh m_cube;
+  bd::Volume m_volume;
   unsigned int m_volumeSampler;
 };
 

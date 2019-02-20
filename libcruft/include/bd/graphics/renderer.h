@@ -131,6 +131,9 @@ public:
   unsigned int
   getViewPortHeight() const;
 
+  float
+  getAspectRatio() const;
+
 //  void setNearClip(float near);
 
 //  void setFarClip(float far);
@@ -203,7 +206,8 @@ private:
   unsigned int m_viewPortWidth;
   /// Window height
   unsigned int m_viewPortHeight;
-
+  /// Aspect ratio of the view port
+  float m_aspectRatio;
   /// Near clipping plain distance
   float m_near;
   /// Far clipping plain distance

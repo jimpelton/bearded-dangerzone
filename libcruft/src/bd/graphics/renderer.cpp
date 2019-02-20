@@ -45,6 +45,7 @@ Renderer::resize(unsigned int w, unsigned int h)
   m_viewPortYPos = 0;
   m_viewPortWidth = w;
   m_viewPortHeight = h;
+  m_aspectRatio = w / static_cast<float>(h);
   glViewport(0, 0, w, h);
 
 //  setViewMatrix(I4x4);
@@ -56,7 +57,6 @@ Renderer::resize(unsigned int w, unsigned int h)
 
 
 }
-
 
 unsigned int
 Renderer::getViewPortWidth() const
@@ -71,6 +71,12 @@ Renderer::getViewPortHeight() const
   return m_viewPortHeight;
 }
 
+
+float
+Renderer::getAspectRatio() const
+{
+  return m_aspectRatio;
+}
 
 void
 Renderer::setFov(float fov)
