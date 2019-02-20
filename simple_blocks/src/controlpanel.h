@@ -7,6 +7,8 @@
 
 #include "blockrenderer.h"
 #include "classificationtype.h"
+#include "cmdline.h"
+#include "messages/recipient.h"
 
 #include <bd/io/indexfile/indexfile.h>
 
@@ -15,7 +17,6 @@
 #include <QReadWriteLock>
 
 #include <map>
-#include "cmdline.h"
 
 class QSlider;
 
@@ -147,8 +148,7 @@ private:
 
 };
 
-class StatsPanel
-    : public QWidget, public Recipient
+class StatsPanel : public QWidget, public subvol::Recipient
 {
 Q_OBJECT
 

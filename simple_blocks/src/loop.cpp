@@ -13,11 +13,11 @@ namespace renderhelp
 {
 
 ///////////////////////////////////////////////////////////////////////////////
-Loop::Loop(GLFWwindow *window, std::unique_ptr<Renderer> r,
-           std::shared_ptr<BlockCollection> c)
+Loop::Loop(GLFWwindow *window, std::shared_ptr<bd::Renderer> r,
+           std::shared_ptr<subvol::BlockCollection> c)
     : _window{ window }
-    , _renderer{ r }
-    , _collection{ c }
+    , _renderer{ std::move(r) }
+    , _collection{ std::move(c) }
     , m_timeOfLastJob{ 0 }
     , m_tf{ 1.0/glfwGetTimerFrequency() }
 {

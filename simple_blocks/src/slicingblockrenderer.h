@@ -52,23 +52,23 @@ public:
 
   /// \brief Set the transfer function texture.
   void
-  setColorMapTexture(bd::Texture const &tfunc);
+  setColorMapTexture(bd::Texture const &tfunc) override;
 
 
   void
-  setColorMapScaleValue(float val);
+  setColorMapScaleValue(float val) override;
 
 
   float
-  getColorMapScaleValue() const;
+  getColorMapScaleValue() const override;
 
 
   void
-  setShaderNShiney(float n);
+  setShaderNShiney(float n) override;
 
 
   void
-  setShaderLightPos(glm::vec3 const &L);
+  setShaderLightPos(glm::vec3 const &L) override;
 
 
 //  glm::vec3 const &
@@ -76,7 +76,7 @@ public:
 
 
   void
-  setShaderMaterial(glm::vec3 const &M);
+  setShaderMaterial(glm::vec3 const &M) override;
 
 
 //  glm::vec3 const &
@@ -84,27 +84,27 @@ public:
 
 
   void
-  setBackgroundColor(glm::vec3 const &c);
+  setBackgroundColor(glm::vec3 const &c) override;
 
 
   glm::vec3 const &
-  getBackgroundColor() const;
+  getBackgroundColor() const override;
 
 
   void
-  setShouldUseLighting(bool b);
+  setShouldUseLighting(bool b) override;
 
 
   bool
-  getShouldUseLighting() const;
+  getShouldUseLighting() const override;
 
 
   void
-  setDrawNonEmptyBoundingBoxes(bool b);
+  setDrawNonEmptyBoundingBoxes(bool b) override;
 
 
   void
-  setDrawNonEmptySlices(bool b);
+  setDrawNonEmptyBlocks(bool b);
 
 
   /// \brief Draw wireframe bounding boxes around the blocks.
@@ -142,6 +142,17 @@ private:
   sortBlocks();
 
 
+  float m_tfuncScaleValue;
+  /// True to draw bounding boxes.
+  bool m_drawNonEmptyBoundingBoxes;
+  bool m_drawNonEmptySlices;
+  /// Show bounding boxes if rov is changing.
+  bool m_rangeChanging;
+  /// True to use Phong lighting shader.
+  bool m_shouldUseLighting;
+
+  /// Current background color.
+  glm::vec3 m_backgroundColor;
   /// Number of slices per block
   glm::u64vec3 m_numSlicesPerBlock;
   /// Transfer function scaling value

@@ -40,7 +40,7 @@ SlicingBlockRenderer::SlicingBlockRenderer(glm::u64vec3 numSlices,
                              std::shared_ptr<bd::VertexArrayObject> blocksVAO,
                              std::shared_ptr<bd::VertexArrayObject> bboxVAO,
                              std::shared_ptr<bd::VertexArrayObject> axisVao)
-    : Renderer()
+    : BlockRenderer()
     , Recipient("BlockRenderer")
 
     , m_numSlicesPerBlock{ numSlices }
@@ -224,7 +224,7 @@ SlicingBlockRenderer::setDrawNonEmptyBoundingBoxes(bool b)
 
 ///////////////////////////////////////////////////////////////////////////////
 void
-SlicingBlockRenderer::setDrawNonEmptySlices(bool b)
+SlicingBlockRenderer::setDrawNonEmptyBlocks(bool b)
 {
   m_drawNonEmptySlices = b;
 }

@@ -18,6 +18,7 @@
 #include "cmdline.h"
 #include "colormap.h"
 #include "constants.h"
+#include "slicingblockrenderer.h"
 
 #include <glm/glm.hpp>
 #include <glm/matrix.hpp>
@@ -368,7 +369,7 @@ initializeVertexBuffers(subvol::CommandLineOptions const &clo,
 
 
 /////////////////////////////////////////////////////////////////////////////////
-BlockRenderer *
+std::shared_ptr<BlockRenderer>
 initializeRenderer(std::shared_ptr<BlockCollection> bc,
                    bd::Volume const &v,
                    subvol::CommandLineOptions const &clo)
@@ -383,7 +384,7 @@ initializeRenderer(std::shared_ptr<BlockCollection> bc,
 
   bool loaded = initializeTransferFunctions(clo);
 
-  BlockRenderer *br = new BlockRenderer(
+  BlockRenderer *br = new SlicingBlockRenderer(
       numSlices,
       renderhelp::g_volumeShader,
       renderhelp::g_volumeShaderLighting,
@@ -400,10 +401,10 @@ initializeRenderer(std::shared_ptr<BlockCollection> bc,
   br->getCamera().setLookAt({ 0, 0, 0 });
   br->getCamera().setUp({ 0, 1, 0 });
   br->setViewMatrix(br->getCamera().createViewMatrix());
-  br->setDrawNonEmptySlices(true);
+  br->setDrawNonEmptyBlocks(true);
   br->setDrawNonEmptyBoundingBoxes(false);
 
-  return br;
+  return std::shared_ptr<BlockRenderer>(br);
 }
 
 

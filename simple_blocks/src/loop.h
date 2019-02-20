@@ -9,9 +9,10 @@
 #include "blockrenderer.h"
 #include "timing.h"
 #include "axis_enum.h"
+#include "io/blockcollection.h"
 
 #include <bd/graphics/renderer.h>
-
+#include <memory>
 namespace subvol
 {
 namespace renderhelp
@@ -20,8 +21,8 @@ namespace renderhelp
 class Loop
 {
 public:
-  Loop(GLFWwindow *, std::shared_ptr<BlockRenderer> r,
-       std::shared_ptr<BlockCollection> c);
+  Loop(GLFWwindow *, std::shared_ptr<bd::Renderer> r,
+       std::shared_ptr<subvol::BlockCollection> c);
 
 
   virtual
@@ -41,7 +42,7 @@ protected:
   double
   timeNow() const;
 
-
+protected:
   GLFWwindow *_window;
   std::shared_ptr<bd::Renderer> _renderer;
   std::shared_ptr<BlockCollection> _collection;
