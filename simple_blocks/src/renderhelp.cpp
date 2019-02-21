@@ -220,18 +220,19 @@ setInitialGLState()
   bd::Info() << "Initializing gl state.";
   gl_check(glClearColor(0.15f, 0.15f, 0.15f, 0.0f));
 
-  gl_check(glEnable(GL_CULL_FACE));
-  gl_check(glCullFace(GL_BACK));
+//  gl_check(glEnable(GL_CULL_FACE));
+//  gl_check(glCullFace(GL_BACK));
 //  gl_check(glDisable(GL_CULL_FACE));
 
-  gl_check(glEnable(GL_DEPTH_TEST));
-  gl_check(glDepthFunc(GL_LESS));
+//  gl_check(glEnable(GL_DEPTH_TEST));
+//  gl_check(glDepthFunc(GL_LESS));
+//  gl_check(glDisable(GL_DEPTH_TEST));
 
-  gl_check(glEnable(GL_BLEND));
-  gl_check(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+//  gl_check(glEnable(GL_BLEND));
+//  gl_check(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
 
-  gl_check(glEnable(GL_PRIMITIVE_RESTART));
-  gl_check(glPrimitiveRestartIndex(0xFFFF));
+//  gl_check(glEnable(GL_PRIMITIVE_RESTART));
+//  gl_check(glPrimitiveRestartIndex(0xFFFF));
 }
 
 
@@ -377,11 +378,11 @@ initializeRenderer(std::shared_ptr<BlockCollection> bc,
 {
   renderhelp::setInitialGLState();
   glm::u64vec3 numSlices;
-  renderhelp::initializeVertexBuffers(clo, v, &numSlices);
-  bd::Info() << "Generated: " << numSlices[0] << "x" << numSlices[1] << "x" << numSlices[2] << " slices.";
-  if (!renderhelp::initializeShaders(clo)) {
-    return nullptr;
-  }
+//  renderhelp::initializeVertexBuffers(clo, v, &numSlices);
+//  bd::Info() << "Generated: " << numSlices[0] << "x" << numSlices[1] << "x" << numSlices[2] << " slices.";
+//  if (!renderhelp::initializeShaders(clo)) {
+//    return nullptr;
+//  }
 
   bool loaded = initializeTransferFunctions(clo);
 
@@ -396,6 +397,7 @@ initializeRenderer(std::shared_ptr<BlockCollection> bc,
 //      renderhelp::g_axisVao);
 
   BlockRenderer *br = new subvol::render::BlockingRaycaster(bc, v);
+  br->initialize();
 
   setRendererInitialTransferFunction(loaded, "USER", *br);
 

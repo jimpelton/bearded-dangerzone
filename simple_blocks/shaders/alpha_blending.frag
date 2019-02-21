@@ -42,7 +42,7 @@ uniform float step_length;
 uniform float threshold;
 
 uniform sampler3D volume;
-uniform sampler2D jitter;
+//uniform sampler2D jitter;
 
 uniform float gamma;
 
@@ -112,7 +112,7 @@ void main()
     vec3 step_vector = step_length * ray / ray_length;
 
     // Random jitter
-    ray_start += step_vector * texture(jitter, gl_FragCoord.xy / viewport_size).r;
+    ray_start += step_vector; // * texture(jitter, gl_FragCoord.xy / viewport_size).r;
 
     vec3 position = ray_start;
     vec4 colour = vec4(0.0);

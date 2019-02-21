@@ -87,6 +87,9 @@ public:
   origin() const;
 
 
+  glm::vec3 const &
+  worldDims() const;
+
   /// \brief Get the texture assoc'd with this block.
   Texture* 
   texture() ;
@@ -155,6 +158,7 @@ private:
   FileBlock m_fb;        ///< The FileBlock (contains the info from IndexFile)
   glm::u64vec3 m_ijk;    ///< Block's location in block coordinates.
   glm::vec3 m_origin;    ///< This blocks center in world coordinates.
+  glm::vec3 m_worldDims; ///< The size of this block in world coords.
   glm::mat4 m_transform; ///< Block's model-to-world transform matrix.
 
   Texture *m_tex ; ///< Texture assoc'd with this block.

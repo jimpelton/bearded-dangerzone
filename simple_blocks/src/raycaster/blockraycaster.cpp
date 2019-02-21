@@ -4,6 +4,7 @@
 
 #include "blockraycaster.h"
 #include "constants.h"
+#include "messages/messagebroker.h"
 
 #include <bd/graphics/shader.h>
 #include <bd/graphics/vertexarrayobject.h>
@@ -21,7 +22,8 @@ namespace render
 
 BlockingRaycaster::BlockingRaycaster(std::shared_ptr<subvol::BlockCollection> bc,
     bd::Volume const &v)
-  : m_cube {
+  : Recipient("blocking ray caster"),
+  m_cube {
     {
        -1.0f, -1.0f, 1.0f,
        1.0f, -1.0f, 1.0f,
@@ -69,6 +71,7 @@ BlockingRaycaster::~BlockingRaycaster() noexcept
 bool
 BlockingRaycaster::initialize()
 {
+  Broker::subscribeRecipient(this);
   initShaders();
   return true;
 }
@@ -102,48 +105,48 @@ BlockingRaycaster::drawAxis()
 void
 BlockingRaycaster::drawNonEmptyBlocks()
 {
-  std::vector<bd::Block*> non_empties{ m_blockCollection->getNonEmptyBlocks() };
+  std::vector<bd::Block*> const &non_empties = m_blockCollection->getNonEmptyBlocks();
+  m_alphaBlending->bind();
   for (auto &b : non_empties) {
     if (b->status() & bd::Block::GPU_RES) {
       setWorldMatrix(b->transform());
       b->texture()->bind(BLOCK_TEXTURE_UNIT);
-      setUniforms();
+      setUniforms(*b);
       gl_check(glBindSampler(m_volumeSampler, BLOCK_TEXTURE_UNIT));
       m_cube.draw();
     }
   }
-
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 void
-BlockingRaycaster::setUniforms()
+BlockingRaycaster::setUniforms(bd::Block const &b)
 {
-  auto top = m_volume.worldDims() * 0.5f;
+  auto top = b.origin() - (b.worldDims() * 0.5f);
   auto bot = -m_volume.worldDims() * 0.5f;
   glm::mat3 mv = glm::mat3{getViewMatrix() * getWorldMatrix()};
   glm::mat3 normalMatrix = glm::transpose(glm::inverse(mv));
 
   m_alphaBlending->setUniform("ViewMatrix", getViewMatrix());
-  m_alphaBlending->setUniform("ModelViewProjectionMatrix", getWorldViewProjectionMatrix());
+  m_alphaBlending->setUniform("MVP", getWorldViewProjectionMatrix());
   m_alphaBlending->setUniform("NormalMatrix", normalMatrix);
   m_alphaBlending->setUniform("aspect_ratio", getAspectRatio());
-  m_alphaBlending->setUniform("focal_length", getFov());
+  m_alphaBlending->setUniform("focal_length", getFocalLength());
   m_alphaBlending->setUniform("viewport_size", glm::vec2{getViewPortWidth(), getViewPortHeight()});
   m_alphaBlending->setUniform("ray_origin", getCamera().getEye());
   m_alphaBlending->setUniform("top", top);
   m_alphaBlending->setUniform("bottom", bot);
   m_alphaBlending->setUniform("background_colour", glm::vec3{0.15, 0.15, 0.15});
-//  m_alphaBlending->setUniform("light_position", m_lightPosition);
-//  m_alphaBlending->setUniform("material_colour", m_diffuseMaterial);
-  m_alphaBlending->setUniform("step_length", 0.001f);
+  m_alphaBlending->setUniform("light_position", _shaderLightPos);
+  m_alphaBlending->setUniform("material_colour", _shaderMat);
+  m_alphaBlending->setUniform("step_length", 0.0001f);
 //  m_alphaBlending->setUniform("threshold", m_threshold);
-//  m_alphaBlending->setUniform("gamma", m_gamma);
-  m_alphaBlending->setUniform("volume", 0);
-  m_alphaBlending->setUniform("jitter", 1);
+  m_alphaBlending->setUniform("gamma", 2.2f);
+  m_alphaBlending->setUniform("volume", BLOCK_TEXTURE_UNIT);
+//  m_alphaBlending->setUniform("jitter", 1);
 
-  glClearColor(0.15, 0.15, 0.15, 1.0);
+  glClearColor(0.15, 0.15, 0.15, 0.0);
   glClear(GL_COLOR_BUFFER_BIT);
 }
 
@@ -170,12 +173,11 @@ BlockingRaycaster::sortBlocks()
 void
 BlockingRaycaster::initShaders()
 {
-  m_alphaBlending = std::unique_ptr<bd::ShaderProgram>();
+  m_alphaBlending = std::unique_ptr<bd::ShaderProgram>( new bd::ShaderProgram() );
   auto pid = m_alphaBlending->linkProgram("shaders/alpha_blending.vert", "shaders/alpha_blending.frag");
   if (pid == 0) {
     throw std::runtime_error("could not initialize shaders");
   }
-
 
   GLuint sampler_state{ 0 };
   gl_check(glGenSamplers(1, &sampler_state));
@@ -191,12 +193,23 @@ BlockingRaycaster::initShaders()
 //  gl_check(glSamplerParameterf(sampler_state, GL_TEXTURE_MAX_ANISOTROPY_EXT, 16.0f));
   gl_check(glBindSampler(sampler_state, BLOCK_TEXTURE_UNIT));
   m_volumeSampler = sampler_state;
-
-  
-
 }
 
 
+///////////////////////////////////////////////////////////////////////////////
+void
+BlockingRaycaster::handle_ROVChangingMessage(ROVChangingMessage &r)
+{
+  // we are on the delivery thread here.
+  m_rangeChanging = r.IsChanging;
+//  if (b) {
+//    m_collection->pauseLoaderThread();
+//  } else {
+  // if rov is not changing anymore, then yayy! update with new visible blocks.
+  if (!r.IsChanging) {
+    m_blockCollection->updateBlockCache();
+  }
+}
 
 
 

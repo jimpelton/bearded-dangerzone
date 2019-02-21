@@ -24,8 +24,8 @@
 
 in vec4 a_position;
 
-uniform mat4 ModelViewProjectionMatrix;
+uniform mat4 MVP;
 
 void main() {
-    gl_Position = ModelViewProjectionMatrix * a_position;
+    gl_Position = MVP * a_position;
 }

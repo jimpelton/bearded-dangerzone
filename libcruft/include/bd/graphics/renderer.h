@@ -148,6 +148,9 @@ public:
   getFov() const;
 
 
+  float
+  getFocalLength() const;
+
   void
   setClearColor(glm::vec3 const &color);
 
@@ -214,6 +217,8 @@ private:
   float m_far;
   /// Field of view
   float m_fov;
+  /// focal length
+  float m_focalLength;
 
   /// Clear color
   glm::vec3 m_clearColor;

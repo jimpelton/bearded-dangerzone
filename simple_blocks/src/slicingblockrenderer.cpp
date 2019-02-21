@@ -481,7 +481,6 @@ SlicingBlockRenderer::handle_ROVChangingMessage(ROVChangingMessage &r)
   if (!r.IsChanging) {
     m_collection->updateBlockCache();
   }
-
 }
 
 

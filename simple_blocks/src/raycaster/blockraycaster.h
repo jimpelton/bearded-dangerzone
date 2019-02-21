@@ -20,7 +20,7 @@ namespace subvol
 namespace render
 {
 
-class BlockingRaycaster : public subvol::BlockRenderer
+class BlockingRaycaster : public subvol::BlockRenderer, public subvol::Recipient
 {
 public:
 
@@ -60,8 +60,10 @@ public:
 
   ///////////////////////////////////////////////////////////////////////////////
   void
-  setUniforms();
+  setUniforms(bd::Block const &b);
 
+  void
+  handle_ROVChangingMessage(subvol::ROVChangingMessage &r) override;
 
 private:
   ///////////////////////////////////////////////////////////////////////////////
@@ -80,6 +82,7 @@ private:
   bd::Mesh m_cube;
   bd::Volume m_volume;
   unsigned int m_volumeSampler;
+  bool m_rangeChanging;
 };
 
 }

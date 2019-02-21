@@ -8,6 +8,8 @@
 
 #include <bd/log/logger.h>
 
+#include <cmath>
+
 namespace bd
 {
 
@@ -18,9 +20,11 @@ Renderer::Renderer()
     , m_viewPortYPos{ 0 }
     , m_viewPortWidth{ 640 }
     , m_viewPortHeight{ 480 }
+    , m_aspectRatio{ m_viewPortWidth / (float)m_viewPortHeight }
     , m_near{ 0.01f }
     , m_far{ 10000.0f }
     , m_fov{ 50.0f }
+    , m_focalLength{ 0.0f }
     , m_clearColor{ 0, 0, 0 }
     , m_worldMat{ 1.0f }
     , m_viewMat{ 1.0f }
@@ -82,6 +86,9 @@ void
 Renderer::setFov(float fov)
 {
   m_fov = fov;
+
+  m_focalLength = 1.0f / std::tan(M_PI / 180.0f * fov / 2.0f);
+
   updateProjectionMatrix();
 }
 
@@ -90,6 +97,13 @@ float
 Renderer::getFov() const
 {
   return m_fov;
+}
+
+
+float
+Renderer::getFocalLength() const
+{
+  return m_focalLength;
 }
 
 
