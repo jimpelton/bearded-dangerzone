@@ -97,15 +97,15 @@ try
   cmd.add(mainMemoryArg);
 
   TCLAP::ValueArg<float>
-      samplingModifierXArg("", "smod-x", "Sampling modifier", true, 0, "float");
+      samplingModifierXArg("", "smod-x", "Sampling modifier", false, 0, "float");
   cmd.add(samplingModifierXArg);
 
   TCLAP::ValueArg<float>
-      samplingModifierYArg("", "smod-y", "Sampling modifier", true, 0, "float");
+      samplingModifierYArg("", "smod-y", "Sampling modifier", false, 0, "float");
   cmd.add(samplingModifierYArg);
 
   TCLAP::ValueArg<float>
-      samplingModifierZArg("", "smod-z", "Sampling modifier", true, 0, "float");
+      samplingModifierZArg("", "smod-z", "Sampling modifier", false, 0, "float");
   cmd.add(samplingModifierZArg);
 
   cmd.parse(argc, argv);
