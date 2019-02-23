@@ -7,12 +7,6 @@ cmake_minimum_required(VERSION 2.8)
 #### P r o j e c t   D e f i n i t i o n  ##################################
 project(cruft CXX)
 
-#### Graphics & Math Libraries ################################################
-find_package(OpenGL REQUIRED)
-find_package(GLFW REQUIRED)
-find_package(GLEW REQUIRED)
-find_package(GLM REQUIRED)
-
 #### Platform Specifics ################################################
 if (UNIX)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} \
@@ -44,12 +38,16 @@ if (UNIX)
 endif()
 target_include_directories(cruft PUBLIC
         "${CMAKE_CURRENT_SOURCE_DIR}/include"
-        "${THIRDPARTY_DIR}/json/include")
+        "${THIRDPARTY_DIR}/json/include"
+		"${GLEW_INCLUDE_DIR}"
+        "${GLM_INCLUDE_DIR}"
+        "${GLFW_INCLUDE_DIRS}"
+		)
 
 target_link_libraries(cruft
     "${GLEW_LIBRARIES}"
     "${OPENGL_LIBRARIES}"
-    "${GLFW_LIBRARIES}")
+    )
 
 add_definitions(-DGLEW_STATIC)
 if (WIN32)
