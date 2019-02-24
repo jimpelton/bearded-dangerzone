@@ -67,7 +67,7 @@ BlockingRaycaster::BlockingRaycaster(std::shared_ptr<subvol::BlockCollection> bc
 ///////////////////////////////////////////////////////////////////////////////
 BlockingRaycaster::~BlockingRaycaster() noexcept
 {
-
+  Broker::unsubscribeRecipient(this);
 }
 
 
@@ -86,7 +86,7 @@ void
 BlockingRaycaster::draw()
 {
   gl_check(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
-  drawAxis();
+  // drawAxis();
   drawNonEmptyBlocks();
 }
 
@@ -152,8 +152,8 @@ BlockingRaycaster::drawNonEmptyBlocks()
 void
 BlockingRaycaster::setUniforms(bd::Block const &b)
 {
-  auto top = b.origin() - (b.worldDims() * 0.5f);
-  auto bot = -m_volume.worldDims() * 0.5f;
+  auto top = b.worldDims();
+  auto bot = -b.worldDims();
   glm::mat3 mv = glm::mat3{getViewMatrix() * getWorldMatrix()};
   glm::mat3 normalMatrix = glm::transpose(glm::inverse(mv));
 
