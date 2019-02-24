@@ -6,10 +6,13 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <array>
+#include "bd/graphics/drawable.h"
+#include "../../../../simple_blocks/src/create_vao.h"
 
 namespace bd
 {
-class CoordinateAxis
+class CoordinateAxis : public bd::Drawable
+
 {
 public:
   static const std::array<glm::vec4, 6> verts;
@@ -21,12 +24,11 @@ public:
 
   virtual ~CoordinateAxis() { }
 
-  void setModel(glm::mat4 const &m);
-
-  glm::mat4 const & getModel() const;
+  void draw() override;
 
 private:
-  glm::mat4 m_model;
+  VertexArrayObject m_vao;
+
 };
 } // namespace bd
 

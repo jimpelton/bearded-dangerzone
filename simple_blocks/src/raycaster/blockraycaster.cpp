@@ -14,6 +14,7 @@
 #include <GL/glew.h>
 
 #include <memory>
+#include "bd/geo/axis.h"
 
 namespace subvol
 {
@@ -22,8 +23,11 @@ namespace render
 
 BlockingRaycaster::BlockingRaycaster(std::shared_ptr<subvol::BlockCollection> bc,
     bd::Volume const &v)
-  : Recipient("blocking ray caster"),
-  m_cube {
+  : Recipient("blocking ray caster")
+  , m_alphaBlending{}
+  , m_wireframeShader{}
+  , m_blockCollection{ std::move(bc) }
+  , m_cube {
     {
        -1.0f, -1.0f, 1.0f,
        1.0f, -1.0f, 1.0f,
@@ -53,9 +57,9 @@ BlockingRaycaster::BlockingRaycaster(std::shared_ptr<subvol::BlockCollection> bc
        // bottom
        4, 5, 1,
        4, 1, 0,
-    } },
-    m_blockCollection{ std::move(bc) },
-    m_volume{ v }
+    } }
+    , m_axis{ }
+    , m_volume{ v }
 {
 }
 
@@ -81,6 +85,8 @@ BlockingRaycaster::initialize()
 void
 BlockingRaycaster::draw()
 {
+  gl_check(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+  drawAxis();
   drawNonEmptyBlocks();
 }
 
@@ -89,7 +95,26 @@ BlockingRaycaster::draw()
 void
 BlockingRaycaster::drawNonEmptyBoundingBoxes()
 {
-
+  // m_wireframeShader->bind();
+  // m_boxesVao->bind();
+  // size_t const nblk{ m_nonEmptyBlocks->size() };
+  // for (size_t i{ 0 }; i < nblk; ++i) {
+  //
+  //   bd::Block *b{ ( *m_nonEmptyBlocks )[i] };
+  //
+  //   setWorldMatrix(b->transform());
+  //   m_wireframeShader->setUniform(WIREFRAME_MVP_MATRIX_UNIFORM_STR,
+  //                                 getWorldViewProjectionMatrix());
+  //   gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, (GLvoid *) 0));
+  //   gl_check(glDrawElements(GL_LINE_LOOP,
+  //                           4,
+  //                           GL_UNSIGNED_SHORT,
+  //                           (GLvoid *) ( 4 * sizeof(GLushort))));
+  //   gl_check(glDrawElements(GL_LINES,
+  //                           8,
+  //                           GL_UNSIGNED_SHORT,
+  //                           (GLvoid *) ( 8 * sizeof(GLushort))));
+  // }
 }
 
 
@@ -97,7 +122,10 @@ BlockingRaycaster::drawNonEmptyBoundingBoxes()
 void
 BlockingRaycaster::drawAxis()
 {
-
+  m_wireframeShader->bind();
+  m_wireframeShader->setUniform(WIREFRAME_MVP_MATRIX_UNIFORM_STR, getWorldViewProjectionMatrix());
+  m_axis.draw();
+  m_wireframeShader->unbind();
 }
 
 
@@ -116,6 +144,7 @@ BlockingRaycaster::drawNonEmptyBlocks()
       m_cube.draw();
     }
   }
+  m_alphaBlending->unbind();
 }
 
 
@@ -146,8 +175,8 @@ BlockingRaycaster::setUniforms(bd::Block const &b)
   m_alphaBlending->setUniform("volume", BLOCK_TEXTURE_UNIT);
 //  m_alphaBlending->setUniform("jitter", 1);
 
-  glClearColor(0.15, 0.15, 0.15, 0.0);
-  glClear(GL_COLOR_BUFFER_BIT);
+  // glClearColor(0.15, 0.15, 0.15, 0.0);
+  // glClear(GL_COLOR_BUFFER_BIT);
 }
 
 
@@ -193,8 +222,32 @@ BlockingRaycaster::initShaders()
 //  gl_check(glSamplerParameterf(sampler_state, GL_TEXTURE_MAX_ANISOTROPY_EXT, 16.0f));
   gl_check(glBindSampler(sampler_state, BLOCK_TEXTURE_UNIT));
   m_volumeSampler = sampler_state;
+
+  m_wireframeShader = std::unique_ptr<bd::ShaderProgram>(new bd::ShaderProgram());
+  pid = m_wireframeShader->linkProgram("shaders/vert_vertexcolor_passthrough.glsl", "shaders/frag_vertcolor.glsl");
+  if (pid == 0) {
+    throw std::runtime_error("could not initialize vertex color shader");
+  }
 }
 
+// void BlockingRaycaster::initAxisVao()
+// {
+//   using BDAxis = bd::CoordinateAxis;
+//   // vertex positions into attribute 0
+//   vao.addVbo((float *) ( BDAxis::verts.data()),
+//              BDAxis::verts.size()*BDAxis::vert_element_size,
+//              BDAxis::vert_element_size,
+//              VERTEX_COORD_ATTR,
+//              bd::VertexArrayObject::Usage::Static_Draw); // attr 0
+//
+//   // vertex colors into attribute 1
+//   vao.addVbo((float *) ( BDAxis::colors.data()),
+//              BDAxis::colors.size()*3,
+//              3, // 3 floats per color
+//              VERTEX_COLOR_ATTR,
+//              bd::VertexArrayObject::Usage::Static_Draw); // attr 1
+// }
+//
 
 ///////////////////////////////////////////////////////////////////////////////
 void

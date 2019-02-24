@@ -154,6 +154,7 @@ init_gl(subvol::CommandLineOptions &clo)
 /////////////////////////////////////////////////////////////////////////////////
 int
 main(int argc, char *argv[])
+try
 {
   subvol::Broker::start();
 
@@ -229,4 +230,7 @@ main(int argc, char *argv[])
   subvol::cleanup();
 
   return 0;
+} catch (std::exception e)
+{
+	std::cerr << "Exception caught in main:" << e.what() << std::endl;
 }

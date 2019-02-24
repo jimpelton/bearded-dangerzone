@@ -18,6 +18,8 @@ enum class ShaderType
   Fragment
 };
 
+
+
 //////////////////////////////////////////////////////////////////////////
 /// \brief A static class with convenience method(s) to compile a shader
 /// without having to use the Shader class.

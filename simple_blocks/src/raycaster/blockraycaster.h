@@ -7,13 +7,15 @@
 
 #include "io/blockcollection.h"
 #include "blockrenderer.h"
+
 #include <bd/graphics/renderer.h>
 #include <bd/graphics/shader.h>
-#include <bd/graphics/vertexarrayobject.h>
+#include <bd/geo/axis.h>
 #include <bd/geo/mesh.h>
 #include <bd/volume/volume.h>
 
 #include <memory>
+#include "bd/geo/axis.h"
 
 namespace subvol
 {
@@ -70,16 +72,28 @@ private:
   void
   sortBlocks();
 
+
   ///////////////////////////////////////////////////////////////////////////////
   void
   initShaders();
 
+
+  ///////////////////////////////////////////////////////////////////////////////
+  // void
+  // initBoxVao();
+  
+
+  ///////////////////////////////////////////////////////////////////////////////
+  // void
+  // initAxisVao();
+
 private:
   std::unique_ptr<bd::ShaderProgram> m_alphaBlending;
-  std::shared_ptr<bd::ShaderProgram> m_wireframeShader;
+  std::unique_ptr<bd::ShaderProgram> m_wireframeShader;
   std::shared_ptr<subvol::BlockCollection> m_blockCollection;
 
   bd::Mesh m_cube;
+  bd::CoordinateAxis m_axis;
   bd::Volume m_volume;
   unsigned int m_volumeSampler;
   bool m_rangeChanging;

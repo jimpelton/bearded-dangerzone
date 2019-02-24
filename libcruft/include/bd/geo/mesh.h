@@ -2,13 +2,14 @@
 #define mesh_h__
 
 #include <bd/graphics/vertexarrayobject.h>
+#include <bd/graphics/drawable.h>
 
 #include <vector>
 
 namespace bd
 {
 
-class Mesh
+class Mesh : public bd::Drawable
 {
 public:
   Mesh();
@@ -18,13 +19,12 @@ public:
 
   void init();
 
-  void draw();
+  void draw() override;
 
 private:
   size_t m_verts_count;
   size_t m_indices_count;
-  bd::VertexArrayObject m_vao;
-  enum AttributeArray{POSITION=0, NORMAL=1, TEXCOORD=2};
+  VertexArrayObject m_vao;
 };
 } /* namespace bd */
 

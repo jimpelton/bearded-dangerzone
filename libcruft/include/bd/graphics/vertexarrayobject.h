@@ -10,6 +10,10 @@
 
 namespace bd
 {
+
+
+enum AttributeArray{POSITION=0, COLOR=1, NORMAL=2};
+
 class VertexArrayObject
 {
 public:

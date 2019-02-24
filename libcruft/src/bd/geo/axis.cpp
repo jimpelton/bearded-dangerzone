@@ -1,3 +1,6 @@
+
+#include <GL/glew.h>
+
 #include <bd/geo/axis.h>
 #include <bd/log/gl_log.h>
 
@@ -35,28 +38,34 @@ const std::array<unsigned short, 6> CoordinateAxis::elements
 };
 
 CoordinateAxis::CoordinateAxis()
-  : m_model{ 1.0f }
 {
+  m_vao.create();
+
+  m_vao.addVbo((float *) ( verts.data()),
+             verts.size()*vert_element_size,
+             vert_element_size,
+             POSITION,
+             bd::VertexArrayObject::Usage::Static_Draw); // attr 0
+
+  // vertex colors into attribute 1
+  m_vao.addVbo((float *) ( colors.data()),
+             colors.size() * 3,
+             3, // 3 floats per color
+             COLOR,
+             bd::VertexArrayObject::Usage::Static_Draw); // attr 1
 }
+
 
 
 void
-CoordinateAxis::setModel(glm::mat4 const &m)
+CoordinateAxis::draw()
 {
-  m_model = m;
+  m_vao.bind();
+  gl_check(glDrawArrays(GL_LINES,
+                        0,
+                        static_cast<GLsizei>(bd::CoordinateAxis::verts.size())));
+  m_vao.unbind();
 }
-
-glm::mat4 const &
-CoordinateAxis::getModel() const
-{
-  return m_model;
-}
-
-//void
-//CoordinateAxis::draw()
-//{
-//  gl_check( glDrawArrays( GL_LINES, 0, static_cast<GLsizei>(verts.size()) ));
-//}
 
 
 } /* namespace  bd */

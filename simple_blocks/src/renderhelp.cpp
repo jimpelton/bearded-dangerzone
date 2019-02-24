@@ -220,16 +220,16 @@ setInitialGLState()
   bd::Info() << "Initializing gl state.";
   gl_check(glClearColor(0.15f, 0.15f, 0.15f, 0.0f));
 
-//  gl_check(glEnable(GL_CULL_FACE));
+  gl_check(glEnable(GL_CULL_FACE));
 //  gl_check(glCullFace(GL_BACK));
 //  gl_check(glDisable(GL_CULL_FACE));
 
-//  gl_check(glEnable(GL_DEPTH_TEST));
-//  gl_check(glDepthFunc(GL_LESS));
+  gl_check(glEnable(GL_DEPTH_TEST));
+  gl_check(glDepthFunc(GL_LESS));
 //  gl_check(glDisable(GL_DEPTH_TEST));
 
-//  gl_check(glEnable(GL_BLEND));
-//  gl_check(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+  gl_check(glEnable(GL_BLEND));
+  gl_check(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
 
 //  gl_check(glEnable(GL_PRIMITIVE_RESTART));
 //  gl_check(glPrimitiveRestartIndex(0xFFFF));
