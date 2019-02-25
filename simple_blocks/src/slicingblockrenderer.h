@@ -84,14 +84,6 @@ public:
 
 
   void
-  setBackgroundColor(glm::vec3 const &c) override;
-
-
-  glm::vec3 const &
-  getBackgroundColor() const override;
-
-
-  void
   setShouldUseLighting(bool b) override;
 
 
@@ -152,7 +144,7 @@ private:
   bool m_shouldUseLighting;
 
   /// Current background color.
-  glm::vec3 m_backgroundColor;
+//  glm::vec3 m_backgroundColor;
   /// Number of slices per block
   glm::u64vec3 m_numSlicesPerBlock;
   /// Transfer function scaling value

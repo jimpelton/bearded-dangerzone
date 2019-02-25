@@ -25,8 +25,7 @@ Renderer::Renderer()
     , m_near{ 0.01f }
     , m_far{ 10000.0f }
     , m_fov{ 50.0f }
-    , m_focalLength{ 0.0f }
-    , m_clearColor{ 0, 0, 0 }
+    , m_focalLength{ 0 }
     , m_worldMat{ 1.0f }
     , m_viewMat{ 1.0f }
     , m_projMat{ 1.0f }
@@ -35,6 +34,7 @@ Renderer::Renderer()
 {
   bd::Dbg() << "Default renderer created.";
   // resize(m_viewPortWidth, m_viewPortHeight);
+  m_focalLength = 1.0f / std::tan(M_PI / 180.0f * m_fov / 2.0f);
 }
 
 
@@ -105,20 +105,6 @@ float
 Renderer::getFocalLength() const
 {
   return m_focalLength;
-}
-
-
-void
-Renderer::setClearColor(glm::vec3 const &color)
-{
-  m_clearColor = color;
-}
-
-
-glm::vec3 const &
-Renderer::getClearColor() const
-{
-  return m_clearColor;
 }
 
 

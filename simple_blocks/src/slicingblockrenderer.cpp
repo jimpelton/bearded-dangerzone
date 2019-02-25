@@ -48,7 +48,6 @@ SlicingBlockRenderer::SlicingBlockRenderer(glm::u64vec3 numSlices,
     , m_drawNonEmptyBoundingBoxes{ false }
     , m_drawNonEmptySlices{ true }
     , m_shouldUseLighting{ false }
-    , m_backgroundColor{ 0.0f }
 
     , m_colorMapTexture{ nullptr }
 
@@ -143,23 +142,6 @@ float
 SlicingBlockRenderer::getColorMapScaleValue() const
 {
   return m_tfuncScaleValue;
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-void
-SlicingBlockRenderer::setBackgroundColor(const glm::vec3 &c)
-{
-  m_backgroundColor = c;
-  glClearColor(c.r, c.g, c.b, 0.0f);
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-glm::vec3 const &
-SlicingBlockRenderer::getBackgroundColor() const
-{
-  return m_backgroundColor;
 }
 
 

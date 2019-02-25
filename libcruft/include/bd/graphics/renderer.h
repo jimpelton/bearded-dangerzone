@@ -152,14 +152,6 @@ public:
   getFocalLength() const;
 
   void
-  setClearColor(glm::vec3 const &color);
-
-
-  glm::vec3 const &
-  getClearColor() const;
-
-
-  void
   setWorldMatrix(glm::mat4 const &world);
 
 
@@ -219,9 +211,6 @@ private:
   float m_fov;
   /// focal length
   float m_focalLength;
-
-  /// Clear color
-  glm::vec3 m_clearColor;
 
   /// World transform
   glm::mat4 m_worldMat;

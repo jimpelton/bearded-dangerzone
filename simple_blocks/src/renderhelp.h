@@ -27,9 +27,9 @@ class Controls;
 
 class BlockRenderer;
 
-glm::vec3 const g_backgroundColors[2]{
-    { 0.15, 0.15, 0.15 },
-    { 1.0,  1.0,  1.0 }
+glm::vec4 const g_backgroundColors[2]{
+    { 0.15, 0.15, 0.15, 1.0 },
+    { 1.0,  1.0,  1.0, 1.0 }
 };
 
 namespace renderhelp

@@ -112,7 +112,7 @@ set(simple_blocks_SOURCES
         src/timing.cpp
         src/renderhelp.cpp
 
-        src/messages/messagebroker.cpp src/raycaster/blockraycaster.cpp)
+        src/messages/messagebroker.cpp src/raycaster/blockraycaster.cpp src/blockrenderer.cpp)
 
 
 add_executable(simple_blocks "${simple_blocks_HEADERS}" "${simple_blocks_SOURCES}")

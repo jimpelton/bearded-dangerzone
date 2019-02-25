@@ -402,6 +402,8 @@ initializeRenderer(std::shared_ptr<BlockCollection> bc,
   setRendererInitialTransferFunction(loaded, "USER", *br);
 
   br->resize(clo.windowWidth, clo.windowHeight);
+  br->setBackgroundColor({0.15, 0.15, 0.15, 0.0});
+  br->setFov(50.0);
   br->getCamera().setEye({ 0, 0, 4 });
   br->getCamera().setLookAt({ 0, 0, 0 });
   br->getCamera().setUp({ 0, 1, 0 });

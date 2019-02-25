@@ -2,6 +2,7 @@
 // Created by jim on 4/2/17.
 //
 
+#include <bd/log/gl_log.h>
 #include "loop.h"
 #include "renderhelp.h"
 

@@ -152,8 +152,8 @@ BlockingRaycaster::drawNonEmptyBlocks()
 void
 BlockingRaycaster::setUniforms(bd::Block const &b)
 {
-  auto top = b.worldDims();
-  auto bot = -b.worldDims();
+  auto top = glm::vec3{1.0, 1.0, 1.0};
+  auto bot = -top;
   glm::mat3 mv = glm::mat3{getViewMatrix() * getWorldMatrix()};
   glm::mat3 normalMatrix = glm::transpose(glm::inverse(mv));
 
@@ -166,16 +166,15 @@ BlockingRaycaster::setUniforms(bd::Block const &b)
   m_alphaBlending->setUniform("ray_origin", getCamera().getEye());
   m_alphaBlending->setUniform("top", top);
   m_alphaBlending->setUniform("bottom", bot);
-  m_alphaBlending->setUniform("background_colour", glm::vec3{0.15, 0.15, 0.15});
+  m_alphaBlending->setUniform("background_colour", glm::vec3{_backgroundColor});
   m_alphaBlending->setUniform("light_position", _shaderLightPos);
   m_alphaBlending->setUniform("material_colour", _shaderMat);
-  m_alphaBlending->setUniform("step_length", 0.0001f);
+  m_alphaBlending->setUniform("step_length", 0.01f);
 //  m_alphaBlending->setUniform("threshold", m_threshold);
   m_alphaBlending->setUniform("gamma", 2.2f);
   m_alphaBlending->setUniform("volume", BLOCK_TEXTURE_UNIT);
 //  m_alphaBlending->setUniform("jitter", 1);
 
-  // glClearColor(0.15, 0.15, 0.15, 0.0);
   // glClear(GL_COLOR_BUFFER_BIT);
 }
 

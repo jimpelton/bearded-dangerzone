@@ -69,13 +69,10 @@ public:
 
 
   virtual void
-  setBackgroundColor(glm::vec3 const &c)
-  {
-    _backgroundColor = c;
-  };
+  setBackgroundColor(glm::vec4 const &c);
 
 
-  virtual glm::vec3 const &
+  virtual glm::vec4 const &
   getBackgroundColor() const
   {
     return _backgroundColor;
@@ -119,7 +116,7 @@ protected:
   /// True to use Phong lighting shader.
   bool _shouldUseLighting;
   /// Current background color.
-  glm::vec3 _backgroundColor;
+  glm::vec4 _backgroundColor;
   glm::vec3 _shaderLightPos;
   glm::vec3 _shaderMat;
   float _shaderNShiney;
