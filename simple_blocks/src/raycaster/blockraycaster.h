@@ -15,6 +15,7 @@
 #include <bd/volume/volume.h>
 
 #include <memory>
+#include <bd/geo/wireframebox.h>
 #include "bd/geo/axis.h"
 
 namespace subvol
@@ -94,6 +95,7 @@ private:
 
   bd::Mesh m_cube;
   bd::CoordinateAxis m_axis;
+  bd::WireframeBox m_box;
   bd::Volume m_volume;
   unsigned int m_volumeSampler;
   bool m_rangeChanging;

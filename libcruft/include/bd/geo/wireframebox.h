@@ -1,6 +1,8 @@
 #ifndef bd_wireframebox_h__
 #define bd_wireframebox_h__
 
+#include <bd/graphics/drawable.h>
+#include <bd/graphics/vertexarrayobject.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -8,7 +10,7 @@
 
 namespace bd {
 
-class WireframeBox {
+class WireframeBox : public Drawable {
 public:
     static const std::array<glm::vec4, 8> vertices;
     static const std::array<glm::vec3, 8> colors;
@@ -18,7 +20,10 @@ public:
     WireframeBox();
     ~WireframeBox();
 
-//    virtual void draw() override;
+   void draw() override;
+
+private:
+  VertexArrayObject m_vao;
 };
 
 } // namspace bd

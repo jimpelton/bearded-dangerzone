@@ -87,6 +87,9 @@ BlockingRaycaster::draw()
 {
   gl_check(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
   // drawAxis();
+//  if (_drawNonEmptyBoundingBoxes) {
+    drawNonEmptyBoundingBoxes();
+//  }
   drawNonEmptyBlocks();
 }
 
@@ -95,26 +98,29 @@ BlockingRaycaster::draw()
 void
 BlockingRaycaster::drawNonEmptyBoundingBoxes()
 {
-  // m_wireframeShader->bind();
-  // m_boxesVao->bind();
-  // size_t const nblk{ m_nonEmptyBlocks->size() };
-  // for (size_t i{ 0 }; i < nblk; ++i) {
-  //
-  //   bd::Block *b{ ( *m_nonEmptyBlocks )[i] };
-  //
-  //   setWorldMatrix(b->transform());
-  //   m_wireframeShader->setUniform(WIREFRAME_MVP_MATRIX_UNIFORM_STR,
-  //                                 getWorldViewProjectionMatrix());
-  //   gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, (GLvoid *) 0));
-  //   gl_check(glDrawElements(GL_LINE_LOOP,
-  //                           4,
-  //                           GL_UNSIGNED_SHORT,
-  //                           (GLvoid *) ( 4 * sizeof(GLushort))));
-  //   gl_check(glDrawElements(GL_LINES,
-  //                           8,
-  //                           GL_UNSIGNED_SHORT,
-  //                           (GLvoid *) ( 8 * sizeof(GLushort))));
-  // }
+
+//   size_t const nblk{ ;
+   auto &blocks = m_blockCollection->getNonEmptyBlocks();
+   auto nblk = blocks.size();
+  m_wireframeShader->bind();
+   for (size_t i{ 0 }; i < nblk; ++i) {
+
+     bd::Block *b{ ( blocks[i] ) };
+
+     setWorldMatrix(b->transform());
+     m_wireframeShader->setUniform(WIREFRAME_MVP_MATRIX_UNIFORM_STR,
+                                   getWorldViewProjectionMatrix());
+      m_box.draw();
+//     gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, (GLvoid *) 0));
+//     gl_check(glDrawElements(GL_LINE_LOOP,
+//                             4,
+//                             GL_UNSIGNED_SHORT,
+//                             (GLvoid *) ( 4 * sizeof(GLushort))));
+//     gl_check(glDrawElements(GL_LINES,
+//                             8,
+//                             GL_UNSIGNED_SHORT,
+//                             (GLvoid *) ( 8 * sizeof(GLushort))));
+   }
 }
 
 
