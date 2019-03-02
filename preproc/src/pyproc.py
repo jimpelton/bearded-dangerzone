@@ -152,13 +152,11 @@ def main():
     rov_max = np.max(relevancies)
 
     print("Creating index file")
-
     vol_path, vol_name = os.path.split(cargs.raw)
     tr_path, tr_name = os.path.split(cargs.tf)
 
     max_dim = np.max(vdims)
-    world_dims = [vdims[0]/max_dim, vdims[1]/max_dim, vdims[2]/max_dim]
-#    world_origin = [0.0, 0.0, 0.0]
+    world_dims = [ 2.0 * vdims[0]/max_dim, 2.0 * vdims[1]/max_dim, 2.0 * vdims[2]/max_dim]
 
     vol_stats = volume.VolStats(min=vol_min, max=vol_max, avg=0.0, tot=vol_tot)
     vol = volume.Volume(world_dims, vdims.tolist(), rov_min, rov_max)

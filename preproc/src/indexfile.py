@@ -49,18 +49,6 @@ class IndexFile:
     def open_from(self, from_file):
         pass
 
-
-class FileBlock:
-    def __init__(self, **kwargs):
-        self.dims = tuple(kwargs['dims'])
-        self.origin = tuple(kwargs['origin'])
-        self.vox_dims = tuple(kwargs['vox_dims'])
-        self.index = kwargs['index']
-        self.ijk = tuple(kwargs['ijk'])
-        self.offset = int(kwargs['offset'])
-        self.data_bytes = int(kwargs['data_bytes'])
-        self.rel = float(kwargs['rel'])
-
 def to1D(col, row, slab, maxCols, maxRows):
     return int(col + maxCols * (row + maxRows * slab))
 
