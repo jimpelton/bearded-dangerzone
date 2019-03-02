@@ -155,6 +155,8 @@ def main():
     vol_path, vol_name = os.path.split(cargs.raw)
     tr_path, tr_name = os.path.split(cargs.tf)
 
+    # resize the volume so that the longest edge is 2 units long. 
+    # the renderer needs the world dimensions to fit within a 2 unit cube.
     max_dim = np.max(vdims)
     world_dims = [ 2.0 * vdims[0]/max_dim, 2.0 * vdims[1]/max_dim, 2.0 * vdims[2]/max_dim]
 
