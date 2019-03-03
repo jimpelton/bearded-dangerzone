@@ -39,10 +39,10 @@ uniform vec3 material_colour;
 uniform vec3 light_position;
 
 uniform float step_length;
-uniform float threshold;
+//uniform float threshold;
 
 uniform sampler3D volume;
-uniform sampler2D jitter;
+//uniform sampler2D jitter;
 
 uniform float gamma;
 

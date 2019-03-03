@@ -59,8 +59,7 @@ namespace {
   };
 }
 
-BlockingRaycaster::BlockingRaycaster(std::shared_ptr<subvol::BlockCollection> bc,
-    bd::Volume const &v)
+BlockingRaycaster::BlockingRaycaster(std::shared_ptr<subvol::BlockCollection> bc, bd::Volume const &v)
   : Recipient("blocking ray caster")
   , m_alphaBlending{}
   , m_wireframeShader{}
