@@ -3,7 +3,7 @@
 //
 
 #include "controlpanel.h"
-#include "blockrenderer.h"
+#include "renderer/blockrenderer.h"
 #include "renderhelp.h"
 #include "messages/messagebroker.h"
 

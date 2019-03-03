@@ -13,10 +13,10 @@
 #include <bd/geo/axis.h>
 #include <bd/geo/mesh.h>
 #include <bd/volume/volume.h>
+#include <bd/geo/wireframebox.h>
+#include <bd/geo/axis.h>
 
 #include <memory>
-#include <bd/geo/wireframebox.h>
-#include "bd/geo/axis.h"
 
 namespace subvol
 {

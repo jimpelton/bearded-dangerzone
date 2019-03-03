@@ -14,16 +14,16 @@
 #include "cmdline.h"
 #include "colormap.h"
 #include "constants.h"
-#include "slicingblockrenderer.h"
-#include "raycaster/blockraycaster.h"
+#include "renderer/slicingblockrenderer.h"
+#include "renderer/blockraycaster.h"
 
 #include <bd/log/logger.h>
 #include <bd/log/gl_log.h>
 #include <bd/graphics/renderer.h>
+#include <bd/io/indexfile/v2/jsonindexfile.h>
 
 #include <glm/glm.hpp>
 #include <glm/matrix.hpp>
-#include <bd/io/indexfile/v2/jsonindexfile.h>
 
 namespace subvol
 {

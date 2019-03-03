@@ -7,7 +7,7 @@
 
 #include <GLFW/glfw3.h>
 
-#include "blockrenderer.h"
+#include "renderer/blockrenderer.h"
 
 #include <string>
 #include <vector>

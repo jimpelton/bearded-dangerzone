@@ -5,7 +5,7 @@
 #ifndef SUBVOL_CONTROLPANEL_H
 #define SUBVOL_CONTROLPANEL_H
 
-#include "blockrenderer.h"
+#include "renderer/blockrenderer.h"
 #include "classificationtype.h"
 #include "cmdline.h"
 #include "messages/recipient.h"

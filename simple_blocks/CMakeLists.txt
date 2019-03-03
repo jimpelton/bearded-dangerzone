@@ -73,7 +73,6 @@ set(simple_blocks_HEADERS
         src/axis_enum.h
         src/io/blockcollection.h
         src/io/blockloader.h
-        src/slicingblockrenderer.h
         src/classificationtype.h
         src/cmdline.h
         src/colormap.h
@@ -93,13 +92,14 @@ set(simple_blocks_HEADERS
         src/messages/messagebroker.h
         src/messages/recipient.h
         src/messages/rovchangingmessage.h
-        src/raycaster/blockraycaster.h src/blockrenderer.h)
+        src/renderer/slicingblockrenderer.h
+        src/renderer/blockraycaster.h
+        src/renderer/blockrenderer.h)
 
 set(simple_blocks_SOURCES
         src/main.cpp
         src/io/blockcollection.cpp
         src/io/blockloader.cpp
-        src/slicingblockrenderer.cpp
         src/cmdline.cpp
         src/colormap.cpp
         src/constants.cpp
@@ -112,7 +112,10 @@ set(simple_blocks_SOURCES
         src/timing.cpp
         src/renderhelp.cpp
 
-        src/messages/messagebroker.cpp src/raycaster/blockraycaster.cpp src/blockrenderer.cpp)
+        src/messages/messagebroker.cpp
+        src/renderer/slicingblockrenderer.cpp
+        src/renderer/blockraycaster.cpp
+        src/renderer/blockrenderer.cpp)
 
 
 add_executable(simple_blocks "${simple_blocks_HEADERS}" "${simple_blocks_SOURCES}")

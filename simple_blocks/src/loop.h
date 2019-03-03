@@ -6,7 +6,7 @@
 #define SUBVOL_LOOP_H
 
 #include <GLFW/glfw3.h>
-#include "blockrenderer.h"
+#include "renderer/blockrenderer.h"
 #include "timing.h"
 #include "axis_enum.h"
 #include "io/blockcollection.h"

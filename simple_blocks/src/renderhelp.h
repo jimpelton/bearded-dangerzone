@@ -8,7 +8,7 @@
 #include <GLFW/glfw3.h>
 
 #include "io/blockcollection.h"
-#include "blockrenderer.h"
+#include "renderer/blockrenderer.h"
 #include "cmdline.h"
 
 #include <bd/graphics/vertexarrayobject.h>
