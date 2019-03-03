@@ -21,45 +21,53 @@ namespace subvol
 namespace render
 {
 
+namespace {
+  const std::vector<glm::vec3> cube_verts{
+      {
+          glm::vec3{ -0.5f, -0.5f, 0.5f},
+          glm::vec3{ 0.5f, -0.5f, 0.5f },
+          glm::vec3{ 0.5f, 0.5f, 0.5f },
+          glm::vec3{ -0.5f, 0.5f, 0.5f },
+          glm::vec3{ -0.5f, -0.5f, -0.5f },
+          glm::vec3{ 0.5f, -0.5f, -0.5f },
+          glm::vec3{ 0.5f, 0.5f, -0.5f },
+          glm::vec3{ -0.5f, 0.5f, -0.5f }
+      }
+  };
+
+  const std::vector<unsigned short> cube_indices{
+      {
+          // front
+          0, 1, 2,
+          0, 2, 3,
+          // right
+          1, 5, 6,
+          1, 6, 2,
+          // back
+          5, 4, 7,
+          5, 7, 6,
+          // left
+          4, 0, 3,
+          4, 3, 7,
+          // top
+          2, 6, 7,
+          2, 7, 3,
+          // bottom
+          4, 5, 1,
+          4, 1, 0,
+      }
+  };
+}
+
 BlockingRaycaster::BlockingRaycaster(std::shared_ptr<subvol::BlockCollection> bc,
     bd::Volume const &v)
   : Recipient("blocking ray caster")
   , m_alphaBlending{}
   , m_wireframeShader{}
   , m_blockCollection{ std::move(bc) }
-  , m_cube {
-    {
-       -1.0f, -1.0f, 1.0f,
-       1.0f, -1.0f, 1.0f,
-       1.0f, 1.0f, 1.0f,
-       -1.0f, 1.0f, 1.0f,
-       -1.0f, -1.0f, -1.0f,
-       1.0f, -1.0f, -1.0f,
-       1.0f, 1.0f, -1.0f,
-       -1.0f, 1.0f, -1.0f,
-    }, 3,
-    {
-       // front
-       0, 1, 2,
-       0, 2, 3,
-       // right
-       1, 5, 6,
-       1, 6, 2,
-       // back
-       5, 4, 7,
-       5, 7, 6,
-       // left
-       4, 0, 3,
-       4, 3, 7,
-       // top
-       2, 6, 7,
-       2, 7, 3,
-       // bottom
-       4, 5, 1,
-       4, 1, 0,
-    } }
-    , m_axis{ }
-    , m_volume{ v }
+  , m_cube{ cube_verts, cube_indices }
+  , m_axis{ }
+  , m_volume{ v }
 {
 }
 
@@ -86,6 +94,7 @@ void
 BlockingRaycaster::draw()
 {
   gl_check(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+  sortBlocks();
   // drawAxis();
 //  if (_drawNonEmptyBoundingBoxes) {
     drawNonEmptyBoundingBoxes();
@@ -110,17 +119,10 @@ BlockingRaycaster::drawNonEmptyBoundingBoxes()
      setWorldMatrix(b->transform());
      m_wireframeShader->setUniform(WIREFRAME_MVP_MATRIX_UNIFORM_STR,
                                    getWorldViewProjectionMatrix());
+
       m_box.draw();
-//     gl_check(glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, (GLvoid *) 0));
-//     gl_check(glDrawElements(GL_LINE_LOOP,
-//                             4,
-//                             GL_UNSIGNED_SHORT,
-//                             (GLvoid *) ( 4 * sizeof(GLushort))));
-//     gl_check(glDrawElements(GL_LINES,
-//                             8,
-//                             GL_UNSIGNED_SHORT,
-//                             (GLvoid *) ( 8 * sizeof(GLushort))));
    }
+   m_wireframeShader->unbind();
 }
 
 
@@ -158,7 +160,7 @@ BlockingRaycaster::drawNonEmptyBlocks()
 void
 BlockingRaycaster::setUniforms(bd::Block const &b)
 {
-  auto top = glm::vec3{1.0, 1.0, 1.0};
+  auto top = b.worldDims(); //glm::vec3{1.0, 1.0, 1.0};
   auto bot = -top;
   glm::mat3 mv = glm::mat3{getViewMatrix() * getWorldMatrix()};
   glm::mat3 normalMatrix = glm::transpose(glm::inverse(mv));
@@ -176,7 +178,7 @@ BlockingRaycaster::setUniforms(bd::Block const &b)
   m_alphaBlending->setUniform("light_position", _shaderLightPos);
   m_alphaBlending->setUniform("material_colour", _shaderMat);
   m_alphaBlending->setUniform("step_length", 0.01f);
-//  m_alphaBlending->setUniform("threshold", m_threshold);
+//  m_alphaBlending->setUniform("threshold", 200.f);
   m_alphaBlending->setUniform("gamma", 2.2f);
   m_alphaBlending->setUniform("volume", BLOCK_TEXTURE_UNIT);
 //  m_alphaBlending->setUniform("jitter", 1);
@@ -208,7 +210,7 @@ void
 BlockingRaycaster::initShaders()
 {
   m_alphaBlending = std::unique_ptr<bd::ShaderProgram>( new bd::ShaderProgram() );
-  auto pid = m_alphaBlending->linkProgram("shaders/alpha_blending.vert", "shaders/alpha_blending.frag");
+  auto pid = m_alphaBlending->linkProgram("shaders/maximum_intensity_projection.vert", "shaders/maximum_intensity_projection.frag");
   if (pid == 0) {
     throw std::runtime_error("could not initialize shaders");
   }
@@ -227,12 +229,13 @@ BlockingRaycaster::initShaders()
 //  gl_check(glSamplerParameterf(sampler_state, GL_TEXTURE_MAX_ANISOTROPY_EXT, 16.0f));
   gl_check(glBindSampler(sampler_state, BLOCK_TEXTURE_UNIT));
   m_volumeSampler = sampler_state;
-
+  m_alphaBlending->unbind();
   m_wireframeShader = std::unique_ptr<bd::ShaderProgram>(new bd::ShaderProgram());
   pid = m_wireframeShader->linkProgram("shaders/vert_vertexcolor_passthrough.glsl", "shaders/frag_vertcolor.glsl");
   if (pid == 0) {
     throw std::runtime_error("could not initialize vertex color shader");
   }
+  m_wireframeShader->unbind();
 }
 
 // void BlockingRaycaster::initAxisVao()

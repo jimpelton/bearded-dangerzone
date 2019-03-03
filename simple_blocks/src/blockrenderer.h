@@ -99,10 +99,22 @@ public:
     _drawNonEmptyBoundingBoxes = b;
   };
 
+  virtual bool
+  getDrawNonEmptyBoundingBoxes(bool b)
+  {
+    return _drawNonEmptyBoundingBoxes;
+  };
+
   virtual void
   setDrawNonEmptyBlocks(bool b)
   {
     _drawNonEmptyBlocks = b;
+  };
+
+  virtual bool
+  getDrawNonEmptyBlocks(bool b)
+  {
+    return _drawNonEmptyBlocks;
   };
 
 protected:

@@ -13,8 +13,7 @@ class Mesh : public bd::Drawable
 {
 public:
   Mesh();
-  Mesh(const std::vector<float> &vertices,
-      unsigned int elements_per_vert, const std::vector<unsigned short> &indices);
+  Mesh(const std::vector<glm::vec3> &vertices, const std::vector<unsigned short> &indices);
   ~Mesh();
 
   void init();

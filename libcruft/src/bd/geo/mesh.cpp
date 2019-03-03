@@ -6,14 +6,13 @@ namespace bd
 
 Mesh::Mesh() {}
 
-Mesh::Mesh(const std::vector<float> &vertices, unsigned int elements_per_vert,
-    const std::vector<unsigned short> &indices)
+Mesh::Mesh(const std::vector<glm::vec3> &vertices, const std::vector<unsigned short> &indices)
     : m_verts_count{ vertices.size() }
     , m_indices_count{ indices.size() }
     , m_vao{ }
 {
   m_vao.create();
-  m_vao.addVbo(vertices, elements_per_vert, POSITION, bd::VertexArrayObject::Usage::Static_Draw);
+  m_vao.addVbo(vertices, POSITION, bd::VertexArrayObject::Usage::Static_Draw);
   m_vao.setIndexBuffer(indices, bd::VertexArrayObject::Usage::Static_Draw);
 }
 
@@ -25,6 +24,8 @@ void
 Mesh::init()
 {
 }
+
+
 
 
 void

@@ -166,6 +166,8 @@ public:
   ///////////////////////////////////////////////////////////////////////////////
   /// \brief Sets the shader uniform specified by \c param to \c val.
   ///////////////////////////////////////////////////////////////////////////////
+  void setUniform(const char* param, const glm::mat3& val);
+
   void setUniform(const char* param, const glm::mat4& val);
 
   void setUniform(const char* param, const glm::vec4& val);

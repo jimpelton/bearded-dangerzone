@@ -91,7 +91,7 @@ BlockCollection::initBlocksFromFileBlocks(std::vector<FileBlock> const &fileBloc
                                           glm::u64vec3 const &nb)
 {
 
-  if (fileBlocks.size()==0) {
+  if (fileBlocks.empty()) {
     bd::Warn() << "No blocks in list of file blocks to initialize.";
     return;
   }

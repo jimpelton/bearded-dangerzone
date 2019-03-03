@@ -272,6 +272,14 @@ unsigned int ShaderProgram::linkProgram(const std::string& vertFilePath,
   return linkProgram(vert, frag);
 }
 
+///////////////////////////////////////////////////////////////////////////////
+void
+ShaderProgram::setUniform(const char* param, const glm::mat3& val)
+{
+  unsigned int loc = getUniformLocation(param);
+  gl_check(glProgramUniformMatrix3fv(m_programId, loc, 1, GL_FALSE, glm::value_ptr(val)));
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 void
