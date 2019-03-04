@@ -32,7 +32,7 @@ Controls::~Controls()
 
 
 void
-Controls::initialize(std::shared_ptr<BlockRenderer> renderer)
+Controls::initialize(std::shared_ptr<renderer::BlockRenderer> renderer)
 {
   if (s_instance==nullptr) {
     s_instance = new Controls();

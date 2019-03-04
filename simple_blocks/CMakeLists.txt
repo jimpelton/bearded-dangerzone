@@ -79,7 +79,7 @@ set(simple_blocks_HEADERS
         src/controls.h
         src/constants.h
         src/controlpanel.h
-        src/create_vao.h
+        src/renderer/create_vao.h
         src/loop.h
         # src/nvpm.h
         src/nvtools.h
@@ -105,7 +105,7 @@ set(simple_blocks_SOURCES
         src/constants.cpp
         src/controls.cpp
         src/controlpanel.cpp
-        src/create_vao.cpp
+        src/renderer/create_vao.cpp
         src/loop.cpp
         # src/nvpm.cpp
         src/sliceset.cpp

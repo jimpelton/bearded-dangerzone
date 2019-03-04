@@ -5,9 +5,10 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include <array>
+#include "bd/graphics/vertexarrayobject.h"
 #include "bd/graphics/drawable.h"
-#include "../../../../simple_blocks/src/create_vao.h"
+
+#include <array>
 
 namespace bd
 {

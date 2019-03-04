@@ -73,30 +73,30 @@ setInitialGLState();
 
 void
 initializeControls(GLFWwindow *,
-                   std::shared_ptr<BlockRenderer>);
+                   std::shared_ptr<renderer::BlockRenderer>);
 
 
 void
 setRendererInitialTransferFunction(bool loaded,
                                    std::string const &name,
-                                   subvol::BlockRenderer &renderer);
+                                   renderer::BlockRenderer &renderer);
 
 
 bool
 initializeTransferFunctions(subvol::CommandLineOptions const &clo);
 
 
-bool
-initializeShaders(subvol::CommandLineOptions const &clo);
+//bool
+//initializeShaders(subvol::CommandLineOptions const &clo);
 
 
-void
-initializeVertexBuffers(subvol::CommandLineOptions const &clo,
-                        bd::Volume const &v,
-                        glm::u64vec3 *numSlices);
+//void
+//initializeVertexBuffers(subvol::CommandLineOptions const &clo,
+//                        bd::Volume const &v,
+//                        glm::u64vec3 *numSlices);
 
 
-std::shared_ptr<BlockRenderer>
+std::shared_ptr<renderer::BlockRenderer>
 initializeRenderer(std::shared_ptr<BlockCollection> bc,
                    bd::Volume const &v,
                    subvol::CommandLineOptions const &clo);

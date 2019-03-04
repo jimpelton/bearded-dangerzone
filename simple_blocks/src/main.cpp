@@ -194,7 +194,7 @@ try
       subvol::renderhelp::initializeBlockCollection(loader, indexFile, clo) };
 
 
-  std::shared_ptr<subvol::BlockRenderer> br{
+  std::shared_ptr<subvol::renderer::BlockRenderer> br{
       subvol::renderhelp::initializeRenderer(bc, indexFile.getVolume(), clo) };
 
   subvol::renderhelp::initializeControls(window, br);

@@ -15,11 +15,14 @@
 #include <bd/graphics/renderer.h>
 #include <bd/graphics/shader.h>
 #include <bd/graphics/texture.h>
+#include <bd/volume/volume.h>
 #include <bd/graphics/vertexarrayobject.h>
 
 #include <memory>
 
 namespace subvol
+{
+namespace renderer
 {
 
 class SlicingBlockRenderer
@@ -30,23 +33,21 @@ public:
   SlicingBlockRenderer();
 
 
-  SlicingBlockRenderer(glm::u64vec3 numSlices,
-                std::shared_ptr<bd::ShaderProgram> volumeShader,
-                std::shared_ptr<bd::ShaderProgram> volumeShaderLighting,
-                std::shared_ptr<bd::ShaderProgram> wireframeShader,
-                std::shared_ptr<subvol::BlockCollection> blockCollection,
-                std::shared_ptr<bd::VertexArrayObject> blocksVAO,
-                std::shared_ptr<bd::VertexArrayObject> bboxVAO,
-                std::shared_ptr<bd::VertexArrayObject> axisVao);
+  SlicingBlockRenderer(glm::vec3 smod,
+      std::shared_ptr<subvol::BlockCollection> blockCollection,
+      bd::Volume const &v);
 
 
   virtual ~SlicingBlockRenderer();
 
+
   bool
   initialize() override;
 
+
   void
   draw() override;
+
 
 public:
 
@@ -107,6 +108,14 @@ public:
 
 private:
 
+  void
+  initVao(float smod_x, float smod_y, float smod_z, bd::Volume const &v);
+
+
+  void
+  initShaders();
+
+
   /// \brief Disable GL_DEPTH_TEST and draw transparent slices
   void
   drawSlices(int baseVertex, int elementOffset, unsigned int numSlices) const;
@@ -143,24 +152,24 @@ private:
   /// True to use Phong lighting shader.
   bool m_shouldUseLighting;
 
-  /// Current background color.
-//  glm::vec3 m_backgroundColor;
   /// Number of slices per block
   glm::u64vec3 m_numSlicesPerBlock;
-  /// Transfer function scaling value
+  glm::vec3 m_smod;
   /// Transfer function texture
   bd::Texture const *m_colorMapTexture;
-  /// Current shader being used (lighting, flat, wire, etc).
-  bd::ShaderProgram *m_currentShader;
+  bd::Volume const &m_volume;
 
   SliceSet m_selectedSliceSet;
+
   unsigned int m_sampler_state;
-  std::shared_ptr<bd::ShaderProgram> m_volumeShader;
-  std::shared_ptr<bd::ShaderProgram> m_volumeShaderLighting;
-  std::shared_ptr<bd::ShaderProgram> m_wireframeShader;
-  std::shared_ptr<bd::VertexArrayObject> m_quadsVao;    ///< Quad geometry verts
-  std::shared_ptr<bd::VertexArrayObject> m_boxesVao;    ///< bounding box wireframe verts
-  std::shared_ptr<bd::VertexArrayObject> m_axisVao;
+  /// Current shader being used (lighting, flat, wire, etc).
+  bd::ShaderProgram *m_currentShader;
+  std::unique_ptr<bd::ShaderProgram> m_volumeShader;
+  std::unique_ptr<bd::ShaderProgram> m_volumeShaderLighting;
+  std::unique_ptr<bd::ShaderProgram> m_wireframeShader;
+  std::unique_ptr<bd::VertexArrayObject> m_quadsVao;    ///< Quad geometry verts
+  std::unique_ptr<bd::VertexArrayObject> m_boxesVao;    ///< bounding box wireframe verts
+  std::unique_ptr<bd::VertexArrayObject> m_axisVao;
   std::shared_ptr<BlockCollection> m_collection;
 
   std::vector<bd::Block *> *m_nonEmptyBlocks;  ///< Non-empty blocks to draw.
@@ -174,6 +183,7 @@ public:
 
 };
 
+} // namespace renderer
 } // namepsace subvol
 
 #endif // blockrenderer_h__

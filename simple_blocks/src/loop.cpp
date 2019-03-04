@@ -2,9 +2,10 @@
 // Created by jim on 4/2/17.
 //
 
-#include <bd/log/gl_log.h>
 #include "loop.h"
 #include "renderhelp.h"
+
+#include <bd/log/gl_log.h>
 
 #define MAX_SECONDS_SINCE_LAST_JOB 1.0 //0000000
 
@@ -80,7 +81,7 @@ Loop::timeNow() const
 }
 
 
-BenchmarkLoop::BenchmarkLoop(GLFWwindow *window, std::shared_ptr<BlockRenderer> r,
+BenchmarkLoop::BenchmarkLoop(GLFWwindow *window, std::shared_ptr<renderer::BlockRenderer> r,
                              std::shared_ptr<BlockCollection> c,
                              glm::vec3 rAxis)
     : Loop(window, r, c)

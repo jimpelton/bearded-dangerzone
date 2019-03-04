@@ -33,7 +33,7 @@ public:
 
 
   static void
-  initialize(std::shared_ptr<BlockRenderer>);
+  initialize(std::shared_ptr<renderer::BlockRenderer>);
 
 
   static Controls &
@@ -114,8 +114,7 @@ private:
   static Controls *s_instance;
 
   Cursor m_cursor;
-//  std::vector<std::string> m_tfuncNames;
-  std::shared_ptr<BlockRenderer> m_renderer;
+  std::shared_ptr<renderer::BlockRenderer> m_renderer;
 
   bool m_showBlockBoxes;
   bool m_shouldUseLighting;

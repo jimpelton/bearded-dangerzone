@@ -9,7 +9,6 @@
 #include "io/blockloader.h"
 #include "io/blockcollection.h"
 #include "controls.h"
-#include "create_vao.h"
 #include "timing.h"
 #include "cmdline.h"
 #include "colormap.h"
@@ -29,19 +28,10 @@ namespace subvol
 {
 namespace renderhelp
 {
-//std::shared_ptr<subvol::BlockRenderer> g_renderer{ nullptr };
-std::shared_ptr<bd::ShaderProgram> g_wireframeShader{ nullptr };
-std::shared_ptr<bd::ShaderProgram> g_volumeShader{ nullptr };
-std::shared_ptr<bd::ShaderProgram> g_volumeShaderLighting{ nullptr };
-std::shared_ptr<bd::VertexArrayObject> g_axisVao{ nullptr };
-std::shared_ptr<bd::VertexArrayObject> g_boxVao{ nullptr };
-std::shared_ptr<bd::VertexArrayObject> g_quadVao{ nullptr };
-//std::shared_ptr<subvol::BlockCollection> g_blockCollection{ nullptr };
-//std::shared_ptr<bd::IndexFile> g_indexFile{ nullptr };
+
 double g_rovMin = 0;
 double g_rovMax = 0;
 
-//BLThreadData g_blThreadData{};
 namespace
 {
 /////////////////////////////////////////////////////////////////////////////////
@@ -238,7 +228,7 @@ setInitialGLState()
 
 ///////////////////////////////////////////////////////////////////////////////
 void
-initializeControls(GLFWwindow *window, std::shared_ptr<BlockRenderer> renderer)
+initializeControls(GLFWwindow *window, std::shared_ptr<renderer::BlockRenderer> renderer)
 {
   Controls::initialize(std::move(renderer));
 
@@ -254,7 +244,7 @@ initializeControls(GLFWwindow *window, std::shared_ptr<BlockRenderer> renderer)
 /////////////////////////////////////////////////////////////////////////////////
 void
 setRendererInitialTransferFunction(bool loaded, std::string const &name,
-                                   subvol::BlockRenderer &renderer)
+                                   renderer::BlockRenderer &renderer)
 {
   if (loaded) {
 
@@ -301,102 +291,89 @@ initializeTransferFunctions(subvol::CommandLineOptions const &clo)
 
 
 ///////////////////////////////////////////////////////////////////////////////
-bool
-initializeShaders(subvol::CommandLineOptions const &clo)
-{
-  GLuint programId{ 0 };
-
-  // Wireframe Shader
-  renderhelp::g_wireframeShader = std::make_shared<bd::ShaderProgram>();
-  programId = renderhelp::g_wireframeShader->linkProgram(
-      "shaders/vert_vertexcolor_passthrough.glsl",
-      "shaders/frag_vertcolor.glsl");
-  if (programId == 0) {
-    bd::Err() << "Error building passthrough shader, program id was 0.";
-    return false;
-  }
-  renderhelp::g_wireframeShader->unbind();
-
-
-  // Volume shader
-  renderhelp::g_volumeShader = std::make_shared<bd::ShaderProgram>();
-  programId = renderhelp::g_volumeShader->linkProgram(
-      "shaders/vert_vertexcolor_passthrough.glsl",
-      "shaders/frag_volumesampler_noshading.glsl");
-  if (programId == 0) {
-    bd::Err() << "Error building volume shader, program id was 0.";
-    return false;
-  }
-  renderhelp::g_volumeShader->unbind();
-
-
-  // Volume shader with Lighting
-  renderhelp::g_volumeShaderLighting = std::make_shared<bd::ShaderProgram>();
-  programId = renderhelp::g_volumeShaderLighting->linkProgram(
-      "shaders/vert_vertexcolor_passthrough.glsl",
-      "shaders/frag_shading_otfgrads.glsl");
-  if (programId == 0) {
-    bd::Err() << "Error building volume lighting shader, program id was 0.";
-    return false;
-  }
-  renderhelp::g_volumeShaderLighting->unbind();
-
-  return true;
-}
-
-
-/////////////////////////////////////////////////////////////////////////////////
-void
-initializeVertexBuffers(subvol::CommandLineOptions const &clo,
-                        bd::Volume const &v,
-                        glm::u64vec3 *numSlices)
-{
-  // 2d slices
-  renderhelp::g_quadVao = std::make_shared<bd::VertexArrayObject>();
-  renderhelp::g_quadVao->create();
-  *numSlices = subvol::genQuadVao(*g_quadVao, v,
-      glm::vec3{clo.smod_x, clo.smod_y, clo.smod_z});
-
-  // coordinate axis
-  renderhelp::g_axisVao = std::make_shared<bd::VertexArrayObject>();
-  renderhelp::g_axisVao->create();
-  subvol::genAxisVao(*g_axisVao);
-
-
-  // bounding boxes
-  renderhelp::g_boxVao = std::make_shared<bd::VertexArrayObject>();
-  renderhelp::g_boxVao->create();
-  subvol::genBoxVao(*g_boxVao);
-}
+//bool
+//initializeShaders(subvol::CommandLineOptions const &clo)
+//{
+//  GLuint programId{ 0 };
+//
+//  // Wireframe Shader
+//  renderhelp::g_wireframeShader = std::make_shared<bd::ShaderProgram>();
+//  programId = renderhelp::g_wireframeShader->linkProgram(
+//      "shaders/vert_vertexcolor_passthrough.glsl",
+//      "shaders/frag_vertcolor.glsl");
+//  if (programId == 0) {
+//    bd::Err() << "Error building passthrough shader, program id was 0.";
+//    return false;
+//  }
+//  renderhelp::g_wireframeShader->unbind();
+//
+//
+//  // Volume shader
+//  renderhelp::g_volumeShader = std::make_shared<bd::ShaderProgram>();
+//  programId = renderhelp::g_volumeShader->linkProgram(
+//      "shaders/vert_vertexcolor_passthrough.glsl",
+//      "shaders/frag_volumesampler_noshading.glsl");
+//  if (programId == 0) {
+//    bd::Err() << "Error building volume shader, program id was 0.";
+//    return false;
+//  }
+//  renderhelp::g_volumeShader->unbind();
+//
+//
+//  // Volume shader with Lighting
+//  renderhelp::g_volumeShaderLighting = std::make_shared<bd::ShaderProgram>();
+//  programId = renderhelp::g_volumeShaderLighting->linkProgram(
+//      "shaders/vert_vertexcolor_passthrough.glsl",
+//      "shaders/frag_shading_otfgrads.glsl");
+//  if (programId == 0) {
+//    bd::Err() << "Error building volume lighting shader, program id was 0.";
+//    return false;
+//  }
+//  renderhelp::g_volumeShaderLighting->unbind();
+//
+//  return true;
+//}
 
 
 /////////////////////////////////////////////////////////////////////////////////
-std::shared_ptr<BlockRenderer>
+//void
+//initializeVertexBuffers(subvol::CommandLineOptions const &clo,
+//                        bd::Volume const &v,
+//                        glm::u64vec3 *numSlices)
+//{
+//  // 2d slices
+//  renderhelp::g_quadVao = std::make_shared<bd::VertexArrayObject>();
+//  renderhelp::g_quadVao->create();
+//  *numSlices = renderer::genQuadVao(*g_quadVao, v,
+//      glm::vec3{clo.smod_x, clo.smod_y, clo.smod_z});
+//
+//  // coordinate axis
+//  renderhelp::g_axisVao = std::make_shared<bd::VertexArrayObject>();
+//  renderhelp::g_axisVao->create();
+//  renderer::genAxisVao(*g_axisVao);
+//
+//
+//  // bounding boxes
+//  renderhelp::g_boxVao = std::make_shared<bd::VertexArrayObject>();
+//  renderhelp::g_boxVao->create();
+//  renderer::genBoxVao(*g_boxVao);
+//}
+
+
+/////////////////////////////////////////////////////////////////////////////////
+std::shared_ptr<renderer::BlockRenderer>
 initializeRenderer(std::shared_ptr<BlockCollection> bc,
                    bd::Volume const &v,
                    subvol::CommandLineOptions const &clo)
 {
   renderhelp::setInitialGLState();
-  glm::u64vec3 numSlices;
-//  renderhelp::initializeVertexBuffers(clo, v, &numSlices);
-//  bd::Info() << "Generated: " << numSlices[0] << "x" << numSlices[1] << "x" << numSlices[2] << " slices.";
-//  if (!renderhelp::initializeShaders(clo)) {
-//    return nullptr;
-//  }
 
   bool loaded = initializeTransferFunctions(clo);
 
-//  BlockRenderer *br = new SlicingBlockRenderer(
-//      numSlices,
-//      renderhelp::g_volumeShader,
-//      renderhelp::g_volumeShaderLighting,
-//      renderhelp::g_wireframeShader,
-//      bc,
-//      renderhelp::g_quadVao,
-//      renderhelp::g_boxVao,
-//      renderhelp::g_axisVao);
+  renderer::BlockRenderer *br = new renderer::SlicingBlockRenderer(
+      { clo.smod_x, clo.smod_y, clo.smod_z }, bc, v);
 
-  BlockRenderer *br = new subvol::render::BlockingRaycaster(bc, v);
+//  BlockRenderer *br = new subvol::render::BlockingRaycaster(bc, v);
   br->initialize();
 
   setRendererInitialTransferFunction(loaded, "USER", *br);
@@ -411,7 +388,7 @@ initializeRenderer(std::shared_ptr<BlockCollection> bc,
   br->setDrawNonEmptyBlocks(true);
   br->setDrawNonEmptyBoundingBoxes(false);
 
-  return std::shared_ptr<BlockRenderer>(br);
+  return std::shared_ptr<renderer::BlockRenderer>(br);
 }
 
 

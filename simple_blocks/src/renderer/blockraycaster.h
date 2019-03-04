@@ -20,10 +20,10 @@
 
 namespace subvol
 {
-namespace render
+namespace renderer
 {
 
-class BlockingRaycaster : public subvol::BlockRenderer, public subvol::Recipient
+class BlockingRaycaster : public BlockRenderer, public subvol::Recipient
 {
 public:
 

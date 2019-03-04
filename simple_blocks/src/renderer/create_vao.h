@@ -16,6 +16,9 @@ class Volume;
 
 namespace subvol
 {
+namespace renderer
+{
+
 struct VertexFormat
 {
   VertexFormat()
@@ -33,7 +36,7 @@ struct VertexFormat
 
   glm::vec4 pos;
   glm::vec3 uv;
-};
+}; // struct VertexFormat
 
 
 /// \brief Create slices for each axis with in a region. The min, max of the
@@ -73,11 +76,13 @@ createQuads(std::vector<VertexFormat> &verts,
             float delta,
             Axis a);
 
+
 void
 createQuadsReversed(std::vector<VertexFormat> &verts,
-            size_t numSlices,
-            float delta,
-            Axis a);
+                    size_t numSlices,
+                    float delta,
+                    Axis a);
+
 
 /// \brief Create element indexes for the verts returned by \c createQuads()
 ///
@@ -98,6 +103,8 @@ genAxisVao(bd::VertexArrayObject &vao);
 /// \brief Generate the vertex buffers for bounding box around the blocks
 void
 genBoxVao(bd::VertexArrayObject &vao);
-}
+
+} // namespace renderer
+} // namespace subvol
 
 #endif // !create_vao_h__

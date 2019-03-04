@@ -7,8 +7,10 @@
 #include <bd/log/gl_log.h>
 #include <GL/glew.h>
 
-namespace subvol {
-
+namespace subvol
+{
+namespace renderer
+{
 void
 BlockRenderer::setBackgroundColor(glm::vec4 const &c)
 {
@@ -17,4 +19,5 @@ BlockRenderer::setBackgroundColor(glm::vec4 const &c)
 };
 
 
-}
+} // namespace renderer
+} // namespace subvol

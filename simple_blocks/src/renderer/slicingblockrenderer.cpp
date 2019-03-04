@@ -8,6 +8,7 @@
 #include "slicingblockrenderer.h"
 #include "colormap.h"
 #include "constants.h"
+#include "create_vao.h"
 #include "messages/messagebroker.h"
 
 #include <bd/util/ordinal.h>
@@ -24,41 +25,40 @@
 
 namespace subvol
 {
+namespace renderer
+{
 
 SlicingBlockRenderer::SlicingBlockRenderer()
-    : SlicingBlockRenderer({ }, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr)
+    : SlicingBlockRenderer({ }, nullptr, { })
 {
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-SlicingBlockRenderer::SlicingBlockRenderer(glm::u64vec3 numSlices,
-                             std::shared_ptr<bd::ShaderProgram> volumeShader,
-                             std::shared_ptr<bd::ShaderProgram> volumeShaderLighting,
-                             std::shared_ptr<bd::ShaderProgram> wireframeShader,
-                             std::shared_ptr<BlockCollection> blockCollection,
-                             std::shared_ptr<bd::VertexArrayObject> blocksVAO,
-                             std::shared_ptr<bd::VertexArrayObject> bboxVAO,
-                             std::shared_ptr<bd::VertexArrayObject> axisVao)
+SlicingBlockRenderer::SlicingBlockRenderer(glm::vec3 smod,
+    std::shared_ptr<BlockCollection> blockCollection,
+    bd::Volume const &v)
     : BlockRenderer()
     , Recipient("BlockRenderer")
 
-    , m_numSlicesPerBlock{ numSlices }
     , m_tfuncScaleValue{ 1.0f }
     , m_drawNonEmptyBoundingBoxes{ false }
     , m_drawNonEmptySlices{ true }
     , m_shouldUseLighting{ false }
 
+    , m_numSlicesPerBlock{ 0, 0, 0 }
+    , m_smod{ smod }
+
     , m_colorMapTexture{ nullptr }
-
+    , m_volume{ v }
     , m_currentShader{ nullptr }
-    , m_volumeShader{ std::move(volumeShader) }
-    , m_volumeShaderLighting{ std::move(volumeShaderLighting) }
-    , m_wireframeShader{ std::move(wireframeShader) }
+    , m_volumeShader{ nullptr }
+    , m_volumeShaderLighting{ nullptr }
+    , m_wireframeShader{ nullptr }
 
-    , m_quadsVao{ std::move(blocksVAO) }
-    , m_boxesVao{ std::move(bboxVAO) }
-    , m_axisVao{ std::move(axisVao) }
+    , m_quadsVao{ nullptr }
+    , m_boxesVao{ nullptr }
+    , m_axisVao{ nullptr }
 
     , m_collection{ std::move(blockCollection) }
     , m_nonEmptyBlocks{ nullptr }
@@ -81,6 +81,10 @@ bool
 SlicingBlockRenderer::initialize()
 {
   Broker::subscribeRecipient(this);
+
+  initVao(m_smod.x, m_smod.y, m_smod.z, m_volume);
+
+  initShaders();
 
   m_volumeShader->bind();
   m_volumeShader->setUniform(VOLUME_SAMPLER_UNIFORM_STR, BLOCK_TEXTURE_UNIT);
@@ -265,7 +269,7 @@ SlicingBlockRenderer::drawNonEmptyBoundingBoxes()
                             (GLvoid *) ( 8 * sizeof(GLushort))));
   }
 //  m_boxesVao->unbind();
-//  m_wireframeShader->unbind();
+  m_wireframeShader->unbind();
 }
 
 
@@ -298,7 +302,7 @@ SlicingBlockRenderer::drawAxis() const
                         0,
                         static_cast<GLsizei>(bd::CoordinateAxis::verts.size())));
 //  m_axisVao->unbind();
-//  m_wireframeShader->unbind();
+  m_wireframeShader->unbind();
 }
 
 
@@ -466,4 +470,65 @@ SlicingBlockRenderer::handle_ROVChangingMessage(ROVChangingMessage &r)
 }
 
 
+void
+SlicingBlockRenderer::initVao(float smod_x, float smod_y, float smod_z, bd::Volume const &v)
+{
+  // 2d slices
+  m_quadsVao = std::unique_ptr<bd::VertexArrayObject>();
+  m_quadsVao->create();
+  m_numSlicesPerBlock = genQuadVao(*m_quadsVao, v, glm::vec3{smod_x, smod_y, smod_z});
+
+  // coordinate axis
+  m_axisVao = std::unique_ptr<bd::VertexArrayObject>();
+  m_axisVao->create();
+  genAxisVao(*m_axisVao);
+
+  // bounding boxes
+  m_boxesVao = std::unique_ptr<bd::VertexArrayObject>();
+  m_boxesVao->create();
+  genBoxVao(*m_boxesVao);
+}
+
+
+void
+SlicingBlockRenderer::initShaders()
+{
+
+  GLuint programId{ 0 };
+
+  // Wireframe Shader
+  m_wireframeShader = std::unique_ptr<bd::ShaderProgram>();
+  programId = m_wireframeShader->linkProgram(
+      "shaders/vert_vertexcolor_passthrough.glsl",
+      "shaders/frag_vertcolor.glsl");
+  if (programId == 0) {
+    throw std::runtime_error("could not initialize wireframe shader");
+  }
+  m_wireframeShader->unbind();
+
+
+  // Volume shader
+  m_volumeShader = std::unique_ptr<bd::ShaderProgram>();
+  programId = m_volumeShader->linkProgram(
+      "shaders/vert_vertexcolor_passthrough.glsl",
+      "shaders/frag_volumesampler_noshading.glsl");
+  if (programId == 0) {
+    throw std::runtime_error("error building non-shading volume shader, program id was 0.");
+  }
+  m_volumeShader->unbind();
+
+
+  // Volume shader with Lighting
+  m_volumeShaderLighting = std::unique_ptr<bd::ShaderProgram>();
+  programId = m_volumeShaderLighting->linkProgram(
+      "shaders/vert_vertexcolor_passthrough.glsl",
+      "shaders/frag_shading_otfgrads.glsl");
+  if (programId == 0) {
+    throw std::runtime_error("Error building volume lighting shader, program id was 0.");
+  }
+  m_volumeShaderLighting->unbind();
+}
+
+
+} // namespace renderer
 } // namespace subvol

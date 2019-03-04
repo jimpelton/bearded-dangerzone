@@ -17,6 +17,8 @@
 
 namespace subvol
 {
+namespace renderer
+{
 namespace
 {
 struct BBox
@@ -45,22 +47,22 @@ struct BBox
   {
     using V3 = glm::vec3;
     using V4 = glm::vec4;
-    verts[0] = VertexFormat(V4{ V3{ -0.5, -0.5, -0.5 }*aspect, 1.0 },
+    verts[0] = VertexFormat(V4{ V3{ -0.5, -0.5, -0.5 } * aspect, 1.0 },
                             V3{ 0, 0, 0 }); // left, bottom, back
-    verts[1] = VertexFormat(V4{ V3{ 0.5, -0.5, -0.5 }*aspect, 1.0 },
+    verts[1] = VertexFormat(V4{ V3{ 0.5, -0.5, -0.5 } * aspect, 1.0 },
                             V3{ 1, 0, 0 }); // right, bottom, back
-    verts[2] = VertexFormat(V4{ V3{ -0.5, 0.5, -0.5 }*aspect, 1.0 },
+    verts[2] = VertexFormat(V4{ V3{ -0.5, 0.5, -0.5 } * aspect, 1.0 },
                             V3{ 0, 1, 0 }); // left, top, back
-    verts[3] = VertexFormat(V4{ V3{ 0.5, 0.5, -0.5 }*aspect, 1.0 },
+    verts[3] = VertexFormat(V4{ V3{ 0.5, 0.5, -0.5 } * aspect, 1.0 },
                             V3{ 1, 1, 0 }); // right, top, back
 
-    verts[4] = VertexFormat(V4{ V3{ 0.5, -0.5, 0.5 }*aspect, 1.0 },
+    verts[4] = VertexFormat(V4{ V3{ 0.5, -0.5, 0.5 } * aspect, 1.0 },
                             V3{ 1, 0, 1 }); // right, bottom, front
-    verts[5] = VertexFormat(V4{ V3{ -0.5, -0.5, 0.5 }*aspect, 1.0 },
+    verts[5] = VertexFormat(V4{ V3{ -0.5, -0.5, 0.5 } * aspect, 1.0 },
                             V3{ 0, 0, 1 }); // left, bottom, front
-    verts[6] = VertexFormat(V4{ V3{ 0.5, 0.5, 0.5 }*aspect, 1.0 },
+    verts[6] = VertexFormat(V4{ V3{ 0.5, 0.5, 0.5 } * aspect, 1.0 },
                             V3{ 1, 1, 1 }); // right, top, front
-    verts[7] = VertexFormat(V4{ V3{ -0.5, 0.5, 0.5 }*aspect, 1.0 },
+    verts[7] = VertexFormat(V4{ V3{ -0.5, 0.5, 0.5 } * aspect, 1.0 },
                             V3{ 0, 1, 1 }); // left, top, front
   }
 
@@ -75,7 +77,7 @@ getDelta(bd::Volume const &v,
          Axis a)
 {
   return 1.0f / ( samplingModifer *
-    v.worldDims()[bd::ordinal<Axis>(a)] * 1.414213562f ); // 1.414213562f = sqrt(2)
+      v.worldDims()[bd::ordinal<Axis>(a)] * 1.414213562f ); // 1.414213562f = sqrt(2)
 }
 
 
@@ -86,8 +88,8 @@ interpolateVertex(VertexFormat const &v1,
 {
   VertexFormat r;
 
-  r.pos = ( 1.0f-depth )*v1.pos+depth*v2.pos;
-  r.uv = ( 1.0f-depth )*v1.uv+depth*v2.uv;
+  r.pos = ( 1.0f - depth ) * v1.pos + depth * v2.pos;
+  r.uv = ( 1.0f - depth ) * v1.uv + depth * v2.uv;
 
   return r;
 }
@@ -109,8 +111,8 @@ genQuadVao(bd::VertexArrayObject &vao,
   glm::u64vec3 sliceCounts;
 
   float delta{ getDelta(v, smod.x, Axis::X) };
-  size_t numSlices{ static_cast<size_t>(std::floor(1.0f/delta)) };
-  delta = 1.0f/( numSlices-1 );
+  size_t numSlices{ static_cast<size_t>(std::floor(1.0f / delta)) };
+  delta = 1.0f / ( numSlices - 1 );
   bd::Info() << "Slices on X: " << numSlices << " with delta: " << delta;
   createQuads(vbuf, numSlices, delta, Axis::X);
   createQuadsReversed(vbuf, numSlices, delta, Axis::X);
@@ -118,8 +120,8 @@ genQuadVao(bd::VertexArrayObject &vao,
   sliceCounts.x = numSlices;
 
   delta = getDelta(v, smod.y, Axis::Y);
-  numSlices = static_cast<size_t>(std::floor(1.0f/delta));
-  delta = 1.0f/( numSlices-1 );
+  numSlices = static_cast<size_t>(std::floor(1.0f / delta));
+  delta = 1.0f / ( numSlices - 1 );
   bd::Info() << "Slices on Y: " << numSlices << " with delta: " << delta;
   createQuads(vbuf, numSlices, delta, Axis::Y);
   createQuadsReversed(vbuf, numSlices, delta, Axis::Y);
@@ -127,8 +129,8 @@ genQuadVao(bd::VertexArrayObject &vao,
   sliceCounts.y = numSlices;
 
   delta = getDelta(v, smod.z, Axis::Z);
-  numSlices = static_cast<size_t>(std::floor(1.0f/delta));
-  delta = 1.0f/( numSlices-1 );
+  numSlices = static_cast<size_t>(std::floor(1.0f / delta));
+  delta = 1.0f / ( numSlices - 1 );
   bd::Info() << "Slices on Z: " << numSlices << " with delta: " << delta;
   createQuads(vbuf, numSlices, delta, Axis::Z);
   createQuadsReversed(vbuf, numSlices, delta, Axis::Z);
@@ -167,7 +169,7 @@ createQuads(std::vector<VertexFormat> &verts,
   std::array<VertexFormat, 4> sliceVerts;
   switch (a) {
     case Axis::X:
-      for (size_t x{ 0 }; x<numSlices; ++x) {
+      for (size_t x{ 0 }; x < numSlices; ++x) {
         sliceVerts[0] = interpolateVertex(volBox.verts[5], volBox.verts[4], depth);
         sliceVerts[1] = interpolateVertex(volBox.verts[0], volBox.verts[1], depth);
         sliceVerts[2] = interpolateVertex(volBox.verts[7], volBox.verts[6], depth);
@@ -180,7 +182,7 @@ createQuads(std::vector<VertexFormat> &verts,
       }
       break;
     case Axis::Y:
-      for (size_t y{ 0 }; y<numSlices; ++y) {
+      for (size_t y{ 0 }; y < numSlices; ++y) {
         sliceVerts[0] = interpolateVertex(volBox.verts[5], volBox.verts[7], depth);
         sliceVerts[1] = interpolateVertex(volBox.verts[4], volBox.verts[6], depth);
         sliceVerts[2] = interpolateVertex(volBox.verts[0], volBox.verts[2], depth);
@@ -193,7 +195,7 @@ createQuads(std::vector<VertexFormat> &verts,
       }
       break;
     case Axis::Z:
-      for (size_t z{ 0 }; z<numSlices; ++z) {
+      for (size_t z{ 0 }; z < numSlices; ++z) {
         sliceVerts[0] = interpolateVertex(volBox.verts[0], volBox.verts[5], depth);
         sliceVerts[1] = interpolateVertex(volBox.verts[1], volBox.verts[4], depth);
         sliceVerts[2] = interpolateVertex(volBox.verts[2], volBox.verts[7], depth);
@@ -208,11 +210,12 @@ createQuads(std::vector<VertexFormat> &verts,
   }
 }
 
+
 void
 createQuadsReversed(std::vector<VertexFormat> &verts,
-            size_t numSlices,
-            float delta,
-            Axis a)
+                    size_t numSlices,
+                    float delta,
+                    Axis a)
 {
   float depth{ 1.0f };
   delta *= -1;
@@ -222,7 +225,7 @@ createQuadsReversed(std::vector<VertexFormat> &verts,
   std::array<VertexFormat, 4> sliceVerts;
   switch (a) {
     case Axis::X:
-      for (size_t x{ 0 }; x<numSlices; ++x) {
+      for (size_t x{ 0 }; x < numSlices; ++x) {
         sliceVerts[0] = interpolateVertex(volBox.verts[0], volBox.verts[1], depth);
         sliceVerts[1] = interpolateVertex(volBox.verts[4], volBox.verts[5], depth);
         sliceVerts[2] = interpolateVertex(volBox.verts[2], volBox.verts[3], depth);
@@ -235,7 +238,7 @@ createQuadsReversed(std::vector<VertexFormat> &verts,
       }
       break;
     case Axis::Y:
-      for (size_t y{ 0 }; y<numSlices; ++y) {
+      for (size_t y{ 0 }; y < numSlices; ++y) {
         sliceVerts[0] = interpolateVertex(volBox.verts[0], volBox.verts[2], depth);
         sliceVerts[1] = interpolateVertex(volBox.verts[1], volBox.verts[3], depth);
         sliceVerts[2] = interpolateVertex(volBox.verts[5], volBox.verts[7], depth);
@@ -248,7 +251,7 @@ createQuadsReversed(std::vector<VertexFormat> &verts,
       }
       break;
     case Axis::Z:
-      for (size_t z{ 0 }; z<numSlices; ++z) {
+      for (size_t z{ 0 }; z < numSlices; ++z) {
         sliceVerts[0] = interpolateVertex(volBox.verts[1], volBox.verts[4], depth);
         sliceVerts[1] = interpolateVertex(volBox.verts[0], volBox.verts[5], depth);
         sliceVerts[2] = interpolateVertex(volBox.verts[3], volBox.verts[6], depth);
@@ -393,11 +396,11 @@ createElementIdx(std::vector<unsigned short> &elebuf,
 //    elebuf.clear();
   // Creates element indices just for X dimension becuase we are using same
   // number of slices for each dimension.
-  for (unsigned short i{ 0 }; i<numSlices; ++i) {
-    elebuf.push_back(0+4*i);
-    elebuf.push_back(1+4*i);
-    elebuf.push_back(2+4*i);
-    elebuf.push_back(3+4*i);
+  for (unsigned short i{ 0 }; i < numSlices; ++i) {
+    elebuf.push_back(0 + 4 * i);
+    elebuf.push_back(1 + 4 * i);
+    elebuf.push_back(2 + 4 * i);
+    elebuf.push_back(3 + 4 * i);
     elebuf.push_back(0xFFFF);
   }
 }
@@ -413,14 +416,14 @@ genAxisVao(bd::VertexArrayObject &vao)
 
   // vertex positions into attribute 0
   vao.addVbo((float *) ( BDAxis::verts.data()),
-             BDAxis::verts.size()*BDAxis::vert_element_size,
+             BDAxis::verts.size() * BDAxis::vert_element_size,
              BDAxis::vert_element_size,
              VERTEX_COORD_ATTR,
              bd::VertexArrayObject::Usage::Static_Draw); // attr 0
 
   // vertex colors into attribute 1
   vao.addVbo((float *) ( BDAxis::colors.data()),
-             BDAxis::colors.size()*3,
+             BDAxis::colors.size() * 3,
              3, // 3 floats per color
              VERTEX_COLOR_ATTR,
              bd::VertexArrayObject::Usage::Static_Draw); // attr 1
@@ -435,14 +438,14 @@ genBoxVao(bd::VertexArrayObject &vao)
 
   // positions as vertex attribute 0
   vao.addVbo((float *) ( bd::WireframeBox::vertices.data()),
-             bd::WireframeBox::vertices.size()*bd::WireframeBox::vert_element_size,
+             bd::WireframeBox::vertices.size() * bd::WireframeBox::vert_element_size,
              bd::WireframeBox::vert_element_size,
              VERTEX_COORD_ATTR,
              bd::VertexArrayObject::Usage::Static_Draw);
 
   // colors as vertex attribute 1
   vao.addVbo((float *) bd::WireframeBox::colors.data(),
-             bd::WireframeBox::colors.size()*3,
+             bd::WireframeBox::colors.size() * 3,
              3,
              VERTEX_COLOR_ATTR,
              bd::VertexArrayObject::Usage::Static_Draw);
@@ -451,6 +454,8 @@ genBoxVao(bd::VertexArrayObject &vao)
                      bd::WireframeBox::elements.size(),
                      bd::VertexArrayObject::Usage::Static_Draw);
 }
+
+} // namespace renderer
 } // namespace subvol
 
 

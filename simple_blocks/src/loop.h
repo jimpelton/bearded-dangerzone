@@ -59,7 +59,7 @@ class BenchmarkLoop
     : public Loop
 {
 public:
-  BenchmarkLoop(GLFWwindow *, std::shared_ptr<BlockRenderer>,
+  BenchmarkLoop(GLFWwindow *, std::shared_ptr<renderer::BlockRenderer>,
                 std::shared_ptr<BlockCollection>,
                 glm::vec3 rAxis = { 1, 0, 0 });
 

@@ -18,7 +18,7 @@
 
 namespace subvol
 {
-namespace render
+namespace renderer
 {
 
 namespace {
