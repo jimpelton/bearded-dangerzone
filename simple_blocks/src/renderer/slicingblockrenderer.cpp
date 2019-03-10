@@ -82,8 +82,25 @@ SlicingBlockRenderer::initialize()
 {
   Broker::subscribeRecipient(this);
 
-  initVao(m_smod.x, m_smod.y, m_smod.z, m_volume);
+  bd::Info() << "Initializing gl state.";
+  gl_check(glClearColor(0.15f, 0.15f, 0.15f, 0.0f));
 
+  gl_check(glEnable(GL_CULL_FACE));
+  gl_check(glCullFace(GL_BACK));
+//  gl_check(glDisable(GL_CULL_FACE));
+
+//  gl_check(glEnable(GL_DEPTH_TEST));
+//  gl_check(glDepthFunc(GL_LESS));
+  gl_check(glDisable(GL_DEPTH_TEST));
+
+  gl_check(glEnable(GL_BLEND));
+  gl_check(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+
+  gl_check(glEnable(GL_PRIMITIVE_RESTART));
+  gl_check(glPrimitiveRestartIndex(0xFFFF));
+
+
+  initVao(m_smod.x, m_smod.y, m_smod.z, m_volume);
   initShaders();
 
   m_volumeShader->bind();
@@ -474,17 +491,17 @@ void
 SlicingBlockRenderer::initVao(float smod_x, float smod_y, float smod_z, bd::Volume const &v)
 {
   // 2d slices
-  m_quadsVao = std::unique_ptr<bd::VertexArrayObject>();
+  m_quadsVao = std::unique_ptr<bd::VertexArrayObject>(new bd::VertexArrayObject());
   m_quadsVao->create();
   m_numSlicesPerBlock = genQuadVao(*m_quadsVao, v, glm::vec3{smod_x, smod_y, smod_z});
 
   // coordinate axis
-  m_axisVao = std::unique_ptr<bd::VertexArrayObject>();
+  m_axisVao = std::unique_ptr<bd::VertexArrayObject>(new bd::VertexArrayObject());
   m_axisVao->create();
   genAxisVao(*m_axisVao);
 
   // bounding boxes
-  m_boxesVao = std::unique_ptr<bd::VertexArrayObject>();
+  m_boxesVao = std::unique_ptr<bd::VertexArrayObject>(new bd::VertexArrayObject());
   m_boxesVao->create();
   genBoxVao(*m_boxesVao);
 }
@@ -497,7 +514,7 @@ SlicingBlockRenderer::initShaders()
   GLuint programId{ 0 };
 
   // Wireframe Shader
-  m_wireframeShader = std::unique_ptr<bd::ShaderProgram>();
+  m_wireframeShader = std::unique_ptr<bd::ShaderProgram>(new bd::ShaderProgram());
   programId = m_wireframeShader->linkProgram(
       "shaders/vert_vertexcolor_passthrough.glsl",
       "shaders/frag_vertcolor.glsl");
@@ -508,7 +525,7 @@ SlicingBlockRenderer::initShaders()
 
 
   // Volume shader
-  m_volumeShader = std::unique_ptr<bd::ShaderProgram>();
+  m_volumeShader = std::unique_ptr<bd::ShaderProgram>(new bd::ShaderProgram());
   programId = m_volumeShader->linkProgram(
       "shaders/vert_vertexcolor_passthrough.glsl",
       "shaders/frag_volumesampler_noshading.glsl");
@@ -519,7 +536,7 @@ SlicingBlockRenderer::initShaders()
 
 
   // Volume shader with Lighting
-  m_volumeShaderLighting = std::unique_ptr<bd::ShaderProgram>();
+  m_volumeShaderLighting = std::unique_ptr<bd::ShaderProgram>(new bd::ShaderProgram());
   programId = m_volumeShaderLighting->linkProgram(
       "shaders/vert_vertexcolor_passthrough.glsl",
       "shaders/frag_shading_otfgrads.glsl");
