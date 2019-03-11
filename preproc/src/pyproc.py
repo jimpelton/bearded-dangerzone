@@ -158,7 +158,7 @@ def main():
     # resize the volume so that the longest edge is 2 units long. 
     # the renderer needs the world dimensions to fit within a 2 unit cube.
     max_dim = np.max(vdims)
-    world_dims = [ 2.0 * vdims[0]/max_dim, 2.0 * vdims[1]/max_dim, 2.0 * vdims[2]/max_dim]
+    world_dims = [ vdims[0]/max_dim, vdims[1]/max_dim, vdims[2]/max_dim]
 
     vol_stats = volume.VolStats(min=vol_min, max=vol_max, avg=0.0, tot=vol_tot)
     vol = volume.Volume(world_dims, vdims.tolist(), rov_min, rov_max)

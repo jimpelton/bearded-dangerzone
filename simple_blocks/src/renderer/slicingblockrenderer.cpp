@@ -66,7 +66,6 @@ SlicingBlockRenderer::SlicingBlockRenderer(glm::vec3 smod,
 {
   m_blocks = &( m_collection->getBlocks());
   m_nonEmptyBlocks = &( m_collection->getNonEmptyBlocks());
-  initialize();
 }
 
 
@@ -87,11 +86,10 @@ SlicingBlockRenderer::initialize()
 
   gl_check(glEnable(GL_CULL_FACE));
   gl_check(glCullFace(GL_BACK));
-//  gl_check(glDisable(GL_CULL_FACE));
 
-//  gl_check(glEnable(GL_DEPTH_TEST));
-//  gl_check(glDepthFunc(GL_LESS));
-  gl_check(glDisable(GL_DEPTH_TEST));
+  gl_check(glEnable(GL_DEPTH_TEST));
+  gl_check(glDepthFunc(GL_LESS));
+//  gl_check(glDisable(GL_DEPTH_TEST));
 
   gl_check(glEnable(GL_BLEND));
   gl_check(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
@@ -377,28 +375,26 @@ SlicingBlockRenderer::computeBaseVertexFromViewDir(glm::vec3 const &viewdir)
   // If isPos == true, then we are looking in the direction that the positive axis points.
   // Example:
   //   viewdir.x > 0 means we are looking in the direction that the positive x axis points.
-  bool isPos{ viewdir.x > 0 };
+  bool isPos{ viewdir.x < 0 };
   float longest{ absViewDir.x };
 
   // find longest component in view vector.
   if (absViewDir.y > longest) {
     newSelected = SliceSet::XZ;
-    isPos = viewdir.y > 0;
+    isPos = viewdir.y < 0;
     longest = absViewDir.y;
   }
 
   if (absViewDir.z > longest) {
     newSelected = SliceSet::XY;
-    isPos = viewdir.z > 0;
+    isPos = viewdir.z < 0;
   }
 
   // Compute base vertex VBO offset.
   int const verts_per_quad{ 4 };
-  unsigned long long baseVertex{ 0uL };
-  unsigned long long elementOffset{ 0 };
-
+  glm::u64 baseVertex{ 0 };
+  glm::u64 elementOffset{ 0 };
   glm::u64 numSlices{ 0 };
-
   switch (newSelected) {
 
     case SliceSet::YZ:
