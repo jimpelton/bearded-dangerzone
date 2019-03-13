@@ -54,9 +54,7 @@ def run_volume(fd, num_vox):
     vol_end = time.time()
     vol_time = vol_end - start
 
-    print(f"Min: {vol_min}, Max: {vol_max}")
-    print(f"Total: {vol_tot}")
-    print(f"Elapsed time: {vol_time}")
+    print(f"Volme level elapsed time: {vol_time}")
     return vol_min, vol_max, vol_tot
 
 
@@ -68,7 +66,6 @@ def block_analysis_jit(fd, xp, yp,
                      blocks: np.ndarray):
     diff = vmax - vmin
     num_vox = np.prod(vdims)
-    print(num_vox)
 
     for i in numba.prange(num_vox):
         bI = numba.uint64((i % vdims[0]) / bdims[0])
@@ -120,7 +117,7 @@ def run_block(fd,
     block_analysis_jit(fd, xp, yp, vmin, vmax, vdims, bdims, bcount, blocks)
     volend = time.time()
     vol_time = volend - start
-    print(f"Elapsed time: {vol_time}")
+    print(f"Block level time: {vol_time}")
 
     block_vox_count = np.prod(bdims)
     for i in range(len(blocks)):
@@ -142,7 +139,7 @@ def main():
     blocks = np.zeros(cargs.bx * cargs.by * cargs.bz)
     block_size = vdims / bcount
     block_extent = block_size * bcount
-
+    print("\nRunning for {} blocks".format(bcount))
     print('Running volume analysis')
     vol_min, vol_max, vol_tot = run_volume(fd, np.prod(vdims))
 
@@ -155,14 +152,13 @@ def main():
     vol_path, vol_name = os.path.split(cargs.raw)
     tr_path, tr_name = os.path.split(cargs.tf)
 
-    # resize the volume so that the longest edge is 2 units long. 
-    # the renderer needs the world dimensions to fit within a 2 unit cube.
     max_dim = np.max(vdims)
     world_dims = [ vdims[0]/max_dim, vdims[1]/max_dim, vdims[2]/max_dim]
 
     vol_stats = volume.VolStats(min=vol_min, max=vol_max, avg=0.0, tot=vol_tot)
     vol = volume.Volume(world_dims, vdims.tolist(), rov_min, rov_max)
 
+    idx_start = time.time()
     blocks = indexfile.create_file_blocks(bcount, fd.dtype, vol, relevancies)
 
     ifile = indexfile.IndexFile(**{
@@ -178,6 +174,9 @@ def main():
         'blocks': blocks,
         })
     ifile.write(cargs.out)
+    idx_end = time.time()
+    index_time = idx_end - idx_start
+    print(f"Index file time: {index_time}")
 
 if __name__ == '__main__':
     main()
