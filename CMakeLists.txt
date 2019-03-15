@@ -47,6 +47,7 @@ set(THIRDPARTY_DIR "${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/")
 
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/libcruft")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/simple_blocks")
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/resample")
 
 #if (UNIX)
  #   include_directories("${OPENGL_INCLUDE_DIR}")

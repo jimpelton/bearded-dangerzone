@@ -136,16 +136,11 @@ target_include_directories(simple_blocks PUBLIC
         "${GLM_INCLUDE_DIR}"
         "${GLFW_INCLUDE_DIRS}")
 
-#find_library(CRUFT_DEBUG_LIB cruftd HINTS "${CRUFT_LIBRARY_DIR}")
-#find_library(CRUFT_RELEASE_LIB cruft HINTS "${CRUFT_LIBRARY_DIR}")
-
 target_link_libraries(simple_blocks PUBLIC
         cruft
         ${OPENGL_LIBRARIES}
         ${GLFW_LIBRARIES}
         ${GLEW_LIBRARIES}
-#        debug ${CRUFT_DEBUG_LIB}
-#        optimized ${CRUFT_RELEASE_LIB}
         ${NVTOOLSEXT_LIB}
         Qt5::Widgets
         Qt5::Core)
