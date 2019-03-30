@@ -1,0 +1,40 @@
+#!/bin/python
+# encoding: utf-8
+
+import argparse
+
+
+def parseArgs():
+    parser = argparse.ArgumentParser(description="Upsample volumetric data", usage=printHelp)
+    parser.add_argument("--vx", metavar="X", type=int, required=True, help="Original voxel dims along X")
+    parser.add_argument("--vy", metavar="Y", type=int, required=True, help="Original voxel dims along Y")
+    parser.add_argument("--vz", metavar="Z", type=int, required=True, help="Original voxel dims along Z")
+
+    parser.add_argument("--nvx", metavar="X", type=int, required=True, help="Target voxel dims along X")
+    parser.add_argument("--nvy", metavar="Y", type=int, required=True, help="Target voxel dims along Y")
+    parser.add_argument("--nvz", metavar="Z", type=int, required=True, help="Target voxel dims along Z")
+
+    parser.add_argument("--idx", meavar="FILE", type=str, required=True, help="Classifier function")
+    parser.add_argument("--type", metavar="TYPE", type=str, required=True, help="Element size (data type)")
+
+    parser.add_argument("in", metavar="FILE", type=str, required=True, help="Input raw file")
+    parser.add_argument("out", metavar="FILE", type=str, required=True, help="Output raw file")
+
+    return parser.parse_args()
+
+
+def 
+
+
+
+def main():
+    args = parseArgs()
+    
+
+    
+
+    return
+
+
+if __name__ == "__main__":
+    main()
