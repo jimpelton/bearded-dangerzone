@@ -23,8 +23,14 @@ def parseArgs():
     return parser.parse_args()
 
 
-def 
-
+class Grid:
+    """Grid is a grid of scalar values
+    """
+    def __init__(self, image=None):
+        self.image = image
+    
+    def interpolate(self):
+         
 
 
 def main():
