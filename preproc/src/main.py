@@ -33,6 +33,11 @@ def parse_args(args):
 
 @njit(fastmath=True)
 def volume_analysis_jit(raw, num_vox):
+    """Compute the min and max and the total for the volume and return them in a tuple.
+
+       These values are needed for the voxel analysis done later on. The returned tuple is
+       in the order: (min, max, total).
+    """
     mn = np.iinfo(raw.dtype).max
     mx = -np.iinfo(raw.dtype).min
     acc = numba.float64(0.0)
@@ -45,10 +50,12 @@ def volume_analysis_jit(raw, num_vox):
 
         acc += x
 
-    return mn, mx, acc
+    return (mn, mx, acc)
 
 
 def run_volume(raw, num_vox):
+    """Run and time the volume min, max and total computation.
+    """
     start = time.time()
     vol_min, vol_max, vol_tot = volume_analysis_jit(raw, num_vox)
     vol_end = time.time()
